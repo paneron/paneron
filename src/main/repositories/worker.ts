@@ -191,20 +191,20 @@ const methods: WorkerSpec = {
     return { success: true };
   },
 
-  async pull(msg) {
-    await gitLock.acquire(msg.workDir, async () => {
+  async pull({ workDir, repoURL, auth, author, _presumeCanceledErrorMeansAwaitingAuth }) {
+    await gitLock.acquire(workDir, async () => {
       try {
         await git.pull({
           http,
           fs,
-          dir: msg.workDir,
-          url: `${msg.repoURL}.git`,
+          dir: workDir,
+          url: `${repoURL}.git`,
           singleBranch: true,
           fastForwardOnly: true,
-          author: msg.author,
-          onAuth: () => msg.auth,
+          author: author,
+          onAuth: () => auth,
           onAuthFailure: () => {
-            repositoryStatus[msg.workDir]?.next({
+            repositoryStatus[workDir]?.next({
               busy: {
                 operation: 'pulling',
                 awaitingPassword: true,
@@ -213,7 +213,7 @@ const methods: WorkerSpec = {
             return { cancel: true };
           },
           onProgress: (progress) => {
-            repositoryStatus[msg.workDir]?.next({
+            repositoryStatus[workDir]?.next({
               busy: {
                 operation: 'pulling',
                 progress,
@@ -221,13 +221,15 @@ const methods: WorkerSpec = {
             });
           },
         });
-        repositoryStatus[msg.workDir]?.next({
+        repositoryStatus[workDir]?.next({
           status: 'ready',
         });
       } catch (e) {
         //log.error(`C/db/isogit/worker: Error pulling from repository`, e);
-        if (e.code !== 'UserCanceledError') {
-          repositoryStatus[msg.workDir]?.next({
+        const suppress: boolean =
+          (e.code === 'UserCanceledError' && _presumeCanceledErrorMeansAwaitingAuth === true);
+        if (!suppress) {
+          repositoryStatus[workDir]?.next({
             busy: {
               operation: 'pulling',
               networkError: true,
@@ -240,17 +242,19 @@ const methods: WorkerSpec = {
     return { success: true };
   },
 
-  async push(msg) {
-    await gitLock.acquire(msg.workDir, async () => {
+  async push({ workDir, repoURL, auth,
+      _presumeRejectedPushMeansNothingToPush,
+      _presumeCanceledErrorMeansAwaitingAuth }) {
+    await gitLock.acquire(workDir, async () => {
       try {
         await git.push({
           http,
           fs,
-          dir: msg.workDir,
-          url: `${msg.repoURL}.git`,
-          onAuth: () => msg.auth,
+          dir: workDir,
+          url: `${repoURL}.git`,
+          onAuth: () => auth,
           onAuthFailure: () => {
-            repositoryStatus[msg.workDir]?.next({
+            repositoryStatus[workDir]?.next({
               busy: {
                 operation: 'pushing',
                 awaitingPassword: true,
@@ -259,7 +263,7 @@ const methods: WorkerSpec = {
             return { cancel: true };
           },
           onProgress: (progress) => {
-            repositoryStatus[msg.workDir]?.next({
+            repositoryStatus[workDir]?.next({
               busy: {
                 operation: 'pushing',
                 progress,
@@ -267,13 +271,16 @@ const methods: WorkerSpec = {
             });
           },
         });
-        repositoryStatus[msg.workDir]?.next({
+        repositoryStatus[workDir]?.next({
           status: 'ready',
         });
       } catch (e) {
         //log.error(`C/db/isogit/worker: Error pushing to repository`, e);
-        if (e.code !== 'UserCanceledError' && e.code !== 'PushRejectedError') {
-          repositoryStatus[msg.workDir]?.next({
+        const suppress: boolean =
+          (e.code === 'UserCanceledError' && _presumeCanceledErrorMeansAwaitingAuth === true) ||
+          (e.code === 'PushRejectedError' && _presumeRejectedPushMeansNothingToPush === true);
+        if (!suppress) {
+          repositoryStatus[workDir]?.next({
             busy: {
               operation: 'pushing',
               networkError: true,

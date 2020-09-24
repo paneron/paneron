@@ -97,54 +97,94 @@ selectWorkingDirectoryContainer.main!.handle(async ({ _default }) => {
 });
 
 
-let repositoryStatusStreams: { [workingCopyPath: string]: Subscription<RepoStatus> } = {};
+let repositoryStatuses: {
+  [workingCopyPath: string]: {
+    stream: Subscription<RepoStatus>
+    updateTimeout: ReturnType<typeof setTimeout>
+    latestStatus?: RepoStatus
+    latestSync?: Date
+  }
+} = {};
+
+
+function removeRepoStatus(workingCopyPath: string) {
+  repositoryStatuses[workingCopyPath]?.stream?.unsubscribe();
+  const timeout = repositoryStatuses[workingCopyPath]?.updateTimeout;
+  clearTimeout(timeout ? (timeout as unknown as number) : undefined);
+}
 
 
 getRepositoryStatus.main!.handle(async ({ workingCopyPath }) => {
-  if (repositoryStatusStreams[workingCopyPath] === undefined) {
-    const w = await worker;
+  const existingStatus = repositoryStatuses[workingCopyPath];
 
-    async function syncRepo() {
-      try {
-        const author = await getAuthorInfo(workingCopyPath);
-        const repoCfg = await readConfigForWorkingCopy(workingCopyPath);
-
-        if (repoCfg.remote) {
-          const auth = await getAuth(repoCfg.remote.url, repoCfg.remote.username);
-          await w.pull({
-            workDir: workingCopyPath,
-            repoURL: repoCfg.remote.url,
-            auth,
-            author,
-          });
-          await w.push({
-            workDir: workingCopyPath,
-            repoURL: repoCfg.remote.url,
-            auth,
-          });
-          setTimeout(syncRepo, 5000);
-        } else {
-          setTimeout(syncRepo, 15000);
-        }
-      } catch (e) {
-        log.error("Repositories: Error syncing repository", workingCopyPath, e);
-        setTimeout(syncRepo, 15000);
-      }
-    }
-
-    repositoryStatusStreams[workingCopyPath] = w.streamStatus({ workDir: workingCopyPath }).
-    subscribe(async (status) => {
-      await repositoryStatusChanged.main!.trigger({
-        workingCopyPath,
-        status,
-      });
-    });
-
-    setTimeout(syncRepo, 500);
+  if (existingStatus) {
+    return existingStatus.latestStatus || { status: 'ready' };
   }
-  return {
-    status: 'ready',
+
+  const w = await worker;
+
+  async function reportStatus(status: RepoStatus) {
+    if (repositoryStatuses[workingCopyPath]) {
+      if (JSON.stringify(repositoryStatuses[workingCopyPath].latestStatus) !== JSON.stringify(status)) {
+        await repositoryStatusChanged.main!.trigger({
+          workingCopyPath,
+          status,
+        });
+      }
+      repositoryStatuses[workingCopyPath].latestStatus = status;
+    } else {
+      streamSubscription.unsubscribe();
+    }
+  }
+
+  async function syncRepoRepeatedly() {
+    if (!repositoryStatuses[workingCopyPath]) { return; }
+
+    try {
+      const author = await getAuthorInfo(workingCopyPath);
+      const repoCfg = await readConfigForWorkingCopy(workingCopyPath);
+
+      if (repoCfg.remote) {
+        const auth = await getAuth(repoCfg.remote.url, repoCfg.remote.username);
+
+        await w.pull({
+          workDir: workingCopyPath,
+          repoURL: repoCfg.remote.url,
+          auth,
+          author,
+          _presumeCanceledErrorMeansAwaitingAuth: true,
+        });
+
+        await w.push({
+          workDir: workingCopyPath,
+          repoURL: repoCfg.remote.url,
+          auth,
+          _presumeRejectedPushMeansNothingToPush: true,
+          _presumeCanceledErrorMeansAwaitingAuth: true,
+        });
+        repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(syncRepoRepeatedly, 5000);
+
+      } else {
+        repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(syncRepoRepeatedly, 15000);
+      }
+
+    } catch (e) {
+      log.error("Repositories: Error syncing repository", workingCopyPath, e);
+      repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(syncRepoRepeatedly, 15000);
+    }
+  }
+
+  const streamSubscription = w.streamStatus({ workDir: workingCopyPath }).subscribe(reportStatus);
+  let updateTimeout = setTimeout(syncRepoRepeatedly, 230);
+
+  repositoryStatuses[workingCopyPath] = {
+    updateTimeout,
+    stream: streamSubscription,
   };
+
+  app.on('quit', () => { removeRepoStatus(workingCopyPath); });
+
+  return { status: 'ready', };
 });
 
 
@@ -263,6 +303,8 @@ createRepository.main!.handle(async ({ workingCopyPath, author, pluginID }) => {
 
 
 deleteRepository.main!.handle(async ({ workingCopyPath }) => {
+  removeRepoStatus(workingCopyPath);
+
   await (await worker).delete({
     workDir: workingCopyPath,
 
