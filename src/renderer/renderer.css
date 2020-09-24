@@ -1,0 +1,58 @@
+body, html {
+  height: 100vh;
+}
+
+#app {
+  height: 100vh;
+  display: flex;
+  flex-flow: column nowrap;
+}
+
+.initial-spinner {
+  position: absolute;
+  display: block;
+  top: 50vh;
+  left: 50vw;
+  transform: translateY(-50%) translateX(-50%);
+}
+
+html.platform--win32::before {
+  content: " ";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  display: block;
+  z-index: 40;
+  background-color: silver;
+}
+
+.bp3-tree-node-caret {
+  cursor: default !important;
+}
+
+.bp3-html-select select {
+  cursor: default !important;
+}
+
+.bp3-button {
+  cursor: default !important;
+
+}
+
+  .bp3-button:focus {
+    outline: none;
+  }
+
+.bp3-tab {
+  cursor: default !important;
+}
+
+.bp3-menu-item {
+  cursor: default;
+}
+
+  .bp3-menu-item, .bp3-menu .bp3-menu-item.bp3-disabled {
+    cursor: default !important;
+  }

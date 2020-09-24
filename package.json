@@ -1,0 +1,283 @@
+{
+  "name": "paneron",
+  "productName": "Paneron",
+  "version": "1.0.0",
+  "description": "Structured data editor and viewer",
+  "bugs": "https://github.com/riboseinc/paneron/issues",
+  "author": {
+    "name": "Ribose Inc.",
+    "email": "open.source@ribose.com",
+    "url": "https://open.ribose.com"
+  },
+  "repository": "github:riboseinc/paneron",
+  "homepage": "https://github.com/riboseinc/paneron",
+  "license": "MIT",
+  "scripts": {
+    "postinstall": "electron-builder install-app-deps",
+    "dev": "electron-webpack dev",
+    "compile": "electron-webpack",
+    "clean": "rm -rf ./bundle ./dist",
+    "dist": "cross-env DEBUG=electron-builder electron-builder",
+    "dist:win": "electron-builder -w",
+    "dist:mac": "electron-builder -m",
+    "dist:linux": "electron-builder -l",
+    "pack": "electron-builder --dir",
+    "release": "electron-builder --publish always",
+    "cdist": "yarn compile && electron-builder -m",
+    "cdist:dir": "yarn dist --dir -c.compression=store -c.mac.identity=null",
+    "lint:css": "stylelint --ignore-path ./.gitignore --max-warnings 0 \"**/*.{css,sass,scss}\"",
+    "lint:css:fix": "yarn lint:css --fix",
+    "lint:ts": "eslint --ext .ts,.tsx --ignore-path ./.gitignore --max-warnings 500 \"**/*.{ts,tsx}\"",
+    "lint:ts:fix": "yarn lint:ts --fix",
+    "format": "prettier --ignore-path ./.gitignore --list-different \"**/*.{css,html,js,json,jsx,less,md,scss,ts,tsx,vue,yaml,yml}\"",
+    "format:fix": "yarn format --write"
+  },
+  "browserslist": [
+    "electron 8.0"
+  ],
+  "electronWebpack": {
+    "staticSourceDirectory": "src/static",
+    "whiteListedModules": [
+      "threads"
+    ],
+    "main": {
+      "webpackConfig": "main.webpack.js"
+    },
+    "renderer": {
+      "webpackConfig": "renderer.webpack.js"
+    }
+  },
+  "build": {
+    "productName": "Paneron",
+    "appId": "org.paneron.desktop",
+    "asarUnpack": [
+      "**/*.node",
+      "node_modules/source-map/**/*",
+      "node_modules/source-map-support/**/*",
+      "node_modules/buffer-from/**/*",
+      "dist/main/*.worker.js*"
+    ],
+    "afterPack": "./scripts/after-pack.js",
+    "afterSign": "electron-builder-notarize",
+    "mac": {
+      "asarUnpack": [
+        "**/*.node"
+      ],
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.productivity",
+      "darkModeSupport": false,
+      "icon": "build/icon.icns",
+      "gatekeeperAssess": false,
+      "hardenedRuntime": true,
+      "entitlements": "./build/entitlements.mac.plist",
+      "entitlementsInherit": "./build/entitlements.mac.plist"
+    },
+    "mas": {
+      "entitlements": "./build/entitlements.mas.plist",
+      "entitlementsInherit": "./build/entitlements.mas.inherit.plist",
+      "hardenedRuntime": false
+    },
+    "dmg": {
+      "contents": [
+        {
+          "x": 110,
+          "y": 150
+        },
+        {
+          "x": 440,
+          "y": 150,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "artifactName": "paneron-desktop-${version}.${ext}"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable"
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": true,
+      "installerIcon": "build/icon.ico",
+      "artifactName": "install-paneron-desktop-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "paneron-desktop-${version}-portable.exe"
+    },
+    "appx": {
+      "backgroundColor": "#464646",
+      "publisherDisplayName": "Paneron",
+      "artifactName": "paneron-desktop-${version}.${ext}"
+    },
+    "linux": {
+      "target": [
+        "snap"
+      ],
+      "category": "Productivity",
+      "icon": "build/icon.icns"
+    },
+    "appImage": {
+      "artifactName": "paneron-desktop-${version}.${ext}"
+    },
+    "snap": {
+      "artifactName": "paneron-desktop-${version}.${ext}",
+      "publish": [
+        "github"
+      ]
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "releaseType": "release"
+      }
+    ]
+  },
+  "resolutions": {
+    "ts-loader": "8.0.4"
+  },
+  "dependencies": {
+    "@blueprintjs/core": "^3.28.2",
+    "@blueprintjs/datetime": "^3.18.2",
+    "@blueprintjs/icons": "^3.18.1",
+    "@blueprintjs/select": "^3.13.3",
+    "@emotion/core": "^10.0.35",
+    "async-lock": "^1.2.2",
+    "axios": "^0.20.0",
+    "cytoscape": "3.16.1",
+    "electron-log": "^4.2.2",
+    "fs-extra": "^9.0.1",
+    "immer": "^7.0.9",
+    "immutability-helper": "^3.1.1",
+    "isomorphic-git": "^1.7.8",
+    "js-yaml": "3.14.0",
+    "live-plugin-manager": "=0.15.0",
+    "moment": "^2.24.0",
+    "mousetrap": "^1.6.5",
+    "react": "^16.11.0",
+    "react-cytoscapejs": "^1.2.1",
+    "react-dom": "^16.11.0",
+    "react-transition-group": "^4.3.0",
+    "react-visual-diff": "^0.4.3",
+    "react-window": "^1.8.5",
+    "rough-notation": "^0.4.0",
+    "source-map-support": "^0.5.19",
+    "throttle-debounce": "^2.1.0"
+  },
+  "devDependencies": {
+    "@types/async-lock": "^1.1.1",
+    "@types/cytoscape": "^3.14.0",
+    "@types/fs-extra": "^9.0.1",
+    "@types/js-yaml": "^3.12.5",
+    "@types/mousetrap": "^1.6.3",
+    "@types/node": "^14.10.3",
+    "@types/react": "^16.9.11",
+    "@types/react-dom": "^16.9.4",
+    "@types/react-transition-group": "^4.2.3",
+    "@types/react-window": "^1.8.1",
+    "@types/throttle-debounce": "^2.1.0",
+    "@typescript-eslint/eslint-plugin": "^4.0.1",
+    "@typescript-eslint/parser": "^4.0.1",
+    "commitizen": "^4.1.2",
+    "cross-env": "^7.0.0",
+    "cz-conventional-changelog": "3.3.0",
+    "electron": "^10.1.2",
+    "electron-builder": "^22.7.0",
+    "electron-builder-notarize": "^1.1.2",
+    "electron-react-devtools": "^0.5.3",
+    "electron-webpack": "^2.8.2",
+    "electron-webpack-ts": "^4.0.1",
+    "eslint": "^7.8.1",
+    "husky": "^4.2.5",
+    "keytar": "^6.0.1",
+    "native-ext-loader": "^2.3.0",
+    "node-sass": "^4.12.0",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^2.0.5",
+    "sass-loader": "^10.0.2",
+    "stylelint": "^13.7.0",
+    "stylelint-config-standard": "^20.0.0",
+    "threads": "^1.6.3",
+    "threads-plugin": "^1.3.2",
+    "typescript": "^4.0.2",
+    "typescript-plugin-css-modules": "^2.2.0",
+    "webpack": "~4.44.2"
+  },
+  "eslintConfig": {
+    "parser": "@typescript-eslint/parser",
+    "extends": [
+      "plugin:@typescript-eslint/recommended"
+    ],
+    "rules": {
+      "@typescript-eslint/no-empty-function": 0,
+      "@typescript-eslint/no-inferrable-types": 0,
+      "@typescript-eslint/no-extra-semi": 0,
+      "@typescript-eslint/ban-ts-comment": 1,
+      "@typescript-eslint/ban-types": 1,
+      "@typescript-eslint/no-explicit-any": 1,
+      "@typescript-eslint/no-empty-interface": 1
+    }
+  },
+  "stylelint": {
+    "extends": "stylelint-config-standard",
+    "rules": {
+      "length-zero-no-unit": null,
+      "max-empty-lines": 3,
+      "rule-empty-line-before": null,
+      "no-missing-end-of-source-newline": null,
+      "number-leading-zero": null,
+      "declaration-empty-line-before": null,
+      "block-no-empty": null,
+      "color-hex-case": null,
+      "font-family-no-duplicate-names": null,
+      "selector-list-comma-newline-after": null,
+      "at-rule-empty-line-before": null,
+      "block-closing-brace-newline-after": null,
+      "no-descending-specificity": null,
+      "at-rule-no-unknown": [
+        true,
+        {
+          "ignoreAtRules": [
+            "include",
+            "extend",
+            "mixin",
+            "if",
+            "else"
+          ]
+        }
+      ],
+      "selector-pseudo-class-no-unknown": [
+        true,
+        {
+          "ignorePseudoClasses": [
+            "global",
+            "local"
+          ]
+        }
+      ]
+    }
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "husky": {
+    "hooks": {
+      "prepare-commit-msg": "exec < /dev/tty && git cz --hook || true",
+      "pre-push": "yarn lint:ts && yarn lint:css && yarn compile"
+    }
+  }
+}

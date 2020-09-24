@@ -1,0 +1,165 @@
+// Repository info
+
+export interface StructuredRepoInfo {
+  title: string
+  pluginID: string
+}
+
+export interface RepositoryType {
+  title: string
+  pluginID: string
+}
+
+export interface Repository {
+  workingCopyPath: string
+  remote?: GitRemote
+  author?: GitAuthor
+}
+
+interface GitRemote {
+  username: string
+  url: string
+}
+
+
+// Creating repos
+
+export interface NewRepositoryDefaults {
+  workingDirectoryContainer?: string
+  remote?: Omit<GitRemote, 'url'>
+  author?: GitAuthor
+}
+
+
+// Repository status
+
+/* Initializing a new repository locally */
+interface CreationStatus {
+  operation: 'creating'
+}
+/* During start up */
+interface InitStatus {
+  operation: 'initializing'
+}
+interface LocalChecksStatus {
+  operation: 'checking-local-changes'
+}
+
+export interface AuthoringOpStatus {
+  awaitingAuthorInfo?: boolean
+}
+interface CommitStatus extends AuthoringOpStatus {
+  operation: 'committing'
+}
+
+export interface RemoteOpStatus {
+  awaitingPassword?: boolean
+  networkError?: true
+  progress?: {
+    phase: string
+    loaded: number
+    total: number
+  }
+}
+interface PullStatus extends RemoteOpStatus {
+  operation: 'pulling'
+}
+interface PushStatus extends RemoteOpStatus {
+  operation: 'pushing'
+}
+interface CloneStatus extends RemoteOpStatus {
+  operation: 'cloning'
+}
+
+type RepoOperationStatus =
+    InitStatus
+  | CreationStatus
+  | CloneStatus
+  | PullStatus
+  | PushStatus
+  | LocalChecksStatus
+  | CommitStatus;
+
+export type RepoStatus = {
+  status: 'ahead' | 'behind' | 'diverged' | 'ready'
+  busy?: undefined
+} | {
+  busy: RepoOperationStatus
+  status?: undefined
+}
+
+
+export interface ObjectData {
+  // Object path must be supplied / is returned relative to repository root.
+  // Writing null must cause the object to be deleted.
+  // When null is returned, it means object does not exist.
+  [objectPath: string]: string | null
+}
+
+
+
+// Git-related types used by worker
+// TODO: Consolidate Git-related types
+
+export interface GitAuthentication {
+  /* Authentication as expected by isomorphic-git */
+
+  username?: string
+  password?: string
+
+  // Unsupported currently
+  oauth2format?: 'github' | 'gitlab' | 'bitbucket'
+  token?: string
+}
+
+export interface GitAuthor {
+  name: string
+  email: string
+}
+
+
+// Worker messages
+
+export interface GitOperationParams {
+  workDir: string
+}
+
+export interface AuthoringGitOperationParams extends GitOperationParams {
+  author: GitAuthor
+}
+
+export interface RemoteGitOperationParams extends GitOperationParams {
+  repoURL: string
+  auth: GitAuthentication
+}
+
+
+export interface StatusRequestMessage extends GitOperationParams {}
+export interface OriginURLRequestMessage extends GitOperationParams {}
+export interface InitRequestMessage extends GitOperationParams {}
+
+export interface CloneRequestMessage extends RemoteGitOperationParams {}
+export interface PullRequestMessage extends RemoteGitOperationParams, AuthoringGitOperationParams {}
+export interface PushRequestMessage extends RemoteGitOperationParams {}
+
+export interface FetchRequestMessage extends RemoteGitOperationParams {}
+
+export interface CommitRequestMessage extends AuthoringGitOperationParams {
+  writeObjectContents: ObjectData
+  commitMessage: string
+}
+
+export interface DeleteRequestMessage extends GitOperationParams {
+  yesReallyDestroyLocalWorkingCopy: true
+}
+
+export interface ObjectDataRequestMessage extends GitOperationParams {
+  readObjectContents: { [objectPath: string]: true }
+}
+
+
+export type WorkerMessage =
+  CloneRequestMessage
+  | PullRequestMessage
+  | FetchRequestMessage
+  | PushRequestMessage;
