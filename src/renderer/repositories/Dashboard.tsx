@@ -321,6 +321,9 @@ function ({ forRemote, username }) {
 };
 
 
+const capFirst = (txt: string) => txt.replace(/^\w/, (txt) => txt.toUpperCase())
+
+
 const RepoStatus: React.FC<{ repo: Repository }> = function ({ repo }) {
   const repoStatus = getRepositoryStatus.renderer!.useValue(
     { workingCopyPath: repo.workingCopyPath },
@@ -358,22 +361,26 @@ const RepoStatus: React.FC<{ repo: Repository }> = function ({ repo }) {
             extraWidget = <Icon icon="error" />;
           }
         } else {
+          buttonText = capFirst(status.busy.operation);
+          buttonProps.icon = status.busy.operation === 'pushing' ? 'cloud-upload' : 'cloud-download';
           const progress = status.busy.progress;
           const progressValue = progress ? (1 / progress.total * progress.loaded) : undefined;
-          buttonText = progress?.phase || status.busy.operation;
-          buttonProps.icon = <Spinner
-            size={Icon.SIZE_STANDARD}
-            value={(progressValue !== undefined && !isNaN(progressValue)) ? progressValue : undefined} />;
+          extraWidget = <Button small disabled
+              icon={<Spinner
+                size={Icon.SIZE_STANDARD}
+                value={(progressValue !== undefined && !isNaN(progressValue)) ? progressValue : undefined} />}>
+            {progress?.phase || null}
+          </Button>;
         }
         break;
 
       default:
-        buttonText = status.busy.operation;
+        buttonText = capFirst(status.busy.operation);
         buttonProps.icon = <Spinner size={Icon.SIZE_STANDARD} />;
         break;
     }
   } else {
-    buttonText = status.status;
+    buttonText = capFirst(status.status);
 
     if (repo.remote) {
       buttonProps.icon = 'tick-circle';
@@ -382,7 +389,7 @@ const RepoStatus: React.FC<{ repo: Repository }> = function ({ repo }) {
     }
   }
 
-  return <ControlGroup>
+  return <ControlGroup css={css`& > * { text-transform: lowercase }`}>
     <Button small disabled {...buttonProps}>{buttonText}</Button>
     {extraWidget}
   </ControlGroup>
