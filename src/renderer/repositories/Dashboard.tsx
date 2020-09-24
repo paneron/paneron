@@ -222,7 +222,7 @@ const PluginStatusButton: React.FC<{ id: string }> = function ({ id }) {
   return (
     <Button
         disabled={isBusy || installedVersion !== undefined}
-        loading={isBusy}
+        loading={isBusy || pluginInfo.isUpdating}
         intent="success"
         onClick={handleInstall}
         icon={installedVersion ? 'tick-circle' : 'download'}>
