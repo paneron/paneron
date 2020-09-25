@@ -84,7 +84,7 @@ export const getStructuredRepositoryInfo = makeEndpoint.main(
 
 export const savePassword = makeEndpoint.main(
   'savePassword',
-  <{ remoteURL: string, username: string, password: string }>_,
+  <{ workingCopyPath: string, remoteURL: string, username: string, password: string }>_,
   <{ success: true }>_,
 );
 

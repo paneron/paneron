@@ -81,7 +81,7 @@ type RepoOperationStatus =
   | CommitStatus;
 
 export type RepoStatus = {
-  status: 'ahead' | 'behind' | 'diverged' | 'ready'
+  status: 'ahead' | 'behind' | 'diverged' | 'ready' | 'invalid-working-copy'
   busy?: undefined
 } | {
   busy: RepoOperationStatus
@@ -136,7 +136,6 @@ export interface RemoteGitOperationParams extends GitOperationParams {
 
 
 export interface StatusRequestMessage extends GitOperationParams {}
-export interface OriginURLRequestMessage extends GitOperationParams {}
 export interface InitRequestMessage extends GitOperationParams {}
 
 export interface CloneRequestMessage extends RemoteGitOperationParams {}

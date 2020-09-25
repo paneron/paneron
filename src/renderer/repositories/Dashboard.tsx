@@ -134,10 +134,12 @@ const RepoListPanel: React.FC<IPanelProps> = function ({ openPanel }) {
 
 
 const RepoDetails: React.FC<{ workingCopyPath: string }> = function ({ workingCopyPath }) {
-  const repoInfo = getRepositoryInfo.renderer!.useValue({ workingCopyPath }, { info: {
-    workingCopyPath,
-  }});
-  const structuredRepoInfo = getStructuredRepositoryInfo.renderer!.useValue({ workingCopyPath }, { info: null });
+  const repoInfo = getRepositoryInfo.renderer!.useValue({ workingCopyPath }, {
+    info: { workingCopyPath },
+  });
+  const structuredRepoInfo = getStructuredRepositoryInfo.renderer!.useValue({ workingCopyPath }, {
+    info: null,
+  });
   const pluginID = structuredRepoInfo.value.info?.pluginID;
 
   const author = repoInfo.value.info.author;
@@ -289,12 +291,18 @@ function ({ closePanel, onComplete }) {
 };
 
 
-const PasswordInput: React.FC<{ forRemote: string, username: string }> =
-function ({ forRemote, username }) {
+const PasswordInput: React.FC<{ workingCopyPath: string, remoteURL: string, username: string }> =
+function ({ workingCopyPath, remoteURL, username }) {
   const [value, setValue] = useState<string>('');
+  const [isBusy, setBusy] = useState(false);
 
   async function handlePasswordConfirm() {
-    await savePassword.renderer!.trigger({ remoteURL: forRemote, username, password: value });
+    setBusy(true);
+    try {
+      await savePassword.renderer!.trigger({ workingCopyPath, remoteURL, username, password: value });
+    } catch (e) {
+      setBusy(false);
+    }
   }
 
   return (
@@ -303,6 +311,7 @@ function ({ forRemote, username }) {
       value={value}
       small
       placeholder="Password required"
+      disabled={isBusy}
       onChange={(event: React.FormEvent<HTMLElement>) =>
         setValue((event.target as HTMLInputElement).value)}
       rightElement={
@@ -310,6 +319,7 @@ function ({ forRemote, username }) {
         ? undefined
         : <Button
               minimal={true}
+              disabled={isBusy}
               small
               onClick={handlePasswordConfirm}
               icon="tick"
@@ -321,7 +331,14 @@ function ({ forRemote, username }) {
 };
 
 
-const capFirst = (txt: string) => txt.replace(/^\w/, (txt) => txt.toUpperCase())
+const formatStatusOrOperation = (txt: string) => txt.replace(/[-]/g, ' ').replace(/^\w/, (txt) => txt.toUpperCase());
+
+
+const OP_LABELS = {
+  'pulling': 'syncing',
+  'pushing': 'syncing',
+  'cloning': 'adding',
+};
 
 
 const RepoStatus: React.FC<{ repo: Repository }> = function ({ repo }) {
@@ -356,36 +373,47 @@ const RepoStatus: React.FC<{ repo: Repository }> = function ({ repo }) {
           buttonProps.icon = 'key';
           buttonText = null;
           if (repo.remote?.url) {
-            extraWidget = <PasswordInput forRemote={repo.remote.url} username={repo.remote.username} />;
+            extraWidget = <PasswordInput
+              workingCopyPath={repo.workingCopyPath}
+              remoteURL={repo.remote.url}
+              username={repo.remote.username} />;
           } else {
             extraWidget = <Icon icon="error" />;
           }
         } else {
-          buttonText = capFirst(status.busy.operation);
+          buttonText = formatStatusOrOperation(OP_LABELS[status.busy.operation]);
           buttonProps.icon = status.busy.operation === 'pushing' ? 'cloud-upload' : 'cloud-download';
           const progress = status.busy.progress;
           const progressValue = progress ? (1 / progress.total * progress.loaded) : undefined;
+          const phase = progress?.phase;
+          const formattedPhase = (phase && phase.toLowerCase() !== 'analyzing workdir')
+            ? formatStatusOrOperation(phase)
+            : null;
           extraWidget = <Button small disabled
               icon={<Spinner
                 size={Icon.SIZE_STANDARD}
                 value={(progressValue !== undefined && !isNaN(progressValue)) ? progressValue : undefined} />}>
-            {progress?.phase || null}
+            {formattedPhase}
           </Button>;
         }
         break;
 
       default:
-        buttonText = capFirst(status.busy.operation);
+        buttonText = formatStatusOrOperation(status.busy.operation);
         buttonProps.icon = <Spinner size={Icon.SIZE_STANDARD} />;
         break;
     }
   } else {
-    buttonText = capFirst(status.status);
+    buttonText = formatStatusOrOperation(status.status);
 
-    if (repo.remote) {
-      buttonProps.icon = 'tick-circle';
+    if (status.status === 'invalid-working-copy') {
+      buttonProps.icon = 'error';
     } else {
-      buttonProps.icon = 'offline';
+      if (repo.remote) {
+        buttonProps.icon = 'tick-circle';
+      } else {
+        buttonProps.icon = 'offline';
+      }
     }
   }
 

@@ -21,7 +21,6 @@ import {
   DeleteRequestMessage,
   PullRequestMessage,
   PushRequestMessage,
-  OriginURLRequestMessage,
   StatusRequestMessage,
   InitRequestMessage,
   CommitRequestMessage,
@@ -42,8 +41,8 @@ export interface Methods {
   destroyWorker: () => Promise<void>
 
   streamStatus: (msg: StatusRequestMessage) => Observable<RepoStatus>
-  getOriginURL: (msg: OriginURLRequestMessage) => Promise<string | null>
 
+  workingCopyIsValid: (msg: { workDir: string }) => Promise<boolean>
   init: (msg: InitRequestMessage) => Promise<{ success: true }>
   clone: (msg: CloneRequestMessage) => Promise<{ success: true }>
   pull: (msg: PullRequestMessage) => Promise<{ success: true }>
@@ -120,15 +119,6 @@ const methods: WorkerSpec = {
       }
     });
     return { success: true };
-  },
-
-  async getOriginURL(msg) {
-    const origin = (await git.listRemotes({
-      fs,
-      dir: msg.workDir,
-    })).find(r => r.remote === 'origin')?.url;
-
-    return origin || null;
   },
 
   async clone(msg) {
@@ -291,6 +281,15 @@ const methods: WorkerSpec = {
       }
     });
     return { success: true };
+  },
+
+  async workingCopyIsValid({ workDir }) {
+    try {
+      await git.resolveRef({ fs, dir: workDir, ref: 'HEAD' });
+    } catch (e) {
+      return false;
+    }
+    return true;
   },
 
   async getObjectContents({ workDir, readObjectContents }) {
