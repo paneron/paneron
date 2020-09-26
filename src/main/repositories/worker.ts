@@ -26,6 +26,7 @@ import {
   CommitRequestMessage,
   ObjectDataRequestMessage,
   ObjectData,
+  GitAuthentication
 } from '../../repositories/types';
 
 
@@ -43,6 +44,12 @@ export interface Methods {
   streamStatus: (msg: StatusRequestMessage) => Observable<RepoStatus>
 
   workingCopyIsValid: (msg: { workDir: string }) => Promise<boolean>
+
+  /* Checks that remote is valid to start sharing. */
+  remoteIsValid: (msg: { url: string, auth: GitAuthentication }) => Promise<boolean>
+
+  addOrigin: (msg: { workDir: string, url: string }) => Promise<{ success: true }>
+
   init: (msg: InitRequestMessage) => Promise<{ success: true }>
   clone: (msg: CloneRequestMessage) => Promise<{ success: true }>
   pull: (msg: PullRequestMessage) => Promise<{ success: true }>
@@ -117,6 +124,27 @@ const methods: WorkerSpec = {
         await fs.remove(msg.workDir);
         throw e;
       }
+    });
+    return { success: true };
+  },
+
+  async remoteIsValid({ url, auth }) {
+    const refs = await git.listServerRefs({
+      http,
+      url: `${url}.git`,
+      forPush: true,
+      onAuth: () => auth,
+      onAuthFailure: () => ({ cancel: true }),
+    });
+    return refs.length === 0;
+  },
+
+  async addOrigin({ workDir, url }) {
+    await git.addRemote({
+      fs,
+      dir: workDir,
+      remote: 'origin',
+      url: `${url}.git`,
     });
     return { success: true };
   },

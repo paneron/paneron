@@ -18,10 +18,14 @@ import {
   repositoriesChanged, repositoryStatusChanged,
   getDefaultWorkingDirectoryContainer,
   selectWorkingDirectoryContainer, validateNewWorkingDirectoryPath,
-  getNewRepoDefaults, listAvailableTypes, getRepositoryInfo, savePassword
+  getNewRepoDefaults, listAvailableTypes, getRepositoryInfo, savePassword, setRemote
 } from '../../repositories';
-import { Repository, GitAuthor, NewRepositoryDefaults, StructuredRepoInfo, RepoStatus } from '../../repositories/types';
+import { Repository, NewRepositoryDefaults, StructuredRepoInfo, RepoStatus } from '../../repositories/types';
 import { Methods as WorkerMethods, WorkerSpec } from './worker';
+
+
+const REPOSITORY_SYNC_INTERVAL_MS = 5000;
+const REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS = 15000;
 
 
 getDefaultWorkingDirectoryContainer.main!.handle(async () => {
@@ -32,7 +36,7 @@ getDefaultWorkingDirectoryContainer.main!.handle(async () => {
 
 
 getNewRepoDefaults.main!.handle(async () => {
-  return (await readRepoConfig()).defaults || {};
+  return (await readRepositories()).defaults || {};
 });
 
 
@@ -97,32 +101,14 @@ selectWorkingDirectoryContainer.main!.handle(async ({ _default }) => {
 });
 
 
-let repositoryStatuses: {
-  [workingCopyPath: string]: {
-    stream: Subscription<RepoStatus>
-    updateTimeout?: ReturnType<typeof setTimeout>
-    latestStatus?: RepoStatus
-    latestSync?: Date
-  }
-} = {};
-
-
-function removeRepoStatus(workingCopyPath: string) {
-  repositoryStatuses[workingCopyPath]?.stream?.unsubscribe();
-  const timeout = repositoryStatuses[workingCopyPath]?.updateTimeout;
-  timeout ? clearTimeout(timeout) : void 0;
-  delete repositoryStatuses[workingCopyPath];
-}
-
-
 getRepositoryStatus.main!.handle(async ({ workingCopyPath }) => {
   const w = await worker;
 
   let repoCfg: Repository;
   try {
-    repoCfg = await readConfigForWorkingCopy(workingCopyPath);
+    repoCfg = await readRepoConfig(workingCopyPath);
   } catch (e) {
-    log.warn("Repositories: Configuration for working copy is invalid.");
+    log.warn("Repositories: Configuration for working copy cannot be read.", workingCopyPath);
     return { status: 'invalid-working-copy' };
   }
 
@@ -133,20 +119,20 @@ getRepositoryStatus.main!.handle(async ({ workingCopyPath }) => {
     copyIsMissing = false;
   } catch (e) {
     if (!repoCfg.remote?.url) {
-      log.error("Repositories: Configuration for working copy exists, but working copy directory is missing and no remote is specified.");
+      log.error("Repositories: Configuration for working copy exists, but working copy directory is missing and no remote is specified.", workingCopyPath);
       return { status: 'invalid-working-copy' };
     } else {
-      log.warn("Repositories: Configuration for working copy exists, but working copy directory is missing. Will attempt to clone again.");
+      log.warn("Repositories: Configuration for working copy exists, but working copy directory is missing. Will attempt to clone again.", workingCopyPath);
       copyIsMissing = true;
       copyIsInvalid = false;
     }
   }
 
   if (copyIsInvalid) {
-    log.error("Repositories: Working copy in filesystem is invalid (not a directory?)");
+    log.error("Repositories: Working copy in filesystem is invalid (not a directory?)", workingCopyPath);
     return { status: 'invalid-working-copy' };
   } else if (!copyIsMissing && !(await w.workingCopyIsValid({ workDir: workingCopyPath }))) {
-    log.warn("Repositories: Working copy in filesystem is invalid (not a Git repo?)");
+    log.warn("Repositories: Working copy in filesystem is invalid (not a Git repo?)", workingCopyPath);
   }
 
   if (repositoryStatuses[workingCopyPath]) {
@@ -181,8 +167,68 @@ getRepositoryStatus.main!.handle(async ({ workingCopyPath }) => {
 });
 
 
+setRemote.main!.handle(async ({ workingCopyPath, url, username, password }) => {
+  const w = await worker;
+
+  const auth = { username, password };
+  const isValid = await w.remoteIsValid({ url, auth });
+
+  if (isValid) {
+    await updateRepositories((data) => {
+      const existingConfig = data.workingCopies?.[workingCopyPath];
+      if (existingConfig) {
+        return {
+          ...data,
+          workingCopies: {
+            ...data.workingCopies,
+            [workingCopyPath]: {
+              ...existingConfig,
+              remote: { url, username },
+            },
+          }
+        };
+      } else {
+        throw new Error("Cannot set remote URL for nonexistent working copy configuration");
+      }
+    });
+
+    await w.addOrigin({
+      workDir: workingCopyPath,
+      url,
+    });
+
+    setImmediate(async () => {
+      await w.push({
+        workDir: workingCopyPath,
+        repoURL: url,
+        auth,
+      });
+      syncRepoRepeatedly(workingCopyPath);
+    });
+
+    await _updateNewRepoDefaults({
+      remote: { username },
+    });
+
+    if (password) {
+      try {
+        await _savePassword(url, username, password);
+      } catch (e) {
+        log.error("Repositories: Unable to save password while initiating sharing", workingCopyPath, url, e);
+      }
+    }
+
+    return { success: true };
+
+  } else {
+    log.warn("Repositories: Remote cannot be used to start sharing", workingCopyPath, url, username);
+    throw new Error("Remote cannot be used to start sharing");
+  }
+});
+
+
 getRepositoryInfo.main!.handle(async ({ workingCopyPath }) => {
-  return { info: await readConfigForWorkingCopy(workingCopyPath) };
+  return { info: await readRepoConfig(workingCopyPath) };
 });
 
 
@@ -202,14 +248,20 @@ getStructuredRepositoryInfo.main!.handle(async ({ workingCopyPath }) => {
 
 
 listRepositories.main!.handle(async () => {
+  const workingCopies = (await readRepositories()).workingCopies;
   return {
-    objects: await readRepositories((await readRepoConfig()).workingCopies),
+    objects: await Promise.all(Object.keys(workingCopies).map(async (path: string) => {
+      return {
+        workingCopyPath: path,
+        ...workingCopies[path],
+      };
+    })),
   };
 });
 
 
 addRepository.main!.handle(async ({ gitRemoteURL, workingCopyPath, username, author }) => {
-  await updateRepoConfig((data) => {
+  await updateRepositories((data) => {
     if (data.workingCopies[workingCopyPath] !== undefined) {
       throw new Error("Repository already exists");
     }
@@ -227,9 +279,7 @@ addRepository.main!.handle(async ({ gitRemoteURL, workingCopyPath, username, aut
   await _updateNewRepoDefaults({
     workingDirectoryContainer: path.dirname(workingCopyPath),
     author,
-    remote: {
-      username,
-    },
+    remote: { username },
   });
 
   repositoriesChanged.main!.trigger({
@@ -249,7 +299,7 @@ addRepository.main!.handle(async ({ gitRemoteURL, workingCopyPath, username, aut
 
 
 createRepository.main!.handle(async ({ workingCopyPath, author, pluginID }) => {
-  await updateRepoConfig((data) => {
+  await updateRepositories((data) => {
     if (data.workingCopies?.[workingCopyPath] !== undefined) {
       throw new Error("Repository already exists");
     }
@@ -279,9 +329,9 @@ createRepository.main!.handle(async ({ workingCopyPath, author, pluginID }) => {
   await w.changeObjects({
     workDir: workingCopyPath,
     commitMessage: "Initial commit",
-    author: await getAuthorInfo(workingCopyPath),
+    author,
     writeObjectContents: {
-      'meta.yaml': yaml.dump(meta),
+      'meta.yaml': yaml.dump(meta, { noRefs: true }),
     },
   });
 
@@ -305,7 +355,7 @@ deleteRepository.main!.handle(async ({ workingCopyPath }) => {
     yesReallyDestroyLocalWorkingCopy: true,
   });
 
-  await updateRepoConfig((data) => {
+  await updateRepositories((data) => {
     if (data.workingCopies?.[workingCopyPath]) {
       const newData = { ...data };
       delete newData.workingCopies[workingCopyPath];
@@ -332,31 +382,52 @@ savePassword.main!.handle(async ({ workingCopyPath, remoteURL, username, passwor
 });
 
 
-async function readRepositories(workingCopies: RepoListSpec["workingCopies"]):
-Promise<Repository[]> {
-  return await Promise.all(Object.keys(workingCopies).map(async (path: string) => {
-    return {
-      workingCopyPath: path,
-      ...workingCopies[path],
-    };
-  }));
+
+// Sync helpers
+// TODO: Must move sync to worker
+
+const repositoryStatuses: {
+  [workingCopyPath: string]: {
+    stream: Subscription<RepoStatus>
+    updateTimeout?: ReturnType<typeof setTimeout>
+    latestSync?: Date
+
+    // This status is set by subscription to worker events and is not to be relied on.
+    latestStatus?: RepoStatus
+  }
+} = {};
+
+
+/* Cancels repo status subscription, clears update timeout, and removes status. */
+function removeRepoStatus(workingCopyPath: string) {
+  repositoryStatuses[workingCopyPath]?.stream?.unsubscribe();
+  const timeout = repositoryStatuses[workingCopyPath]?.updateTimeout;
+  timeout ? clearTimeout(timeout) : void 0;
+  delete repositoryStatuses[workingCopyPath];
 }
 
 
 /* Sync sequence */
 function syncRepoRepeatedly(workingCopyPath: string): void {
   async function _sync(): Promise<void> {
+    const w = await worker;
+
+    // Do our best to avoid multiple concurrent sync runs on one repo and clear sync timeout, if exists.
     const timeout = repositoryStatuses[workingCopyPath]?.updateTimeout;
     timeout ? clearTimeout(timeout) : void 0;
 
-    const w = await worker;
+    // 1. Check that repository is OK.
+    // If something is broken or operation in latest status snapshot
+    // indicates that we are awaiting user input, clear status and cancel further sync.
+    // If latest operation indicates we are awaiting user input, skip sync during this run.
 
+    // 1.1. Check configuration
     let repoCfg: Repository | null;
     if (!repositoryStatuses[workingCopyPath]) {
       return removeRepoStatus(workingCopyPath);
     } else {
       try {
-        repoCfg = await readConfigForWorkingCopy(workingCopyPath);
+        repoCfg = await readRepoConfig(workingCopyPath);
         if (!repoCfg.author) {
           log.error("Repositories: Configuration for working copy is missing author info.");
           return removeRepoStatus(workingCopyPath);
@@ -376,6 +447,8 @@ function syncRepoRepeatedly(workingCopyPath: string): void {
       }
     }
 
+    // 1.2. Check that working copy is OK.
+    // If copy is missing, skip sync during this run and try to re-clone instead.
     try {
       await fs.stat(workingCopyPath);
     } catch (e) {
@@ -391,10 +464,12 @@ function syncRepoRepeatedly(workingCopyPath: string): void {
           log.error("Repositories: Error re-cloning repository", workingCopyPath, e);
         }
       }
-      repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, 15000);
+      repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
       return;
     }
 
+
+    // 2. Perform actual sync.
     try {
       if (repoCfg.remote) {
         const auth = await getAuth(repoCfg.remote.url, repoCfg.remote.username);
@@ -414,15 +489,15 @@ function syncRepoRepeatedly(workingCopyPath: string): void {
           _presumeRejectedPushMeansNothingToPush: true,
           _presumeCanceledErrorMeansAwaitingAuth: true,
         });
-        repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, 5000);
+        repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_MS);
 
       } else {
-        repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, 15000);
+        repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
       }
 
     } catch (e) {
       log.error("Repositories: Error syncing repository", workingCopyPath, e);
-      repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, 15000);
+      repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
     }
   }
   repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, 100);
@@ -495,24 +570,20 @@ interface RepoListSpec {
 
 const FileAccessLock = new AsyncLock();
 
-async function _updateNewRepoDefaults(defaults: NewRepositoryDefaults) {
-  return await updateRepoConfig((data) => ({ ...data, defaults }));
+async function _updateNewRepoDefaults(defaults: Partial<NewRepositoryDefaults>) {
+  return await updateRepositories((data) => ({
+    ...data,
+    defaults: {
+      ...data.defaults,
+      ...defaults,
+    },
+  }));
 }
 
-async function getAuthorInfo(workingCopyPath: string): Promise<GitAuthor> {
-  const cfg = await readConfigForWorkingCopy(workingCopyPath);
-  if (cfg.author) {
-    return cfg.author;
-  } else {
-    log.error("Author info for repository is incomplete or missing", workingCopyPath, cfg);
-    throw new Error("Author info is incomplete or missing");
-  }
-}
-
-async function readConfigForWorkingCopy(workingCopyPath: string): Promise<Repository> {
+async function readRepoConfig(workingCopyPath: string): Promise<Repository> {
   const cfg: Repository | undefined = {
     workingCopyPath,
-    ...(await readRepoConfig()).workingCopies[workingCopyPath]
+    ...(await readRepositories()).workingCopies[workingCopyPath]
   };
   if (cfg !== undefined) {
     return cfg;
@@ -522,7 +593,7 @@ async function readConfigForWorkingCopy(workingCopyPath: string): Promise<Reposi
   }
 }
 
-async function readRepoConfig(): Promise<RepoListSpec> {
+async function readRepositories(): Promise<RepoListSpec> {
   const rawData = await FileAccessLock.acquire('1', async () => {
     await fs.ensureFile(REPO_LIST_PATH);
     return await fs.readFile(REPO_LIST_PATH, { encoding: 'utf-8' });
@@ -537,7 +608,7 @@ async function readRepoConfig(): Promise<RepoListSpec> {
   }
 }
 
-async function updateRepoConfig(updater: (data: RepoListSpec) => RepoListSpec) {
+async function updateRepositories(updater: (data: RepoListSpec) => RepoListSpec) {
   await FileAccessLock.acquire('1', async () => {
     let data: RepoListSpec;
     try {
@@ -548,7 +619,7 @@ async function updateRepoConfig(updater: (data: RepoListSpec) => RepoListSpec) {
     }
 
     const newData = updater(data);
-    const newRawData = yaml.dump(newData);
+    const newRawData = yaml.dump(newData, { noRefs: true });
 
     await fs.writeFile(REPO_LIST_PATH, newRawData, { encoding: 'utf-8' });
   });

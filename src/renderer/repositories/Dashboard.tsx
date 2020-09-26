@@ -8,13 +8,13 @@ import { css, jsx } from '@emotion/core';
 import React, { useEffect, useState } from 'react';
 
 import {
-  Button as BPButton, ButtonGroup,
+  Button as BPButton,
   MenuItem, Menu,
   IButtonProps, InputGroup,
   IPanelProps, PanelStack,
   Icon, Tree, ITreeNode,
   FormGroup, ControlGroup,
-  Colors, Classes,
+  Colors, Classes
 } from '@blueprintjs/core';
 
 import { NonIdealState, Spinner } from '@blueprintjs/core';
@@ -26,16 +26,18 @@ import {
   deleteRepository, getRepositoryInfo, repositoryDetails
 } from 'repositories';
 
-import { getPluginInfo, installPlugin, pluginsUpdated } from 'plugins';
-
 import {
   Repository,
   RepoStatus,
 } from 'repositories/types';
 
 import { WindowComponentProps } from 'window';
+
+import PluginStatusButton from 'renderer/plugins/PluginStatusButton';
+
 import StartNewRepoForm from './StartNewRepoForm';
 import AddSharedRepoForm from './AddSharedRepoForm';
+import ShareRepoForm from './ShareRepoForm';
 
 
 const Window: React.FC<WindowComponentProps> = function () {
@@ -87,15 +89,21 @@ const RepoListPanel: React.FC<IPanelProps> = function ({ openPanel }) {
     });
   }
 
-  function handleNodeClick(node: ITreeNode) {
-    selectRepo(`${node.id}`);
+  function handleNodeClick(node: ITreeNode, _: unknown, evt: React.MouseEvent) {
+    if (node.id !== 'new') {
+      selectRepo(`${node.id}`);
+    } else {
+      handleAdd();
+    }
   }
 
-  async function handleNodeDoubleClick(node: ITreeNode) {
-    await repositoryDetails.renderer!.open({
-      componentParams: `workingCopyPath=${node.id}`,
-      title: `${node.id}`,
-    });
+  async function handleNodeDoubleClick(node: ITreeNode, _: unknown, evt: React.MouseEvent) {
+    if (node.id !== 'new') {
+      await repositoryDetails.renderer!.open({
+        componentParams: `workingCopyPath=${node.id}`,
+        title: `${node.id}`,
+      });
+    }
   }
 
   const repoNodes: ITreeNode[] = repos.value.objects.map(repo => {
@@ -110,22 +118,29 @@ const RepoListPanel: React.FC<IPanelProps> = function ({ openPanel }) {
 
   return (
     <div css={css`flex: 1; display: flex; flex-flow: column nowrap; overflow: hidden`}>
-      <section css={css`flex: 1; display: flex; flex-flow: column nowrap`}>
+      <section css={css`flex: 1;min-height: 132px; display: flex; flex-flow: column nowrap; overflow-y: auto;`}>
         <Tree
           css={{ flex: 1 }}
-          contents={repoNodes}
+          contents={[ ...repoNodes, {
+            disabled: true,
+            id: 'new',
+            label: '',
+            secondaryLabel: <Button minimal small onClick={handleAdd} icon="add">Add repository</Button> } ]}
           onNodeClick={handleNodeClick}
           onNodeDoubleClick={handleNodeDoubleClick} />
-        <ButtonGroup fill>
-          <Button css={{ margin: '1rem' }} onClick={handleAdd} icon="add">Add repository</Button>
-        </ButtonGroup>
       </section>
 
       <section
           className={Classes.ELEVATION_1}
-          css={css`padding: 1rem; background: ${Colors.LIGHT_GRAY5}; overflow-y: auto`}>
+          css={css`flex: 0; height: 370px; display: flex; background: ${Colors.LIGHT_GRAY5};`}>
         {selectedRepo
-          ? <RepoDetails key={selectedRepo} workingCopyPath={selectedRepo} />
+          ? <PanelStack key={selectedRepo} css={css`flex: 1; background: ${Colors.LIGHT_GRAY5};`} initialPanel={{
+              component: RepoDetails,
+              title: "Repository details",
+              props: {
+                workingCopyPath: selectedRepo,
+              },
+            }} />
           : null}
       </section>
     </div>
@@ -133,7 +148,7 @@ const RepoListPanel: React.FC<IPanelProps> = function ({ openPanel }) {
 };
 
 
-const RepoDetails: React.FC<{ workingCopyPath: string }> = function ({ workingCopyPath }) {
+const RepoDetails: React.FC<IPanelProps & { workingCopyPath: string }> = function ({ openPanel, workingCopyPath }) {
   const repoInfo = getRepositoryInfo.renderer!.useValue({ workingCopyPath }, {
     info: { workingCopyPath },
   });
@@ -145,8 +160,25 @@ const RepoDetails: React.FC<{ workingCopyPath: string }> = function ({ workingCo
   const author = repoInfo.value.info.author;
   const remote = repoInfo.value.info.remote;
 
+  function handleShare() {
+    openPanel({
+      component: ShareRepoPanel,
+      title: "Share repository",
+      props: {
+        repo: repoInfo.value.info,
+      },
+    });
+  }
+
   return (
-    <>
+    <div css={css`flex: 1; padding: 1rem; overflow-y: auto; background: ${Colors.LIGHT_GRAY5};`}>
+      <FormGroup label="Working copy:">
+        <ControlGroup>
+          <InputGroup fill readOnly value={workingCopyPath} />
+          <Button disabled>Locate</Button>
+        </ControlGroup>
+      </FormGroup>
+
       <FormGroup label="Structured data repository type:">
         <ControlGroup>
           <InputGroup fill disabled value={pluginID} />
@@ -156,14 +188,7 @@ const RepoDetails: React.FC<{ workingCopyPath: string }> = function ({ workingCo
         </ControlGroup>
       </FormGroup>
 
-      <FormGroup label="Working copy:">
-        <ControlGroup>
-          <InputGroup fill readOnly value={workingCopyPath} />
-          <Button disabled>Locate</Button>
-        </ControlGroup>
-      </FormGroup>
-
-      <FormGroup label="Contributing as:">
+      <FormGroup label="Authoring as:">
         <ControlGroup>
           <InputGroup
             fill disabled
@@ -171,13 +196,15 @@ const RepoDetails: React.FC<{ workingCopyPath: string }> = function ({ workingCo
         </ControlGroup>
       </FormGroup>
 
-      <FormGroup label="Upstream repository URL:">
-        <ControlGroup>
-          <InputGroup
-            fill disabled
-            value={remote ? remote.url : '(repository is not shared)'} />
-          {remote ? null : <Button disabled>Share</Button>}
-        </ControlGroup>
+      <FormGroup label="Sharing:">
+        {remote
+          ? <ControlGroup>
+              <InputGroup
+                fill disabled
+                value={remote ? remote.url : '(repository is not shared)'} />
+              <Button disabled>Open in browser</Button>
+            </ControlGroup>
+          : <Button fill onClick={handleShare}>Share</Button>}
       </FormGroup>
 
       <ControlGroup vertical>
@@ -185,57 +212,14 @@ const RepoDetails: React.FC<{ workingCopyPath: string }> = function ({ workingCo
           Delete working copy
         </Button>
       </ControlGroup>
-    </>
-  );
-};
-
-
-const PluginStatusButton: React.FC<{ id: string }> = function ({ id }) {
-  const pluginInfo = getPluginInfo.renderer!.useValue({ id }, { id, title: id });
-  const installedVersion = pluginInfo.value.installedVersion;
-  const [isBusy, setBusy] = useState(false);
-
-  async function handleInstall() {
-    if (installedVersion) { return; }
-
-    setBusy(true);
-    try {
-      await installPlugin.renderer!.trigger({ id });
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  pluginsUpdated.renderer!.useEvent(async ({ changedIDs }) => {
-    if (changedIDs === undefined || changedIDs.indexOf(id) >= 0) {
-      pluginInfo.refresh();
-    }
-  }, []);
-
-  if (pluginInfo.errors.length > 0) {
-    const fetchError = pluginInfo.findError('FetchError');
-    if (fetchError && fetchError.message.indexOf('registry.npmjs.org') >= 0) {
-      return <Button icon="offline" disabled>Cannot connect to plugin registry</Button>;
-    } else {
-      return <Button icon="error" disabled>Cannot find plugin</Button>;
-    }
-  }
-
-  return (
-    <Button
-        disabled={isBusy || installedVersion !== undefined}
-        loading={isBusy || pluginInfo.isUpdating}
-        intent="success"
-        onClick={handleInstall}
-        icon={installedVersion ? 'tick-circle' : 'download'}>
-      {installedVersion ? `Installed ${installedVersion}` : 'Install'}
-    </Button>
+    </div>
   );
 };
 
 
 const AddRepoPanel: React.FC<IPanelProps & { isInitial?: true }> =
 function ({ openPanel, closePanel, isInitial }) {
+
   function handleStartNew() {
     openPanel({
       component: StartNewRepoPanel,
@@ -286,6 +270,19 @@ function ({ closePanel, onComplete }) {
   return (
     <div css={{ textAlign: 'left', padding: '1rem', overflowY: 'auto' }}>
       <StartNewRepoForm onCreate={() => { setImmediate(closePanel); setImmediate(onComplete); }} />
+    </div>
+  );
+};
+
+
+const ShareRepoPanel: React.FC<IPanelProps & { repo: Repository }> =
+function ({ closePanel, repo }) {
+  return (
+    <div css={css`flex: 1; padding: 1rem; background: ${Colors.LIGHT_GRAY5}; overflow-y: auto; `}>
+      <ShareRepoForm
+        workingCopyPath={repo.workingCopyPath}
+        onComplete={() => { setImmediate(closePanel); }}
+      />
     </div>
   );
 };

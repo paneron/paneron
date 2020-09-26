@@ -88,6 +88,12 @@ export const savePassword = makeEndpoint.main(
   <{ success: true }>_,
 );
 
+export const setRemote = makeEndpoint.main(
+  'setRemote',
+  <{ workingCopyPath: string, url: string, username: string, password?: string }>_,
+  <{ success: true }>_,
+);
+
 export const deleteRepository = makeEndpoint.main(
   'deleteRepository',
   <{ workingCopyPath: string }>_,
