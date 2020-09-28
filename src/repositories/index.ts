@@ -1,9 +1,11 @@
 import { makeWindowForComponent } from '../window';
 import { EmptyPayload, makeEndpoint, _ } from '../ipc';
 import {
+  CommitOutcome,
   GitAuthor,
   NewRepositoryDefaults,
-  ObjectData,
+  ObjectChangeset,
+  ObjectDataset,
   Repository, RepositoryType,
   RepoStatus, StructuredRepoInfo,
 } from './types';
@@ -106,13 +108,13 @@ export const deleteRepository = makeEndpoint.main(
 export const readContents = makeEndpoint.main(
   'readContents',
   <{ workingCopyPath: string, objects: Record<string, true> }>_,
-  <ObjectData>_,
+  <ObjectDataset>_,
 );
 
 export const commitChanges = makeEndpoint.main(
   'commitChanges',
-  <{ workingCopyPath: string, changeset: ObjectData, commitMessage: string }>_,
-  <{ success: true }>_,
+  <{ workingCopyPath: string, changeset: ObjectChangeset, commitMessage: string }>_,
+  <CommitOutcome>_,
 );
 
 

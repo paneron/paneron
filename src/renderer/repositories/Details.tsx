@@ -31,17 +31,20 @@ const RepositoryDetails: React.FC<WindowComponentProps> = function ({ query }) {
 
   const pluginID = repo.value.info?.pluginID;
 
+  log.debug("Rendering repository window", pluginManagerProps, pluginID);
+
   useEffect(() => {
     (async () => {
-      if (pluginID && !loaded) {
+      if (pluginID && pluginManagerProps.cwd && pluginManagerProps.pluginsPath && !loaded) {
         try {
           const manager = new PluginManager(pluginManagerProps);
           const pluginInfo = await getPluginInfo.renderer!.trigger({ id: pluginID });
           const version = pluginInfo.result?.installedVersion;
 
+          log.debug("Opening repository window", pluginID, pluginManagerProps);
+
           if (version) {
-            // TODO: DRY
-            const pluginName = `@riboseinc/plugin-${pluginID}`;
+            const pluginName = `@riboseinc/plugin-${pluginID}`; // TODO: DRY
             await manager.install(pluginName, version);
             const plugin: RendererPlugin = manager.require(pluginName).default;
 
@@ -58,7 +61,7 @@ const RepositoryDetails: React.FC<WindowComponentProps> = function ({ query }) {
         }
       }
     })();
-  }, [pluginID]);
+  }, [pluginID, pluginManagerProps]);
 
   if (workingCopyPath === '') {
     return <NonIdealState title="Repository not found" />;

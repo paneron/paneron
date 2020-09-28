@@ -25,8 +25,12 @@ import {
   InitRequestMessage,
   CommitRequestMessage,
   ObjectDataRequestMessage,
-  ObjectData,
-  GitAuthentication
+  ObjectDataset,
+  GitAuthentication,
+  CommitOutcome,
+  ObjectDataRequest,
+  ObjectChangeset,
+  ObjectData
 } from '../../repositories/types';
 
 
@@ -56,8 +60,8 @@ export interface Methods {
   push: (msg: PushRequestMessage) => Promise<{ success: true }>
   delete: (msg: DeleteRequestMessage) => Promise<{ success: true }>
 
-  changeObjects: (msg: CommitRequestMessage) => Promise<{ newCommitHash: string }>
-  getObjectContents: (msg: ObjectDataRequestMessage) => Promise<ObjectData>
+  changeObjects: (msg: CommitRequestMessage) => Promise<CommitOutcome>
+  getObjectContents: (msg: ObjectDataRequestMessage) => Promise<ObjectDataset>
 }
 
 export type WorkerSpec = ModuleMethods & Methods;
@@ -321,38 +325,12 @@ const methods: WorkerSpec = {
   },
 
   async getObjectContents({ workDir, readObjectContents }) {
-    const result: ObjectData = await gitLock.acquire(workDir, async () => {
-      const currentCommit = await git.resolveRef({ fs, dir: workDir, ref: 'HEAD' });
-
-      async function readContentsAtPath(path: string): Promise<string | null> {
-        let blob: Uint8Array;
-        try {
-          blob = (await git.readBlob({
-            fs,
-            dir: workDir,
-            oid: currentCommit,
-            filepath: path,
-          })).blob;
-        } catch (e) {
-          if (e.code === 'NotFoundError') {
-            return null;
-          } else {
-            throw e;
-          }
-        }
-        return new TextDecoder('utf-8').decode(blob);
-      }
-
-      return (await Promise.all(Object.keys(readObjectContents).map(async (path) => {
-        return {
-          [path]: await readContentsAtPath(path),
-        };
-      }))).reduce((prev, curr) => ({ ...prev, ...curr }));
+    return await gitLock.acquire(workDir, async () => {
+      return await _lockFree_getObjectContents(workDir, readObjectContents);
     });
-    return result;
   },
 
-  async changeObjects({ workDir, writeObjectContents, author, commitMessage }) {
+  async changeObjects({ workDir, writeObjectContents, author, commitMessage, _dangerouslySkipValidation }) {
     const objectPaths = Object.keys(writeObjectContents);
 
     if (objectPaths.length < 1) {
@@ -364,28 +342,54 @@ const methods: WorkerSpec = {
     if ((commitMessage || '').trim() === '') {
       throw new Error("Missing commit message");
     }
+    if (Object.values(writeObjectContents).find(val => val.encoding !== 'utf-8' && val.encoding !== undefined) !== undefined) {
+      throw new Error("Supplied encoding is not supported");
+    }
 
-    const newCommitHash: string = await gitLock.acquire(workDir, async () => {
+    const result: CommitOutcome = await gitLock.acquire(workDir, async () => {
       repositoryStatus[workDir]?.next({
         busy: {
           operation: 'committing',
         },
       });
 
-      // Write files
+      const dataRequest = objectPaths.
+      map(p => ({ [p]: writeObjectContents[p].encoding as 'utf-8' })).
+      reduce((prev, curr) => ({ ...prev, ...curr }));
+
+      let conflicts: Record<string, true>
+      try {
+        await git.resolveRef({ fs, dir: workDir, ref: 'HEAD' });
+        const oldData = await _lockFree_getObjectContents(workDir, dataRequest);
+        conflicts = _canBeApplied(writeObjectContents, oldData);
+      } catch (e) {
+        if (e.name === 'NotFoundError') {
+          // Presume the first commit is being created.
+          conflicts = {};
+        } else {
+          throw e;
+        }
+      }
+
+      if (Object.keys(conflicts).length > 0) {
+        return { newCommitHash: undefined, conflicts };
+      }
+
+      // Write objects
       try {
         await Promise.all(objectPaths.map(async (objectPath) => {
           const absolutePath = path.join(workDir, objectPath);
-          const contentsToWrite: string | null = writeObjectContents[objectPath];
+          const { newValue, encoding } = writeObjectContents[objectPath];
           await fs.ensureFile(absolutePath);
 
-          if (contentsToWrite === null) {
+          if (newValue === null) {
             fs.removeSync(absolutePath);
           } else {
-            await fs.writeFile(
-              absolutePath,
-              contentsToWrite,
-              { encoding: 'utf-8' });
+            if (encoding !== undefined) {
+              await fs.writeFile(absolutePath, newValue, { encoding });
+            } else {
+              await fs.writeFile(absolutePath, Buffer.from(newValue));
+            }
           }
         }));
 
@@ -430,9 +434,9 @@ const methods: WorkerSpec = {
       }
 
       // Make a commit and pray it doesn’t fail
-      let commitHash: string;
+      let newCommitHash: string;
       try {
-        commitHash = await git.commit({
+        newCommitHash = await git.commit({
           fs,
           dir: workDir,
           message: commitMessage,
@@ -443,12 +447,121 @@ const methods: WorkerSpec = {
           status: 'ready',
         });
       }
-      return commitHash;
+      return { newCommitHash, conflicts };
     });
 
-    return { newCommitHash };
+    return result;
   },
 
 }
 
 expose(methods);
+
+
+
+async function _lockFree_getObjectContents(workDir: string, readObjectContents: ObjectDataRequest): Promise<ObjectDataset> {
+  const currentCommit = await git.resolveRef({ fs, dir: workDir, ref: 'HEAD' });
+
+  async function readContentsAtPath
+  (path: string, textEncoding?: string): Promise<
+      null
+      | { value: string, encoding: string }
+      | { value: Uint8Array, encoding: undefined }> {
+    let blob: Uint8Array;
+    try {
+      blob = (await git.readBlob({
+        fs,
+        dir: workDir,
+        oid: currentCommit,
+        filepath: path,
+      })).blob;
+    } catch (e) {
+      if (e.code === 'NotFoundError') {
+        return null;
+      } else {
+        throw e;
+      }
+    }
+    if (textEncoding === undefined) {
+      return { value: blob, encoding: undefined };
+    } else {
+      return { value: new TextDecoder(textEncoding).decode(blob), encoding: textEncoding };
+    }
+  }
+
+  return (await Promise.all(Object.entries(readObjectContents).map(async ([path, textEncoding]) => {
+    return {
+      [path]: await readContentsAtPath(path, textEncoding),
+    };
+  }))).reduce((prev, curr) => ({ ...prev, ...curr }));
+
+}
+
+
+/* Returns an object where keys are object paths that have conflicts and values are “true”. */
+function _canBeApplied(changeset: ObjectChangeset, dataset: ObjectDataset, strict = true): Record<string, true> {
+  const dPaths = new Set(Object.keys(dataset));
+  const cPaths = new Set(Object.keys(changeset));
+
+  if (dPaths.size !== cPaths.size || JSON.stringify([...dPaths].sort()) !== JSON.stringify([...cPaths].sort())) {
+    throw new Error("Cannot compare changeset and dataset containing different sets of object paths");
+  }
+
+  const conflicts: Record<string, true> = {};
+
+  for (const path of dPaths) {
+    const cRecord = changeset[path];
+
+    // NOTE: Skipping conflict check because old snapshot was not provided
+    if (cRecord.oldValue === undefined) {
+      if (strict === true) {
+        throw new Error("Missing reference value in changeset for comparison");
+      } else {
+        continue;
+      }
+    }
+
+    const existingData = dataset[path];
+
+    let referenceData: ObjectData;
+    if (cRecord.oldValue === null) {
+      referenceData = null;
+    } else if (cRecord.encoding === undefined) {
+      referenceData = { value: cRecord.oldValue, encoding: undefined };
+    } else {
+      referenceData = { value: cRecord.oldValue, encoding: cRecord.encoding };
+    }
+
+    if (existingData === null || referenceData === null) {
+      if (referenceData !== existingData) {
+        // Only one is null
+        conflicts[path] = true;
+      }
+    } else {
+      if (existingData.encoding === undefined &&
+          (referenceData.encoding !== undefined || !arrayBuffersAreEqual(existingData.value, referenceData.value))) {
+        // Mismatching binary contents (or reference data encoding is unexpectedly not binary)
+        conflicts[path] = true;
+      } else if (existingData.encoding !== undefined &&
+          (referenceData.encoding === undefined || existingData.value !== referenceData.value)) {
+        // Mismatching string contents (or reference data encoding is unexpectedly binary)
+        conflicts[path] = true;
+      }
+    }
+  }
+
+  return conflicts;
+}
+
+function arrayBuffersAreEqual(a: ArrayBuffer, b: ArrayBuffer) {
+  return dataViewsAreEqual(new DataView(a), new DataView(b));
+}
+
+
+function dataViewsAreEqual(a: DataView, b: DataView) {
+  if (a.byteLength !== b.byteLength) return false;
+  for (let i=0; i < a.byteLength; i++) {
+    if (a.getUint8(i) !== b.getUint8(i)) return false;
+  }
+  return true;
+}

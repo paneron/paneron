@@ -233,17 +233,18 @@ getRepositoryInfo.main!.handle(async ({ workingCopyPath }) => {
 
 
 getStructuredRepositoryInfo.main!.handle(async ({ workingCopyPath }) => {
-  const data = await (await worker).getObjectContents({
+  const meta = (await (await worker).getObjectContents({
     workDir: workingCopyPath,
-    readObjectContents: { 'meta.yaml': true },
-  });
+    readObjectContents: { 'meta.yaml': 'utf-8' },
+  }))['meta.yaml'];
 
-  const rawMeta = data['meta.yaml'];
-  const registerMeta = rawMeta ? yaml.load(rawMeta) : null;
-
-  return {
-    info: registerMeta,
-  };
+  if (meta === null) {
+    return { info: null };
+  } else if (meta?.encoding !== 'utf-8') {
+    throw new Error("Invalid structured repository metadata file format");
+  } else {
+    return { info: yaml.load(meta.value) };
+  }
 });
 
 
@@ -326,14 +327,24 @@ createRepository.main!.handle(async ({ workingCopyPath, author, pluginID }) => {
     pluginID,
   };
 
-  await w.changeObjects({
+  const { newCommitHash, conflicts } = await w.changeObjects({
     workDir: workingCopyPath,
     commitMessage: "Initial commit",
     author,
+    // _dangerouslySkipValidation: true, // Have to, since we cannot validate data
     writeObjectContents: {
-      'meta.yaml': yaml.dump(meta, { noRefs: true }),
+      'meta.yaml': {
+        oldValue: null,
+        newValue: yaml.dump(meta, { noRefs: true }),
+        encoding: 'utf-8',
+      },
     },
   });
+
+  if (!newCommitHash) {
+    log.error("Failed to create a repository—conflicts when writing initial commit!", conflicts);
+    throw new Error("Could not create a repository");
+  }
 
   repositoriesChanged.main!.trigger({
     changedWorkingPaths: [],
