@@ -8,7 +8,7 @@ import { InputGroup, FormGroup, Button, ControlGroup } from '@blueprintjs/core';
 import { getNewRepoDefaults, setRemote } from 'repositories';
 
 
-const ShareRepoForm: React.FC<{ workingCopyPath: string, onComplete: () => void }> =
+export const ShareRepoForm: React.FC<{ workingCopyPath: string, onComplete: () => void }> =
 function ({ workingCopyPath, onComplete }) {
   const [busy, setBusy] = useState(false);
   const defaults = getNewRepoDefaults.renderer!.useValue({}, {});
