@@ -1,6 +1,7 @@
 import { app } from 'electron';
 import log from 'electron-log';
 
+import fs from 'fs-extra';
 import path from 'path';
 
 import { spawn, Worker, Thread } from 'threads';
@@ -8,10 +9,23 @@ import { getPluginInfo, getPluginManagerProps, installPlugin, pluginsUpdated } f
 import { Methods as WorkerMethods, WorkerSpec } from './worker';
 
 
+const devFolder = app.isPackaged === false ? process.env.PANERON_PLUGIN_DIR : undefined;
+
+
+if (devFolder) {
+  log.warn("Using development plugin folder", devFolder);
+}
+
+
 installPlugin.main!.handle(async ({ id }) => {
   const name = getNPMNameForPlugin(id);
 
-  await (await worker).install({ name });
+  if (devFolder === undefined) {
+    await (await worker).install({ name });
+  } else {
+    await (await worker)._installDev({ name, fromPath: devFolder });
+  }
+
   await pluginsUpdated.main!.trigger({
     changedIDs: [id],
   });
@@ -70,6 +84,11 @@ var worker: Promise<Thread & WorkerMethods> = new Promise((resolve, reject) => {
     });
 
     log.debug("Plugins: Initializing worker");
+
+    if (devFolder !== undefined) {
+      fs.removeSync(PLUGIN_CONFIG_PATH);
+      fs.removeSync(PLUGINS_PATH);
+    }
 
     worker.initialize({
       cwd: CWD,

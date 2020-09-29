@@ -18,7 +18,8 @@ import {
   repositoriesChanged, repositoryStatusChanged,
   getDefaultWorkingDirectoryContainer,
   selectWorkingDirectoryContainer, validateNewWorkingDirectoryPath,
-  getNewRepoDefaults, listAvailableTypes, getRepositoryInfo, savePassword, setRemote
+  getNewRepoDefaults, listAvailableTypes,
+  getRepositoryInfo, savePassword, setRemote
 } from '../../repositories';
 import { Repository, NewRepositoryDefaults, StructuredRepoInfo, RepoStatus } from '../../repositories/types';
 import { Methods as WorkerMethods, WorkerSpec } from './worker';

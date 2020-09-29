@@ -1,60 +1,67 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 
+import path from 'path';
 import log from 'electron-log';
 import { css, jsx } from '@emotion/core';
 import React, { useEffect, useState } from 'react';
 import { PluginManager } from 'live-plugin-manager';
-import { NonIdealState, Spinner } from '@blueprintjs/core';
-import { getStructuredRepositoryInfo } from 'repositories';
+import { Classes, Colors, Icon, Navbar, NavbarHeading, NonIdealState, Spinner, Tag } from '@blueprintjs/core';
+import { getStructuredRepositoryInfo, repositoryContentsChanged, StructuredRepoInfo } from 'repositories';
+import { RendererPlugin, RepositoryViewProps } from '@riboseinc/paneron-plugin-kit/types';
 import { WindowComponentProps } from 'window';
 import { getPluginInfo, getPluginManagerProps } from 'plugins';
 
-
-interface PluginViewProps {
-  title: string
-  readContents: () => void
-  commitChanges: () => void
-}
-
-interface RendererPlugin {
-  repositoryView?: Promise<React.FC<PluginViewProps>>,
-}
 
 const RepositoryDetails: React.FC<WindowComponentProps> = function ({ query }) {
   const workingCopyPath = (query.get('workingCopyPath') || '').trim();
 
   const repo = getStructuredRepositoryInfo.renderer!.useValue({ workingCopyPath }, { info: null });
   const pluginManagerProps = getPluginManagerProps.renderer!.useValue({}, {}).value;
-  const [repositoryView, setRepositoryView] = useState<React.FC<PluginViewProps> | null>(null);
+  const [repositoryView, setRepositoryView] = useState<React.FC<RepositoryViewProps> | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   const pluginID = repo.value.info?.pluginID;
-
-  log.debug("Rendering repository window", pluginManagerProps, pluginID);
 
   useEffect(() => {
     (async () => {
       if (pluginID && pluginManagerProps.cwd && pluginManagerProps.pluginsPath && !loaded) {
         try {
+          log.silly("Loading manager...");
+
           const manager = new PluginManager(pluginManagerProps);
+
+          log.silly("Loading plugin info...");
+
           const pluginInfo = await getPluginInfo.renderer!.trigger({ id: pluginID });
           const version = pluginInfo.result?.installedVersion;
 
-          log.debug("Opening repository window", pluginID, pluginManagerProps);
-
           if (version) {
             const pluginName = `@riboseinc/plugin-${pluginID}`; // TODO: DRY
-            await manager.install(pluginName, version);
-            const plugin: RendererPlugin = manager.require(pluginName).default;
+            if (process.env.PANERON_PLUGIN_DIR === undefined) {
+              log.silly("Installing plugin for renderer...", pluginName, version);
+              await manager.installFromNpm(pluginName, version);
+            } else {
+              log.silly("Repositories: Installing plugin for renderer...", path.join(process.env.PANERON_PLUGIN_DIR, pluginName));
+              await manager.installFromPath(path.join(process.env.PANERON_PLUGIN_DIR, pluginName));
+            }
+            log.silly("Repositories: Requiring plugin...", pluginName);
+            const pluginPromise: RendererPlugin = manager.require(pluginName).default;
+            log.silly("Repositories: Awaiting plugin...", pluginPromise);
+            const plugin = await pluginPromise;
+            log.silly("Repositories: Got plugin", plugin);
 
             if (plugin.repositoryView) {
-              const view = await plugin.repositoryView;
-              setRepositoryView(() => view);
+              log.silly("Loading repository view...", plugin.repositoryView, pluginName, version);
+              const view = plugin.repositoryView;
+              log.silly("Loaded repository view.", pluginName, version);
+              setImmediate(() => setRepositoryView(() => view));
+            } else {
+              log.warn("No repository view defined by the plugin!", plugin);
             }
           }
         } catch (e) {
-          log.error("Repositories: Failed to load repository view from plugin", pluginID);
+          log.error("Repositories: Failed to load repository view from plugin", pluginID, e);
           throw e;
         } finally {
           setLoaded(true);
@@ -66,32 +73,47 @@ const RepositoryDetails: React.FC<WindowComponentProps> = function ({ query }) {
   if (workingCopyPath === '') {
     return <NonIdealState title="Repository not found" />;
   }
-
   if (!repo.value.info) {
     return <NonIdealState title="Invalid structured repository" />;
   }
 
+  let el: JSX.Element;
   if (!loaded || repo.isUpdating || !pluginManagerProps.cwd || !pluginManagerProps.pluginsPath) {
-    return <NonIdealState title={<Spinner />} />;
+    el = <NonIdealState title={<Spinner />} />;
+  } else if (repositoryView === null) {
+    el = <NonIdealState title="Invalid plugin" />;
+  } else {
+    const View = repositoryView;
+    el = <View
+      css={css`flex: 1; display: flex; flex-flow: column nowrap`}
+      title={repo.value.info.title}
+      useRepoContentsChanged={repositoryContentsChanged.renderer!.useEvent}
+      readObjects={async () => ({})}
+      changeObjects={async () => ({ success: true })} />;
   }
 
-  if (repositoryView === null) {
-    return <NonIdealState title="Invalid plugin" />;
-  }
-
-  const View = repositoryView;
 
   return (
     <div css={css`flex: 1; display: flex; flex-flow: column nowrap;`}>
-      <p>{repo.value.info.title}</p>
-      <View
-        css={css`flex: 1; display: flex; flex-flow: column nowrap`}
-        title={repo.value.info.title}
-        readContents={() => void 0}
-        commitChanges={() => void 0} />
+      <div className={Classes.ELEVATION_2} css={css`flex: 1; display: flex; flex-flow: column nowrap; z-index: 2`}>
+        {el}
+      </div>
+      <Toolbar workingCopyPath={workingCopyPath} structuredRepo={repo.value.info} />
     </div>
   );
 };
 
 
 export default RepositoryDetails;
+
+
+const Toolbar: React.FC<{ workingCopyPath: string, structuredRepo: StructuredRepoInfo }> =
+function ({ workingCopyPath, structuredRepo }) {
+  return (
+    <Navbar>
+      <Navbar.Group>
+        <Tag icon="git-repo" large minimal>{structuredRepo.title}</Tag>
+      </Navbar.Group>
+    </Navbar>
+  );
+};

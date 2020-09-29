@@ -130,6 +130,11 @@ export const repositoryStatusChanged = makeEndpoint.renderer(
   <{ workingCopyPath: string, status: RepoStatus }>_,
 );
 
+export const repositoryContentsChanged = makeEndpoint.renderer(
+  'repositoryContentsChanged',
+  <{ workingCopyPath: string, objects: Record<string, true> }>_,
+);
+
 
 // Windows
 

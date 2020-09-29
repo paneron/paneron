@@ -2,6 +2,7 @@ import { expose } from 'threads/worker';
 import { ModuleMethods } from 'threads/dist/types/master';
 
 import * as fs from 'fs-extra';
+import * as path from 'path';
 
 import * as yaml from 'js-yaml';
 import AsyncLock from 'async-lock';
@@ -40,6 +41,9 @@ export interface Methods {
      if already installed but version recorded in the configuration does not match installed version, update that;
      return factually installed version. */
   install: (msg: { name: string }) => Promise<{ installedVersion: string }>
+
+  /* Development environment helper. Installs from a special path in user’s app data. */
+  _installDev: (msg: { name: string, fromPath: string }) => Promise<{ installedVersion: string }>
 
   /* Returns information about a plugin, either installed or from NPM */
   getInfo: (msg: { name: string }) => Promise<PluginInfo>
@@ -161,6 +165,32 @@ const methods: WorkerSpec = {
       throw new Error("Failed to install");
     }
 
+    return { installedVersion };
+  },
+
+  async _installDev({ name, fromPath }) {
+    // TODO: DRY
+    const installedVersion: string | undefined = await pluginLock.acquire('1', async () => {
+      assertInitialized();
+
+      const { version } = await manager!.installFromPath(path.join(fromPath, name));
+
+      await updateConfig((data) => {
+        const newData = { ...data };
+
+        if (version === undefined) {
+          delete newData.installedPlugins[name];
+        } else if (version !== newData.installedPlugins[name]?.installedVersion) {
+          newData.installedPlugins[name] = { installedVersion: version };
+        }
+        return newData;
+      });
+
+      if (!version) {
+        throw new Error("Failed to install");
+      }
+      return version;
+    });
     return { installedVersion };
   },
 
