@@ -36,8 +36,8 @@ import { WindowComponentProps } from 'window';
 import PluginStatusButton from 'renderer/plugins/PluginStatusButton';
 
 import StartNewRepoForm from './StartNewRepoForm';
-import AddSharedRepoForm from './AddSharedRepoForm';
 import ShareRepoForm from './ShareRepoForm';
+import AddSharedRepoForm from './AddSharedRepoForm';
 
 
 const Window: React.FC<WindowComponentProps> = function () {
