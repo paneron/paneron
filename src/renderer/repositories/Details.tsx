@@ -6,7 +6,7 @@ import log from 'electron-log';
 import { css, jsx } from '@emotion/core';
 import React, { useEffect, useState } from 'react';
 import { PluginManager } from 'live-plugin-manager';
-import { Classes, Colors, Icon, Navbar, NavbarHeading, NonIdealState, Spinner, Tag } from '@blueprintjs/core';
+import { Classes, Navbar, NonIdealState, Spinner, Tag } from '@blueprintjs/core';
 import { getStructuredRepositoryInfo, repositoryContentsChanged, StructuredRepoInfo } from 'repositories';
 import { RendererPlugin, RepositoryViewProps } from '@riboseinc/paneron-plugin-kit/types';
 import { WindowComponentProps } from 'window';
