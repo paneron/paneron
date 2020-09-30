@@ -42,7 +42,7 @@ export function isExternalWindowSource(source: WindowSource): source is External
 
 //export const openWindow = makeEndpoint('open-window', 'main', <WindowOpenerParams>_, <{}>_);
 
-type DefaultImporter<T> = () => Promise<{ default: T }>;
+type DefaultImporter<T> = () => Promise<{ default: T | Promise<T> }>;
 
 export interface WindowComponentProps {
   query: URLSearchParams

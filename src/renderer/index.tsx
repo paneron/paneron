@@ -39,7 +39,12 @@ async function renderApp() {
     if (importer) {
       try {
         const Component = (await importer()).default;
-        topLevelEl = <Component query={searchParams} />;
+        if (typeof Component === 'function') {
+          topLevelEl = <Component query={searchParams} />;
+        } else {
+          await Component;
+          return;
+        }
       } catch (e) {
         log.error(`Unable to import or initialize top-level window component ${componentID}`, e);
         topLevelEl = <NonIdealState

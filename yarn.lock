@@ -1071,15 +1071,15 @@
     "@nodelib/fs.scandir" "2.1.3"
     fastq "^1.6.0"
 
-"@riboseinc/paneron-plugin-kit@^1.0.0-dev2":
-  version "1.0.0-dev2"
-  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-plugin-kit/-/paneron-plugin-kit-1.0.0-dev2.tgz#25c60869f079751517450af4d001bc6dbbd036aa"
-  integrity sha512-7MZEH9nDGFm7UUZs+CNvSBHhc/1ARPZgAkAvTCjgRInqqa+OTsHFsNx4UCvG+AiHGz8XT3843W843tlivhDNFA==
+"@riboseinc/paneron-plugin-kit@^1.0.0-alpha1":
+  version "1.0.0-alpha1"
+  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-plugin-kit/-/paneron-plugin-kit-1.0.0-alpha1.tgz#9457d55da595e1217b83e4337a7f086896fa7cc9"
+  integrity sha512-Za4h2ZZKdKdUBFuhSvERjVpa33FSgF5egSIJJn6ZbF9K3y7h0dJwRrglKDRW3pP2akoELGtAXH+JPEBeDY9pdg==
 
-"@riboseinc/paneron-registry-kit@^1.0.0-dev3":
-  version "1.0.0-dev3"
-  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-registry-kit/-/paneron-registry-kit-1.0.0-dev3.tgz#8d947596b5ac94be5c6eb90dbc9c07c8cfe4c34e"
-  integrity sha512-rE6ygf9gytv7kGrjR4pMoxeRnrM/vFrHsnxmJbsuMVka13NrOvHi2PyAkV0iYgH2mWfdKULZaSPS8elm6rDJGQ==
+"@riboseinc/paneron-registry-kit@^1.0.0-alpha1":
+  version "1.0.0-alpha1"
+  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-registry-kit/-/paneron-registry-kit-1.0.0-alpha1.tgz#0a46c30fcf8ef424af9e2a16a2b82ef8da631528"
+  integrity sha512-Ix6wgNqkM5c9mO4u6T7H2psPACe25tnBeHOIXPEDns03GO1SELsuvFp6QqcKm3JYDYtUf8zfAzhNkJJ4ZCdDyQ==
 
 "@sindresorhus/is@^0.14.0":
   version "0.14.0"
@@ -1249,7 +1249,7 @@
   dependencies:
     "@types/react" "*"
 
-"@types/react-window@^1.8.1":
+"@types/react-window@^1.8.2":
   version "1.8.2"
   resolved "https://registry.yarnpkg.com/@types/react-window/-/react-window-1.8.2.tgz#a5a6b2762ce73ffaab7911ee1397cf645f2459fe"
   integrity sha512-gP1xam68Wc4ZTAee++zx6pTdDAH08rAkQrWm4B4F/y6hhmlT9Mgx2q8lTCXnrPHXsr15XjRN9+K2DLKcz44qEQ==
@@ -3787,10 +3787,10 @@ electron-webpack@^2.8.2:
     webpack-merge "^4.2.2"
     yargs "^15.3.1"
 
-electron@^10.1.2:
-  version "10.1.2"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-10.1.2.tgz#30b6fd7669f8daf08c56219a61dfa053fa2b0c70"
-  integrity sha512-SvN8DcKCmPZ0UcQSNAJBfaUu+LGACqtRhUn1rW0UBLHgdbbDM76L0GU5/XGQEllH5pu5bwlCZwax3srzIl+Aeg==
+electron@^10.1.3:
+  version "10.1.3"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-10.1.3.tgz#7e276e373bf30078bd4cb1184850a91268dc0e6c"
+  integrity sha512-CR8LrlG47MdAp317SQ3vGYa2o2cIMdMSMPYH46OVitFLk35dwE9fn3VqvhUIXhCHYcNWIAPzMhkVHpkoFdKWuw==
   dependencies:
     "@electron/get" "^1.0.1"
     "@types/node" "^12.0.12"
@@ -9525,7 +9525,7 @@ threads@^1.6.3:
   optionalDependencies:
     tiny-worker ">= 2"
 
-throttle-debounce@^2.1.0:
+throttle-debounce@^2.3.0:
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/throttle-debounce/-/throttle-debounce-2.3.0.tgz#fd31865e66502071e411817e241465b3e9c372e2"
   integrity sha512-H7oLPV0P7+jgvrk+6mwwwBDmxTaxnu9HMXmloNLXwnNO0ZxZ31Orah2n8lU1eMPvsaowP2CX+USCgyovXfdOFQ==

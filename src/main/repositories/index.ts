@@ -1,5 +1,6 @@
 import path from 'path';
 import fs from 'fs-extra';
+import crypto from 'crypto';
 
 import AsyncLock from 'async-lock';
 import yaml from 'js-yaml';
@@ -19,9 +20,10 @@ import {
   getDefaultWorkingDirectoryContainer,
   selectWorkingDirectoryContainer, validateNewWorkingDirectoryPath,
   getNewRepoDefaults, listAvailableTypes,
-  getRepositoryInfo, savePassword, setRemote
+  getRepositoryInfo, savePassword, setRemote,
+  listObjectPaths, readContents, commitChanges, makeRandomID, repositoryContentsChanged
 } from '../../repositories';
-import { Repository, NewRepositoryDefaults, StructuredRepoInfo, RepoStatus } from '../../repositories/types';
+import { Repository, NewRepositoryDefaults, StructuredRepoInfo, RepoStatus, CommitOutcome } from '../../repositories/types';
 import { Methods as WorkerMethods, WorkerSpec } from './worker';
 
 
@@ -47,6 +49,66 @@ listAvailableTypes.main!.handle(async () => {
       { title: "Geodetic Registry", pluginID: 'geodetic-registry' },
     ],
   };
+});
+
+
+listObjectPaths.main!.handle(async ({ workingCopyPath, query }) => {
+  const w = await worker;
+  return await w.listObjectPaths({ workDir: workingCopyPath, query });
+});
+
+
+makeRandomID.main!.handle(async () => {
+  return { id: crypto.randomBytes(16).toString("hex") };
+});
+
+
+commitChanges.main!.handle(async ({ workingCopyPath, commitMessage, changeset }) => {
+  const w = await worker;
+  const repoCfg = await readRepoConfig(workingCopyPath);
+
+  if (!repoCfg.author) {
+    throw new Error("Author information is missing in repository config");
+  }
+
+  let outcome: CommitOutcome;
+  try {
+    outcome = await w.changeObjects({
+      workDir: workingCopyPath,
+      commitMessage,
+      writeObjectContents: changeset,
+      author: repoCfg.author,
+    });
+  } catch (e) {
+    log.error("Repositories: Failed to change objects", workingCopyPath, changeset, commitMessage, e);
+    throw e;
+  }
+
+  if (outcome.newCommitHash) {
+    await repositoryContentsChanged.main!.trigger({
+      workingCopyPath,
+      objects: Object.keys(changeset).
+        map(path => ({ [path]: true as true })).
+        reduce((p, c) => ({ ...p, ...c }), {}),
+    });
+  }
+
+  return outcome;
+});
+
+
+readContents.main!.handle(async ({ workingCopyPath, objects }) => {
+  try {
+    const w = await worker;
+    const data = await w.getObjectContents({
+      workDir: workingCopyPath,
+      readObjectContents: objects,
+    });
+    return data;
+  } catch (e) {
+    log.error("Failed to read file contents", e);
+    throw e;
+  }
 });
 
 
@@ -486,13 +548,26 @@ function syncRepoRepeatedly(workingCopyPath: string): void {
       if (repoCfg.remote) {
         const auth = await getAuth(repoCfg.remote.url, repoCfg.remote.username);
 
-        await w.pull({
+        const { changedObjects } = await w.pull({
           workDir: workingCopyPath,
           repoURL: repoCfg.remote.url,
           auth,
           author: repoCfg.author,
           _presumeCanceledErrorMeansAwaitingAuth: true,
         });
+
+        if (changedObjects === null) {
+          log.error("Repositories: Apparently unable to compare for changes after pull!");
+          await repositoryContentsChanged.main!.trigger({
+            workingCopyPath,
+          });
+        } else if (Object.keys(changedObjects).length > 0) {
+          await repositoryContentsChanged.main!.trigger({
+            workingCopyPath,
+            objects: changedObjects,
+          });
+        }
+
 
         await w.push({
           workDir: workingCopyPath,
@@ -649,6 +724,7 @@ var worker: Promise<Thread & WorkerMethods> = new Promise((resolve, reject) => {
     log.debug("Repositories: Spawning worker: Done");
 
     async function terminateWorker() {
+      log.debug("Repositories: Terminating worker")
       try {
         await worker.destroyWorker();
       } finally {

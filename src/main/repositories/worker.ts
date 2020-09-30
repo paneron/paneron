@@ -30,11 +30,12 @@ import {
   CommitOutcome,
   ObjectDataRequest,
   ObjectChangeset,
-  ObjectData
+  ObjectData,
+  FileChangeType
 } from '../../repositories/types';
 
 
-const gitLock = new AsyncLock({ timeout: 20000, maxPending: 4 });
+const gitLock = new AsyncLock({ timeout: 20000, maxPending: 1000 });
 
 
 // TODO: Split methods into sub-modules?
@@ -56,12 +57,13 @@ export interface Methods {
 
   init: (msg: InitRequestMessage) => Promise<{ success: true }>
   clone: (msg: CloneRequestMessage) => Promise<{ success: true }>
-  pull: (msg: PullRequestMessage) => Promise<{ success: true }>
+  pull: (msg: PullRequestMessage) => Promise<{ success: true, changedObjects: Record<string, FileChangeType> | null }>
   push: (msg: PushRequestMessage) => Promise<{ success: true }>
   delete: (msg: DeleteRequestMessage) => Promise<{ success: true }>
 
   changeObjects: (msg: CommitRequestMessage) => Promise<CommitOutcome>
   getObjectContents: (msg: ObjectDataRequestMessage) => Promise<ObjectDataset>
+  listObjectPaths: (msg: { workDir: string, query: { pathPrefix: string, contentSubstring?: string } }) => Promise<string[]>
 }
 
 export type WorkerSpec = ModuleMethods & Methods;
@@ -214,7 +216,10 @@ const methods: WorkerSpec = {
   },
 
   async pull({ workDir, repoURL, auth, author, _presumeCanceledErrorMeansAwaitingAuth }) {
-    await gitLock.acquire(workDir, async () => {
+    const changedObjects: Record<string, FileChangeType> | null = await gitLock.acquire(workDir, async () => {
+
+      const oidBeforePull = await git.resolveRef({ fs, dir: workDir, ref: 'HEAD' });
+
       try {
         await git.pull({
           http,
@@ -260,8 +265,21 @@ const methods: WorkerSpec = {
         }
         throw e;
       }
+
+      const oidAfterPull = await git.resolveRef({ fs, dir: workDir, ref: 'HEAD' });
+
+      if (oidAfterPull !== oidBeforePull) {
+        try {
+          return await getObjectPathsChangedBetweenCommits(oidBeforePull, oidAfterPull, workDir);
+        } catch (e) {
+          return null;
+        }
+      } else {
+        return {};
+      }
+
     });
-    return { success: true };
+    return { success: true, changedObjects };
   },
 
   async push({ workDir, repoURL, auth,
@@ -330,7 +348,24 @@ const methods: WorkerSpec = {
     });
   },
 
-  async changeObjects({ workDir, writeObjectContents, author, commitMessage, _dangerouslySkipValidation }) {
+  async listObjectPaths({ workDir, query }) {
+    const pathPrefix = query.pathPrefix.replace(/\/$/, '');
+    const items = fs.readdirSync(path.join(workDir, query.pathPrefix), { withFileTypes: true });
+
+    return (items.
+      filter(i => {
+        if (query.contentSubstring !== undefined && i.isFile()) {
+          const contents = fs.readFileSync(path.join(pathPrefix, i.name), { encoding: 'utf-8' })
+          return contents.indexOf(query.contentSubstring) >= 0;
+        }
+        return true;
+      }).
+      map(i => {
+        return `${pathPrefix}/${i.name}`;
+      }));
+  },
+
+  async changeObjects({ workDir, writeObjectContents, author, commitMessage }) {
     const objectPaths = Object.keys(writeObjectContents);
 
     if (objectPaths.length < 1) {
@@ -395,7 +430,8 @@ const methods: WorkerSpec = {
 
         // TODO: Make sure checkout in catch() block resets staged files as well!
         for (const [path, contents] of Object.entries(writeObjectContents)) {
-          if (contents !== null) {
+          const { newValue } = contents;
+          if (newValue !== null) {
             await git.add({
               fs,
               dir: workDir,
@@ -493,7 +529,7 @@ async function _lockFree_getObjectContents(workDir: string, readObjectContents: 
     return {
       [path]: await readContentsAtPath(path, textEncoding),
     };
-  }))).reduce((prev, curr) => ({ ...prev, ...curr }));
+  }))).reduce((prev, curr) => ({ ...prev, ...curr }), {});
 
 }
 
@@ -564,4 +600,50 @@ function dataViewsAreEqual(a: DataView, b: DataView) {
     if (a.getUint8(i) !== b.getUint8(i)) return false;
   }
   return true;
+}
+
+
+async function getObjectPathsChangedBetweenCommits(oid1: string, oid2: string, workDir: string) {
+  return git.walk({
+    fs,
+    dir: workDir,
+    trees: [git.TREE({ ref: oid1 }), git.TREE({ ref: oid2 })],
+    reduce: async function (parent, children) {
+      return { ...parent, ...children };
+    },
+    map: async function (filepath, walkerEntry) {
+      if (walkerEntry === null) {
+        return;
+      }
+      if (filepath === '.') {
+        return;
+      }
+
+      const [A, B] = walkerEntry;
+
+      if ((await A.type()) === 'tree' || (await B.type()) === 'tree') {
+        return;
+      }
+
+      const Aoid = await A.oid();
+      const Boid = await B.oid();
+
+      let type: FileChangeType;
+      if (Aoid === Boid) {
+        if (Aoid === undefined && Boid === undefined) {
+          // Well this would be super unexpected!
+        }
+        // Object at this path did not change.
+        return;
+      } else if (Aoid === undefined) {
+        type = 'added';
+      } else if (Boid === undefined) {
+        type = 'removed';
+      } else {
+        type = 'modified';
+      }
+
+      return { [`/${filepath}`]: type };
+    },
+  });
 }

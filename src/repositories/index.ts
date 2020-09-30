@@ -2,6 +2,7 @@ import { makeWindowForComponent } from '../window';
 import { EmptyPayload, makeEndpoint, _ } from '../ipc';
 import {
   CommitOutcome,
+  FileChangeType,
   GitAuthor,
   NewRepositoryDefaults,
   ObjectChangeset,
@@ -105,10 +106,28 @@ export const deleteRepository = makeEndpoint.main(
 
 // Making changes
 
+export const listObjectPaths = makeEndpoint.main(
+  'listObjectPaths',
+  <{ workingCopyPath: string, query: { pathPrefix: string, contentSubstring?: string } }>_,
+  <string[]>_,
+);
+
+// export const queryObjects = makeEndpoint.main(
+//   'queryObjects',
+//   <{ workingCopyPath: string, query: Record<string, true> }>_,
+//   <Record<string, true>>_,
+// );
+
 export const readContents = makeEndpoint.main(
   'readContents',
-  <{ workingCopyPath: string, objects: Record<string, true> }>_,
+  <{ workingCopyPath: string, objects: Record<string, 'utf-8' | undefined> }>_,
   <ObjectDataset>_,
+);
+
+export const makeRandomID = makeEndpoint.main(
+  'makeRandomID',
+  <EmptyPayload>_,
+  <{ id: string }>_,
 );
 
 export const commitChanges = makeEndpoint.main(
@@ -132,7 +151,7 @@ export const repositoryStatusChanged = makeEndpoint.renderer(
 
 export const repositoryContentsChanged = makeEndpoint.renderer(
   'repositoryContentsChanged',
-  <{ workingCopyPath: string, objects: Record<string, true> }>_,
+  <{ workingCopyPath: string, objects?: Record<string, FileChangeType | true> }>_,
 );
 
 

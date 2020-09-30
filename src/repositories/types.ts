@@ -1,3 +1,10 @@
+export type { ObjectData, ObjectDataset, ObjectChange, ObjectChangeset } from '@riboseinc/paneron-plugin-kit/types';
+import type { ObjectChangeset } from '@riboseinc/paneron-plugin-kit/types';
+
+
+export type FileChangeType = 'modified' | 'added' | 'removed';
+
+
 // Repository info
 
 export interface StructuredRepoInfo {
@@ -88,26 +95,6 @@ export type RepoStatus = {
   status?: undefined
 }
 
-
-export type ObjectData = null
-  | { value: string, encoding: string }
-  | { value: Uint8Array, encoding: undefined }
-export interface ObjectDataset {
-  // Object path must be supplied / is returned relative to repository root.
-  // Writing null must cause the object to be deleted.
-  // When null is returned, it means object does not exist.
-  [objectPath: string]: ObjectData
-}
-
-export type ObjectChange =
-  | { newValue: string | null, encoding: string, oldValue?: string | null }
-  | { newValue: Uint8Array | null, encoding: undefined, oldValue?: Uint8Array | null }
-export interface ObjectChangeset {
-  // Object path must be supplied / is returned relative to repository root.
-  // Writing null must cause the object to be deleted.
-  // When null is returned, it means object does not exist.
-  [objectPath: string]: ObjectChange
-}
 
 export interface ObjectDataRequest {
   [objectPath: string]: 'utf-8' | undefined

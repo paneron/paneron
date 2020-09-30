@@ -68,11 +68,19 @@ const PLUGIN_CONFIG_PATH = path.join(CWD, 'plugin-config.yaml');
 var worker: Promise<Thread & WorkerMethods> = new Promise((resolve, reject) => {
   log.debug("Plugins: Spawning worker");
 
+  if (devFolder !== undefined) {
+    fs.removeSync(PLUGIN_CONFIG_PATH);
+    fs.removeSync(PLUGINS_PATH);
+
+    log.debug("Plugins: Cleared paths");
+  }
+
   spawn<WorkerSpec>(new Worker('./worker')).
   then((worker) => {
     log.debug("Plugins: Spawning worker: Done");
 
     async function terminateWorker() {
+      log.debug("Plugins: Terminating worker")
       await Thread.terminate(worker);
     }
 
@@ -84,11 +92,6 @@ var worker: Promise<Thread & WorkerMethods> = new Promise((resolve, reject) => {
     });
 
     log.debug("Plugins: Initializing worker");
-
-    if (devFolder !== undefined) {
-      fs.removeSync(PLUGIN_CONFIG_PATH);
-      fs.removeSync(PLUGINS_PATH);
-    }
 
     worker.initialize({
       cwd: CWD,
