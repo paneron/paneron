@@ -88,7 +88,7 @@ commitChanges.main!.handle(async ({ workingCopyPath, commitMessage, changeset })
     await repositoryContentsChanged.main!.trigger({
       workingCopyPath,
       objects: Object.keys(changeset).
-        map(path => ({ [path]: true as true })).
+        map(path => ({ [path]: true as const })).
         reduce((p, c) => ({ ...p, ...c }), {}),
     });
   }
