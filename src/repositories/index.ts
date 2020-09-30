@@ -159,9 +159,9 @@ export const repositoryDetails = makeWindowForComponent(
   {
     dimensions: {
       minWidth: 800,
-      minHeight: 700,
-      width: 800,
-      height: 700,
+      minHeight: 600,
+      width: 1100,
+      height: 750,
     },
   },
 );
