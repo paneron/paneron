@@ -23,7 +23,7 @@
     "dist:linux": "electron-builder -l",
     "pack": "electron-builder --dir",
     "release": "electron-builder --publish always",
-    "cdist": "yarn compile && electron-builder -m",
+    "cdist": "yarn compile && electron-builder -mlw",
     "cdist:dir": "yarn dist --dir -c.compression=store -c.mac.identity=null",
     "lint:css": "stylelint --ignore-path ./.gitignore --max-warnings 0 \"**/*.{css,sass,scss}\"",
     "lint:css:fix": "yarn lint:css --fix",
