@@ -46,7 +46,7 @@ getNewRepoDefaults.main!.handle(async () => {
 listAvailableTypes.main!.handle(async () => {
   return {
     types: [
-      { title: "Geodetic Registry", pluginID: 'geodetic-registry' },
+      { title: "Geodetic Registry (beta)", pluginID: 'geodetic-registry' },
     ],
   };
 });
@@ -681,10 +681,8 @@ async function readRepoConfig(workingCopyPath: string): Promise<Repository> {
 }
 
 async function readRepositories(): Promise<RepoListSpec> {
-  const rawData = await FileAccessLock.acquire('1', async () => {
-    await fs.ensureFile(REPO_LIST_PATH);
-    return await fs.readFile(REPO_LIST_PATH, { encoding: 'utf-8' });
-  });
+  await fs.ensureFile(REPO_LIST_PATH);
+  const rawData = await fs.readFile(REPO_LIST_PATH, { encoding: 'utf-8' });
 
   const data = yaml.load(rawData);
 

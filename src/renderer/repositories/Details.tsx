@@ -21,7 +21,7 @@ import {
   ObjectsChangedEventHook,
   RendererPlugin, RepositoryViewProps,
   ObjectDataHook, ObjectPathsHook, RemoteUsernameHook
-} from '@riboseinc/paneron-plugin-kit/types';
+} from '@riboseinc/paneron-extension-kit/types';
 import { getPluginInfo, getPluginManagerProps } from 'plugins';
 import { WindowComponentProps } from 'window';
 
@@ -96,7 +96,12 @@ const repoView: Promise<React.FC<WindowComponentProps>> = new Promise((resolve, 
           <Component
             css={css`flex: 1; display: flex; flex-flow: column nowrap; overflow: hidden;`}
             title={info.title}
+
             React={React}
+
+            // TODO: remote will be obsolete. Unfortunately, calling setTimeout within dynamically resolved extension components will be an illegal invocation.
+            setTimeout={require('electron').remote.getGlobal('setTimeout')}
+
             useObjectsChangedEvent={useObjectsChanged}
             useObjectPaths={useObjectPaths}
             useObjectData={useObjectData}
@@ -196,7 +201,7 @@ Promise<{ info: StructuredRepoInfo, Component: React.FC<RepositoryViewProps> }> 
     throw new Error("Failed to get plugin info for plugin");
   }
 
-  const pluginName = `@riboseinc/plugin-${pluginID}`; // TODO: DRY
+  const pluginName = `@riboseinc/paneron-extension-${pluginID}`; // TODO: DRY
 
   // Install plugin in renderer
   try {

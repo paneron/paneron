@@ -46,7 +46,7 @@ export interface Methods {
   _installDev: (msg: { name: string, fromPath: string }) => Promise<{ installedVersion: string }>
 
   /* Returns information about a plugin, either installed or from NPM */
-  getInfo: (msg: { name: string }) => Promise<PluginInfo>
+  getInfo: (msg: { name: string, doOnlineCheck?: boolean }) => Promise<PluginInfo>
 }
 
 
@@ -114,7 +114,7 @@ const methods: WorkerSpec = {
     }
   },
 
-  async getInfo({ name }) {
+  async getInfo({ name, doOnlineCheck }) {
     const installedVersion = (await readConfig()).installedPlugins[name]?.installedVersion;
     if (installedVersion) {
       return {
@@ -122,11 +122,16 @@ const methods: WorkerSpec = {
         title: name,
         installedVersion,
       };
-    } else {
+    } else if (doOnlineCheck) {
       const npmInfo = await manager!.queryPackageFromNpm(name);
       return {
         id: npmInfo.name,
         title: npmInfo.name,
+      };
+    } else {
+      return {
+        id: name,
+        title: name,
       };
     }
   },

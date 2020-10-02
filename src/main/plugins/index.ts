@@ -37,7 +37,7 @@ installPlugin.main!.handle(async ({ id }) => {
 getPluginInfo.main!.handle(async ({ id }) => {
   const name = getNPMNameForPlugin(id);
   try {
-    return await (await worker).getInfo({ name });
+    return await (await worker).getInfo({ name, doOnlineCheck: devFolder === undefined });
   } catch (e) {
     log.error("Cannot fetch plugin info", e, e.code, e.name, e.message);
     throw e;
@@ -54,7 +54,7 @@ getPluginManagerProps.main!.handle(async () => {
 
 
 function getNPMNameForPlugin(pluginID: string): string {
-  return `@riboseinc/plugin-${pluginID}`;
+  return `@riboseinc/paneron-extension-${pluginID}`;
 }
 
 

@@ -1,5 +1,5 @@
-export type { ObjectData, ObjectDataset, ObjectChange, ObjectChangeset } from '@riboseinc/paneron-plugin-kit/types';
-import type { ObjectChangeset } from '@riboseinc/paneron-plugin-kit/types';
+export type { ObjectData, ObjectDataset, ObjectChange, ObjectChangeset } from '@riboseinc/paneron-extension-kit/types';
+import type { ObjectChangeset } from '@riboseinc/paneron-extension-kit/types';
 
 
 export type FileChangeType = 'modified' | 'added' | 'removed';

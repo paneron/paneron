@@ -18,7 +18,7 @@ export const listInstalledPlugins = makeEndpoint.main(
 
 export const getPluginInfo = makeEndpoint.main(
   'getPluginInfo',
-  <{ id: string }>_,
+  <{ id: string, doOnlineCheck?: boolean }>_,
   <PluginInfo>_,
 );
 

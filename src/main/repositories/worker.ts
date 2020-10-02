@@ -343,9 +343,7 @@ const methods: WorkerSpec = {
   },
 
   async getObjectContents({ workDir, readObjectContents }) {
-    return await gitLock.acquire(workDir, async () => {
-      return await _lockFree_getObjectContents(workDir, readObjectContents);
-    });
+    return await _lockFree_getObjectContents(workDir, readObjectContents);
   },
 
   async listObjectPaths({ workDir, query }) {
