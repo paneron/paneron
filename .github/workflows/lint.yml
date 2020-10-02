@@ -1,0 +1,30 @@
+name: Lint
+
+on:
+  push:
+    ignore-tags:
+      - v*
+  pull_request:
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14
+
+      - name: Install project dependencies
+        if: steps.yarn-cache.outputs.cache-hit != 'true'
+        run: yarn
+
+      - name: Run linters
+        run: |
+          yarn lint:css
+          yarn lint:ts

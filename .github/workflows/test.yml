@@ -1,0 +1,38 @@
+name: Test
+
+on:
+  push:
+    tags-ignore:
+      - v*
+  pull_request:
+
+jobs:
+  test:
+    name: Test
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        # , ubuntu-latest
+        os: [macos-latest, windows-latest]
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12
+
+      - name: Install project dependencies
+        if: steps.yarn-cache.outputs.cache-hit != 'true'
+        run: yarn
+
+      - name: Run tests
+        run: yarn compile
+        # yarn test
+        # In package.json:
+        #   "test": "run-s test:*",
+        #   "test:jest": "jest",
+        #   "test:types": "tsc --noEmit && tsc --project ./website --noEmit",
