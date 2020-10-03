@@ -607,7 +607,11 @@ async function getObjectPathsChangedBetweenCommits(oid1: string, oid2: string, w
     dir: workDir,
     trees: [git.TREE({ ref: oid1 }), git.TREE({ ref: oid2 })],
     reduce: async function (parent, children) {
-      return { ...parent, ...children };
+      const reduced = {
+        ...(parent || {}),
+        ...((children || []).reduce((p, c) => ({ ...p, ...c }), {})),
+      };
+      return reduced;
     },
     map: async function (filepath, walkerEntry) {
       if (walkerEntry === null) {
