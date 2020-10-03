@@ -3,14 +3,14 @@
   "productName": "Paneron",
   "version": "1.0.0-alpha1",
   "description": "Structured data editor and viewer",
-  "bugs": "https://github.com/riboseinc/paneron/issues",
+  "bugs": "https://github.com/paneron/paneron/issues",
   "author": {
     "name": "Ribose Inc.",
     "email": "open.source@ribose.com",
     "url": "https://open.ribose.com"
   },
-  "repository": "github:riboseinc/paneron",
-  "homepage": "https://github.com/riboseinc/paneron",
+  "repository": "github:paneron/paneron",
+  "homepage": "https://github.com/paneron/paneron",
   "license": "MIT",
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
