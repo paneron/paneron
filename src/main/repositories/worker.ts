@@ -601,7 +601,11 @@ function dataViewsAreEqual(a: DataView, b: DataView) {
 }
 
 
-async function getObjectPathsChangedBetweenCommits(oid1: string, oid2: string, workDir: string) {
+/* Given two commits, returns a big flat object of paths and their change status.
+   Unelss opts.returnUnchanged is true, returned change status cannot be "unchnaged". */
+async function getObjectPathsChangedBetweenCommits
+(oid1: string, oid2: string, workDir: string, opts?: { returnUnchanged?: boolean }):
+Promise<Record<string, FileChangeType>> {
   return git.walk({
     fs,
     dir: workDir,
@@ -636,7 +640,11 @@ async function getObjectPathsChangedBetweenCommits(oid1: string, oid2: string, w
           // Well this would be super unexpected!
         }
         // Object at this path did not change.
-        return;
+        if (opts?.returnUnchanged) {
+          type = 'unchanged';
+        } else {
+          return;
+        }
       } else if (Aoid === undefined) {
         type = 'added';
       } else if (Boid === undefined) {
