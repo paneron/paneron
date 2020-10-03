@@ -2,7 +2,7 @@ export type { ObjectData, ObjectDataset, ObjectChange, ObjectChangeset } from '@
 import type { ObjectChangeset } from '@riboseinc/paneron-extension-kit/types';
 
 
-export type FileChangeType = 'modified' | 'added' | 'removed';
+export type FileChangeType = 'modified' | 'added' | 'removed' | 'unchanged';
 
 
 // Repository info

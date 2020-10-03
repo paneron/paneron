@@ -151,7 +151,7 @@ export const repositoryStatusChanged = makeEndpoint.renderer(
 
 export const repositoryContentsChanged = makeEndpoint.renderer(
   'repositoryContentsChanged',
-  <{ workingCopyPath: string, objects?: Record<string, FileChangeType | true> }>_,
+  <{ workingCopyPath: string, objects?: Record<string, Exclude<FileChangeType, 'unchanged'> | true> }>_,
 );
 
 

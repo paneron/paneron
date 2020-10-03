@@ -57,7 +57,10 @@ export interface Methods {
 
   init: (msg: InitRequestMessage) => Promise<{ success: true }>
   clone: (msg: CloneRequestMessage) => Promise<{ success: true }>
-  pull: (msg: PullRequestMessage) => Promise<{ success: true, changedObjects: Record<string, FileChangeType> | null }>
+  pull: (msg: PullRequestMessage) => Promise<{
+    success: true
+    changedObjects: Record<string, Exclude<FileChangeType, "unchanged">> | null
+  }>
   push: (msg: PushRequestMessage) => Promise<{ success: true }>
   delete: (msg: DeleteRequestMessage) => Promise<{ success: true }>
 
@@ -216,7 +219,7 @@ const methods: WorkerSpec = {
   },
 
   async pull({ workDir, repoURL, auth, author, _presumeCanceledErrorMeansAwaitingAuth }) {
-    const changedObjects: Record<string, FileChangeType> | null = await gitLock.acquire(workDir, async () => {
+    const changedObjects: Record<string, Exclude<FileChangeType, "unchanged">> | null = await gitLock.acquire(workDir, async () => {
 
       const oidBeforePull = await git.resolveRef({ fs, dir: workDir, ref: 'HEAD' });
 
@@ -270,7 +273,8 @@ const methods: WorkerSpec = {
 
       if (oidAfterPull !== oidBeforePull) {
         try {
-          return await getObjectPathsChangedBetweenCommits(oidBeforePull, oidAfterPull, workDir);
+          const changeStatus = await getObjectPathsChangedBetweenCommits(oidBeforePull, oidAfterPull, workDir);
+          return changeStatus as Record<string, Exclude<FileChangeType, "unchanged">>;
         } catch (e) {
           return null;
         }
