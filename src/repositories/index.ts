@@ -112,11 +112,6 @@ export const listObjectPaths = makeEndpoint.main(
   <string[]>_,
 );
 
-// export const queryObjects = makeEndpoint.main(
-//   'queryObjects',
-//   <{ workingCopyPath: string, query: Record<string, true> }>_,
-//   <Record<string, true>>_,
-// );
 
 export const readContents = makeEndpoint.main(
   'readContents',
