@@ -67,6 +67,9 @@ export interface Methods {
   changeObjects: (msg: CommitRequestMessage) => Promise<CommitOutcome>
   getObjectContents: (msg: ObjectDataRequestMessage) => Promise<ObjectDataset>
   listObjectPaths: (msg: { workDir: string, query: { pathPrefix: string, contentSubstring?: string } }) => Promise<string[]>
+
+  /* Recursively lists files under given path prefix. Returns { path: status } as one big flat object. */
+  listAllObjectPathsWithSyncStatus: (msg: { workDir: string }) => Promise<Record<string, FileChangeType>>
 }
 
 export type WorkerSpec = ModuleMethods & Methods;
@@ -365,6 +368,24 @@ const methods: WorkerSpec = {
       map(i => {
         return `${pathPrefix}/${i.name}`;
       }));
+  },
+
+  async listAllObjectPathsWithSyncStatus({ workDir }) {
+    const latestCommit = await git.resolveRef({ fs, dir: workDir, ref: 'HEAD' });
+
+    let latestCommitInOrigin: string;
+    try {
+      latestCommitInOrigin = await git.resolveRef({ fs, dir: workDir, ref: 'refs/remotes/origin/master' });
+      // TODO: Check that no one else pushed to origin in meantime? Otherwise change status may be confusing
+    } catch (e) {
+      latestCommitInOrigin = latestCommit;
+    }
+
+    return await getObjectPathsChangedBetweenCommits(
+      latestCommitInOrigin,
+      latestCommit,
+      workDir,
+      { returnUnchanged: true });
   },
 
   async changeObjects({ workDir, writeObjectContents, author, commitMessage }) {

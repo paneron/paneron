@@ -21,7 +21,9 @@ import {
   selectWorkingDirectoryContainer, validateNewWorkingDirectoryPath,
   getNewRepoDefaults, listAvailableTypes,
   getRepositoryInfo, savePassword, setRemote,
-  listObjectPaths, readContents, commitChanges, makeRandomID, repositoryContentsChanged
+  listObjectPaths, readContents, commitChanges, makeRandomID,
+  repositoryContentsChanged,
+  listAllObjectPathsWithSyncStatus
 } from '../../repositories';
 import { Repository, NewRepositoryDefaults, StructuredRepoInfo, RepoStatus, CommitOutcome } from '../../repositories/types';
 import { Methods as WorkerMethods, WorkerSpec } from './worker';
@@ -55,6 +57,14 @@ listAvailableTypes.main!.handle(async () => {
 listObjectPaths.main!.handle(async ({ workingCopyPath, query }) => {
   const w = await worker;
   return await w.listObjectPaths({ workDir: workingCopyPath, query });
+});
+
+
+listAllObjectPathsWithSyncStatus.main!.handle(async ({ workingCopyPath }) => {
+  const w = await worker;
+  const result = await w.listAllObjectPathsWithSyncStatus({ workDir: workingCopyPath });
+  log.info("Got sync status", JSON.stringify(result));
+  return result;
 });
 
 

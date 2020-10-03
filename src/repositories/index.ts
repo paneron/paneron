@@ -112,6 +112,11 @@ export const listObjectPaths = makeEndpoint.main(
   <string[]>_,
 );
 
+export const listAllObjectPathsWithSyncStatus = makeEndpoint.main(
+  'listAllObjectPathsWithSyncStatus',
+  <{ workingCopyPath: string }>_,
+  <Record<string, FileChangeType>>_,
+);
 
 export const readContents = makeEndpoint.main(
   'readContents',

@@ -1071,10 +1071,10 @@
     "@nodelib/fs.scandir" "2.1.3"
     fastq "^1.6.0"
 
-"@riboseinc/paneron-extension-kit@^1.0.0-alpha3":
-  version "1.0.0-alpha3"
-  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-extension-kit/-/paneron-extension-kit-1.0.0-alpha3.tgz#2a81aa437fb33dc453b1a366cbc2b1a18a469732"
-  integrity sha512-9vQKaNXH9y6XTDxdUnaRlPXRUnEVr/0qZK1W8LKhRqNhD93KBe6Ve6fEjy6dxwdMLPVIYYH++R6fQ32m3ifkcA==
+"@riboseinc/paneron-extension-kit@^1.0.0-alpha4":
+  version "1.0.0-alpha4"
+  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-extension-kit/-/paneron-extension-kit-1.0.0-alpha4.tgz#c8abfabefc7bf49286ba5b2b12618ee3b7e52684"
+  integrity sha512-ijesbZwOYg8anSOi7S41PiiiYCJZQRszqKxc48nioMtGcdpR01NpIc8nw1+QZQ3YAlh8Ac367dqutF5VX7S8jA==
 
 "@riboseinc/paneron-registry-kit@^1.0.0-alpha4":
   version "1.0.0-alpha4"

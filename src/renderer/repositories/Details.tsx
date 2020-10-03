@@ -13,6 +13,7 @@ import {
   commitChanges,
   getRepositoryInfo,
   getStructuredRepositoryInfo,
+  listAllObjectPathsWithSyncStatus,
   listObjectPaths, makeRandomID, readContents,
   repositoryContentsChanged,
   StructuredRepoInfo
@@ -20,7 +21,7 @@ import {
 import {
   ObjectsChangedEventHook,
   RendererPlugin, RepositoryViewProps,
-  ObjectDataHook, ObjectPathsHook, RemoteUsernameHook
+  ObjectDataHook, ObjectPathsHook, RemoteUsernameHook, ObjectSyncStatusHook
 } from '@riboseinc/paneron-extension-kit/types';
 import { getPluginInfo, getPluginManagerProps } from 'plugins';
 import { WindowComponentProps } from 'window';
@@ -53,6 +54,18 @@ const useObjectPaths: ObjectPathsHook = (query) => {
         result.refresh();
       }
     }
+  }, [JSON.stringify(query)]);
+
+  return result;
+};
+
+const useObjectSyncStatus: ObjectSyncStatusHook = () => {
+  const result = listAllObjectPathsWithSyncStatus.renderer!.useValue({
+    workingCopyPath,
+  }, {});
+
+  useObjectsChanged(async (evt) => {
+    result.refresh();
   }, [JSON.stringify(query)]);
 
   return result;
@@ -104,6 +117,7 @@ const repoView: Promise<React.FC<WindowComponentProps>> = new Promise((resolve, 
 
             useObjectsChangedEvent={useObjectsChanged}
             useObjectPaths={useObjectPaths}
+            useObjectSyncStatus={useObjectSyncStatus}
             useObjectData={useObjectData}
             useRemoteUsername={useRemoteUsername}
             makeRandomID={async () => {
