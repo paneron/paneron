@@ -287,7 +287,6 @@ setRemote.main!.handle(async ({ workingCopyPath, url, username, password }) => {
         repoURL: url,
         auth,
       });
-      syncRepoRepeatedly(workingCopyPath);
     });
 
     await _updateNewRepoDefaults({
