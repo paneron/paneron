@@ -132,7 +132,7 @@ export const makeRandomID = makeEndpoint.main(
 
 export const commitChanges = makeEndpoint.main(
   'commitChanges',
-  <{ workingCopyPath: string, changeset: ObjectChangeset, commitMessage: string }>_,
+  <{ workingCopyPath: string, changeset: ObjectChangeset, commitMessage: string, ignoreConflicts?: true }>_,
   <CommitOutcome>_,
 );
 

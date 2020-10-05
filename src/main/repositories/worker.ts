@@ -66,6 +66,8 @@ export interface Methods {
 
   changeObjects: (msg: CommitRequestMessage) => Promise<CommitOutcome>
   getObjectContents: (msg: ObjectDataRequestMessage) => Promise<ObjectDataset>
+
+  /* Non-recursively lists files and directories under given prefix, optionally checking for substring. */
   listObjectPaths: (msg: { workDir: string, query: { pathPrefix: string, contentSubstring?: string } }) => Promise<string[]>
 
   /* Recursively lists files under given path prefix. Returns { path: status } as one big flat object. */
@@ -388,7 +390,7 @@ const methods: WorkerSpec = {
       { returnUnchanged: true });
   },
 
-  async changeObjects({ workDir, writeObjectContents, author, commitMessage }) {
+  async changeObjects({ workDir, writeObjectContents, author, commitMessage, _dangerouslySkipValidation }) {
     const objectPaths = Object.keys(writeObjectContents);
 
     if (objectPaths.length < 1) {
@@ -415,20 +417,37 @@ const methods: WorkerSpec = {
       map(p => ({ [p]: writeObjectContents[p].encoding as 'utf-8' })).
       reduce((prev, curr) => ({ ...prev, ...curr }));
 
-      let conflicts: Record<string, true>
+      let firstCommit = false;
       try {
         await git.resolveRef({ fs, dir: workDir, ref: 'HEAD' });
-        const oldData = await _lockFree_getObjectContents(workDir, dataRequest);
-        conflicts = _canBeApplied(writeObjectContents, oldData);
+        firstCommit = false;
       } catch (e) {
         if (e.name === 'NotFoundError') {
           // Presume the first commit is being created.
-          conflicts = {};
+          firstCommit = true;
         } else {
           throw e;
         }
+      } finally {
+        repositoryStatus[workDir]?.next({
+          status: 'ready',
+        });
       }
-
+      let conflicts: Record<string, true>;
+      if (!firstCommit) {
+        try {
+          const oldData = await _lockFree_getObjectContents(workDir, dataRequest);
+          conflicts = _canBeApplied(writeObjectContents, oldData, !_dangerouslySkipValidation);
+        } catch (e) {
+          throw e;
+        } finally {
+          repositoryStatus[workDir]?.next({
+            status: 'ready',
+          });
+        }
+      } else {
+        conflicts = {};
+      }
       if (Object.keys(conflicts).length > 0) {
         return { newCommitHash: undefined, conflicts };
       }

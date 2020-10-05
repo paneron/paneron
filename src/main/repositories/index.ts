@@ -73,7 +73,7 @@ makeRandomID.main!.handle(async () => {
 });
 
 
-commitChanges.main!.handle(async ({ workingCopyPath, commitMessage, changeset }) => {
+commitChanges.main!.handle(async ({ workingCopyPath, commitMessage, changeset, ignoreConflicts }) => {
   const w = await worker;
   const repoCfg = await readRepoConfig(workingCopyPath);
 
@@ -88,6 +88,7 @@ commitChanges.main!.handle(async ({ workingCopyPath, commitMessage, changeset })
       commitMessage,
       writeObjectContents: changeset,
       author: repoCfg.author,
+      _dangerouslySkipValidation: ignoreConflicts,
     });
   } catch (e) {
     log.error("Repositories: Failed to change objects", workingCopyPath, changeset, commitMessage, e);

@@ -127,11 +127,12 @@ const repoView: Promise<React.FC<WindowComponentProps>> = new Promise((resolve, 
               }
               return id;
             }}
-            changeObjects={async (changeset, commitMessage) => {
+            changeObjects={async (changeset, commitMessage, ignoreConflicts) => {
               const result = (await commitChanges.renderer!.trigger({
                 workingCopyPath,
                 changeset,
                 commitMessage,
+                ignoreConflicts: ignoreConflicts || undefined,
               }))
               if (result.result) {
                 return result.result;
