@@ -104,6 +104,11 @@ commitChanges.main!.handle(async ({ workingCopyPath, commitMessage, changeset, i
     });
   }
 
+  if (Object.keys(outcome.conflicts || {}).length > 0) {
+    log.error("Repositories: Conflicts while changing objects!", outcome.conflicts);
+    throw new Error("Conflicts while changing objects");
+  }
+
   return outcome;
 });
 
