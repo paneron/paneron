@@ -609,6 +609,9 @@ function syncRepoRepeatedly(workingCopyPath: string): void {
       repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
     }
   }
+
+  const timeout = repositoryStatuses[workingCopyPath]?.updateTimeout;
+  timeout ? clearTimeout(timeout) : void 0;
   repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, 100);
 }
 
