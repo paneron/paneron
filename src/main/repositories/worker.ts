@@ -335,8 +335,14 @@ const methods: WorkerSpec = {
               networkError: true,
             },
           });
+        } else {
+          repositoryStatus[workDir]?.next({
+            status: 'ready',
+          });
+          if (e.code !== 'PushRejectedError') {
+            throw e;
+          }
         }
-        throw e;
       }
     });
     return { success: true };
