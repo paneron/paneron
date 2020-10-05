@@ -671,12 +671,12 @@ Promise<Record<string, FileChangeType>> {
 
       const [A, B] = walkerEntry as (WalkerEntry | null)[];
 
-      if ((await A.type()) === 'tree' || (await B.type()) === 'tree') {
+      if ((await A?.type()) === 'tree' || (await B?.type()) === 'tree') {
         return;
       }
 
-      const Aoid = await A.oid();
-      const Boid = await B.oid();
+      const Aoid = await A?.oid();
+      const Boid = await B?.oid();
 
       let type: FileChangeType;
       if (Aoid === Boid) {
