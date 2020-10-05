@@ -276,6 +276,12 @@ setRemote.main!.handle(async ({ workingCopyPath, url, username, password }) => {
       url,
     });
 
+    await repositoriesChanged.main!.trigger({
+      changedWorkingPaths: [workingCopyPath],
+      deletedWorkingPaths: [],
+      createdWorkingPaths: [],
+    });
+
     setImmediate(async () => {
       await w.push({
         workDir: workingCopyPath,
