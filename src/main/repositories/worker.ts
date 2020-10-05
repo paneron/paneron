@@ -12,7 +12,7 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as AsyncLock from 'async-lock';
 
-import git from 'isomorphic-git';
+import git, { WalkerEntry } from 'isomorphic-git';
 import http from 'isomorphic-git/http/node';
 
 import {
@@ -669,7 +669,7 @@ Promise<Record<string, FileChangeType>> {
         return;
       }
 
-      const [A, B] = walkerEntry;
+      const [A, B] = walkerEntry as (WalkerEntry | null)[];
 
       if ((await A.type()) === 'tree' || (await B.type()) === 'tree') {
         return;
