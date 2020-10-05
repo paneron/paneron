@@ -16,6 +16,7 @@ import {
   listAllObjectPathsWithSyncStatus,
   listObjectPaths, makeRandomID, readContents,
   repositoryContentsChanged,
+  repositoryStatusChanged,
   StructuredRepoInfo
 } from 'repositories';
 import {
@@ -66,7 +67,15 @@ const useObjectSyncStatus: ObjectSyncStatusHook = () => {
 
   useObjectsChanged(async (evt) => {
     result.refresh();
-  }, [JSON.stringify(query)]);
+  }, []);
+
+  repositoryStatusChanged.renderer!.useEvent(async (evt) => {
+    if (workingCopyPath === evt.workingCopyPath) {
+      if (evt.status.status === 'ready') {
+        result.refresh();
+      }
+    }
+  }, []);
 
   return result;
 };
