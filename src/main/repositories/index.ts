@@ -242,7 +242,7 @@ getRepositoryStatus.main!.handle(async ({ workingCopyPath }) => {
 
   app.on('quit', () => { removeRepoStatus(workingCopyPath); });
 
-  return { status: 'ready', };
+  return { status: 'ready' };
 });
 
 
