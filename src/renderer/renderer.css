@@ -32,6 +32,10 @@ html.platform--win32::before {
   cursor: default !important;
 }
 
+.bp3-tree-node-content:hover {
+  background: unset;
+}
+
 .bp3-html-select select {
   cursor: default !important;
 }
