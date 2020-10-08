@@ -7,7 +7,7 @@ import * as path from 'path';
 import * as yaml from 'js-yaml';
 import AsyncLock from 'async-lock';
 
-import { PluginManager } from 'live-plugin-manager';
+import { IPluginInfo, PluginManager } from 'live-plugin-manager';
 
 import { PluginInfo } from 'plugins/types';
 
@@ -47,6 +47,8 @@ export interface Methods {
 
   /* Returns information about a plugin, either installed or from NPM */
   getInfo: (msg: { name: string, doOnlineCheck?: boolean }) => Promise<PluginInfo>
+
+  listInstalledPlugins: () => Promise<IPluginInfo[]>
 }
 
 
@@ -112,6 +114,10 @@ const methods: WorkerSpec = {
     for (const [name, info] of Object.entries(plugins)) {
       await manager.installFromNpm(name, info.installedVersion);
     }
+  },
+
+  async listInstalledPlugins() {
+    return await manager!.list();
   },
 
   async getInfo({ name, doOnlineCheck }) {

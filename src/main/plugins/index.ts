@@ -4,6 +4,8 @@ import log from 'electron-log';
 import fs from 'fs-extra';
 import path from 'path';
 
+import { PluginManager } from 'live-plugin-manager';
+
 import { spawn, Worker, Thread } from 'threads';
 import { getPluginInfo, getPluginManagerProps, installPlugin, pluginsUpdated } from 'plugins';
 import { Methods as WorkerMethods, WorkerSpec } from './worker';
@@ -65,7 +67,14 @@ const CWD = app.getPath('userData');
 const PLUGINS_PATH = path.join(CWD, 'plugins');
 const PLUGIN_CONFIG_PATH = path.join(CWD, 'plugin-config.yaml');
 
-var worker: Promise<Thread & WorkerMethods> = new Promise((resolve, reject) => {
+const pluginManager: Promise<PluginManager> = new Promise((resolve, _) => {
+  resolve(new PluginManager({
+    cwd: CWD,
+    pluginsPath: PLUGINS_PATH,
+  }));
+});
+
+const worker: Promise<Thread & WorkerMethods> = new Promise((resolve, reject) => {
   log.debug("Plugins: Spawning worker");
 
   if (devFolder !== undefined) {
@@ -100,10 +109,25 @@ var worker: Promise<Thread & WorkerMethods> = new Promise((resolve, reject) => {
     }).
     then(() => {
       log.debug("Plugins: Initializing worker: Done");
-      resolve(worker);
+
+      log.debug("Plugins: Installing plugins");
+      worker.listInstalledPlugins().
+      then((plugins) => {
+        pluginManager.
+        then(manager => {
+          for (const plugin of plugins) {
+            log.silly("Plugins: Installing in main", plugin.name, plugin.version);
+            manager.install(plugin.name, plugin.version).
+            then(plugin =>
+              manager.require(plugin.name)
+            ).catch(reject);
+          }
+          resolve(worker);
+        }).catch(reject);
+      }).
+      catch(reject);
     }).
     catch(reject);
-
   }).
   catch(reject);
 });
