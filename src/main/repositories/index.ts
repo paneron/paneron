@@ -48,7 +48,8 @@ getNewRepoDefaults.main!.handle(async () => {
 listAvailableTypes.main!.handle(async () => {
   return {
     types: [
-      { title: "Geodetic Registry (beta)", pluginID: 'geodetic-registry' },
+      { title: "Aperis documentation site (beta)", pluginID: 'aperis-site' },
+      { title: "Geodetic registry (alpha)", pluginID: 'geodetic-registry' },
     ],
   };
 });
