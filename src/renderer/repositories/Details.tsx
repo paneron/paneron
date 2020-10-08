@@ -116,6 +116,7 @@ const repoView: Promise<React.FC<WindowComponentProps>> = new Promise((resolve, 
         <div
             className={Classes.ELEVATION_2}
             css={css`flex: 1; z-index: 2; display: flex; flex-flow: column nowrap; background: ${Colors.LIGHT_GRAY5}; overflow: hidden;`}>
+
           <Component
             css={css`flex: 1; display: flex; flex-flow: column nowrap; overflow: hidden;`}
             title={info.title}
@@ -161,11 +162,15 @@ const repoView: Promise<React.FC<WindowComponentProps>> = new Promise((resolve, 
                 log.error("Unable to change objects", result.errors)
                 throw new Error("Unable to change objects");
               }
-            }} />
+            }}
+          />
+
         </div>
+
         <Toolbar workingCopyPath={workingCopyPath} structuredRepo={info} />
       </div>
     );
+
 
     ReactDOM.render(thing, document.getElementById('app'));
 
