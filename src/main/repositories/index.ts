@@ -558,7 +558,9 @@ function syncRepoRepeatedly(workingCopyPath: string): void {
           log.error("Repositories: Error re-cloning repository", workingCopyPath, e);
         }
       }
-      repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
+      if (repositoryStatuses[workingCopyPath]) {
+        repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
+      }
       return;
     }
 
@@ -596,21 +598,30 @@ function syncRepoRepeatedly(workingCopyPath: string): void {
           _presumeRejectedPushMeansNothingToPush: true,
           _presumeCanceledErrorMeansAwaitingAuth: true,
         });
-        repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_MS);
+
+        if (repositoryStatuses[workingCopyPath]) {
+          repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_MS);
+        }
 
       } else {
-        repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
+        if (repositoryStatuses[workingCopyPath]) {
+          repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
+        }
       }
 
     } catch (e) {
       log.error("Repositories: Error syncing repository", workingCopyPath, e);
-      repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
+      if (repositoryStatuses[workingCopyPath]) {
+        repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
+      }
     }
   }
 
   const timeout = repositoryStatuses[workingCopyPath]?.updateTimeout;
   timeout ? clearTimeout(timeout) : void 0;
-  repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, 100);
+  if (repositoryStatuses[workingCopyPath]) {
+    repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, 100);
+  }
 }
 
 
