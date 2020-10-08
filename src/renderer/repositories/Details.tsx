@@ -26,6 +26,7 @@ import {
 } from '@riboseinc/paneron-extension-kit/types';
 import { getPluginInfo, getPluginManagerProps } from 'plugins';
 import { WindowComponentProps } from 'window';
+import { chooseFileFromFilesystem } from 'common';
 
 
 const query = new URLSearchParams(window.location.search);
@@ -129,6 +130,17 @@ const repoView: Promise<React.FC<WindowComponentProps>> = new Promise((resolve, 
             useObjectSyncStatus={useObjectSyncStatus}
             useObjectData={useObjectData}
             useRemoteUsername={useRemoteUsername}
+
+            requestFileFromFilesystem={async (props) => {
+              const result = await chooseFileFromFilesystem.renderer!.trigger(props);
+              if (result.result) {
+                return result.result;
+              } else {
+                log.error("Unable to request file from filesystem", result.errors);
+                throw new Error("Unable to request file from filesystem");
+              }
+            }}
+
             makeRandomID={async () => {
               const id = (await makeRandomID.renderer!.trigger({})).result?.id;
               if (!id) {
