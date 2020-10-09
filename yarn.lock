@@ -1081,10 +1081,10 @@
   resolved "https://registry.yarnpkg.com/@riboseinc/paneron-registry-kit/-/paneron-registry-kit-1.0.0-alpha5.tgz#c3009f1232ae0b0784b9078b560438d240e5e453"
   integrity sha512-DdICoz8buJntlMbMMCe5BXadE2/NwtxrhYXo3U0QRucJcvikKwFLU9m6BV02PLbyZU650QrODOsnSu55MPDnmA==
 
-"@riboseinc/reprose@^1.0.0-alpha2":
-  version "1.0.0-alpha2"
-  resolved "https://registry.yarnpkg.com/@riboseinc/reprose/-/reprose-1.0.0-alpha2.tgz#84301cfa10bd217a17c8ee47f34f0c9677f52a03"
-  integrity sha512-PdqeErn7k4vSIT57NdNFAzIR/q1cpOefCnpUuOB2sveop1ztAT7UNWyQmxeT5GXpFS5anR9Qiy9LXx9/HREyDA==
+"@riboseinc/reprose@^1.0.0-alpha3":
+  version "1.0.0-alpha3"
+  resolved "https://registry.yarnpkg.com/@riboseinc/reprose/-/reprose-1.0.0-alpha3.tgz#3167a3516aaf64aba4cb85b48e94e826359281d1"
+  integrity sha512-OlORhJfMu0KdYXvj3MkICoQ8lNiBUvuzv/7VWMMAt3NCO62MUQIqie7UXDb9U4Cnp3Zb2y3t4ucQYCXcdEGbSw==
   dependencies:
     prosemirror-commands "^1.1.4"
     prosemirror-inputrules "^1.1.3"
