@@ -22,15 +22,18 @@ if (devFolder) {
 installPlugin.main!.handle(async ({ id }) => {
   const name = getNPMNameForPlugin(id);
 
+  let version: string;
   if (devFolder === undefined) {
-    await (await worker).install({ name });
+    version = (await (await worker).install({ name })).installedVersion;
   } else {
-    await (await worker)._installDev({ name, fromPath: devFolder });
+    version = (await (await worker)._installDev({ name, fromPath: devFolder })).installedVersion;
   }
 
   await pluginsUpdated.main!.trigger({
     changedIDs: [id],
   });
+
+  (await pluginManager).install(name, version);
 
   return { installed: true };
 });
