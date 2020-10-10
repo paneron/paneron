@@ -1089,10 +1089,10 @@
   resolved "https://registry.yarnpkg.com/@riboseinc/paneron-registry-kit/-/paneron-registry-kit-1.0.0-alpha5.tgz#c3009f1232ae0b0784b9078b560438d240e5e453"
   integrity sha512-DdICoz8buJntlMbMMCe5BXadE2/NwtxrhYXo3U0QRucJcvikKwFLU9m6BV02PLbyZU650QrODOsnSu55MPDnmA==
 
-"@riboseinc/reprose@^1.0.0-alpha5":
-  version "1.0.0-alpha5"
-  resolved "https://registry.yarnpkg.com/@riboseinc/reprose/-/reprose-1.0.0-alpha5.tgz#7b41bcc0be5214f45ed0813f5be7b41af2ca5122"
-  integrity sha512-/S+DzZMMx8NAHvIihPGwyc/8Q4gGec8dOMtbvFFKnoMmBlDv1Oban0cgcN7B5mFS1M8K6eajWlDMnz4eYVDpCA==
+"@riboseinc/reprose@^1.0.0-alpha6":
+  version "1.0.0-alpha6"
+  resolved "https://registry.yarnpkg.com/@riboseinc/reprose/-/reprose-1.0.0-alpha6.tgz#4bb665e4b956030222834f4621bddd31a51681b9"
+  integrity sha512-fhKHesHWD2RaxD/6/WIgFeRnvGgeaIKlQ3dGCRNVbP1p/pGZ7mRB24pQ0/SiG+16SQrZMAXkyZEGXVMWqGLIbg==
   dependencies:
     "@babel/polyfill" "^7.11.5"
     prosemirror-commands "^1.1.4"
