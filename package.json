@@ -156,7 +156,7 @@
     "@emotion/core": "^10.0.35",
     "@riboseinc/paneron-extension-kit": "^1.0.0-alpha6",
     "@riboseinc/paneron-registry-kit": "^1.0.0-alpha5",
-    "@riboseinc/reprose": "^1.0.0-alpha3",
+    "@riboseinc/reprose": "^1.0.0-alpha5",
     "async-lock": "^1.2.2",
     "axios": "^0.20.0",
     "cytoscape": "3.16.1",
