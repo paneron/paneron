@@ -1,0 +1,15 @@
+= Paneron host application
+
+== Development
+
+=== Release workflow
+
+When starting the work on a new version:
+
+. Create a release draft on GitHub (tag name should be in the form of “v1.2.3” and release title can be anything).
+. Update version in package.json (package version should be in the form of “1.2.3”).
+
+When version is ready:
+
+. Change release status from to published.
+. Repeat from the top.
