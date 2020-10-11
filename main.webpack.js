@@ -2,6 +2,8 @@ const path = require('path');
 const ThreadsPlugin = require('threads-plugin');
 
 module.exports = function (config) {
+  config.optimization.minimizer = [];
+
   config.resolve.modules = [path.resolve(__dirname, './src'), 'node_modules'];
 
   config.module.rules = config.module.rules.filter(r => {
