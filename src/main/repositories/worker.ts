@@ -35,7 +35,7 @@ import {
 } from '../../repositories/types';
 
 
-const gitLock = new AsyncLock({ timeout: 20000, maxPending: 1000 });
+const gitLock = new AsyncLock({ timeout: 12000, maxPending: 1000 });
 
 
 // TODO: Split methods into sub-modules?
