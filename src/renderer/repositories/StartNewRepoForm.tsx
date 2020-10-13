@@ -115,7 +115,7 @@ const StartNewRepoForm: React.FC<{ onCreate: () => void }> = function ({ onCreat
           required
           onChange={(evt: React.FormEvent<HTMLInputElement>) =>
             setName(evt.currentTarget.value.
-              toLowerCase().replace(/ /g,'-').replace(/[^\w-]+/g,''))
+              toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, ''))
           } />
       </FormGroup>
 
