@@ -505,6 +505,8 @@ const methods: WorkerSpec = {
 
       } catch (e) {
         // Undo changes by resetting to HEAD
+        // TODO: We could do this at the very end for reliability,
+        // if we take note of previous commit and force reset to it (?)
         await git.checkout({
           fs,
           dir: workDir,
