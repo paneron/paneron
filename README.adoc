@@ -37,24 +37,10 @@ This helps us catch compilation errors before code reaches CI.
 === Releasing
 
 CI builds the application automatically,
-and publishes a release if it doesn’t yet exist for the version specified in package.json
-and Git version tag exists and is formatted appropriately.
+and attaches build artifacts to release tag that matches the version in package.json
+if that release is still a draft.
 
-After you have made and tested your changes:
-
-. Edit package.json to increment version as appropriate, let’s say we are publishing `1.2.3`.
-
-. Tag and push the repository.
-+
-Version tags are formatted as semantic version with “v” prepended, such as `v1.2.3`.
-+
-[source]
---
-$ git tag -s v1.2.3
-$ git push --follow-tags
---
-
-=== Release workflow
+==== Release sequence
 
 When starting the work on a new version:
 
