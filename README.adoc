@@ -1,6 +1,58 @@
 = Paneron host application
 
+image:https://img.shields.io/badge/commitizen-friendly-brightgreen.svg[alt="Commitizen friendly",link="http://commitizen.github.io/cz-cli/"] image:https://github.com/paneron/paneron/workflows/Build/release/badge.svg[alt="Build/release"]
+
 == Development
+
+=== Committing
+
+This repository is set up with AngularJS commit message convention.
+Pre-commit hook will invoke interactive prompt, powered by Commitizen,
+that will ask you for information and put together a commit message for you.
+
+To make sure you follow the convention:
+
+* Only use ``git commit`` when making commits
+* Don’t use built-in IDE commit prompts, since they may bypass prepare-commit-msg hook
+
+=== Pulling
+
+- It is recommended to use “rebase” behavior of pull (make sure to use fresh Git)
+  by having this in your global .gitconfig:
++
+[source]
+----
+[pull]
+    rebase = true
+----
+
+- When pulling, Commitizen commit prompt may appear even if there is no merge commit to be made.
+  You can dismiss it with Ctrl+C.
+
+=== Pushing
+
+There is a pre-push Git hook that compiles the app.
+This helps us catch compilation errors before code reaches CI.
+
+=== Releasing
+
+CI builds the application automatically,
+and publishes a release if it doesn’t yet exist for the version specified in package.json
+and Git version tag exists and is formatted appropriately.
+
+After you have made and tested your changes:
+
+. Edit package.json to increment version as appropriate, let’s say we are publishing `1.2.3`.
+
+. Tag and push the repository.
++
+Version tags are formatted as semantic version with “v” prepended, such as `v1.2.3`.
++
+[source]
+--
+$ git tag -s v1.2.3
+$ git push --follow-tags
+--
 
 === Release workflow
 
@@ -8,6 +60,7 @@ When starting the work on a new version:
 
 . Create a release draft on GitHub (tag name should be in the form of “v1.2.3” and release title can be anything).
 . Update version in package.json (package version should be in the form of “1.2.3”).
+. Push your commits as usual.
 
 After your final push, when you think this version is ready:
 
