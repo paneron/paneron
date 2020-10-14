@@ -9,7 +9,14 @@ When starting the work on a new version:
 . Create a release draft on GitHub (tag name should be in the form of “v1.2.3” and release title can be anything).
 . Update version in package.json (package version should be in the form of “1.2.3”).
 
-When version is ready:
+After your final push, when you think this version is ready:
 
+. Make sure all artifacts attached to the release are updated by push’s CI run.
++
+If, say, Apple notarization servers are down or a build failed for a transient reason, then after this run
+the release will have latest binary for Linux and Windows, but macOS binary will be left over from the previous build.
++
+You can check build logs (look for “publishing” in Build/release step) to make sure all artifacts are up-to-date,
+and if they aren’t due to a transient issue you can simply rerun the workflow.
 . Change release status from to published.
 . Repeat from the top.
