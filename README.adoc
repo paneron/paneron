@@ -14,7 +14,7 @@ After your final push, when you think this version is ready:
 . Make sure *all artifacts attached to the release are updated* by final push’s CI run.
 +
 If, say, Apple notarization servers are down or a build failed for a transient reason, then after this run
-the release will have latest binary for Linux and Windows, but macOS binary will be left over from the previous build.
+the release will have latest binaries for Linux and Windows, but macOS binary will be left over from the previous build.
 +
 You can check build logs (look for “publishing” in Build/release step) to make sure all artifacts are up-to-date,
 and if they aren’t due to a transient issue you can simply rerun the workflow.
