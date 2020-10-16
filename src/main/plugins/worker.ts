@@ -42,6 +42,8 @@ export interface Methods {
      return factually installed version. */
   install: (msg: { name: string }) => Promise<{ installedVersion: string }>
 
+  remove: (msg: { name: string }) => Promise<{ success: true }>
+
   /* Development environment helper. Installs from a special path in user’s app data. */
   _installDev: (msg: { name: string, fromPath: string }) => Promise<{ installedVersion: string }>
 
@@ -141,6 +143,21 @@ const methods: WorkerSpec = {
     }
 
     return info;
+  },
+
+  async remove({ name }) {
+    await pluginLock.acquire('1', async () => {
+      assertInitialized();
+      (await manager!.uninstall(name));
+
+      await updateConfig((data) => {
+        const newData = { ...data };
+        delete newData.installedPlugins[name];
+        return newData;
+      });
+    });
+
+    return { success: true };
   },
 
   async install({ name }) {

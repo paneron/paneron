@@ -30,6 +30,13 @@ export const installPlugin = makeEndpoint.main(
 );
 
 
+export const upgradePlugin = makeEndpoint.main(
+  'upgradePlugin',
+  <{ id: string }>_,
+  <{ installed: true }>_,
+);
+
+
 export const pluginsUpdated = makeEndpoint.renderer(
   'pluginsChanged',
   <{ changedIDs?: string[] }>_,

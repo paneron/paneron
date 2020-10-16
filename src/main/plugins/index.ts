@@ -7,7 +7,7 @@ import path from 'path';
 import { PluginManager } from 'live-plugin-manager';
 
 import { spawn, Worker, Thread } from 'threads';
-import { getPluginInfo, getPluginManagerProps, installPlugin, pluginsUpdated } from 'plugins';
+import { getPluginInfo, getPluginManagerProps, installPlugin, pluginsUpdated, upgradePlugin } from 'plugins';
 import { Methods as WorkerMethods, WorkerSpec } from './worker';
 
 
@@ -22,18 +22,33 @@ if (devFolder) {
 installPlugin.main!.handle(async ({ id }) => {
   const name = getNPMNameForPlugin(id);
 
-  let version: string;
-  if (devFolder === undefined) {
-    version = (await (await worker).install({ name })).installedVersion;
-  } else {
-    version = (await (await worker)._installDev({ name, fromPath: devFolder })).installedVersion;
-  }
+  const version = await _installPlugin(name);
+  (await pluginManager).install(name, version);
 
   await pluginsUpdated.main!.trigger({
     changedIDs: [id],
   });
 
+  return { installed: true };
+});
+
+
+upgradePlugin.main!.handle(async ({ id }) => {
+  const name = getNPMNameForPlugin(id);
+
+  try {
+    await _removePlugin(name);
+  } catch (e) {
+    log.error("Plugins: Upgrade: Error when uninstalling", id)
+  }
+
+  (await pluginManager).uninstall(name);
+  const version = await _installPlugin(name);
   (await pluginManager).install(name, version);
+
+  await pluginsUpdated.main!.trigger({
+    changedIDs: [id],
+  });
 
   return { installed: true };
 });
@@ -60,6 +75,25 @@ getPluginManagerProps.main!.handle(async () => {
 
 function getNPMNameForPlugin(pluginID: string): string {
   return `@riboseinc/paneron-extension-${pluginID}`;
+}
+
+
+async function _installPlugin(name: string): Promise<string> {
+  let version: string;
+  if (devFolder === undefined) {
+    version = (await (await worker).install({ name })).installedVersion;
+  } else {
+    version = (await (await worker)._installDev({ name, fromPath: devFolder })).installedVersion;
+  }
+
+  return version;
+}
+
+
+async function _removePlugin(name: string): Promise<true> {
+  (await (await worker).remove({ name }));
+
+  return true;
 }
 
 
