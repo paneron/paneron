@@ -1,5 +1,5 @@
 import fs from 'fs-extra';
-import { app, BrowserWindow, dialog } from 'electron';
+import { app, BrowserWindow, dialog, protocol } from 'electron';
 import log from 'electron-log';
 
 import { ObjectData, ObjectDataset, repositoryDashboard } from '../repositories';
@@ -30,6 +30,11 @@ async function initMain() {
   app.on('window-all-closed', preventDefault);
 
   await app.whenReady();
+
+  protocol.registerFileProtocol('file', (request, callback) => {
+    const pathname = decodeURI(request.url.replace('file:///', ''));
+    callback(pathname);
+  });
 
   chooseFileFromFilesystem.main!.handle(async (opts) => {
     const window = BrowserWindow.getFocusedWindow();
