@@ -366,7 +366,7 @@ const RepoStatus: React.FC<{ repo: Repository }> = function ({ repo }) {
       case 'pushing':
       case 'cloning':
         if (status.busy.networkError) {
-          buttonProps.icon = 'error';
+          buttonProps.icon = 'offline';
           buttonText = "Network error";
         } else if (status.busy.awaitingPassword) {
           buttonProps.icon = 'key';
