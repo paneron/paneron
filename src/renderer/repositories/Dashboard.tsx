@@ -184,7 +184,9 @@ const RepoDetails: React.FC<IPanelProps & { workingCopyPath: string }> = functio
           <InputGroup fill disabled value={pluginID} />
           {pluginID
             ? <PluginStatusButton id={pluginID} />
-            : <Button intent="warning" disabled icon="error">Not a valid structured data repository</Button>}
+            : structuredRepoInfo.isUpdating
+              ? <Button loading />
+              : <Button intent="warning" disabled icon="error">Unknown repository type</Button>}
         </ControlGroup>
       </FormGroup>
 
