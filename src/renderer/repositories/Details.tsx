@@ -132,6 +132,8 @@ const repoView: Promise<React.FC<WindowComponentProps>> = new Promise((resolve, 
             useObjectData={useObjectData}
             useRemoteUsername={useRemoteUsername}
 
+            makeAbsolutePath={relativeGitPath => path.join(workingCopyPath, relativeGitPath)}
+
             requestFileFromFilesystem={async (props) => {
               const result = await chooseFileFromFilesystem.renderer!.trigger(props);
               if (result.result) {
