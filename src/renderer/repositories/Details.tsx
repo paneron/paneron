@@ -155,7 +155,7 @@ const repoView: Promise<React.FC<WindowComponentProps>> = new Promise((resolve, 
                 changeset,
                 commitMessage,
                 ignoreConflicts: ignoreConflicts || undefined,
-              }))
+              }));
               if (result.result) {
                 return result.result;
               } else {
