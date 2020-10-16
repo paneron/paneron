@@ -121,25 +121,26 @@ const methods: WorkerSpec = {
   },
 
   async getInfo({ name, doOnlineCheck }) {
-    const installedVersion = (await readConfig()).installedPlugins[name]?.installedVersion;
-    if (installedVersion) {
-      return {
-        id: name,
-        title: name,
-        installedVersion,
-      };
-    } else if (doOnlineCheck) {
-      const npmInfo = await manager!.queryPackageFromNpm(name);
-      return {
-        id: npmInfo.name,
-        title: npmInfo.name,
-      };
-    } else {
-      return {
-        id: name,
-        title: name,
-      };
+    let info: PluginInfo = { id: name, title: name };
+
+    info.installedVersion = (await readConfig()).installedPlugins[name]?.installedVersion;
+
+    if (doOnlineCheck) {
+      try {
+        const npmInfo = await manager!.queryPackageFromNpm(name);
+        info.latestVersion = npmInfo.version;
+      } catch (e) {
+        // If latest version failed to be fetched but there is a version already installed,
+        // suppress the error and just report latest version as undefined.
+        if (info.installedVersion) {
+          info.latestVersion = undefined;
+        } else {
+          throw e;
+        }
+      }
     }
+
+    return info;
   },
 
   async install({ name }) {
