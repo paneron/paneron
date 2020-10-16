@@ -8,12 +8,20 @@ import 'main/plugins';
 import 'main/repositories';
 
 import { chooseFileFromFilesystem } from 'common';
+import path from 'path';
 
 
 function preventDefault(e: Electron.Event) {
   log.debug("Not quitting app (windows closed)");
   e.preventDefault();
 }
+
+const FILE_ENCODINGS: { [extension: string]: 'utf-8' | undefined } = {
+  '.svg': 'utf-8' as const,
+  '.png': undefined,
+  '.jpeg': undefined,
+  '.jpg': undefined,
+};
 
 async function initMain() {
 
@@ -56,7 +64,14 @@ async function initMain() {
     for (const filepath of filepaths) {
       const blob = await fs.readFile(filepath);
 
-      const encoding = filepath.endsWith('.svg') ? 'utf-8' as const : undefined;
+      const ext = path.extname(filepath);
+      if (Object.keys(FILE_ENCODINGS).indexOf(ext) < 0) {
+        log.error("Choosing file from filesystem: unknown file type", ext);
+        throw new Error("Unknown file type");
+      }
+
+      const encoding = FILE_ENCODINGS[path.extname(filepath)];
+
       let parsedData: string | Uint8Array;
 
       if (encoding === 'utf-8') {
