@@ -9,7 +9,7 @@ import '!style-loader!css-loader!@blueprintjs/core/lib/css/blueprint.css';
 import '!style-loader!css-loader!./normalize.css';
 import '!style-loader!css-loader!./renderer.css';
 
-import { getComponent } from 'window';
+import { getComponent, WindowComponentProps } from 'window';
 
 
 async function renderApp() {
@@ -38,13 +38,11 @@ async function renderApp() {
     const importer = getComponent(componentID);
     if (importer) {
       try {
-        const Component = (await importer()).default;
-        if (typeof Component === 'function') {
-          topLevelEl = <Component query={searchParams} />;
-        } else {
-          await Component;
-          return;
+        let Component = (await importer()).default;
+        if (typeof Component !== 'function') {
+          Component = await Component;
         }
+        topLevelEl = <Component query={searchParams} />;
       } catch (e) {
         log.error(`Unable to import or initialize top-level window component ${componentID}`, e);
         topLevelEl = <NonIdealState

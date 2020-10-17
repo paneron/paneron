@@ -1,14 +1,12 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 
-import ReactDOM from 'react-dom';
-
 import path from 'path';
 import log from 'electron-log';
 import { css, jsx } from '@emotion/core';
 import React from 'react';
 import { PluginManager } from 'live-plugin-manager';
-import { Classes, Colors, Navbar, /*NonIdealState, Spinner,*/ Tag } from '@blueprintjs/core';
+import { Button, Callout, Classes, Colors, Navbar, NonIdealState, /*NonIdealState, Spinner,*/ Tag, UL } from '@blueprintjs/core';
 import {
   commitChanges,
   getRepositoryInfo,
@@ -173,12 +171,24 @@ const repoView: Promise<React.FC<WindowComponentProps>> = new Promise((resolve, 
       </div>
     );
 
+    resolve(() => thing);
 
-    ReactDOM.render(thing, document.getElementById('app'));
-
-    resolve(() => <></>);
-
-  }).catch((err) => reject(err));
+  }).catch((err) => resolve(() => <NonIdealState
+      icon="heart-broken"
+      title="Error loading extension"
+      css={css`background: ${Colors.LIGHT_GRAY5}`}
+      description={<>
+        <Callout style={{ textAlign: 'left' }} title="Suggestions to resolve" intent="primary">
+          <UL>
+            <li>Check that you have the extension for this repository type installed: you should
+              see <Button disabled intent="success" small icon="tick-circle">Installed</Button> in repository details pane.</li>
+            <li>Try downloading the latest version of Paneron, and upgrading the extension as well.</li>
+          </UL>
+          <p>
+            To upgrade or install an extension, Internet connection is necessary.
+          </p>
+        </Callout>
+        <Callout title="Error details" style={{ transform: 'scale(0.8)', textAlign: 'left' }}>{err.message}</Callout></>} />));
 
 });
 
@@ -187,7 +197,7 @@ async function getRepoInfo(workingCopyPath: string):
 Promise<{ info: StructuredRepoInfo, Component: React.FC<RepositoryViewProps> }> {
 
   if (workingCopyPath === '') {
-    throw new Error("Invalid working copy path");
+    throw new Error("Invalid repository working copy path");
   }
 
   let pluginManager: PluginManager;
@@ -205,7 +215,7 @@ Promise<{ info: StructuredRepoInfo, Component: React.FC<RepositoryViewProps> }> 
     const _structuredRepoInfo = structuredRepo.result?.info;
 
     if (!_structuredRepoInfo) {
-      throw new Error("Missing structured repository info");
+      throw new Error("This does not seem to be a Paneron repository");
     }
 
     const _pluginID = _structuredRepoInfo.pluginID;
@@ -213,10 +223,10 @@ Promise<{ info: StructuredRepoInfo, Component: React.FC<RepositoryViewProps> }> 
     const pluginsPath = pluginManagerProps.result?.pluginsPath;
 
     if (!_pluginID) {
-      throw new Error("Plugin ID is missing in structured repository info");
+      throw new Error("Paneron repository doesn’t specify extension name");
     }
     if (!pluginsPath || !cwd) {
-      throw new Error("Plugin manager props are missing");
+      throw new Error("Error configuring extension manager");
     }
 
     structuredRepoInfo = _structuredRepoInfo;
@@ -224,7 +234,8 @@ Promise<{ info: StructuredRepoInfo, Component: React.FC<RepositoryViewProps> }> 
     pluginID = _pluginID;
 
   } catch (e) {
-    throw new Error("Failed to get plugin ID or plugin manager props");
+    log.error("Failed to get extension ID or load extension manager", e);
+    throw e;
   }
 
   // Check plugin’s installed version
@@ -233,15 +244,15 @@ Promise<{ info: StructuredRepoInfo, Component: React.FC<RepositoryViewProps> }> 
     const _version = pluginInfo.result?.installedVersion;
 
     if (!_version) {
-      log.error("Repository view: Plugin is not installed?", workingCopyPath, pluginID, pluginInfo);
-      throw new Error("Plugin is not installed");
+      log.error("Repository view: Extension is not installed?", workingCopyPath, pluginID, pluginInfo);
+      throw new Error("Required extension is not installed");
     }
 
     pluginVersion = _version;
 
   } catch (e) {
-    log.error("Repository view: Failed to get plugin info for plugin", workingCopyPath, pluginID, e);
-    throw new Error("Failed to get plugin info for plugin");
+    log.error("Repository view: Failed to get extension info", pluginID, e);
+    throw e;
   }
 
   const pluginName = `@riboseinc/paneron-extension-${pluginID}`; // TODO: DRY
@@ -258,7 +269,7 @@ Promise<{ info: StructuredRepoInfo, Component: React.FC<RepositoryViewProps> }> 
 
   } catch (e) {
     log.error("Repository view: Error installing plugin", workingCopyPath, pluginName, pluginVersion, e);
-    throw new Error("Error initializing plugin");
+    throw new Error("Error loading extension");
   }
 
   // Require plugin
@@ -274,14 +285,14 @@ Promise<{ info: StructuredRepoInfo, Component: React.FC<RepositoryViewProps> }> 
 
     if (!plugin.repositoryView) {
       log.error("Repository view: Not provided by plugin", pluginName, pluginVersion);
-      throw new Error("Plugin does not provide repository view");
+      throw new Error("Error requesting repository view from Paneron extension");
     }
 
     RepoView = plugin.repositoryView;
 
   } catch (e) {
     log.error("Repository view: Error requiring plugin", workingCopyPath, pluginName, pluginVersion, e);
-    throw new Error("Error requiring plugin");
+    throw e;
   }
 
   return { Component: RepoView, info: structuredRepoInfo };
