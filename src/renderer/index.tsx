@@ -9,7 +9,7 @@ import '!style-loader!css-loader!@blueprintjs/core/lib/css/blueprint.css';
 import '!style-loader!css-loader!./normalize.css';
 import '!style-loader!css-loader!./renderer.css';
 
-import { getComponent, WindowComponentProps } from 'window';
+import { getComponent } from 'window';
 
 
 async function renderApp() {

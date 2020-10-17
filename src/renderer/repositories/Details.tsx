@@ -22,7 +22,7 @@ import {
   RendererPlugin, RepositoryViewProps,
   ObjectDataHook, ObjectPathsHook, RemoteUsernameHook, ObjectSyncStatusHook
 } from '@riboseinc/paneron-extension-kit/types';
-import { getPluginInfo, getPluginManagerProps } from 'plugins';
+import { getPluginInfo, getPluginManagerProps, installPlugin } from 'plugins';
 import { WindowComponentProps } from 'window';
 import { chooseFileFromFilesystem } from 'common';
 
@@ -239,11 +239,17 @@ Promise<{ info: StructuredRepoInfo, Component: React.FC<RepositoryViewProps> }> 
   // Check plugin’s installed version
   try {
     const pluginInfo = await getPluginInfo.renderer!.trigger({ id: pluginID });
-    const _version = pluginInfo.result?.installedVersion;
 
+    let _version = pluginInfo.result?.installedVersion;
     if (!_version) {
-      log.error("Repository view: Extension is not installed?", workingCopyPath, pluginID, pluginInfo);
-      throw new Error("Required extension is not installed");
+      log.warn("Repository view: Extension is not installed?", workingCopyPath, pluginID, pluginInfo);
+      const installationResult = await installPlugin.renderer!.trigger({ id: pluginID });
+      if (installationResult.result && installationResult.result.installed && installationResult.result.installedVersion) {
+        _version = installationResult.result.installedVersion;
+      } else {
+        log.error("Repository view: Extension could not be installed on the fly", installationResult.errors);
+        throw new Error("Required extension could not be installed");
+      }
     }
 
     pluginVersion = _version;
