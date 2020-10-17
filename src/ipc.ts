@@ -204,7 +204,7 @@ export const makeEndpoint: EndpointMaker = {
                   }
 
                 } catch (e) {
-                  log.error("IPC: Failed to invoke method", name, payloadSnapshot);
+                  log.error("IPC: Failed to invoke method", name, payloadSnapshot, e);
                   updateErrors([e]);
                   updateValue(initialValue);
 
