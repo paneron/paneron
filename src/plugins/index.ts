@@ -26,7 +26,7 @@ export const getPluginInfo = makeEndpoint.main(
 export const installPlugin = makeEndpoint.main(
   'installPlugin',
   <{ id: string }>_,
-  <{ installed: true }>_,
+  <{ installed: true, installedVersion: string }>_,
 );
 
 

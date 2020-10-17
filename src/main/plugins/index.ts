@@ -29,7 +29,7 @@ installPlugin.main!.handle(async ({ id }) => {
     changedIDs: [id],
   });
 
-  return { installed: true };
+  return { installed: true, installedVersion: version };
 });
 
 
