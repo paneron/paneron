@@ -179,14 +179,12 @@ const repoView: Promise<React.FC<WindowComponentProps>> = new Promise((resolve, 
       css={css`background: ${Colors.LIGHT_GRAY5}`}
       description={<>
         <Callout style={{ textAlign: 'left' }} title="Suggestions to resolve" intent="primary">
+          <p>Make sure Paneron can connect to internet, and try the following:</p>
           <UL>
             <li>Check that you have the extension for this repository type installed: you should
               see <Button disabled intent="success" small icon="tick-circle">Installed</Button> in repository details pane.</li>
-            <li>Try downloading the latest version of Paneron, and upgrading the extension as well.</li>
+            <li>Downloading the latest version of Paneron, and upgrade the extension as well.</li>
           </UL>
-          <p>
-            To upgrade or install an extension, Internet connection is necessary.
-          </p>
         </Callout>
         <Callout title="Error details" style={{ transform: 'scale(0.8)', textAlign: 'left' }}>{err.message}</Callout></>} />));
 
