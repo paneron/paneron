@@ -224,7 +224,9 @@ const methods: WorkerSpec = {
   },
 
   async pull({ workDir, repoURL, auth, author, _presumeCanceledErrorMeansAwaitingAuth }) {
-    const changedObjects: Record<string, Exclude<FileChangeType, "unchanged">> | null = await gitLock.acquire(workDir, async () => {
+    const changedObjects:
+    Record<string, Exclude<FileChangeType, "unchanged">> | null =
+    await gitLock.acquire(workDir, async () => {
 
       const oidBeforePull = await git.resolveRef({ fs, dir: workDir, ref: 'HEAD' });
 
