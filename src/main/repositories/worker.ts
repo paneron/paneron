@@ -70,7 +70,9 @@ export interface Methods {
   /* Non-recursively lists files and directories under given prefix, optionally checking for substring. */
   listObjectPaths: (msg: { workDir: string, query: { pathPrefix: string, contentSubstring?: string } }) => Promise<string[]>
 
-  /* Recursively lists files under given path prefix. Returns { path: status } as one big flat object. */
+  /* Recursively lists files under given path prefix.
+     Returns { path: status } as one big flat object.
+     NOTE: paths are relative to repo root and have leading slashes. */
   listAllObjectPathsWithSyncStatus: (msg: { workDir: string }) => Promise<Record<string, FileChangeType>>
 }
 
@@ -399,7 +401,13 @@ const methods: WorkerSpec = {
   },
 
   async changeObjects({ workDir, writeObjectContents, author, commitMessage, _dangerouslySkipValidation }) {
-    const objectPaths = Object.keys(writeObjectContents);
+
+    // Isomorphic Git doesn’t like leading slashes in filepath parameter
+    // TODO: Should probably catch inconsistent use of slashes earlier and fail loudly?
+    const objectPaths = Object.keys(writeObjectContents).map(stripLeadingSlash);
+    const changeset = Object.entries(writeObjectContents).
+    map(([path, data]) => ({ [stripLeadingSlash(path)]: data })).
+    reduce((p, c) => ({ ...p, ...c }), {});
 
     if (objectPaths.length < 1) {
       throw new Error("Nothing to commit");
@@ -410,7 +418,7 @@ const methods: WorkerSpec = {
     if ((commitMessage || '').trim() === '') {
       throw new Error("Missing commit message");
     }
-    if (Object.values(writeObjectContents).find(val => val.encoding !== 'utf-8' && val.encoding !== undefined) !== undefined) {
+    if (Object.values(changeset).find(val => val.encoding !== 'utf-8' && val.encoding !== undefined) !== undefined) {
       throw new Error("Supplied encoding is not supported");
     }
 
@@ -422,7 +430,7 @@ const methods: WorkerSpec = {
       });
 
       const dataRequest = objectPaths.
-      map(p => ({ [p]: writeObjectContents[p].encoding as 'utf-8' })).
+      map(p => ({ [p]: changeset[p].encoding as 'utf-8' })).
       reduce((prev, curr) => ({ ...prev, ...curr }));
 
       let firstCommit = false;
@@ -445,7 +453,7 @@ const methods: WorkerSpec = {
       if (!firstCommit) {
         try {
           const oldData = await _lockFree_getObjectContents(workDir, dataRequest);
-          conflicts = _canBeApplied(writeObjectContents, oldData, !_dangerouslySkipValidation);
+          conflicts = _canBeApplied(changeset, oldData, !_dangerouslySkipValidation);
         } catch (e) {
           throw e;
         } finally {
@@ -464,7 +472,7 @@ const methods: WorkerSpec = {
       try {
         await Promise.all(objectPaths.map(async (objectPath) => {
           const absolutePath = path.join(workDir, objectPath);
-          const { newValue, encoding } = writeObjectContents[objectPath];
+          const { newValue, encoding } = changeset[objectPath];
           await fs.ensureFile(absolutePath);
 
           if (newValue === null) {
@@ -479,7 +487,7 @@ const methods: WorkerSpec = {
         }));
 
         // TODO: Make sure checkout in catch() block resets staged files as well!
-        for (const [path, contents] of Object.entries(writeObjectContents)) {
+        for (const [path, contents] of Object.entries(changeset)) {
           const { newValue } = contents;
           if (newValue !== null) {
             await git.add({
@@ -550,6 +558,10 @@ expose(methods);
 async function _lockFree_getObjectContents(workDir: string, readObjectContents: ObjectDataRequest): Promise<ObjectDataset> {
   const currentCommit = await git.resolveRef({ fs, dir: workDir, ref: 'HEAD' });
 
+  const request = Object.entries(readObjectContents).
+  map(([path, enc]) => ({ [stripLeadingSlash(path)]: enc })).
+  reduce((p, c) => ({ ...p, ...c }), {});
+
   async function readContentsAtPath
   (path: string, textEncoding?: string): Promise<
       null
@@ -577,7 +589,7 @@ async function _lockFree_getObjectContents(workDir: string, readObjectContents: 
     }
   }
 
-  return (await Promise.all(Object.entries(readObjectContents).map(async ([path, textEncoding]) => {
+  return (await Promise.all(Object.entries(request).map(async ([path, textEncoding]) => {
     return {
       [path]: await readContentsAtPath(path, textEncoding),
     };
@@ -710,4 +722,9 @@ Promise<Record<string, FileChangeType>> {
       return { [`/${filepath}`]: type };
     },
   });
+}
+
+
+function stripLeadingSlash(fp: string): string {
+  return fp.replace(/^\//, '');
 }
