@@ -113,7 +113,7 @@ function conformSlashes(path: string): string {
 		return path;
   }
 
-  log.info("Conforming slashes: done", path.replace(/\\\\/g, '/'));
+  log.info("Conforming slashes: done", path.replace(/\\/g, '/'));
 
 	return path.replace(/\\/g, '/');
 }
