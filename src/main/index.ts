@@ -64,6 +64,8 @@ async function initMain() {
     for (const filepath of filepaths) {
       const blob = await fs.readFile(filepath);
 
+      log.info("Choose file from filesystem: got files", filepaths, result);
+
       const ext = path.extname(filepath);
       if (Object.keys(FILE_ENCODINGS).indexOf(ext) < 0) {
         log.error("Choosing file from filesystem: unknown file type", ext);
@@ -79,7 +81,7 @@ async function initMain() {
       } else {
         parsedData = blob;
       }
-      filedata[filepath] = {
+      filedata[conformSlashes(filepath)] = {
         encoding,
         value: parsedData,
       } as ObjectData;
@@ -96,3 +98,22 @@ async function initMain() {
 }
 
 initMain();
+
+
+
+
+function conformSlashes(path: string): string {
+	const isExtendedLengthPath = /^\\\\\?\\/.test(path);
+  const hasNonAscii = /[^\u0000-\u0080]+/.test(path); // eslint-disable-line no-control-regex
+  
+  log.info("Conforming slashes", path);
+
+	if (isExtendedLengthPath || hasNonAscii) {
+    log.info("Won’t conform slashes");
+		return path;
+  }
+
+  log.info("Conforming slashes: done", path.replace(/\\\\/g, '/'));
+
+	return path.replace(/\\\\/g, '/');
+}
