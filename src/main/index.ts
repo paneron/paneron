@@ -57,22 +57,25 @@ async function initMain() {
     });
 
     const filepaths = (result.filePaths || []);
-    if (filepaths.length < 1) { return {}; }
+
+    if (filepaths.length < 1 || result.canceled) {
+      return {};
+    }
 
     let filedata: ObjectDataset = {};
 
-    for (const filepath of filepaths) {
-      const blob = await fs.readFile(filepath);
+    for (const _f of filepaths) {
+      const blob = await fs.readFile(_f);
+      const filepath = path.basename(_f);
 
-      log.info("Choose file from filesystem: got files", filepaths, result);
+      log.info("Choose file from filesystem: got file", _f, filepath, result);
 
       const ext = path.extname(filepath);
       if (Object.keys(FILE_ENCODINGS).indexOf(ext) < 0) {
         log.error("Choosing file from filesystem: unknown file type", ext);
         throw new Error("Unknown file type");
       }
-
-      const encoding = FILE_ENCODINGS[path.extname(filepath)];
+      const encoding = FILE_ENCODINGS[ext];
 
       let parsedData: string | Uint8Array;
 
@@ -81,7 +84,7 @@ async function initMain() {
       } else {
         parsedData = blob;
       }
-      filedata[conformSlashes(filepath)] = {
+      filedata[filepath] = {
         encoding,
         value: parsedData,
       } as ObjectData;
