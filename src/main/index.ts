@@ -105,18 +105,18 @@ initMain();
 
 
 
-function conformSlashes(path: string): string {
-	const isExtendedLengthPath = /^\\\\\?\\/.test(path);
-  const hasNonAscii = /[^\u0000-\u0080]+/.test(path); // eslint-disable-line no-control-regex
-  
-  log.info("Conforming slashes", path);
-
-	if (isExtendedLengthPath || hasNonAscii) {
-    log.info("Won’t conform slashes");
-		return path;
-  }
-
-  log.info("Conforming slashes: done", path.replace(/\\/g, '/'));
-
-	return path.replace(/\\/g, '/');
-}
+// function conformSlashes(path: string): string {
+// 	const isExtendedLengthPath = /^\\\\\?\\/.test(path);
+//   const hasNonAscii = /[^\u0000-\u0080]+/.test(path); // eslint-disable-line no-control-regex
+//   
+//   log.info("Conforming slashes", path);
+// 
+// 	if (isExtendedLengthPath || hasNonAscii) {
+//     log.info("Won’t conform slashes");
+// 		return path;
+//   }
+// 
+//   log.info("Conforming slashes: done", path.replace(/\\/g, '/'));
+// 
+// 	return path.replace(/\\/g, '/');
+// }
