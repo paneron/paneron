@@ -92,7 +92,7 @@ commitChanges.main!.handle(async ({ workingCopyPath, commitMessage, changeset, i
       _dangerouslySkipValidation: ignoreConflicts,
     });
   } catch (e) {
-    log.error("Repositories: Failed to change objects", workingCopyPath, changeset, commitMessage, e);
+    log.error("Repositories: Failed to change objects", workingCopyPath, Object.keys(changeset), commitMessage, e);
     throw e;
   }
 
