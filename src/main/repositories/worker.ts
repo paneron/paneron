@@ -639,7 +639,7 @@ function _canBeApplied(changeset: ObjectChangeset, dataset: ObjectDataset, stric
       }
     } else {
       if (existingData.encoding === undefined &&
-          (referenceData.encoding !== undefined || !arrayBuffersAreEqual(existingData.value, referenceData.value))) {
+          (referenceData.encoding !== undefined || !arrayBuffersAreEqual(existingData.value.buffer, referenceData.value.buffer))) {
         // Mismatching binary contents (or reference data encoding is unexpectedly not binary)
         conflicts[path] = true;
       } else if (existingData.encoding !== undefined &&
