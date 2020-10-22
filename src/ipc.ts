@@ -173,7 +173,7 @@ export const makeEndpoint: EndpointMaker = {
                 setUpdating(true);
 
                 try {
-                  log.debug('IPC: Invoking', name, payload);
+                  log.debug("IPC: Invoking", name, payload);
                   const maybeResp: any = await ipcRenderer.invoke(name, payload);
 
                   if (cancelled) { setUpdating(false); return; }
