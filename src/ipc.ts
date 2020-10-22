@@ -213,11 +213,11 @@ export const makeEndpoint: EndpointMaker = {
                 }
               };
 
-              log.debug("IPC: Querying");
+              log.debug("IPC: Querying", name, payloadSnapshot);
               doQuery();
 
               return () => {
-                log.debug('IPC: Cancelling query');
+                log.debug("IPC: Cancelling query", name, payloadSnapshot);
                 cancelled = true;
               }
 
