@@ -155,7 +155,7 @@
     "@blueprintjs/select": "^3.13.3",
     "@emotion/core": "^10.0.35",
     "@emotion/styled": "^10.0.27",
-    "@riboseinc/paneron-extension-kit": "^1.0.0-alpha7",
+    "@riboseinc/paneron-extension-kit": "^1.0.0-alpha8",
     "@riboseinc/paneron-registry-kit": "^1.0.0-alpha10",
     "@riboseinc/reprose": "^1.0.0-alpha9",
     "async-lock": "^1.2.2",

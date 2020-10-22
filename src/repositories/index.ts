@@ -120,7 +120,7 @@ export const listAllObjectPathsWithSyncStatus = makeEndpoint.main(
 
 export const readContents = makeEndpoint.main(
   'readContents',
-  <{ workingCopyPath: string, objects: Record<string, 'utf-8' | undefined> }>_,
+  <{ workingCopyPath: string, objects: Record<string, 'utf-8' | 'binary'> }>_,
   <ObjectDataset>_,
 );
 

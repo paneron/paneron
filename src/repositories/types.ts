@@ -97,7 +97,7 @@ export type RepoStatus = {
 
 
 export interface ObjectDataRequest {
-  [objectPath: string]: 'utf-8' | undefined
+  [objectPath: string]: 'utf-8' | 'binary'
 }
 
 

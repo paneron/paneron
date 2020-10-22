@@ -430,7 +430,7 @@ const methods: WorkerSpec = {
       });
 
       const dataRequest = objectPaths.
-      map(p => ({ [p]: changeset[p].encoding as 'utf-8' })).
+      map(p => ({ [p]: !changeset[p].encoding ? 'binary' : changeset[p].encoding } as ObjectDataRequest)).
       reduce((prev, curr) => ({ ...prev, ...curr }));
 
       let firstCommit = false;
@@ -563,7 +563,7 @@ async function _lockFree_getObjectContents(workDir: string, readObjectContents: 
   reduce((p, c) => ({ ...p, ...c }), {});
 
   async function readContentsAtPath
-  (path: string, textEncoding?: string): Promise<
+  (path: string, textEncoding: 'utf-8' | 'binary'): Promise<
       null
       | { value: string, encoding: string }
       | { value: Uint8Array, encoding: undefined }> {
@@ -582,7 +582,7 @@ async function _lockFree_getObjectContents(workDir: string, readObjectContents: 
         throw e;
       }
     }
-    if (textEncoding === undefined) {
+    if (textEncoding === 'binary') {
       return { value: blob, encoding: undefined };
     } else {
       return { value: new TextDecoder(textEncoding).decode(blob), encoding: textEncoding };
