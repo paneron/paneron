@@ -64,7 +64,7 @@ listObjectPaths.main!.handle(async ({ workingCopyPath, query }) => {
 listAllObjectPathsWithSyncStatus.main!.handle(async ({ workingCopyPath }) => {
   const w = await worker;
   const result = await w.listAllObjectPathsWithSyncStatus({ workDir: workingCopyPath });
-  log.info("Got sync status", JSON.stringify(result));
+  //log.info("Got sync status", JSON.stringify(result));
   return result;
 });
 
