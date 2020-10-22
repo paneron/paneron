@@ -31,6 +31,40 @@ const query = new URLSearchParams(window.location.search);
 const workingCopyPath = (query.get('workingCopyPath') || '').trim();
 
 
+class ErrorBoundary extends React.Component<Record<never, never>, { error?: string }> {
+  constructor(props: any) {
+    super(props);
+    this.state = { error: undefined };
+  }
+  componentDidCatch(error: Error, info: any) {
+    log.error("Error rendering repository view", error, info);
+    this.setState({ error: `${error.name}: ${error.message}` });
+  }
+  render() {
+    log.debug("Rendering error boundary")
+    if (this.state.error !== undefined) {
+      return <NonIdealState
+        icon="heart-broken"
+        title="Ouch"
+        description={
+          <>
+            <p>
+              Error displaying repository.
+            </p>
+            <Callout style={{ textAlign: 'left', transform: 'scale(0.9)' }} title="Technical details">
+              <pre style={{ overflow: 'auto', paddingBottom: '1em' }}>
+                {this.state.error}
+              </pre>
+            </Callout>
+          </>
+        }
+      />;
+    }
+    return this.props.children;
+  }
+}
+
+
 const useObjectsChanged: ObjectsChangedEventHook = (eventCallback, args) => {
   return repositoryContentsChanged.renderer!.useEvent(async (evt) => {
     if (evt.workingCopyPath === workingCopyPath) {
@@ -114,57 +148,57 @@ const repoView: Promise<React.FC<WindowComponentProps>> = new Promise((resolve, 
         <div
             className={Classes.ELEVATION_2}
             css={css`flex: 1; z-index: 2; display: flex; flex-flow: column nowrap; background: ${Colors.LIGHT_GRAY5}; overflow: hidden;`}>
+          <ErrorBoundary>
+            <Component
+              css={css`flex: 1; display: flex; flex-flow: column nowrap; overflow: hidden;`}
+              title={info.title}
 
-          <Component
-            css={css`flex: 1; display: flex; flex-flow: column nowrap; overflow: hidden;`}
-            title={info.title}
+              React={React}
 
-            React={React}
+              // TODO: remote will be obsolete. Unfortunately, calling setTimeout within dynamically resolved extension components will be an illegal invocation.
+              setTimeout={require('electron').remote.getGlobal('setTimeout')}
 
-            // TODO: remote will be obsolete. Unfortunately, calling setTimeout within dynamically resolved extension components will be an illegal invocation.
-            setTimeout={require('electron').remote.getGlobal('setTimeout')}
+              useObjectsChangedEvent={useObjectsChanged}
+              useObjectPaths={useObjectPaths}
+              useObjectSyncStatus={useObjectSyncStatus}
+              useObjectData={useObjectData}
+              useRemoteUsername={useRemoteUsername}
 
-            useObjectsChangedEvent={useObjectsChanged}
-            useObjectPaths={useObjectPaths}
-            useObjectSyncStatus={useObjectSyncStatus}
-            useObjectData={useObjectData}
-            useRemoteUsername={useRemoteUsername}
+              makeAbsolutePath={relativeGitPath => path.join(workingCopyPath, relativeGitPath)}
 
-            makeAbsolutePath={relativeGitPath => path.join(workingCopyPath, relativeGitPath)}
+              requestFileFromFilesystem={async (props) => {
+                const result = await chooseFileFromFilesystem.renderer!.trigger(props);
+                if (result.result) {
+                  return result.result;
+                } else {
+                  log.error("Unable to request file from filesystem", result.errors);
+                  throw new Error("Unable to request file from filesystem");
+                }
+              }}
 
-            requestFileFromFilesystem={async (props) => {
-              const result = await chooseFileFromFilesystem.renderer!.trigger(props);
-              if (result.result) {
-                return result.result;
-              } else {
-                log.error("Unable to request file from filesystem", result.errors);
-                throw new Error("Unable to request file from filesystem");
-              }
-            }}
-
-            makeRandomID={async () => {
-              const id = (await makeRandomID.renderer!.trigger({})).result?.id;
-              if (!id) {
-                throw new Error("Unable to obtain a random ID")
-              }
-              return id;
-            }}
-            changeObjects={async (changeset, commitMessage, ignoreConflicts) => {
-              const result = (await commitChanges.renderer!.trigger({
-                workingCopyPath,
-                changeset,
-                commitMessage,
-                ignoreConflicts: ignoreConflicts || undefined,
-              }));
-              if (result.result) {
-                return result.result;
-              } else {
-                log.error("Unable to change objects", result.errors)
-                throw new Error("Unable to change objects");
-              }
-            }}
-          />
-
+              makeRandomID={async () => {
+                const id = (await makeRandomID.renderer!.trigger({})).result?.id;
+                if (!id) {
+                  throw new Error("Unable to obtain a random ID")
+                }
+                return id;
+              }}
+              changeObjects={async (changeset, commitMessage, ignoreConflicts) => {
+                const result = (await commitChanges.renderer!.trigger({
+                  workingCopyPath,
+                  changeset,
+                  commitMessage,
+                  ignoreConflicts: ignoreConflicts || undefined,
+                }));
+                if (result.result) {
+                  return result.result;
+                } else {
+                  log.error("Unable to change objects", result.errors)
+                  throw new Error("Unable to change objects");
+                }
+              }}
+            />
+          </ErrorBoundary>
         </div>
 
         <Toolbar workingCopyPath={workingCopyPath} structuredRepo={info} />
