@@ -134,6 +134,10 @@
     },
     "snap": {
       "artifactName": "paneron-desktop-${version}.${ext}",
+      "plugs": [
+        "default",
+        "password-manager-service"
+      ],
       "publish": [
         "github"
       ]
