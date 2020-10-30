@@ -2,6 +2,13 @@ import fs from 'fs-extra';
 import { app, BrowserWindow, dialog, protocol } from 'electron';
 import log from 'electron-log';
 
+if (process.platform === 'linux' && process.env.SNAP && process.env.SNAP_USER_COMMON) {
+  app.setPath(
+    'userData',
+    path.join(process.env.SNAP_USER_COMMON, '.config', app.getName()));
+  app.setAppLogsPath();
+}
+
 import { ObjectData, ObjectDataset, repositoryDashboard } from '../repositories';
 
 import 'main/plugins';
@@ -22,13 +29,6 @@ const FILE_ENCODINGS: { [extension: string]: 'utf-8' | undefined } = {
   '.jpeg': undefined,
   '.jpg': undefined,
 };
-
-if (process.platform === 'linux' && process.env.SNAP && process.env.SNAP_USER_COMMON) {
-  app.setPath(
-    'userData',
-    path.join(process.env.SNAP_USER_COMMON, '.config', app.getName()));
-  app.setAppLogsPath();
-}
 
 async function initMain() {
 
