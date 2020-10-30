@@ -340,11 +340,12 @@ const methods: WorkerSpec = {
             },
           });
         } else {
-          repositoryStatus[workDir]?.next({
-            status: 'ready',
-          });
           if (e.code !== 'PushRejectedError') {
             throw e;
+          } else {
+            repositoryStatus[workDir]?.next({
+              status: 'ready',
+            });
           }
         }
       }
