@@ -23,6 +23,13 @@ const FILE_ENCODINGS: { [extension: string]: 'utf-8' | undefined } = {
   '.jpg': undefined,
 };
 
+if (process.platform === 'linux' && process.env.SNAP && process.env.SNAP_USER_COMMON) {
+  app.setPath(
+    'userData',
+    path.join(process.env.SNAP_USER_COMMON, '.config', app.getName()));
+  app.setAppLogsPath();
+}
+
 async function initMain() {
 
   log.catchErrors({ showDialog: true });
