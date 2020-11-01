@@ -50,6 +50,7 @@ listAvailableTypes.main!.handle(async () => {
     types: [
       { title: "Aperis documentation site (beta)", pluginID: 'aperis-site' },
       { title: "Geodetic registry (alpha)", pluginID: 'geodetic-registry' },
+      { title: "Glossarist concept system (dev)", pluginID: 'glossarist' },
     ],
   };
 });
