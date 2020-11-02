@@ -177,6 +177,7 @@
     "react": "^16.11.0",
     "react-cytoscapejs": "^1.2.1",
     "react-dom": "^16.11.0",
+    "react-mathjax2": "^0.0.2",
     "react-transition-group": "^4.3.0",
     "react-visual-diff": "^0.4.3",
     "react-window": "^1.8.5",
