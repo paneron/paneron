@@ -27,6 +27,10 @@ import { WindowComponentProps } from 'window';
 import { chooseFileFromFilesystem } from 'common';
 
 
+const NODE_MODULES_PATH = process.env.NODE_ENV === 'production'
+  ? `${__static}/../../app.asar.unpacked/node_modules`
+  : `${__static}/../../node_modules`;
+
 const query = new URLSearchParams(window.location.search);
 const workingCopyPath = (query.get('workingCopyPath') || '').trim();
 
@@ -173,6 +177,7 @@ const repoView: Promise<React.FC<WindowComponentProps>> = new Promise((resolve, 
               useRemoteUsername={useRemoteUsername}
               useAuthorEmail={useAuthorEmail}
 
+              getRuntimeNodeModulePath={moduleName => path.join(NODE_MODULES_PATH, moduleName)}
 
               makeAbsolutePath={relativeGitPath => path.join(workingCopyPath, relativeGitPath)}
 
