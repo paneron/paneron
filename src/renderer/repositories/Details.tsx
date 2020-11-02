@@ -20,7 +20,7 @@ import {
 import {
   ObjectsChangedEventHook,
   RendererPlugin, RepositoryViewProps,
-  ObjectDataHook, ObjectPathsHook, RemoteUsernameHook, ObjectSyncStatusHook
+  ObjectDataHook, ObjectPathsHook, RemoteUsernameHook, ObjectSyncStatusHook, AuthorEmailHook
 } from '@riboseinc/paneron-extension-kit/types';
 import { getPluginInfo, getPluginManagerProps, installPlugin } from 'plugins';
 import { WindowComponentProps } from 'window';
@@ -126,15 +126,28 @@ const useObjectData: ObjectDataHook = (objects) => {
   return result;
 };
 
+const useRepositoryInfo = () => {
+  return getRepositoryInfo.renderer!.useValue({ workingCopyPath }, { info: { workingCopyPath } });
+}
+
 const useRemoteUsername: RemoteUsernameHook = () => {
-  const repoCfg = getRepositoryInfo.renderer!.useValue({
-    workingCopyPath,
-  }, {
-    info: { workingCopyPath },
-  });
+  const repoCfg = useRepositoryInfo();
   return {
     ...repoCfg,
     value: { username: repoCfg.value.info?.remote?.username || undefined },
+  }
+};
+
+const useAuthorEmail: AuthorEmailHook = () => {
+  const repoCfg = useRepositoryInfo();
+
+  if (!repoCfg.value.info.author?.email) {
+    throw new Error("Misconfigured repository: missing author email");
+  }
+
+  return {
+    ...repoCfg,
+    value: { email: repoCfg.value.info.author?.email },
   }
 };
 
@@ -158,6 +171,8 @@ const repoView: Promise<React.FC<WindowComponentProps>> = new Promise((resolve, 
               useObjectSyncStatus={useObjectSyncStatus}
               useObjectData={useObjectData}
               useRemoteUsername={useRemoteUsername}
+              useAuthorEmail={useAuthorEmail}
+
 
               makeAbsolutePath={relativeGitPath => path.join(workingCopyPath, relativeGitPath)}
 
