@@ -1,6 +1,5 @@
 import path from 'path';
 import fs from 'fs-extra';
-import crypto from 'crypto';
 
 import AsyncLock from 'async-lock';
 import yaml from 'js-yaml';
@@ -21,7 +20,7 @@ import {
   selectWorkingDirectoryContainer, validateNewWorkingDirectoryPath,
   getNewRepoDefaults, listAvailableTypes,
   getRepositoryInfo, savePassword, setRemote,
-  listObjectPaths, readContents, commitChanges, makeRandomID,
+  listObjectPaths, readContents, commitChanges,
   repositoryContentsChanged,
   listAllObjectPathsWithSyncStatus
 } from '../../repositories';
@@ -67,11 +66,6 @@ listAllObjectPathsWithSyncStatus.main!.handle(async ({ workingCopyPath }) => {
   const result = await w.listAllObjectPathsWithSyncStatus({ workDir: workingCopyPath });
   //log.info("Got sync status", JSON.stringify(result));
   return result;
-});
-
-
-makeRandomID.main!.handle(async () => {
-  return { id: crypto.randomBytes(16).toString("hex") };
 });
 
 

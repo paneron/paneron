@@ -12,7 +12,7 @@ import {
   getRepositoryInfo,
   getStructuredRepositoryInfo,
   listAllObjectPathsWithSyncStatus,
-  listObjectPaths, makeRandomID, readContents,
+  listObjectPaths, readContents,
   repositoryContentsChanged,
   repositoryStatusChanged,
   StructuredRepoInfo
@@ -24,7 +24,7 @@ import {
 } from '@riboseinc/paneron-extension-kit/types';
 import { getPluginInfo, getPluginManagerProps, installPlugin } from 'plugins';
 import { WindowComponentProps } from 'window';
-import { chooseFileFromFilesystem } from 'common';
+import { makeRandomID, chooseFileFromFilesystem } from 'common';
 
 
 const NODE_MODULES_PATH = process.env.NODE_ENV === 'production'

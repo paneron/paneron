@@ -1,4 +1,5 @@
 import fs from 'fs-extra';
+import crypto from 'crypto';
 import { app, BrowserWindow, dialog, protocol } from 'electron';
 import log from 'electron-log';
 
@@ -14,7 +15,7 @@ import { ObjectData, ObjectDataset, repositoryDashboard } from '../repositories'
 import 'main/plugins';
 import 'main/repositories';
 
-import { chooseFileFromFilesystem } from 'common';
+import { chooseFileFromFilesystem, makeRandomID } from 'common';
 import path from 'path';
 
 
@@ -49,6 +50,13 @@ async function initMain() {
   protocol.registerFileProtocol('file', (request, callback) => {
     const pathname = decodeURI(request.url.replace('file:///', ''));
     callback(pathname);
+  });
+
+
+  // Shared IPC
+
+  makeRandomID.main!.handle(async () => {
+    return { id: crypto.randomBytes(16).toString("hex") };
   });
 
   chooseFileFromFilesystem.main!.handle(async (opts) => {

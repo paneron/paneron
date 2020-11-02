@@ -124,12 +124,6 @@ export const readContents = makeEndpoint.main(
   <ObjectDataset>_,
 );
 
-export const makeRandomID = makeEndpoint.main(
-  'makeRandomID',
-  <EmptyPayload>_,
-  <{ id: string }>_,
-);
-
 export const commitChanges = makeEndpoint.main(
   'commitChanges',
   <{ workingCopyPath: string, changeset: ObjectChangeset, commitMessage: string, ignoreConflicts?: true }>_,
