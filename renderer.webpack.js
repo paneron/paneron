@@ -1,7 +1,7 @@
 const path = require('path');
 
-module.exports = {
-  resolve: {
-    modules: [path.resolve(__dirname, './src'), 'node_modules']
-  }
+module.exports = function (config) {
+  config.externals = [ ...config.externals, 'react' ];
+  config.resolve.modules = [path.resolve(__dirname, './src'), 'node_modules'];
+  return config;
 }
