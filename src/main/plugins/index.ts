@@ -145,22 +145,26 @@ const worker: Promise<Thread & WorkerMethods> = new Promise((resolve, reject) =>
       pluginConfigPath: PLUGIN_CONFIG_PATH,
     }).
     then(() => {
-      log.debug("Plugins: Initializing worker: Done");
-
       log.debug("Plugins: Installing plugins");
+
       worker.listInstalledPlugins().
       then((plugins) => {
         pluginManager.
         then(manager => {
-          for (const plugin of plugins) {
+          Promise.all(plugins.map(plugin => {
             log.silly("Plugins: Installing in main", plugin.name, plugin.version);
-            manager.install(plugin.name, plugin.version).
-            then(plugin =>
-              manager.require(plugin.name)
-            ).catch(reject);
-          }
-          resolve(worker);
-        }).catch(reject);
+            return (
+              manager.install(plugin.name, plugin.version).
+              then(plugin => { manager.require(plugin.name) }).
+              catch(reject));
+          })).
+          then(() => {
+            log.debug("Plugins: Initializing worker: Done");
+            resolve(worker);
+          }).
+          catch(reject);
+        }).
+        catch(reject);
       }).
       catch(reject);
     }).
