@@ -166,6 +166,7 @@
     "axios": "^0.20.0",
     "cytoscape": "3.16.1",
     "electron-log": "^4.2.2",
+    "emotion": "^10.0.27",
     "fs-extra": "^9.0.1",
     "immutability-helper": "^3.1.1",
     "isomorphic-git": "^1.7.8",
