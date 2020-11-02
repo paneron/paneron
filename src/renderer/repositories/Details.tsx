@@ -153,11 +153,6 @@ const repoView: Promise<React.FC<WindowComponentProps>> = new Promise((resolve, 
               css={css`flex: 1; display: flex; flex-flow: column nowrap; overflow: hidden;`}
               title={info.title}
 
-              React={React}
-
-              // TODO: remote will be obsolete. Unfortunately, calling setTimeout within dynamically resolved extension components will be an illegal invocation.
-              setTimeout={require('electron').remote.getGlobal('setTimeout')}
-
               useObjectsChangedEvent={useObjectsChanged}
               useObjectPaths={useObjectPaths}
               useObjectSyncStatus={useObjectSyncStatus}
