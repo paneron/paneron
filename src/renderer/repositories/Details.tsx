@@ -295,6 +295,8 @@ Promise<{ info: StructuredRepoInfo, Component: React.FC<RepositoryViewProps> }> 
 
   const pluginName = `@riboseinc/paneron-extension-${pluginID}`; // TODO: DRY
 
+  let pluginPath: string | undefined;
+
   // Install plugin in renderer
   try {
     if (process.env.PANERON_PLUGIN_DIR === undefined) {
@@ -305,9 +307,16 @@ Promise<{ info: StructuredRepoInfo, Component: React.FC<RepositoryViewProps> }> 
       await pluginManager.installFromPath(path.join(process.env.PANERON_PLUGIN_DIR, pluginName));
     }
 
+    pluginPath = pluginManager.getInfo(pluginName)?.location;
+
   } catch (e) {
     log.error("Repository view: Error installing plugin", workingCopyPath, pluginName, pluginVersion, e);
     throw new Error("Error loading extension");
+  }
+
+  if (!pluginPath) {
+    log.error("Repository view: Cannot get plugin path");
+    throw new Error("Cannot get extension module file path");
   }
 
   // Require plugin
@@ -316,7 +325,7 @@ Promise<{ info: StructuredRepoInfo, Component: React.FC<RepositoryViewProps> }> 
 
   try {
     log.silly("Repositories: Requiring renderer plugin...", pluginName);
-    const pluginPromise: RendererPlugin = pluginManager.require(pluginName).default;
+    const pluginPromise: RendererPlugin = global.require(path.resolve(`${pluginPath}/plugin`)).default;
     log.silly("Repositories: Awaiting renderer plugin...", pluginPromise);
     const plugin = await pluginPromise;
     log.silly("Repositories: Got renderer plugin", plugin);
