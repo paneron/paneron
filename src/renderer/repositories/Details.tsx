@@ -174,6 +174,7 @@ const repoView: Promise<React.FC<WindowComponentProps>> = new Promise((resolve, 
               useObjectPaths={useObjectPaths}
               useObjectSyncStatus={useObjectSyncStatus}
               useObjectData={useObjectData}
+
               useRemoteUsername={useRemoteUsername}
               useAuthorEmail={useAuthorEmail}
 
@@ -277,6 +278,7 @@ Promise<{ info: StructuredRepoInfo, Component: React.FC<RepositoryViewProps> }> 
     }
 
     structuredRepoInfo = _structuredRepoInfo;
+
     pluginManager = new PluginManager({ cwd, pluginsPath });
     pluginID = _pluginID;
 
