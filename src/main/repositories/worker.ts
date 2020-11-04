@@ -555,6 +555,7 @@ const methods: WorkerSpec = {
 expose(methods);
 
 
+/* Reads object data, optionally at specified Git commit hash. */
 async function _lockFree_getObjectContents(workDir: string, readObjectContents: ObjectDataRequest, atCommitHash?: string): Promise<ObjectDataset> {
   const request = Object.entries(readObjectContents).
   map(([path, enc]) => ({ [stripLeadingSlash(path)]: enc })).
