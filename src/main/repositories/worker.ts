@@ -610,7 +610,7 @@ async function __readGitBlobAt(path: string, commitHash: string, workDir: string
 }
 
 async function __readFileAt
-(p: string, workDir: string): Promise<Uint8Array> {
+(p: string, workDir: string): Promise<Uint8Array | null> {
   let blob: Uint8Array;
   const fullPath = path.join(workDir, p);
   blob = await fs.readFile(fullPath);
