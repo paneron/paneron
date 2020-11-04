@@ -555,35 +555,27 @@ const methods: WorkerSpec = {
 expose(methods);
 
 
-
-async function _lockFree_getObjectContents(workDir: string, readObjectContents: ObjectDataRequest): Promise<ObjectDataset> {
-  const currentCommit = await git.resolveRef({ fs, dir: workDir, ref: 'HEAD' });
-
+async function _lockFree_getObjectContents(workDir: string, readObjectContents: ObjectDataRequest, atCommitHash?: string): Promise<ObjectDataset> {
   const request = Object.entries(readObjectContents).
   map(([path, enc]) => ({ [stripLeadingSlash(path)]: enc })).
   reduce((p, c) => ({ ...p, ...c }), {});
 
-  async function readContentsAtPath
-  (path: string, textEncoding: 'utf-8' | 'binary'): Promise<
-      null
-      | { value: string, encoding: string }
-      | { value: Uint8Array, encoding: undefined }> {
-    let blob: Uint8Array;
-    try {
-      blob = (await git.readBlob({
-        fs,
-        dir: workDir,
-        oid: currentCommit,
-        filepath: path,
-      })).blob;
-    } catch (e) {
-      if (e.code === 'NotFoundError') {
-        return null;
-      } else {
-        throw e;
-      }
+  async function readObject(path: string, textEncoding: 'utf-8' | 'binary'):
+  Promise<
+    null
+    | { value: string, encoding: string }
+    | { value: Uint8Array, encoding: undefined }> {
+
+    let blob: Uint8Array | null;
+    if (atCommitHash) {
+      blob = await __readGitBlobAt(path, atCommitHash, workDir);
+    } else {
+      blob = await __readFileAt(path, workDir);
     }
-    if (textEncoding === 'binary') {
+
+    if (blob === null) {
+      return blob;
+    } else if (textEncoding === 'binary') {
       return { value: blob, encoding: undefined };
     } else {
       return { value: new TextDecoder(textEncoding).decode(blob), encoding: textEncoding };
@@ -592,10 +584,39 @@ async function _lockFree_getObjectContents(workDir: string, readObjectContents: 
 
   return (await Promise.all(Object.entries(request).map(async ([path, textEncoding]) => {
     return {
-      [path]: await readContentsAtPath(path, textEncoding),
+      [path]: await readObject(path, textEncoding),
     };
   }))).reduce((prev, curr) => ({ ...prev, ...curr }), {});
 
+}
+
+
+async function __readGitBlobAt(path: string, commitHash: string, workDir: string): Promise<Uint8Array | null> {
+  let blob: Uint8Array;
+  try {
+    blob = (await git.readBlob({
+      fs,
+      dir: workDir,
+      oid: commitHash,
+      filepath: path,
+    })).blob;
+  } catch (e) {
+    if (e.code === 'NotFoundError') {
+      return null;
+    } else {
+      throw e;
+    }
+  }
+  return blob;
+}
+
+
+async function __readFileAt
+(p: string, workDir: string): Promise<Uint8Array> {
+  let blob: Uint8Array;
+  const fullPath = path.join(workDir, p);
+  blob = await fs.readFile(fullPath);
+  return blob;
 }
 
 
