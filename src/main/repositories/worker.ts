@@ -588,9 +588,7 @@ async function _lockFree_getObjectContents(workDir: string, readObjectContents: 
       [path]: await readObject(path, textEncoding),
     };
   }))).reduce((prev, curr) => ({ ...prev, ...curr }), {});
-
 }
-
 
 async function __readGitBlobAt(path: string, commitHash: string, workDir: string): Promise<Uint8Array | null> {
   let blob: Uint8Array;
@@ -610,7 +608,6 @@ async function __readGitBlobAt(path: string, commitHash: string, workDir: string
   }
   return blob;
 }
-
 
 async function __readFileAt
 (p: string, workDir: string): Promise<Uint8Array> {
