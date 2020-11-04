@@ -611,6 +611,7 @@ async function __readGitBlobAt(path: string, commitHash: string, workDir: string
 
 async function __readFileAt
 (p: string, workDir: string): Promise<Uint8Array | null> {
+  // TODO: Return null if file does not exist
   let blob: Uint8Array;
   const fullPath = path.join(workDir, p);
   blob = await fs.readFile(fullPath);
