@@ -160,7 +160,7 @@
     "@emotion/core": "^10.0.35",
     "@emotion/styled": "^10.0.27",
     "@riboseinc/paneron-extension-kit": "^1.0.0-alpha12",
-    "@riboseinc/paneron-registry-kit": "^1.0.0-alpha14",
+    "@riboseinc/paneron-registry-kit": "^1.0.0-alpha15",
     "@riboseinc/reprose": "^1.0.0-alpha9",
     "async-lock": "^1.2.2",
     "axios": "^0.20.0",
