@@ -1,6 +1,7 @@
 import path from 'path';
 import fs from 'fs-extra';
 
+import axios from 'axios';
 import AsyncLock from 'async-lock';
 import yaml from 'js-yaml';
 import { spawn, Worker, Thread } from 'threads';
@@ -26,6 +27,7 @@ import {
 } from '../../repositories';
 import { Repository, NewRepositoryDefaults, StructuredRepoInfo, RepoStatus, CommitOutcome } from '../../repositories/types';
 import { Methods as WorkerMethods, WorkerSpec } from './worker';
+import { NPM_EXTENSION_PREFIX } from 'plugins';
 
 
 const REPOSITORY_SYNC_INTERVAL_MS = 5000;
@@ -44,13 +46,25 @@ getNewRepoDefaults.main!.handle(async () => {
 });
 
 
+interface NPMEntry {
+  package: { name: string, version: string, description: string } 
+}
+
+
 listAvailableTypes.main!.handle(async () => {
+  const packages = (await axios.get(`https://registry.npmjs.com/-/v1/search?text=${NPM_EXTENSION_PREFIX}`)).data.objects;
+  const availableTypes = packages.
+  filter((entry: NPMEntry) => !entry.package.name.endsWith('extension-kit')).
+  filter((entry: NPMEntry) => entry.package.name.startsWith(NPM_EXTENSION_PREFIX)).
+  map((entry: NPMEntry) => {
+    const name = entry.package.name.replace(NPM_EXTENSION_PREFIX, '');
+    return {
+      title: `${name} (${entry.package.version})`,
+      pluginID: name,
+    }
+  });
   return {
-    types: [
-      { title: "Aperis documentation site (beta)", pluginID: 'aperis-site' },
-      { title: "Geodetic registry (alpha)", pluginID: 'geodetic-registry' },
-      { title: "Glossarist concept system (dev)", pluginID: 'glossarist' },
-    ],
+    types: availableTypes,
   };
 });
 

@@ -7,7 +7,7 @@ import path from 'path';
 import { PluginManager } from 'live-plugin-manager';
 
 import { spawn, Worker, Thread } from 'threads';
-import { getPluginInfo, getPluginManagerProps, installPlugin, pluginsUpdated, upgradePlugin } from 'plugins';
+import { getPluginInfo, getPluginManagerProps, installPlugin, NPM_EXTENSION_PREFIX, pluginsUpdated, upgradePlugin } from 'plugins';
 import { Methods as WorkerMethods, WorkerSpec } from './worker';
 
 
@@ -74,7 +74,7 @@ getPluginManagerProps.main!.handle(async () => {
 
 
 function getNPMNameForPlugin(pluginID: string): string {
-  return `@riboseinc/paneron-extension-${pluginID}`;
+  return `${NPM_EXTENSION_PREFIX}${pluginID}`;
 }
 
 
