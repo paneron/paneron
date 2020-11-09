@@ -13,13 +13,13 @@ import { PluginInfo } from 'plugins/types';
 
 
 interface InstalledPlugins {
-  [pluginName: string]: {
-    installedVersion: string
-  }
+  [pluginName: string]: PluginInfo
 }
 
 interface PluginConfigData {
-  installedPlugins: InstalledPlugins
+  installedPlugins: {
+    [pluginName: string]: Pick<PluginInfo, 'installedVersion'>
+  }
 }
 
 //let plugins: InstalledPlugins = {}
@@ -29,6 +29,8 @@ let manager: PluginManager | null = null;
 let configPath: string | null = null;
 
 const pluginLock = new AsyncLock();
+
+const installedPlugins: InstalledPlugins = {};
 
 
 export interface Methods {
@@ -104,7 +106,7 @@ const methods: WorkerSpec = {
 
     configPath = pluginConfigPath;
 
-    let plugins: InstalledPlugins;
+    let plugins: PluginConfigData["installedPlugins"]
     try {
       plugins = (await readConfig()).installedPlugins;
     } catch (e) {
@@ -123,11 +125,12 @@ const methods: WorkerSpec = {
   },
 
   async getInfo({ name, doOnlineCheck }) {
-    let info: PluginInfo = { id: name, title: name };
 
-    info.installedVersion = (await readConfig()).installedPlugins[name]?.installedVersion;
+    if (!installedPlugins[name] || !installedPlugins[name].latestVersion) {
+      let info: PluginInfo = { id: name, title: name };
 
-    if (doOnlineCheck) {
+      info.installedVersion = (await readConfig()).installedPlugins[name]?.installedVersion;
+
       try {
         const npmInfo = await manager!.queryPackageFromNpm(name);
         info.latestVersion = npmInfo.version;
@@ -140,14 +143,21 @@ const methods: WorkerSpec = {
           throw e;
         }
       }
+
+      installedPlugins[name] = info;
     }
 
-    return info;
+    return installedPlugins[name];
   },
 
   async remove({ name }) {
     await pluginLock.acquire('1', async () => {
       assertInitialized();
+
+      if (installedPlugins[name]) {
+        delete installedPlugins[name];
+      }
+
       (await manager!.uninstall(name));
 
       await updateConfig((data) => {
