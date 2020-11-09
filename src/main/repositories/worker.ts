@@ -4,6 +4,7 @@
 
 // TODO: Make electron-log work somehow
 
+import { debounce } from 'throttle-debounce';
 import { expose } from 'threads/worker';
 import { Observable, Subject } from 'threads/observable';
 import { ModuleMethods } from 'threads/dist/types/master';
@@ -12,7 +13,7 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as AsyncLock from 'async-lock';
 
-import git, { WalkerEntry } from 'isomorphic-git';
+import git from 'isomorphic-git';
 import http from 'isomorphic-git/http/node';
 
 import {
@@ -33,6 +34,16 @@ import {
   ObjectData,
   FileChangeType
 } from '../../repositories/types';
+
+import {
+  clone,
+  lockFree_getObjectContents,
+  getObjectPathsChangedBetweenCommits,
+  makeChanges,
+  pull,
+  push,
+  stripLeadingSlash,
+} from './git-methods';
 
 
 const gitLock = new AsyncLock({ timeout: 12000, maxPending: 1000 });
@@ -80,8 +91,42 @@ export type WorkerSpec = ModuleMethods & Methods;
 
 
 let repositoryStatus: {
-  [workingCopyPath: string]: Subject<RepoStatus>
+  [workingCopyPath: string]: {
+    statusSubject: Subject<RepoStatus>
+    latestStatus: RepoStatus
+  }
 } = {};
+
+function initRepoStatus(workDir: string) {
+  const defaultStatus: RepoStatus = {
+    status: 'ready',
+  };
+  repositoryStatus[workDir] = {
+    statusSubject: new Subject<RepoStatus>(),
+    latestStatus: defaultStatus,
+  };
+  repositoryStatus[workDir].statusSubject.next(defaultStatus);
+}
+
+function getRepoStatusUpdater(workDir: string) {
+  if (!repositoryStatus[workDir]) {
+    initRepoStatus(workDir);
+  }
+  function updater(newStatus: RepoStatus) {
+    repositoryStatus[workDir].statusSubject.next(newStatus);
+  }
+  const updaterDebounced = debounce(100, updater);
+  return (newStatus: RepoStatus) => {
+    repositoryStatus[workDir].latestStatus = newStatus;
+
+    if (newStatus.busy && repositoryStatus[workDir]?.latestStatus?.busy) {
+      return updaterDebounced(newStatus);
+    } else {
+      updaterDebounced.cancel();
+      return updater(newStatus);
+    }
+  };
+}
 
 
 /* Returns true if given path does not exist. */
@@ -101,19 +146,14 @@ async function pathIsTaken(path: string): Promise<boolean> {
 const methods: WorkerSpec = {
 
   async destroyWorker() {
-    for (const subject of Object.values(repositoryStatus)) {
-      subject.complete();
+    for (const { statusSubject } of Object.values(repositoryStatus)) {
+      statusSubject.complete();
     }
   },
 
   streamStatus(msg) {
-    if (!repositoryStatus[msg.workDir]) {
-      repositoryStatus[msg.workDir] = new Subject();
-      repositoryStatus[msg.workDir].next({
-        status: 'ready',
-      });
-    }
-    return Observable.from(repositoryStatus[msg.workDir]);
+    initRepoStatus(msg.workDir);
+    return Observable.from(repositoryStatus[msg.workDir].statusSubject);
   },
 
   async delete(msg) {
@@ -171,184 +211,27 @@ const methods: WorkerSpec = {
         throw new Error("Cannot clone into an already existing directory");
       }
       await fs.ensureDir(msg.workDir);
-
-      try {
-        await git.clone({
-          url: `${msg.repoURL}.git`,
-          // ^^ .git suffix is required here:
-          // https://github.com/isomorphic-git/isomorphic-git/issues/1145#issuecomment-653819147
-          // TODO: Support non-GitHub repositories by removing force-adding this suffix here,
-          // and provide migration instructions for Coulomb-based apps that work with GitHub.
-          http,
-          fs,
-          dir: msg.workDir,
-          ref: 'master',
-          singleBranch: true,
-          depth: 5,
-          onAuth: () => msg.auth,
-          onAuthFailure: () => {
-            repositoryStatus[msg.workDir]?.next({
-              busy: {
-                operation: 'cloning',
-                awaitingPassword: true,
-              },
-            });
-            return { cancel: true };
-          },
-          onProgress: (progress) => {
-            repositoryStatus[msg.workDir]?.next({
-              busy: {
-                operation: 'cloning',
-                progress,
-              },
-            });
-          },
-        });
-        repositoryStatus[msg.workDir]?.next({
-          status: 'ready',
-        });
-      } catch (e) {
-        //log.error(`C/db/isogit/worker: Error cloning repository`, e);
-        if (e.code !== 'UserCanceledError') {
-          repositoryStatus[msg.workDir]?.next({
-            busy: {
-              operation: 'cloning',
-              networkError: true,
-            },
-          });
-        }
-        // Clean up failed clone
-        fs.removeSync(msg.workDir);
-        throw e;
-      }
+      await clone(msg, getRepoStatusUpdater(msg.workDir));
     });
     return { success: true };
   },
 
-  async pull({ workDir, repoURL, auth, author, _presumeCanceledErrorMeansAwaitingAuth }) {
+  async pull(msg) {
+    const { workDir } = msg;
+
     const changedObjects:
     Record<string, Exclude<FileChangeType, "unchanged">> | null =
     await gitLock.acquire(workDir, async () => {
 
-      const oidBeforePull = await git.resolveRef({ fs, dir: workDir, ref: 'HEAD' });
-
-      try {
-        await git.pull({
-          http,
-          fs,
-          dir: workDir,
-          url: `${repoURL}.git`,
-          singleBranch: true,
-          fastForwardOnly: true,
-          author: author,
-          onAuth: () => auth,
-          onAuthFailure: () => {
-            repositoryStatus[workDir]?.next({
-              busy: {
-                operation: 'pulling',
-                awaitingPassword: true,
-              },
-            });
-            return { cancel: true };
-          },
-          onProgress: (progress) => {
-            repositoryStatus[workDir]?.next({
-              busy: {
-                operation: 'pulling',
-                progress,
-              },
-            });
-          },
-        });
-        repositoryStatus[workDir]?.next({
-          status: 'ready',
-        });
-      } catch (e) {
-        //log.error(`C/db/isogit/worker: Error pulling from repository`, e);
-        const suppress: boolean =
-          (e.code === 'UserCanceledError' && _presumeCanceledErrorMeansAwaitingAuth === true);
-        if (!suppress) {
-          repositoryStatus[workDir]?.next({
-            busy: {
-              operation: 'pulling',
-              networkError: true,
-            },
-          });
-        }
-        throw e;
-      }
-
-      const oidAfterPull = await git.resolveRef({ fs, dir: workDir, ref: 'HEAD' });
-
-      if (oidAfterPull !== oidBeforePull) {
-        try {
-          const changeStatus = await getObjectPathsChangedBetweenCommits(oidBeforePull, oidAfterPull, workDir);
-          return changeStatus as Record<string, Exclude<FileChangeType, "unchanged">>;
-        } catch (e) {
-          return null;
-        }
-      } else {
-        return {};
-      }
+      return await pull(msg, getRepoStatusUpdater(workDir));
 
     });
     return { success: true, changedObjects };
   },
 
-  async push({ workDir, repoURL, auth,
-      _presumeRejectedPushMeansNothingToPush,
-      _presumeCanceledErrorMeansAwaitingAuth }) {
-    await gitLock.acquire(workDir, async () => {
-      try {
-        await git.push({
-          http,
-          fs,
-          dir: workDir,
-          url: `${repoURL}.git`,
-          onAuth: () => auth,
-          onAuthFailure: () => {
-            repositoryStatus[workDir]?.next({
-              busy: {
-                operation: 'pushing',
-                awaitingPassword: true,
-              },
-            });
-            return { cancel: true };
-          },
-          onProgress: (progress) => {
-            repositoryStatus[workDir]?.next({
-              busy: {
-                operation: 'pushing',
-                progress,
-              },
-            });
-          },
-        });
-        repositoryStatus[workDir]?.next({
-          status: 'ready',
-        });
-      } catch (e) {
-        //log.error(`C/db/isogit/worker: Error pushing to repository`, e);
-        const suppress: boolean =
-          (e.code === 'UserCanceledError' && _presumeCanceledErrorMeansAwaitingAuth === true) ||
-          (e.code === 'PushRejectedError' && _presumeRejectedPushMeansNothingToPush === true);
-        if (!suppress) {
-          repositoryStatus[workDir]?.next({
-            busy: {
-              operation: 'pushing',
-              networkError: true,
-            },
-          });
-        } else {
-          if (e.code !== 'PushRejectedError') {
-            throw e;
-          } else {
-            repositoryStatus[workDir]?.next({
-              status: 'ready',
-            });
-          }
-        }
-      }
+  async push(msg) {
+    await gitLock.acquire(msg.workDir, async () => {
+      return await push(msg, getRepoStatusUpdater(msg.workDir));
     });
     return { success: true };
   },
@@ -363,7 +246,7 @@ const methods: WorkerSpec = {
   },
 
   async getObjectContents({ workDir, readObjectContents }) {
-    return await _lockFree_getObjectContents(workDir, readObjectContents);
+    return await lockFree_getObjectContents(workDir, readObjectContents);
   },
 
   async listObjectPaths({ workDir, query }) {
@@ -401,7 +284,10 @@ const methods: WorkerSpec = {
       { returnUnchanged: true });
   },
 
-  async changeObjects({ workDir, writeObjectContents, author, commitMessage, _dangerouslySkipValidation }) {
+  async changeObjects(msg) {
+    const { workDir, writeObjectContents, author, commitMessage, _dangerouslySkipValidation } = msg;
+
+    const onNewStatus = getRepoStatusUpdater(workDir);
 
     // Isomorphic Git doesn’t like leading slashes in filepath parameter
     // TODO: Should probably catch inconsistent use of slashes earlier and fail loudly?
@@ -424,7 +310,7 @@ const methods: WorkerSpec = {
     }
 
     const result: CommitOutcome = await gitLock.acquire(workDir, async () => {
-      repositoryStatus[workDir]?.next({
+      onNewStatus({
         busy: {
           operation: 'committing',
         },
@@ -446,19 +332,19 @@ const methods: WorkerSpec = {
           throw e;
         }
       } finally {
-        repositoryStatus[workDir]?.next({
+        onNewStatus({
           status: 'ready',
         });
       }
       let conflicts: Record<string, true>;
       if (!firstCommit) {
         try {
-          const oldData = await _lockFree_getObjectContents(workDir, dataRequest);
-          conflicts = _canBeApplied(changeset, oldData, !_dangerouslySkipValidation);
+          const oldData = await lockFree_getObjectContents(workDir, dataRequest);
+          conflicts = canBeApplied(changeset, oldData, !_dangerouslySkipValidation);
         } catch (e) {
           throw e;
         } finally {
-          repositoryStatus[workDir]?.next({
+          onNewStatus({
             status: 'ready',
           });
         }
@@ -470,80 +356,9 @@ const methods: WorkerSpec = {
       }
 
       // Write objects
-      try {
-        await Promise.all(objectPaths.map(async (objectPath) => {
-          const absolutePath = path.join(workDir, objectPath);
-          const { newValue, encoding } = changeset[objectPath];
-          await fs.ensureFile(absolutePath);
-
-          if (newValue === null) {
-            fs.removeSync(absolutePath);
-          } else {
-            if (encoding !== undefined) {
-              await fs.writeFile(absolutePath, newValue, { encoding });
-            } else {
-              await fs.writeFile(absolutePath, Buffer.from(newValue));
-            }
-          }
-        }));
-
-        // TODO: Make sure checkout in catch() block resets staged files as well!
-        for (const [path, contents] of Object.entries(changeset)) {
-          const { newValue } = contents;
-          if (newValue !== null) {
-            await git.add({
-              fs,
-              dir: workDir,
-              filepath: path,
-            });
-          } else {
-            await git.remove({
-              fs,
-              dir: workDir,
-              filepath: path,
-            });
-          }
-        }
-
-        // Check if we can do this
-        await git.commit({
-          dryRun: true,
-          fs,
-          dir: workDir,
-          message: commitMessage,
-          author,
-        });
-
-      } catch (e) {
-        // Undo changes by resetting to HEAD
-        // TODO: We could do this at the very end for reliability,
-        // if we take note of previous commit and force reset to it (?)
-        await git.checkout({
-          fs,
-          dir: workDir,
-          force: true,
-          filepaths: objectPaths,
-        });
-        repositoryStatus[workDir]?.next({
-          status: 'ready',
-        });
-        throw e;
-      }
-
-      // Make a commit and pray it doesn’t fail
-      let newCommitHash: string;
-      try {
-        newCommitHash = await git.commit({
-          fs,
-          dir: workDir,
-          message: commitMessage,
-          author,
-        });
-      } finally {
-        repositoryStatus[workDir]?.next({
-          status: 'ready',
-        });
-      }
+      const newCommitHash: string = await makeChanges(
+        { ...msg, writeObjectContents: changeset },
+        getRepoStatusUpdater(msg.workDir));
       return { newCommitHash, conflicts };
     });
 
@@ -555,80 +370,8 @@ const methods: WorkerSpec = {
 expose(methods);
 
 
-/* Reads object data, optionally at specified Git commit hash. */
-async function _lockFree_getObjectContents(workDir: string, readObjectContents: ObjectDataRequest, atCommitHash?: string): Promise<ObjectDataset> {
-  const request = Object.entries(readObjectContents).
-  map(([path, enc]) => ({ [stripLeadingSlash(path)]: enc })).
-  reduce((p, c) => ({ ...p, ...c }), {});
-
-  async function readObject(path: string, textEncoding: 'utf-8' | 'binary'):
-  Promise<
-    null
-    | { value: string, encoding: string }
-    | { value: Uint8Array, encoding: undefined }> {
-
-    let blob: Uint8Array | null;
-    if (atCommitHash) {
-      blob = await __readGitBlobAt(path, atCommitHash, workDir);
-    } else {
-      blob = await __readFileAt(path, workDir);
-    }
-
-    if (blob === null) {
-      return blob;
-    } else if (textEncoding === 'binary') {
-      return { value: blob, encoding: undefined };
-    } else {
-      return { value: new TextDecoder(textEncoding).decode(blob), encoding: textEncoding };
-    }
-  }
-
-  return (await Promise.all(Object.entries(request).map(async ([path, textEncoding]) => {
-    return {
-      [path]: await readObject(path, textEncoding),
-    };
-  }))).reduce((prev, curr) => ({ ...prev, ...curr }), {});
-}
-
-async function __readGitBlobAt(path: string, commitHash: string, workDir: string): Promise<Uint8Array | null> {
-  let blob: Uint8Array;
-  try {
-    blob = (await git.readBlob({
-      fs,
-      dir: workDir,
-      oid: commitHash,
-      filepath: path,
-    })).blob;
-  } catch (e) {
-    if (e.code === 'NotFoundError') {
-      return null;
-    } else {
-      throw e;
-    }
-  }
-  return blob;
-}
-
-async function __readFileAt
-(p: string, workDir: string): Promise<Uint8Array | null> {
-  // TODO: Return null if file does not exist
-  let blob: Uint8Array;
-  const fullPath = path.join(workDir, p);
-  try {
-    blob = await fs.readFile(fullPath);
-  } catch (e) {
-    if (e.code === 'ENOENT') {
-      return null;
-    } else {
-      throw e;
-    }
-  }
-  return blob;
-}
-
-
 /* Returns an object where keys are object paths that have conflicts and values are “true”. */
-function _canBeApplied(changeset: ObjectChangeset, dataset: ObjectDataset, strict = true): Record<string, true> {
+export function canBeApplied(changeset: ObjectChangeset, dataset: ObjectDataset, strict = true): Record<string, true> {
   const dPaths = new Set(Object.keys(dataset));
   const cPaths = new Set(Object.keys(changeset));
 
@@ -668,7 +411,7 @@ function _canBeApplied(changeset: ObjectChangeset, dataset: ObjectDataset, stric
       }
     } else {
       if (existingData.encoding === undefined &&
-          (referenceData.encoding !== undefined || !arrayBuffersAreEqual(existingData.value.buffer, referenceData.value.buffer))) {
+          (referenceData.encoding !== undefined || !_arrayBuffersAreEqual(existingData.value.buffer, referenceData.value.buffer))) {
         // Mismatching binary contents (or reference data encoding is unexpectedly not binary)
         conflicts[path] = true;
       } else if (existingData.encoding !== undefined &&
@@ -682,78 +425,14 @@ function _canBeApplied(changeset: ObjectChangeset, dataset: ObjectDataset, stric
   return conflicts;
 }
 
-function arrayBuffersAreEqual(a: ArrayBuffer, b: ArrayBuffer) {
-  return dataViewsAreEqual(new DataView(a), new DataView(b));
+function _arrayBuffersAreEqual(a: ArrayBuffer, b: ArrayBuffer) {
+  return _dataViewsAreEqual(new DataView(a), new DataView(b));
 }
 
-
-function dataViewsAreEqual(a: DataView, b: DataView) {
+function _dataViewsAreEqual(a: DataView, b: DataView) {
   if (a.byteLength !== b.byteLength) return false;
   for (let i=0; i < a.byteLength; i++) {
     if (a.getUint8(i) !== b.getUint8(i)) return false;
   }
   return true;
-}
-
-
-/* Given two commits, returns a big flat object of paths and their change status.
-   Unelss opts.returnUnchanged is true, returned change status cannot be "unchnaged". */
-async function getObjectPathsChangedBetweenCommits
-(oid1: string, oid2: string, workDir: string, opts?: { returnUnchanged?: boolean }):
-Promise<Record<string, FileChangeType>> {
-  return git.walk({
-    fs,
-    dir: workDir,
-    trees: [git.TREE({ ref: oid1 }), git.TREE({ ref: oid2 })],
-    reduce: async function (parent, children) {
-      const reduced = {
-        ...(parent || {}),
-        ...((children || []).reduce((p, c) => ({ ...p, ...c }), {})),
-      };
-      return reduced;
-    },
-    map: async function (filepath, walkerEntry) {
-      if (walkerEntry === null) {
-        return;
-      }
-      if (filepath === '.') {
-        return;
-      }
-
-      const [A, B] = walkerEntry as (WalkerEntry | null)[];
-
-      if ((await A?.type()) === 'tree' || (await B?.type()) === 'tree') {
-        return;
-      }
-
-      const Aoid = await A?.oid();
-      const Boid = await B?.oid();
-
-      let type: FileChangeType;
-      if (Aoid === Boid) {
-        if (Aoid === undefined && Boid === undefined) {
-          // Well this would be super unexpected!
-        }
-        // Object at this path did not change.
-        if (opts?.returnUnchanged) {
-          type = 'unchanged';
-        } else {
-          return;
-        }
-      } else if (Aoid === undefined) {
-        type = 'added';
-      } else if (Boid === undefined) {
-        type = 'removed';
-      } else {
-        type = 'modified';
-      }
-
-      return { [`/${filepath}`]: type };
-    },
-  });
-}
-
-
-function stripLeadingSlash(fp: string): string {
-  return fp.replace(/^\//, '');
 }
