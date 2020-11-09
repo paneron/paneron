@@ -614,7 +614,15 @@ async function __readFileAt
   // TODO: Return null if file does not exist
   let blob: Uint8Array;
   const fullPath = path.join(workDir, p);
-  blob = await fs.readFile(fullPath);
+  try {
+    blob = await fs.readFile(fullPath);
+  } catch (e) {
+    if (e.code === 'ENOENT') {
+      return null;
+    } else {
+      throw e;
+    }
+  }
   return blob;
 }
 
