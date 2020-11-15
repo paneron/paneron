@@ -33,6 +33,8 @@ import { NPM_EXTENSION_PREFIX } from 'plugins';
 const REPOSITORY_SYNC_INTERVAL_MS = 5000;
 const REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS = 15000;
 
+const devPlugin = app.isPackaged === false ? process.env.PANERON_DEV_PLUGIN : undefined;
+
 
 getDefaultWorkingDirectoryContainer.main!.handle(async () => {
   const _path = path.join(app.getPath('userData'), 'working_copies');
@@ -63,8 +65,11 @@ listAvailableTypes.main!.handle(async () => {
       pluginID: name,
     }
   });
+  const _devPlugin = devPlugin
+    ? [{ title: devPlugin, pluginID: devPlugin }]
+    : [];
   return {
-    types: availableTypes,
+    types: [ ...availableTypes, ..._devPlugin],
   };
 });
 

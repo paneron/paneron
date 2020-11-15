@@ -13,6 +13,8 @@ import { Methods as WorkerMethods, WorkerSpec } from './worker';
 
 const devFolder = app.isPackaged === false ? process.env.PANERON_PLUGIN_DIR : undefined;
 
+const devPlugin = app.isPackaged === false ? process.env.PANERON_DEV_PLUGIN : undefined;
+
 
 if (devFolder) {
   log.warn("Using development plugin folder", devFolder);
@@ -59,8 +61,17 @@ getPluginInfo.main!.handle(async ({ id }) => {
   try {
     return await (await worker).getInfo({ name, doOnlineCheck: devFolder === undefined });
   } catch (e) {
-    log.error("Cannot fetch plugin info", e, e.code, e.name, e.message);
-    throw e;
+    if (id === devPlugin) {
+      return {
+        id,
+        title: id,
+        installedVersion: 'dev',
+        latestVersion: 'dev',
+      };
+    } else {
+      log.error("Cannot fetch plugin info", e, e.code, e.name, e.message);
+      throw e;
+    }
   }
 });
 

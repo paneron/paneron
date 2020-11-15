@@ -4,6 +4,7 @@
 import path from 'path';
 import log from 'electron-log';
 import { css, jsx } from '@emotion/core';
+import { remote } from 'electron';
 import React from 'react';
 import { PluginManager } from 'live-plugin-manager';
 import { Button, Callout, Classes, Colors, Navbar, NonIdealState, /*NonIdealState, Spinner,*/ Tag, UL } from '@blueprintjs/core';
@@ -30,6 +31,9 @@ import { makeRandomID, chooseFileFromFilesystem } from 'common';
 const NODE_MODULES_PATH = process.env.NODE_ENV === 'production'
   ? `${__static}/../../app.asar.unpacked/node_modules`
   : `${__static}/../../node_modules`;
+
+const PLUGINS_PATH = path.join(remote.app.getPath('userData'), 'plugins');
+
 
 const query = new URLSearchParams(window.location.search);
 const workingCopyPath = (query.get('workingCopyPath') || '').trim();
@@ -316,12 +320,13 @@ Promise<{ info: StructuredRepoInfo, Component: React.FC<RepositoryViewProps> }> 
 
   // Install plugin in renderer
   try {
-    if (process.env.PANERON_PLUGIN_DIR === undefined) {
+    if (process.env.PANERON_DEV_PLUGIN === undefined) {
       log.silly("Repository view: Installing plugin for renderer...", workingCopyPath, pluginName, pluginVersion);
       await pluginManager.installFromNpm(pluginName, pluginVersion);
     } else {
-      log.silly("Repository view: (DEV) Installing plugin for renderer...", path.join(process.env.PANERON_PLUGIN_DIR, pluginName));
-      await pluginManager.installFromPath(path.join(process.env.PANERON_PLUGIN_DIR, pluginName));
+      const pluginPath = path.join(PLUGINS_PATH, '@riboseinc', `paneron-extension-${process.env.PANERON_DEV_PLUGIN}`);
+      log.silly("Repository view: (DEV) Installing plugin for renderer...", pluginPath);
+      await pluginManager.installFromPath(pluginPath);
     }
 
     // pluginPath = pluginManager.getInfo(pluginName)?.location;
