@@ -125,11 +125,15 @@ const methods: WorkerSpec = {
   },
 
   async getInfo({ name, doOnlineCheck }) {
+    const installedVersion = (await readConfig()).installedPlugins[name]?.installedVersion;
+    const runtimePluginInfoCache = installedPlugins[name];
+    const doRefreshCache = (
+      runtimePluginInfoCache?.latestVersion === undefined ||
+      runtimePluginInfoCache?.installedVersion !== installedVersion);
 
-    if (!installedPlugins[name] || !installedPlugins[name].latestVersion) {
-      let info: PluginInfo = { id: name, title: name };
-
-      info.installedVersion = (await readConfig()).installedPlugins[name]?.installedVersion;
+    if (doRefreshCache) {
+      const info: PluginInfo = { id: name, title: name };
+      info.installedVersion = installedVersion;
 
       try {
         const npmInfo = await manager!.queryPackageFromNpm(name);
