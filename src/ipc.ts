@@ -166,7 +166,7 @@ export const makeEndpoint: EndpointMaker = {
             const [reqCounter, updateReqCounter] = useState(0);
             const payloadSnapshot = JSON.stringify(
               payload || {},
-              (k, v) => (v === undefined) ? '__undefined' : v).replace(/\"__undefined\"/g, 'undefined');
+              (_, v) => (v === undefined) ? '__undefined' : v).replace(/\"__undefined\"/g, 'undefined');
 
             useEffect(() => {
               let cancelled = false;
