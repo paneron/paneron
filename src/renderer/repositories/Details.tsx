@@ -20,7 +20,7 @@ import {
 } from 'repositories';
 import {
   ObjectsChangedEventHook,
-  RendererPlugin, RepositoryViewProps,
+  RendererPlugin, ExtensionContext,
   ObjectDataHook, ObjectPathsHook, RemoteUsernameHook, ObjectSyncStatusHook, AuthorEmailHook
 } from '@riboseinc/paneron-extension-kit/types';
 import { getPluginInfo, getPluginManagerProps, installPlugin } from 'plugins';
@@ -82,6 +82,7 @@ const useObjectsChanged: ObjectsChangedEventHook = (eventCallback, args) => {
 };
 
 const useObjectPaths: ObjectPathsHook = (query) => {
+  console.debug("Using object paths", query)
   const result = listObjectPaths.renderer!.useValue({
     workingCopyPath,
     query,
@@ -159,10 +160,59 @@ const useAuthorEmail: AuthorEmailHook = () => {
   }
 };
 
+const requestFileFromFilesystem: ExtensionContext["requestFileFromFilesystem"] = async (props) => {
+  const result = await chooseFileFromFilesystem.renderer!.trigger(props);
+  if (result.result) {
+    return result.result;
+  } else {
+    log.error("Unable to request file from filesystem", result.errors);
+    throw new Error("Unable to request file from filesystem");
+  }
+}
+
+const _makeRandomID: ExtensionContext["makeRandomID"] = async () => {
+  const id = (await makeRandomID.renderer!.trigger({})).result?.id;
+  if (!id) {
+    throw new Error("Unable to obtain a random ID")
+  }
+  return id;
+}
+
+const changeObjects: ExtensionContext["changeObjects"] = async (changeset, commitMessage, ignoreConflicts) => {
+  const result = (await commitChanges.renderer!.trigger({
+    workingCopyPath,
+    changeset,
+    commitMessage,
+    ignoreConflicts: ignoreConflicts || undefined,
+  }));
+  if (result.result) {
+    return result.result;
+  } else {
+    log.error("Unable to change objects", result.errors)
+    throw new Error("Unable to change objects");
+  }
+}
+
 
 const repoView: Promise<React.FC<WindowComponentProps>> = new Promise((resolve, reject) => {
 
   getRepoInfo(workingCopyPath).then(({ info, Component }) => {
+    const extensionContext: ExtensionContext = {
+      title: info.title,
+      useObjectsChangedEvent: useObjectsChanged,
+      useObjectPaths,
+      useObjectSyncStatus,
+      useObjectData,
+      useRemoteUsername,
+      useAuthorEmail,
+
+      getRuntimeNodeModulePath: moduleName => path.join(NODE_MODULES_PATH, moduleName),
+      makeAbsolutePath: relativeGitPath => path.join(workingCopyPath, relativeGitPath),
+
+      requestFileFromFilesystem,
+      makeRandomID: _makeRandomID,
+      changeObjects,
+    };
 
     const thing = (
       <div css={css`flex: 1; display: flex; flex-flow: column nowrap; overflow: hidden;`}>
@@ -172,56 +222,12 @@ const repoView: Promise<React.FC<WindowComponentProps>> = new Promise((resolve, 
           <ErrorBoundary>
             <Component
               css={css`flex: 1; display: flex; flex-flow: column nowrap; overflow: hidden;`}
-              title={info.title}
-
-              useObjectsChangedEvent={useObjectsChanged}
-              useObjectPaths={useObjectPaths}
-              useObjectSyncStatus={useObjectSyncStatus}
-              useObjectData={useObjectData}
-
-              useRemoteUsername={useRemoteUsername}
-              useAuthorEmail={useAuthorEmail}
-
-              getRuntimeNodeModulePath={moduleName => path.join(NODE_MODULES_PATH, moduleName)}
-
-              makeAbsolutePath={relativeGitPath => path.join(workingCopyPath, relativeGitPath)}
-
-              requestFileFromFilesystem={async (props) => {
-                const result = await chooseFileFromFilesystem.renderer!.trigger(props);
-                if (result.result) {
-                  return result.result;
-                } else {
-                  log.error("Unable to request file from filesystem", result.errors);
-                  throw new Error("Unable to request file from filesystem");
-                }
-              }}
-
-              makeRandomID={async () => {
-                const id = (await makeRandomID.renderer!.trigger({})).result?.id;
-                if (!id) {
-                  throw new Error("Unable to obtain a random ID")
-                }
-                return id;
-              }}
-              changeObjects={async (changeset, commitMessage, ignoreConflicts) => {
-                const result = (await commitChanges.renderer!.trigger({
-                  workingCopyPath,
-                  changeset,
-                  commitMessage,
-                  ignoreConflicts: ignoreConflicts || undefined,
-                }));
-                if (result.result) {
-                  return result.result;
-                } else {
-                  log.error("Unable to change objects", result.errors)
-                  throw new Error("Unable to change objects");
-                }
-              }}
+              {...extensionContext}
             />
           </ErrorBoundary>
         </div>
 
-        <Toolbar workingCopyPath={workingCopyPath} structuredRepo={info} />
+        <Toolbar structuredRepo={info} />
       </div>
     );
 
@@ -246,7 +252,7 @@ const repoView: Promise<React.FC<WindowComponentProps>> = new Promise((resolve, 
 
 
 async function getRepoInfo(workingCopyPath: string):
-Promise<{ info: StructuredRepoInfo, Component: React.FC<RepositoryViewProps> }> {
+Promise<{ info: StructuredRepoInfo, Component: React.FC<ExtensionContext> }> {
 
   if (workingCopyPath === '') {
     throw new Error("Invalid repository working copy path");
@@ -343,7 +349,7 @@ Promise<{ info: StructuredRepoInfo, Component: React.FC<RepositoryViewProps> }> 
 
   // Require plugin
 
-  let RepoView: React.FC<RepositoryViewProps>;
+  let RepoView: React.FC<ExtensionContext>;
 
   try {
     log.silly("Repositories: Requiring renderer plugin...", pluginName);
@@ -376,8 +382,8 @@ export default repoView;
 // const InvalidView = () => <NonIdealState title="Invalid plugin" />;
 
 
-const Toolbar: React.FC<{ workingCopyPath: string, structuredRepo: StructuredRepoInfo }> =
-function ({ workingCopyPath, structuredRepo }) {
+const Toolbar: React.FC<{ structuredRepo: StructuredRepoInfo }> =
+function ({ structuredRepo }) {
   return (
     <Navbar css={css`background: ${Colors.LIGHT_GRAY2}; height: 35px;`}>
       <Navbar.Group css={css`height: 35px`}>
