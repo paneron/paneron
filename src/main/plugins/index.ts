@@ -69,7 +69,7 @@ getPluginInfo.main!.handle(async ({ id }) => {
         latestVersion: 'dev',
       };
     } else {
-      log.error("Cannot fetch plugin info", e, e.code, e.name, e.message);
+      log.error("Cannot fetch plugin info", name, e, e.code, e.name, e.message);
       throw e;
     }
   }
