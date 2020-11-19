@@ -164,15 +164,15 @@ const worker: Promise<Thread & WorkerMethods> = new Promise((resolve, reject) =>
         then(manager => {
           Promise.all(plugins.map(plugin => {
             log.silly("Plugins: Installing in main", plugin.name, plugin.version);
-            return new Promise((_, reject) => (
+            return new Promise((resolve, reject) => (
               manager.install(plugin.name, plugin.version).
               then(plugin => {
                 try {
                   manager.require(plugin.name);
-                  return;
+                  resolve(true);
                 } catch (e) {
                   log.error("Plugins: Failed to require plugin during init; removing plugin", e)
-                  return worker.remove({ name: plugin.name });
+                  worker.remove({ name: plugin.name }).then(resolve).catch(reject);
                 }
               }).
               catch(reject)));
