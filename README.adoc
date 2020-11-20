@@ -56,6 +56,7 @@ It is recommended to check build logs for each platform
 (look for “publishing” in Build/release step) to make sure all artifacts were indeed uploaded.
 +
 If, for example, version in package.json during push did not match the draft release you want to publish,
-then CI will silently skip attaching updated build artifacts to the draft.
-. Change release status from to published.
+then CI will silently skip attaching updated build artifacts to the draft, and version released
+. Perform QA/tests against artifacts attached to the draft.
+. If QA/tests succeeded, change release status from draft to published.
 . Repeat from the top.
