@@ -50,13 +50,13 @@ When starting the work on a new version:
 
 After your final push, when you think this version is ready:
 
-. Make sure *all artifacts attached to the release were updated during CI run from final pre-release push*.
+. Wait until CI run completes, and artifacts for each platform are attached to release draft.
 +
-It is recommended to check build logs for each platform
-(look for “publishing” in Build/release step) to make sure all artifacts were indeed uploaded.
+You may check build logs for each platform, looking for “publishing” in Build/release step,
+to make sure all artifacts were indeed uploaded at the end.
 +
 If, for example, version in package.json during push did not match the draft release you want to publish,
-then CI will silently skip attaching updated build artifacts to the draft, and version released
-. Perform QA/tests against artifacts attached to the draft.
+then CI will silently skip attaching updated build artifacts to the draft, and binaries attached to the draft will be outdated.
+. Perform QA/tests against artifacts attached to the draft. (Make sure that the artifacts attached are of correct versions, there are no regressions, and features work as intended.)
 . If QA/tests succeeded, change release status from draft to published.
 . Repeat from the top.
