@@ -50,7 +50,7 @@ When starting the work on a new version:
 
 After your final push, when you think this version is ready:
 
-. Make sure *all artifacts attached to the release are updated* by final push’s CI run.
+. Make sure *all artifacts attached to the release are updated during CI run from final pre-release push*.
 +
 If, say, Apple notarization servers are down or a build failed for a transient reason, then after this run
 the release will have latest binaries for Linux and Windows, but macOS binary will be left over from the previous build.
