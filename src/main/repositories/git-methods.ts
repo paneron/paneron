@@ -35,7 +35,7 @@ export async function clone(opts: CloneRequestMessage, updateStatus: StatusUpdat
       dir: opts.workDir,
       ref: 'master',
       singleBranch: true,
-      depth: 5,
+      depth: 1,
       onAuth: () => opts.auth,
       onAuthFailure: () => {
         updateStatus({
