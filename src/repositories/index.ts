@@ -97,6 +97,12 @@ export const setRemote = makeEndpoint.main(
   <{ success: true }>_,
 );
 
+export const unsetRemote = makeEndpoint.main(
+  'unsetRemote',
+  <{ workingCopyPath: string }>_,
+  <{ success: true }>_,
+);
+
 export const deleteRepository = makeEndpoint.main(
   'deleteRepository',
   <{ workingCopyPath: string }>_,
