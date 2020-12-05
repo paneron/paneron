@@ -25,7 +25,7 @@ type StatusUpdater = (newStatus: RepoStatus) => void;
 export async function clone(opts: CloneRequestMessage, updateStatus: StatusUpdater) {
   try {
     await git.clone({
-      url: `${opts.repoURL}.git`,
+      url: normalizeURL(opts.repoURL),
       // ^^ .git suffix is required here:
       // https://github.com/isomorphic-git/isomorphic-git/issues/1145#issuecomment-653819147
       // TODO: Support non-GitHub repositories by removing force-adding this suffix here,
@@ -166,7 +166,6 @@ export async function makeChanges(opts: CommitRequestMessage, updateStatus: Stat
 
 export async function push(opts: PushRequestMessage, updateStatus: StatusUpdater) {
   const {
-    repoURL,
     workDir,
     auth,
     _presumeCanceledErrorMeansAwaitingAuth,
@@ -178,7 +177,7 @@ export async function push(opts: PushRequestMessage, updateStatus: StatusUpdater
       http,
       fs,
       dir: workDir,
-      url: `${repoURL}.git`,
+      url: normalizeURL(opts.repoURL),
       onAuth: () => auth,
       onAuthFailure: () => {
         updateStatus({
@@ -428,4 +427,16 @@ Promise<Record<string, FileChangeType>> {
 
 export function stripLeadingSlash(fp: string): string {
   return fp.replace(/^\//, '');
+}
+
+function stripTrailingSlash(somePath: string): string {
+  return somePath.replace(/\/$/, '');
+}
+
+export function normalizeURL(repoURL: string): string {
+  const slashNormalized = stripTrailingSlash(repoURL);
+  const suffixNormalized = slashNormalized.endsWith('.git')
+    ? slashNormalized
+    : `${slashNormalized}.git`;
+  return suffixNormalized;
 }
