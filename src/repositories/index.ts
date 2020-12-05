@@ -103,6 +103,12 @@ export const unsetRemote = makeEndpoint.main(
   <{ success: true }>_,
 );
 
+export const setAuthorInfo = makeEndpoint.main(
+  'setAuthorInfo',
+  <{ workingCopyPath: string, author: GitAuthor }>_,
+  <{ success: true }>_,
+);
+
 export const deleteRepository = makeEndpoint.main(
   'deleteRepository',
   <{ workingCopyPath: string }>_,
