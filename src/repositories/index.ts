@@ -51,7 +51,6 @@ export const getDefaultWorkingDirectoryContainer = makeEndpoint.main(
   <{ path: string }>_,
 );
 
-
 export const selectWorkingDirectoryContainer = makeEndpoint.main(
   'selectWorkingDirectoryContainer',
   <{ _default: string }>_,
