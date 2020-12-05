@@ -66,6 +66,12 @@ export const listRepositories = makeEndpoint.main(
   <{ objects: Repository[] }>_,
 );
 
+export const listPaneronRepositories = makeEndpoint.main(
+  'listPaneronRepositories',
+  <{ workingCopyPaths: string[] }>_,
+  <{ objects: { [workingCopyPath: string]: PaneronRepository | null } }>_,
+);
+
 export const getRepositoryStatus = makeEndpoint.main(
   'getRepositoryStatus',
   <{ workingCopyPath: string }>_,
