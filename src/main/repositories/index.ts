@@ -23,7 +23,8 @@ import {
   getRepositoryInfo, savePassword, setRemote,
   listObjectPaths, readContents, commitChanges,
   repositoryContentsChanged,
-  listAllObjectPathsWithSyncStatus
+  listAllObjectPathsWithSyncStatus,
+  setAuthorInfo,
 } from '../../repositories';
 import { Repository, NewRepositoryDefaults, StructuredRepoInfo, RepoStatus, CommitOutcome } from '../../repositories/types';
 import { Methods as WorkerMethods, WorkerSpec } from './worker';
@@ -343,6 +344,28 @@ getStructuredRepositoryInfo.main!.handle(async ({ workingCopyPath }) => {
   } else {
     return { info: yaml.load(meta.value) };
   }
+});
+
+
+setAuthorInfo.main!.handle(async ({ workingCopyPath, author }) => {
+  await updateRepositories((data) => {
+    const existingConfig = data.workingCopies?.[workingCopyPath];
+    if (existingConfig) {
+      return {
+        ...data,
+        workingCopies: {
+          ...data.workingCopies,
+          [workingCopyPath]: {
+            author,
+          },
+        }
+      };
+    } else {
+      throw new Error("Cannot edit author info for nonexistent working copy configuration");
+    }
+  });
+
+  return { success: true };
 });
 
 
