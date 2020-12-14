@@ -235,7 +235,7 @@ export async function pull(opts: PullRequestMessage, updateStatus: StatusUpdater
       http,
       fs,
       dir: opts.workDir,
-      url: `${opts.repoURL}.git`,
+      url: normalizeURL(opts.repoURL),
       singleBranch: true,
       fastForwardOnly: true,
       author: opts.author,
