@@ -17,6 +17,11 @@ import {
   RepoStatus,
 } from 'repositories/types';
 
+import getDecoder from './decoders';
+
+
+const UTF_DECODER = getDecoder('utf-8');
+
 
 type StatusUpdater = (newStatus: RepoStatus) => void;
 
@@ -317,7 +322,7 @@ Promise<ObjectDataset> {
     } else if (textEncoding === 'binary') {
       return { value: blob, encoding: undefined };
     } else {
-      return { value: new TextDecoder(textEncoding).decode(blob), encoding: textEncoding };
+      return { value: UTF_DECODER.decode(blob), encoding: textEncoding };
     }
   }
 
