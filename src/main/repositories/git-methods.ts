@@ -28,8 +28,7 @@ export async function clone(opts: CloneRequestMessage, updateStatus: StatusUpdat
       url: normalizeURL(opts.repoURL),
       // ^^ .git suffix is required here:
       // https://github.com/isomorphic-git/isomorphic-git/issues/1145#issuecomment-653819147
-      // TODO: Support non-GitHub repositories by removing force-adding this suffix here,
-      // and provide migration instructions for Coulomb-based apps that work with GitHub.
+      // TODO: Support non-GitHub repositories by removing force-adding this suffix in normalizeURL?
       http,
       fs,
       dir: opts.workDir,
