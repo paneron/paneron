@@ -6,12 +6,11 @@ import * as fs from 'fs-extra';
 import git, { WalkerEntry } from 'isomorphic-git';
 import http from 'isomorphic-git/http/node';
 
-import { FileChangeType } from '@riboseinc/paneron-extension-kit/types';
+import { FileChangeType, ObjectDataRequest } from '@riboseinc/paneron-extension-kit/types';
 
 import {
   CloneRequestMessage,
   CommitRequestMessage,
-  ObjectDataRequest,
   ObjectDataset,
   PullRequestMessage,
   PushRequestMessage,
