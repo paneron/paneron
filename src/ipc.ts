@@ -11,6 +11,9 @@ let endpointsRegistered: { [key in Exclude<typeof process.type, 'worker'>]: stri
 };
 
 
+const LOG_PAYLOAD_SLICE: number = 256;
+
+
 // This will be the main export.
 type EndpointMaker = {
   main: <I extends Payload, O extends Payload>(name: string, _: I, __: O) => MainEndpoint<I, O>
@@ -168,6 +171,8 @@ export const makeEndpoint: EndpointMaker = {
               payload || {},
               (_, v) => (v === undefined) ? '__undefined' : v).replace(/\"__undefined\"/g, 'undefined');
 
+            const payloadSliceToLog = payloadSnapshot.slice(0, LOG_PAYLOAD_SLICE);
+
             useEffect(() => {
               let cancelled = false;
 
@@ -175,7 +180,7 @@ export const makeEndpoint: EndpointMaker = {
                 setUpdating(true);
 
                 try {
-                  log.debug("IPC: Invoking", name, payload);
+                  log.debug("IPC: Invoking", name, payloadSliceToLog);
                   const maybeResp: any = await ipcRenderer.invoke(name, payload);
 
                   if (cancelled) { setUpdating(false); return; }
@@ -206,7 +211,7 @@ export const makeEndpoint: EndpointMaker = {
                   }
 
                 } catch (e) {
-                  log.error("IPC: Failed to invoke method", name, payloadSnapshot, e);
+                  log.error("IPC: Failed to invoke method", name, payloadSliceToLog, e);
                   updateErrors([e]);
                   updateValue(initialValue);
 
@@ -215,11 +220,11 @@ export const makeEndpoint: EndpointMaker = {
                 }
               };
 
-              log.debug("IPC: Querying", name, payloadSnapshot);
+              log.debug("IPC: Querying", name, payloadSliceToLog);
               doQuery();
 
               return () => {
-                log.debug("IPC: Cancelling query", name, payloadSnapshot);
+                log.debug("IPC: Cancelling query", name, payloadSliceToLog);
                 cancelled = true;
               }
 
