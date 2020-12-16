@@ -1,5 +1,5 @@
 export type { ObjectData, ObjectDataset, ObjectChange, ObjectChangeset } from '@riboseinc/paneron-extension-kit/types';
-import type { ObjectChangeset } from '@riboseinc/paneron-extension-kit/types';
+import type { ObjectChangeset, ObjectDataRequest } from '@riboseinc/paneron-extension-kit/types';
 
 
 export type FileChangeType = 'modified' | 'added' | 'removed' | 'unchanged';
@@ -7,15 +7,15 @@ export type FileChangeType = 'modified' | 'added' | 'removed' | 'unchanged';
 
 // Repository info
 
-export interface StructuredRepoInfo {
-  title: string
-  pluginID: string
-}
-
-export interface RepositoryType {
-  title: string
-  pluginID: string
-}
+export type PaneronRepository = {
+  title?: string
+} & ({
+  datasets: { [path: string]: true }
+  dataset?: undefined
+} | {
+  datasets?: undefined
+  dataset: true
+})
 
 export interface Repository {
   workingCopyPath: string
@@ -23,9 +23,10 @@ export interface Repository {
   author?: GitAuthor
 }
 
-interface GitRemote {
+export interface GitRemote {
   username: string
   url: string
+  writeAccess?: true
 }
 
 
@@ -96,16 +97,13 @@ export type RepoStatus = {
 }
 
 
-export interface ObjectDataRequest {
-  [objectPath: string]: 'utf-8' | 'binary'
-}
+// A map of object path and true
+export type Conflicts = Record<string, true>;
 
 
 export interface CommitOutcome {
   newCommitHash?: string
-  conflicts?: {
-    [objectPath: string]: true
-  }
+  conflicts?: Conflicts
 }
 
 
@@ -161,6 +159,10 @@ export interface PushRequestMessage extends RemoteGitOperationParams {
 
 export interface FetchRequestMessage extends RemoteGitOperationParams {}
 
+export interface ObjectDataRequestMessage extends GitOperationParams {
+  readObjectContents: ObjectDataRequest
+}
+
 export interface CommitRequestMessage extends AuthoringGitOperationParams {
   writeObjectContents: ObjectChangeset
   commitMessage: string
@@ -169,10 +171,6 @@ export interface CommitRequestMessage extends AuthoringGitOperationParams {
 
 export interface DeleteRequestMessage extends GitOperationParams {
   yesReallyDestroyLocalWorkingCopy: true
-}
-
-export interface ObjectDataRequestMessage extends GitOperationParams {
-  readObjectContents: ObjectDataRequest
 }
 
 // export type ObjectRequester<Encoding extends string | undefined> =

@@ -10,20 +10,26 @@ import React, { useState } from 'react';
 
 import {
   InputGroup,
-  FormGroup, ControlGroup, Button, HTMLSelect
+  FormGroup,
+  ControlGroup,
 } from '@blueprintjs/core';
 
 import {
   createRepository,
   selectWorkingDirectoryContainer,
   getDefaultWorkingDirectoryContainer,
-  validateNewWorkingDirectoryPath, listAvailableTypes, getNewRepoDefaults
+  validateNewWorkingDirectoryPath,
+  getNewRepoDefaults,
 } from 'repositories';
+
+import { forceSlug } from 'utils';
+
+import { Button } from '../widgets';
 
 
 const StartNewRepoForm: React.FC<{ onCreate: () => void }> = function ({ onCreate }) {
-  const [selectedRepoType, selectRepoType] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
+  const [title, setTitle] = useState<string | null>(null);
   const [workingDirectory, setWorkingDirectory] = useState<string | null>(null);
 
   const [customAuthorName, setAuthorName] = useState('');
@@ -32,9 +38,6 @@ const StartNewRepoForm: React.FC<{ onCreate: () => void }> = function ({ onCreat
   const [busy, setBusy] = useState(false);
 
   const defaults = getNewRepoDefaults.renderer!.useValue({}, {});
-
-  const newRepoTypes = listAvailableTypes.renderer!.useValue({}, { types: [] }).value.types;
-  const pluginID = selectedRepoType || newRepoTypes[0]?.pluginID || null;
 
   const defaultWorkingDirectoryContainer =
     getDefaultWorkingDirectoryContainer.renderer!.useValue({}, { path: '' });
@@ -55,7 +58,7 @@ const StartNewRepoForm: React.FC<{ onCreate: () => void }> = function ({ onCreat
     (authorEmail || '').trim() !== '' &&
     (name || '').trim() !== '' &&
     (workDir || '').trim() !== '' &&
-    pluginID &&
+    (title || '').trim() !== '' &&
     workingCopyPathIsAvailable;
 
   const author = {
@@ -77,13 +80,13 @@ const StartNewRepoForm: React.FC<{ onCreate: () => void }> = function ({ onCreat
   }
 
   async function create() {
-    if (!busy && workingCopyPath && author && pluginID && workingCopyPathIsAvailable) {
+    if (!busy && workingCopyPath && author && title && workingCopyPathIsAvailable) {
       setBusy(true);
       try {
         await createRepository.renderer!.trigger({
           workingCopyPath,
           author,
-          pluginID,
+          title: title.trim(),
         });
         onCreate();
       } catch (e) {
@@ -96,38 +99,35 @@ const StartNewRepoForm: React.FC<{ onCreate: () => void }> = function ({ onCreat
 
   return (
     <>
-      <FormGroup label="Type of repository:">
-        <ControlGroup>
-          <HTMLSelect
-            options={newRepoTypes.map(type => ({ label: type.title, value: type.pluginID }))}
-            onChange={(evt) => {
-              selectRepoType(evt.currentTarget.value);
-            }}
-            value={pluginID || undefined} />
-        </ControlGroup>
-      </FormGroup>
-
-      <FormGroup
-          label="Machine-readable identifier:"
-          helperText="Give your repository a name. This cannot contain spaces or special non-Latin characters.">
+      <FormGroup label="Title:">
         <InputGroup
-          value={name || ''}
+          value={title || ''}
           required
           onChange={(evt: React.FormEvent<HTMLInputElement>) =>
-            setName(evt.currentTarget.value.
-              toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, ''))
+            setTitle(evt.currentTarget.value)
           } />
       </FormGroup>
 
       <FormGroup
-          label="Working copy location:"
-          helperText={<>Your repository’s working copy folder will be created <em>inside</em> this folder.</>}>
+          label="Machine-readable identifier:"
+          helperText="This cannot contain spaces or special non-Latin characters.">
+        <InputGroup
+          value={name || ''}
+          required
+          onChange={(evt: React.FormEvent<HTMLInputElement>) =>
+            setName(forceSlug(evt.currentTarget.value))
+          } />
+      </FormGroup>
+
+      <FormGroup
+          label="Working directory location:"
+          helperText={<>Your repository’s working directory will be created <em>inside</em> this folder.</>}>
         <ControlGroup>
           <InputGroup fill readOnly value={workDir || ''} />
           <Button
             disabled={busy || workDir.trim() === ''}
             onClick={selectWorkingDirectory}
-            title="Change working copy location"
+            title="Select another working directory location"
             icon="folder-open" />
         </ControlGroup>
       </FormGroup>

@@ -4,16 +4,18 @@
 
 // TODO: Make electron-log work somehow
 
-import { debounce } from 'throttle-debounce';
 import { expose } from 'threads/worker';
 import { Observable, Subject } from 'threads/observable';
 import { ModuleMethods } from 'threads/dist/types/master';
 
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import * as AsyncLock from 'async-lock';
 
-import git from 'isomorphic-git';
+import * as AsyncLock from 'async-lock';
+import * as globby from 'globby';
+import { throttle } from 'throttle-debounce';
+
+import git, { ServerRef } from 'isomorphic-git';
 import http from 'isomorphic-git/http/node';
 
 import {
@@ -29,10 +31,10 @@ import {
   ObjectDataset,
   GitAuthentication,
   CommitOutcome,
-  ObjectDataRequest,
   ObjectChangeset,
   ObjectData,
-  FileChangeType
+  FileChangeType,
+  AuthoringGitOperationParams
 } from '../../repositories/types';
 
 import {
@@ -43,10 +45,12 @@ import {
   pull,
   push,
   stripLeadingSlash,
+  normalizeURL,
 } from './git-methods';
+import { ObjectDataRequest } from '@riboseinc/paneron-extension-kit/types';
 
 
-const gitLock = new AsyncLock({ timeout: 12000, maxPending: 1000 });
+const gitLock = new AsyncLock({ timeout: 60000, maxPending: 100 });
 
 
 // TODO: Split methods into sub-modules?
@@ -61,10 +65,10 @@ export interface Methods {
 
   workingCopyIsValid: (msg: { workDir: string }) => Promise<boolean>
 
-  /* Checks that remote is valid to start sharing. */
-  remoteIsValid: (msg: { url: string, auth: GitAuthentication }) => Promise<boolean>
+  queryRemote: (msg: { url: string, auth: GitAuthentication }) => Promise<{ isBlank: boolean, canPush: boolean }>
 
   addOrigin: (msg: { workDir: string, url: string }) => Promise<{ success: true }>
+  deleteOrigin: (msg: { workDir: string }) => Promise<{ success: true }>
 
   init: (msg: InitRequestMessage) => Promise<{ success: true }>
   clone: (msg: CloneRequestMessage) => Promise<{ success: true }>
@@ -75,16 +79,26 @@ export interface Methods {
   push: (msg: PushRequestMessage) => Promise<{ success: true }>
   delete: (msg: DeleteRequestMessage) => Promise<{ success: true }>
 
+  deleteTree: (msg: AuthoringGitOperationParams & { treeRoot: string, commitMessage: string }) => Promise<CommitOutcome>
+
   changeObjects: (msg: CommitRequestMessage) => Promise<CommitOutcome>
   getObjectContents: (msg: ObjectDataRequestMessage) => Promise<ObjectDataset>
 
   /* Non-recursively lists files and directories under given prefix, optionally checking for substring. */
   listObjectPaths: (msg: { workDir: string, query: { pathPrefix: string, contentSubstring?: string } }) => Promise<string[]>
 
-  /* Recursively lists files under given path prefix.
-     Returns { path: status } as one big flat object.
-     NOTE: paths are relative to repo root and have leading slashes. */
+  /* Recursively lists files, and checks sync status against latest remote commit (if available).
+     Returns { path: sync status } as one big flat object.
+     NOTE: Paths are relative to repo root and have leading slashes. */
   listAllObjectPathsWithSyncStatus: (msg: { workDir: string }) => Promise<Record<string, FileChangeType>>
+
+  /* Recursively lists files. Returns paths as one big flat list.
+     NOTE: Paths are relative to repo root and have leading slashes. */
+  listAllObjectPaths: (msg: { workDir: string }) => Promise<string[]>
+
+  // These are not supposed to be commonly used.
+  _resetUncommittedChanges: (msg: { workDir: string, pathSpec?: string }) => Promise<{ success: true }>
+  _commitAnyOutstandingChanges: (msg: AuthoringGitOperationParams & { commitMessage: string }) => Promise<{ newCommitHash: string }>
 }
 
 export type WorkerSpec = ModuleMethods & Methods;
@@ -115,7 +129,7 @@ function getRepoStatusUpdater(workDir: string) {
   function updater(newStatus: RepoStatus) {
     repositoryStatus[workDir].statusSubject.next(newStatus);
   }
-  const updaterDebounced = debounce(100, updater);
+  const updaterDebounced = throttle(100, updater);
   return (newStatus: RepoStatus) => {
     repositoryStatus[workDir].latestStatus = newStatus;
 
@@ -157,10 +171,12 @@ const methods: WorkerSpec = {
   },
 
   async delete(msg) {
-    await gitLock.acquire(msg.workDir, async () => {
+    if (gitLock.isBusy(msg.workDir)) {
+      throw new Error("Lock is busy");
+    } else {
       fs.remove(msg.workDir);
-    });
-    return { success: true };
+      return { success: true };
+    }
   },
 
   async init(msg) {
@@ -184,15 +200,39 @@ const methods: WorkerSpec = {
     return { success: true };
   },
 
-  async remoteIsValid({ url, auth }) {
-    const refs = await git.listServerRefs({
-      http,
-      url: `${url}.git`,
-      forPush: true,
-      onAuth: () => auth,
-      onAuthFailure: () => ({ cancel: true }),
-    });
-    return refs.length === 0;
+  async queryRemote({ url, auth }) {
+    const normalizedURL = normalizeURL(url);
+
+    let canPush: boolean;
+    let refs: ServerRef[];
+
+    try {
+      refs = await git.listServerRefs({
+        http,
+        url: normalizedURL,
+        forPush: true,
+        onAuth: () => auth,
+        onAuthFailure: () => ({ cancel: true }),
+      });
+      canPush = true;
+
+    } catch (e) {
+      refs = await git.listServerRefs({
+        http,
+        url: normalizedURL,
+        forPush: false,
+        onAuth: () => auth,
+        onAuthFailure: () => ({ cancel: true }),
+      });
+      canPush = false;
+    }
+
+    const isBlank = refs.length === 0;
+
+    return {
+      isBlank,
+      canPush,
+    }
   },
 
   async addOrigin({ workDir, url }) {
@@ -200,12 +240,24 @@ const methods: WorkerSpec = {
       fs,
       dir: workDir,
       remote: 'origin',
-      url: `${url}.git`,
+      url: normalizeURL(url),
+    });
+    return { success: true };
+  },
+
+  async deleteOrigin({ workDir }) {
+    await git.deleteRemote({
+      fs,
+      dir: workDir,
+      remote: 'origin',
     });
     return { success: true };
   },
 
   async clone(msg) {
+    if (gitLock.isBusy(msg.workDir)) {
+      throw new Error("Lock is busy");
+    }
     await gitLock.acquire(msg.workDir, async () => {
       if (await pathIsTaken(msg.workDir)) {
         throw new Error("Cannot clone into an already existing directory");
@@ -282,6 +334,107 @@ const methods: WorkerSpec = {
       latestCommit,
       workDir,
       { returnUnchanged: true });
+  },
+
+  async listAllObjectPaths({ workDir }) {
+    const latestCommit = await git.resolveRef({ fs, dir: workDir, ref: 'HEAD' });
+    return Object.entries(await getObjectPathsChangedBetweenCommits(
+      latestCommit,
+      latestCommit,
+      workDir,
+      { returnUnchanged: true })).
+    filter(([_, status]) => status !== 'removed').
+    map(([path, _]) => path);
+  },
+
+  async deleteTree({ workDir, treeRoot, commitMessage, author }) {
+    return await gitLock.acquire(workDir, async () => {
+
+      // This will throw in case something is off
+      // and workDir is not a Git repository.
+      await git.resolveRef({ fs, dir: workDir, ref: 'HEAD' });
+
+      try {
+        const fullPath = path.join(workDir, treeRoot);
+
+        await fs.remove(fullPath);
+
+        const WORKDIR = 2, FILE = 0;
+        const deletedPaths = (await git.statusMatrix({ fs, dir: workDir })).
+          filter(row => row[WORKDIR] === 0).
+          filter(row => row[FILE].startsWith(`${treeRoot}/`)).
+          map(row => row[FILE]);
+
+        for (const dp of deletedPaths) {
+          await git.remove({ fs, dir: workDir, filepath: dp });
+        }
+      } catch (e) {
+        await git.checkout({
+          fs,
+          dir: workDir,
+          force: true,
+          filepaths: [treeRoot],
+        });
+        throw e;
+      }
+
+      const newCommitHash = await git.commit({
+        fs,
+        dir: workDir,
+        message: commitMessage,
+        author: author,
+      });
+
+      return { newCommitHash };
+    });
+  },
+
+  async _resetUncommittedChanges({ workDir, pathSpec }) {
+    await gitLock.acquire(workDir, async () => {
+      await git.checkout({
+        fs,
+        dir: workDir,
+        force: true,
+        filepaths: pathSpec ? [pathSpec] : undefined,
+      });
+    });
+    return { success: true };
+  },
+
+  // WARNING: Adds everything inside given working directory, then commits.
+  async _commitAnyOutstandingChanges({ workDir, commitMessage, author }) {
+    const repo = { fs, dir: workDir };
+
+    // Add any modified or unstaged files (git add --no-all)
+    const modifiedOrUntrackedPaths: string[] =
+    await globby(['./**', './**/.*'], {
+      gitignore: true,
+      cwd: workDir,
+    });
+    for (const filepath of modifiedOrUntrackedPaths) {
+      await git.add({ ...repo, filepath });
+    }
+
+    // Delete deleted files (git add -A)
+    const removedPaths: string[] =
+    await git.statusMatrix(repo).then((status) =>
+      status.
+        filter(([_1, _2, worktreeStatus]) => worktreeStatus < 1).
+        map(([filepath, _1, _2]) => filepath)
+    );
+    for (const filepath of removedPaths) {
+      await git.remove({ ...repo, filepath });
+    }
+
+    // Commit staged
+    const newCommitHash = await git.commit({
+      fs,
+      dir: workDir,
+      message: commitMessage,
+      author,
+    });
+
+    return { newCommitHash };
   },
 
   async changeObjects(msg) {

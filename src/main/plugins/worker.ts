@@ -9,16 +9,16 @@ import AsyncLock from 'async-lock';
 
 import { IPluginInfo, PluginManager } from 'live-plugin-manager';
 
-import { PluginInfo } from 'plugins/types';
+import { InstalledPluginInfo } from 'plugins/types';
 
 
 interface InstalledPlugins {
-  [pluginName: string]: PluginInfo
+  [pluginName: string]: InstalledPluginInfo
 }
 
 interface PluginConfigData {
   installedPlugins: {
-    [pluginName: string]: Pick<PluginInfo, 'installedVersion'>
+    [pluginName: string]: Pick<InstalledPluginInfo, 'installedVersion'>
   }
 }
 
@@ -50,7 +50,9 @@ export interface Methods {
   _installDev: (msg: { name: string, fromPath: string }) => Promise<{ installedVersion: string }>
 
   /* Returns information about a plugin, either installed or from NPM */
-  getInfo: (msg: { name: string, doOnlineCheck?: boolean }) => Promise<PluginInfo>
+  //getInfo: (msg: { name: string, doOnlineCheck?: boolean }) => Promise<InstalledPluginInfo>
+
+  getInstalledVersion: (msg: { name: string }) => Promise<{ installedVersion: string | null }>
 
   listInstalledPlugins: () => Promise<IPluginInfo[]>
 }
@@ -116,7 +118,7 @@ const methods: WorkerSpec = {
     }
 
     for (const [name, info] of Object.entries(plugins)) {
-      await manager.installFromNpm(name, info.installedVersion);
+      await manager.installFromNpm(name, info.installedVersion || undefined);
     }
   },
 
@@ -124,35 +126,39 @@ const methods: WorkerSpec = {
     return await manager!.list();
   },
 
-  async getInfo({ name, doOnlineCheck }) {
-    const installedVersion = (await readConfig()).installedPlugins[name]?.installedVersion;
-    const runtimePluginInfoCache = installedPlugins[name];
-    const doRefreshCache = (
-      runtimePluginInfoCache?.latestVersion === undefined ||
-      runtimePluginInfoCache?.installedVersion !== installedVersion);
-
-    if (doRefreshCache) {
-      const info: PluginInfo = { id: name, title: name };
-      info.installedVersion = installedVersion;
-
-      try {
-        const npmInfo = await manager!.queryPackageFromNpm(name);
-        info.latestVersion = npmInfo.version;
-      } catch (e) {
-        // If latest version failed to be fetched but there is a version already installed,
-        // suppress the error and just report latest version as undefined.
-        if (info.installedVersion) {
-          info.latestVersion = undefined;
-        } else {
-          throw e;
-        }
-      }
-
-      installedPlugins[name] = info;
-    }
-
-    return installedPlugins[name];
+  async getInstalledVersion({ name }) {
+    return { installedVersion: (await readConfig()).installedPlugins[name]?.installedVersion || null };
   },
+
+  //async getInfo({ name, doOnlineCheck }) {
+  //  const installedVersion = (await readConfig()).installedPlugins[name]?.installedVersion;
+  //  const runtimePluginInfoCache = installedPlugins[name];
+  //  const doRefreshCache = (
+  //    runtimePluginInfoCache?.npm.version === undefined ||
+  //    runtimePluginInfoCache?.installedVersion !== installedVersion);
+
+  //  if (doRefreshCache) {
+  //    const info: InstalledPluginInfo = { id: name, title: name };
+  //    info.installedVersion = installedVersion;
+
+  //    try {
+  //      const npmInfo = await manager!.queryPackageFromNpm(name);
+  //      info.latestVersion = npmInfo.version;
+  //    } catch (e) {
+  //      // If latest version failed to be fetched but there is a version already installed,
+  //      // suppress the error and just report latest version as undefined.
+  //      if (info.installedVersion) {
+  //        info.latestVersion = undefined;
+  //      } else {
+  //        throw e;
+  //      }
+  //    }
+
+  //    installedPlugins[name] = info;
+  //  }
+
+  //  return installedPlugins[name];
+  //},
 
   async remove({ name }) {
     await pluginLock.acquire('1', async () => {

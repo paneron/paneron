@@ -1,8 +1,8 @@
 import { makeEndpoint, _, EmptyPayload } from '../ipc';
-import { PluginInfo } from './types';
+import { Extension, InstalledPluginInfo } from './types';
 
 
-export const NPM_EXTENSION_PREFIX = '@riboseinc/paneron-extension-';
+// export const NPM_EXTENSION_PREFIX = '@riboseinc/paneron-extension-';
 
 
 export const getPluginManagerProps = makeEndpoint.main(
@@ -15,14 +15,21 @@ export const getPluginManagerProps = makeEndpoint.main(
 export const listInstalledPlugins = makeEndpoint.main(
   'listInstalledPlugins',
   <EmptyPayload>_,
-  <{ objects: PluginInfo[] }>_,
+  <{ objects: InstalledPluginInfo[] }>_,
+);
+
+
+export const listAvailablePlugins = makeEndpoint.main(
+  'listAvailablePlugins',
+  <EmptyPayload>_,
+  <{ extensions: Extension[] }>_,
 );
 
 
 export const getPluginInfo = makeEndpoint.main(
   'getPluginInfo',
-  <{ id: string, doOnlineCheck?: boolean }>_,
-  <PluginInfo>_,
+  <{ id: string }>_,
+  <{ plugin: InstalledPluginInfo | null }>_,
 );
 
 

@@ -7,29 +7,35 @@ import {
   NewRepositoryDefaults,
   ObjectChangeset,
   ObjectDataset,
-  Repository, RepositoryType,
-  RepoStatus, StructuredRepoInfo,
+  PaneronRepository,
+  Repository,
+  RepoStatus,
 } from './types';
+import { ObjectDataRequest } from '@riboseinc/paneron-extension-kit/types';
 export * from './types';
+
+
+export const PANERON_REPOSITORY_META_FILENAME = 'paneron.yaml';
+
+
+export const queryGitRemote = makeEndpoint.main(
+  'queryRemote',
+  <{ url: string, username: string, password?: string }>_,
+  <{ isBlank: boolean, canPush: boolean }>_,
+);
 
 
 // Creating repos
 
-export const listAvailableTypes = makeEndpoint.main(
-  'listAvailableTypes',
-  <EmptyPayload>_,
-  <{ types: RepositoryType[] }>_,
-);
-
 export const addRepository = makeEndpoint.main(
   'addRepository',
-  <{ gitRemoteURL: string, workingCopyPath: string, username: string, author: GitAuthor }>_,
+  <{ gitRemoteURL: string, workingCopyPath: string, username: string, password?: string, author: GitAuthor }>_,
   <{ success: true }>_,
 );
 
 export const createRepository = makeEndpoint.main(
   'createRepository',
-  <{ workingCopyPath: string, author: GitAuthor, pluginID: string }>_,
+  <{ workingCopyPath: string, author: GitAuthor, title: string }>_,
   <{ success: true }>_,
 );
 
@@ -84,10 +90,16 @@ export const getRepositoryInfo = makeEndpoint.main(
   <{ info: Repository }>_,
 );
 
-export const getStructuredRepositoryInfo = makeEndpoint.main(
-  'getStructuredRepositoryInfo',
+export const getPaneronRepositoryInfo = makeEndpoint.main(
+  'getPaneronRepositoryInfo',
   <{ workingCopyPath: string }>_,
-  <{ info: StructuredRepoInfo | null }>_,
+  <{ info: PaneronRepository | null }>_,
+);
+
+export const setPaneronRepositoryInfo = makeEndpoint.main(
+  'setPaneronRepositoryInfo',
+  <{ workingCopyPath: string, info: Omit<PaneronRepository, 'datasets' | 'dataset'> }>_,
+  <{ success: true }>_,
 );
 
 export const savePassword = makeEndpoint.main(
@@ -108,6 +120,12 @@ export const unsetRemote = makeEndpoint.main(
   <{ success: true }>_,
 );
 
+export const unsetWriteAccess = makeEndpoint.main(
+  'unsetWriteAccess',
+  <{ workingCopyPath: string }>_,
+  <{ success: true }>_,
+);
+
 export const setAuthorInfo = makeEndpoint.main(
   'setAuthorInfo',
   <{ workingCopyPath: string, author: GitAuthor }>_,
@@ -118,6 +136,14 @@ export const deleteRepository = makeEndpoint.main(
   'deleteRepository',
   <{ workingCopyPath: string }>_,
   <{ deleted: true }>_,
+);
+
+// TODO: Remove when possible.
+/* Converts an old single-dataset repository to Paneron format. */
+export const migrateRepositoryFormat = makeEndpoint.main(
+  'migrateRepositoryFormat',
+  <{ workingCopyPath: string }>_,
+  <{ newCommitHash: string }>_,
 );
 
 
@@ -137,7 +163,7 @@ export const listAllObjectPathsWithSyncStatus = makeEndpoint.main(
 
 export const readContents = makeEndpoint.main(
   'readContents',
-  <{ workingCopyPath: string, objects: Record<string, 'utf-8' | 'binary'> }>_,
+  <{ workingCopyPath: string, objects: ObjectDataRequest }>_,
   <ObjectDataset>_,
 );
 
@@ -178,20 +204,6 @@ export const repositoryDashboard = makeWindowForComponent(
       minHeight: 600,
       width: 500,
       height: 600,
-    },
-  },
-);
-
-export const repositoryDetails = makeWindowForComponent(
-  'repositoryDetails',
-  () => import('renderer/repositories/Details'),
-  'Repository',
-  {
-    dimensions: {
-      minWidth: 980,
-      minHeight: 600,
-      width: 1100,
-      height: 750,
     },
   },
 );

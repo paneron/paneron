@@ -1,19 +1,53 @@
+import axios from 'axios';
+
 import { app } from 'electron';
 import log from 'electron-log';
 
 import fs from 'fs-extra';
 import path from 'path';
 
+import compareDesc from 'date-fns/compareDesc';
+import parseJSON from 'date-fns/parseJSON';
+
 import { PluginManager } from 'live-plugin-manager';
 
 import { spawn, Worker, Thread } from 'threads';
-import { getPluginInfo, getPluginManagerProps, installPlugin, NPM_EXTENSION_PREFIX, pluginsUpdated, upgradePlugin } from 'plugins';
+import {
+  getPluginInfo, getPluginManagerProps,
+  installPlugin, listAvailablePlugins,
+  pluginsUpdated, upgradePlugin,
+} from 'plugins';
 import { Methods as WorkerMethods, WorkerSpec } from './worker';
+import { Extension } from 'plugins/types';
+import { MainPlugin } from '@riboseinc/paneron-extension-kit/types';
 
 
 const devFolder = app.isPackaged === false ? process.env.PANERON_PLUGIN_DIR : undefined;
 
-const devPlugin = app.isPackaged === false ? process.env.PANERON_DEV_PLUGIN : undefined;
+const devPluginName = app.isPackaged === false ? process.env.PANERON_DEV_PLUGIN : undefined;
+
+const devPlugin = devPluginName
+  ? {
+      title: devPluginName,
+      author: 'You',
+      description: "Your test plugin",
+      latestUpdate: new Date(),
+      featured: true,
+      iconURL: "https://open.ribose.com/assets/favicon-192x192.png",
+      requiredHostAppVersion: app.getVersion(),
+      npm: {
+        name: '__your-test-plugin',
+        bugs: { url: "https://open.ribose.com/" },
+        version: '0.0.0',
+        dist: {
+          shasum: '000',
+          integrity: '000',
+          unpackedSize: 10000,
+          'npm-signature': '000',
+        },
+      },
+    }
+  : undefined;
 
 
 if (devFolder) {
@@ -21,8 +55,35 @@ if (devFolder) {
 }
 
 
+let _extensionCache: { [packageID: string]: Extension } | undefined = undefined;
+
+export async function fetchExtensions(): Promise<{ [packageID: string]: Extension }> {
+  if (_extensionCache === undefined) {
+    _extensionCache = (
+      (await axios.get("https://extensions.paneron.org/extensions.json")).
+      data.extensions);
+  }
+  return _extensionCache!;
+}
+
+
+listAvailablePlugins.main!.handle(async () => {
+  const packages = await fetchExtensions();
+
+  const extensions: Extension[] = Object.entries(packages).
+  sort(([_0, ext1], [_1, ext2]) => compareDesc(parseJSON(ext1.latestUpdate), parseJSON(ext2.latestUpdate))).
+  map(([_, ext]) => ext);
+
+  const _devPlugin: Extension[] = devPlugin ? [devPlugin] : [];
+
+  return {
+    extensions: [ ...extensions, ..._devPlugin ],
+  };
+});
+
+
 installPlugin.main!.handle(async ({ id }) => {
-  const name = getNPMNameForPlugin(id);
+  const name = id;
 
   const version = await _installPlugin(name);
   (await pluginManager).install(name, version);
@@ -36,7 +97,7 @@ installPlugin.main!.handle(async ({ id }) => {
 
 
 upgradePlugin.main!.handle(async ({ id }) => {
-  const name = getNPMNameForPlugin(id);
+  const name = id;
 
   try {
     await _removePlugin(name);
@@ -57,20 +118,19 @@ upgradePlugin.main!.handle(async ({ id }) => {
 
 
 getPluginInfo.main!.handle(async ({ id }) => {
-  const name = getNPMNameForPlugin(id);
-  try {
-    return await (await worker).getInfo({ name, doOnlineCheck: devFolder === undefined });
-  } catch (e) {
-    if (id === devPlugin) {
-      return {
-        id,
-        title: id,
-        installedVersion: 'dev',
-        latestVersion: 'dev',
-      };
+  const name = id;
+  const w = await worker;
+  if (name === devPluginName && devPlugin) {
+    return { plugin: { ...devPlugin, installedVersion: '0.0.0' } };
+  } else {
+    const extensions = await fetchExtensions();
+    const ext = extensions[name];
+    if (ext) {
+      const { installedVersion } = await w.getInstalledVersion({ name });
+      return { plugin: { ...ext, installedVersion } };
     } else {
-      log.error("Cannot fetch plugin info", name, e, e.code, e.name, e.message);
-      throw e;
+      log.error("Cannot locate extension in Paneron index", name);
+      return { plugin: null };
     }
   }
 });
@@ -84,9 +144,9 @@ getPluginManagerProps.main!.handle(async () => {
 });
 
 
-function getNPMNameForPlugin(pluginID: string): string {
-  return `${NPM_EXTENSION_PREFIX}${pluginID}`;
-}
+// function getNPMNameForPlugin(pluginID: string): string {
+//   return `${NPM_EXTENSION_PREFIX}${pluginID}`;
+// }
 
 
 async function _installPlugin(name: string): Promise<string> {
@@ -108,21 +168,43 @@ async function _removePlugin(name: string): Promise<true> {
 }
 
 
+export async function requireMainPlugin(name: string, version?: string): Promise<MainPlugin> {
+  const { installedVersion } = await (await worker).getInstalledVersion({ name });
+  if (!installedVersion) {
+    log.error("Plugins: Requiring main plugin that is not installed", name);
+    throw new Error("Extension is not installed");
+  }
 
-// Worker
+  if (version !== undefined && installedVersion !== version) {
+    log.error("Plugins: Requiring main plugin: requested version is different from installed", name, version);
+    throw new Error("Installed extension version is different from requested");
+  }
+
+  const plugin: MainPlugin = await (await pluginManager).require(name).default;
+  log.silly("Plugins: Required main plugin", name, version, plugin);
+
+  return plugin;
+}
+
+
+
+// Plugin manager
 
 const CWD = app.getPath('userData');
 const PLUGINS_PATH = path.join(CWD, 'plugins');
 const PLUGIN_CONFIG_PATH = path.join(CWD, 'plugin-config.yaml');
 
-const pluginManager: Promise<PluginManager> = new Promise((resolve, _) => {
+export const pluginManager: Promise<PluginManager> = new Promise((resolve, _) => {
   resolve(new PluginManager({
     cwd: CWD,
     pluginsPath: PLUGINS_PATH,
   }));
 });
 
-const worker: Promise<Thread & WorkerMethods> = new Promise((resolve, reject) => {
+
+// Worker
+
+export const worker: Promise<Thread & WorkerMethods> = new Promise((resolve, reject) => {
   log.debug("Plugins: Spawning worker");
 
   if (devFolder !== undefined) {

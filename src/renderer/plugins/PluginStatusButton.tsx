@@ -9,18 +9,19 @@ import { getPluginInfo, installPlugin, pluginsUpdated, upgradePlugin } from 'plu
 import { Button, ButtonGroup } from '@blueprintjs/core';
 
 
-const PluginStatusButton: React.FC<{ id: string }> = function ({ id }) {
-  const pluginInfo = getPluginInfo.renderer!.useValue({ id }, { id, title: id });
-  const installedVersion = pluginInfo.value.installedVersion;
-  const latestVersion = pluginInfo.value.latestVersion;
+const PluginStatusButton: React.FC<{ id: string, className?: string }> =
+function ({ id, className }) {
+  const pluginInfo = getPluginInfo.renderer!.useValue({ id }, { plugin: null });
+  const installedVersion = pluginInfo.value.plugin?.installedVersion;
+  const latestVersion = pluginInfo.value.plugin?.npm.version;
   const [isBusy, setBusy] = useState(false);
 
   async function handleInstall() {
-    if (installedVersion !== undefined && installedVersion === latestVersion) { return; }
+    if (installedVersion && installedVersion === latestVersion) { return; }
 
     setBusy(true);
     try {
-      if (installedVersion === undefined) {
+      if (!installedVersion) {
         await installPlugin.renderer!.trigger({ id });
       } else {
         await upgradePlugin.renderer!.trigger({ id });
@@ -36,7 +37,7 @@ const PluginStatusButton: React.FC<{ id: string }> = function ({ id }) {
     }
   }, []);
 
-  if (installedVersion === undefined && latestVersion === undefined) {
+  if (!installedVersion && latestVersion === undefined) {
     const fetchError = pluginInfo.findError('FetchError');
     if (fetchError && fetchError.message.indexOf('registry.npmjs.org') >= 0) {
       return <Button icon="offline" disabled>Cannot connect to package registry</Button>;
@@ -48,14 +49,14 @@ const PluginStatusButton: React.FC<{ id: string }> = function ({ id }) {
   }
 
   return (
-    <ButtonGroup>
+    <ButtonGroup className={className}>
       <Button
           disabled={isBusy || pluginInfo.isUpdating || installedVersion === latestVersion || latestVersion === undefined}
           loading={isBusy || pluginInfo.isUpdating}
-          intent="success"
+          intent="primary"
           onClick={handleInstall}
           icon={installedVersion ? 'tick-circle' : 'download'}>
-        {installedVersion !== undefined
+        {installedVersion
           ? (installedVersion === latestVersion || latestVersion === undefined)
             ? `Installed ${installedVersion}`
             : `Upgrade from ${installedVersion} to ${latestVersion}`

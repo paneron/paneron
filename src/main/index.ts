@@ -14,6 +14,7 @@ import { ObjectData, ObjectDataset, repositoryDashboard } from '../repositories'
 
 import 'main/plugins';
 import 'main/repositories';
+import 'datasets/main';
 
 import { chooseFileFromFilesystem, makeRandomID } from 'common';
 import path from 'path';

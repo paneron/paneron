@@ -18,10 +18,12 @@ import {
   getDefaultWorkingDirectoryContainer,
   validateNewWorkingDirectoryPath, getNewRepoDefaults, addRepository
 } from 'repositories';
+import GitCredentialsInput from './GitCredentialsInput';
 
 
-const AddSharedRepoForm: React.FC<{ onCreate: () => void }> = function ({ onCreate }) {
+const AddSharedRepoForm: React.FC<{ onCreate: (workingCopyPath: string) => void }> = function ({ onCreate }) {
   const [customUsername, setUsername] = useState<string | null>(null);
+  const [password, setPassword] = useState('');
   const [remoteURL, setRemoteURL] = useState<string | null>(null);
   const [workingDirectory, setWorkingDirectory] = useState<string | null>(null);
 
@@ -83,10 +85,11 @@ const AddSharedRepoForm: React.FC<{ onCreate: () => void }> = function ({ onCrea
           author,
           gitRemoteURL: remoteURL.replace(/\/$/, ''),
           username,
+          password: password !== '' ? password : undefined,
         });
-        setImmediate(onCreate);
+        setImmediate(() => onCreate(workingCopyPath));
       } catch (e) {
-        log.error("Could not clone repository", e);
+        log.error("Could not start cloning repository", e);
       } finally {
         setBusy(false);
       }
@@ -108,29 +111,13 @@ const AddSharedRepoForm: React.FC<{ onCreate: () => void }> = function ({ onCrea
           } />
       </FormGroup>
 
-      <FormGroup
-          label="Your username:"
-          helperText="The username you use to access this repository. In case of GitHub, this is your GitHub username.">
-        <InputGroup
-          value={username || ''}
-          required
-          onChange={(evt: React.FormEvent<HTMLInputElement>) =>
-            setUsername(evt.currentTarget.value.replace(/ /g,'-').replace(/[^\w-]+/g,''))
-          } />
-      </FormGroup>
-
-      <FormGroup
-          label="Working copy location:"
-          helperText={<>Folder of your working copy of this repository will be created <em>inside</em> this folder.</>}>
-        <ControlGroup>
-          <InputGroup fill readOnly value={workDir || ''} />
-          <Button
-            disabled={busy || workDir.trim() === ''}
-            onClick={selectWorkingDirectory}
-            title="Change working copy location"
-            icon="folder-open" />
-        </ControlGroup>
-      </FormGroup>
+      <GitCredentialsInput
+        username={username}
+        password={password}
+        remoteURL={remoteURL || ''}
+        onEditPassword={setPassword}
+        onEditUsername={setUsername}
+      />
 
       <FormGroup
           label="Authorship:"
@@ -155,7 +142,20 @@ const AddSharedRepoForm: React.FC<{ onCreate: () => void }> = function ({ onCrea
       </FormGroup>
 
       <FormGroup
-          label="Working copy path:"
+          label="Working copy location:"
+          helperText={<>Folder of your working copy of this repository will be created <em>inside</em> this folder.</>}>
+        <ControlGroup>
+          <InputGroup fill readOnly value={workDir || ''} />
+          <Button
+            disabled={busy || workDir.trim() === ''}
+            onClick={selectWorkingDirectory}
+            title="Change working copy location"
+            icon="folder-open" />
+        </ControlGroup>
+      </FormGroup>
+
+      <FormGroup
+          label="Calculated full working copy path:"
           intent={(!remoteURL || workingCopyPathIsAvailable) ? undefined : 'danger'}
           helperText={
             (!remoteURL || workingCopyPathIsAvailable)
