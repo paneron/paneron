@@ -5,9 +5,6 @@ import { EmptyPayload, makeEndpoint, _ } from '../ipc';
 import { DatasetInfo, DatasetType, MigrationSequenceOutcome } from './types';
 
 
-export const DATASET_FILENAME = 'panerondataset.yaml';
-
-
 /* List dataset types, provided by extensions, available for dataset initialization */
 export const listAvailableTypes = makeEndpoint.main(
   'listAvailableTypes',
@@ -55,6 +52,21 @@ export const deleteDataset = makeEndpoint.main(
   'deleteDataset',
   <{ workingCopyPath: string, datasetPath: string }>_,
   <{ success: true }>_,
+);
+
+
+// Working with data
+
+export const listObjectPaths = makeEndpoint.main(
+  'datasets_listObjectPaths',
+  <{ workingCopyPath: string, datasetPath: string, queryExpression?: string }>_,
+  <{ objectPaths: string[] }>_,
+);
+
+export const readObjects = makeEndpoint.main(
+  'datasets_readObjects',
+  <{ workingCopyPath: string, datasetPath: string, objectPaths: string[] }>_,
+  <{ data: Record<string, Record<string, any>> }>_,
 );
 
 

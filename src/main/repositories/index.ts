@@ -36,11 +36,11 @@ import { Repository, NewRepositoryDefaults, RepoStatus, CommitOutcome, PaneronRe
 import { forceSlug } from 'utils';
 import { DatasetInfo } from 'datasets/types';
 import { fetchExtensions } from 'main/plugins';
-import { DATASET_FILENAME } from 'datasets';
 import { stripLeadingSlash } from './git-methods';
 import cache from './cache';
 import worker from './workerInterface';
 import { FileChangeType, ObjectDataRequest, ObjectDataset } from '@riboseinc/paneron-extension-kit/types';
+import { DATASET_FILENAME } from 'datasets/main/util';
 
 
 const REPOSITORY_SYNC_INTERVAL_MS = 5000;
@@ -55,8 +55,9 @@ getDefaultWorkingDirectoryContainer.main!.handle(async () => {
 
 
 validateNewWorkingDirectoryPath.main!.handle(async ({ _path }) => {
+  log.debug("Repositories: Validating working directory path", _path);
+
   // Container is a directory?
-  log.debug("Checking path", _path)
   let containerAvailable: boolean;
   try {
     containerAvailable = (await fs.stat(path.dirname(_path))).isDirectory();
@@ -97,7 +98,6 @@ selectWorkingDirectoryContainer.main!.handle(async ({ _default }) => {
 
   if ((result.filePaths || []).length > 0) {
     directory = result.filePaths[0];
-    // TODO: Check that selected new repo working path is available
   } else {
     directory = _default;
   }
@@ -698,6 +698,7 @@ commitChanges.main!.handle(async ({ workingCopyPath, commitMessage, changeset, i
 
 
 migrateRepositoryFormat.main!.handle(async ({ workingCopyPath }) => {
+  // TODO: Move dataset-specific stuff into datasets
   const w = await worker;
 
   const { author } = await readRepoConfig(workingCopyPath);

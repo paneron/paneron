@@ -353,7 +353,7 @@ async function __readGitBlobAt(path: string, commitHash: string, workDir: string
   return blob;
 }
 
-async function __readFileAt
+export async function __readFileAt
 (p: string, workDir: string): Promise<Uint8Array | null> {
   // TODO: Return null if file does not exist
   const fullPath = path.join(workDir, p);

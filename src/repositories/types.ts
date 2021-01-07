@@ -5,6 +5,13 @@ import type { ObjectChangeset, ObjectDataRequest } from '@riboseinc/paneron-exte
 export type FileChangeType = 'modified' | 'added' | 'removed' | 'unchanged';
 
 
+interface Progress {
+  phase: string
+  loaded: number
+  total: number
+}
+
+
 // Repository info
 
 export type PaneronRepository = {
@@ -63,11 +70,7 @@ interface CommitStatus extends AuthoringOpStatus {
 export interface RemoteOpStatus {
   awaitingPassword?: boolean
   networkError?: true
-  progress?: {
-    phase: string
-    loaded: number
-    total: number
-  }
+  progress?: Progress
 }
 interface PullStatus extends RemoteOpStatus {
   operation: 'pulling'
@@ -134,6 +137,10 @@ export interface GitOperationParams {
   workDir: string
 }
 
+export interface DatasetOperationParams extends GitOperationParams {
+  datasetDir: string
+}
+
 export interface AuthoringGitOperationParams extends GitOperationParams {
   author: GitAuthor
 }
@@ -182,3 +189,12 @@ export type WorkerMessage =
   | PullRequestMessage
   | FetchRequestMessage
   | PushRequestMessage;
+
+
+
+// Indexes
+
+export interface IndexStatus {
+  objectCount: number
+  progress?: Progress
+}

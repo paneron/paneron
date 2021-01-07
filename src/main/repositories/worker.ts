@@ -34,7 +34,10 @@ import {
   ObjectChangeset,
   ObjectData,
   FileChangeType,
-  AuthoringGitOperationParams
+  AuthoringGitOperationParams,
+  GitOperationParams,
+  DatasetOperationParams,
+  IndexStatus,
 } from '../../repositories/types';
 
 import {
@@ -46,8 +49,10 @@ import {
   push,
   stripLeadingSlash,
   normalizeURL,
+  __readFileAt,
 } from './git-methods';
 import { ObjectDataRequest } from '@riboseinc/paneron-extension-kit/types';
+import { SerializableObjectSpec } from '@riboseinc/paneron-extension-kit/types/object-spec';
 
 
 const gitLock = new AsyncLock({ timeout: 60000, maxPending: 100 });
@@ -58,17 +63,27 @@ const gitLock = new AsyncLock({ timeout: 60000, maxPending: 100 });
 // TODO: Validate that `msg.workDir` is a descendant of a safe directory
 // under user’s home?
 
+
+// Worker API
+
 export interface Methods {
   destroyWorker: () => Promise<void>
 
   streamStatus: (msg: StatusRequestMessage) => Observable<RepoStatus>
 
+
+  // Git features
+
   workingCopyIsValid: (msg: { workDir: string }) => Promise<boolean>
 
-  queryRemote: (msg: { url: string, auth: GitAuthentication }) => Promise<{ isBlank: boolean, canPush: boolean }>
+  queryRemote:
+    (msg: { url: string, auth: GitAuthentication }) =>
+    Promise<{ isBlank: boolean, canPush: boolean }>
 
-  addOrigin: (msg: { workDir: string, url: string }) => Promise<{ success: true }>
-  deleteOrigin: (msg: { workDir: string }) => Promise<{ success: true }>
+  addOrigin:
+    (msg: { workDir: string, url: string }) => Promise<{ success: true }>
+  deleteOrigin:
+    (msg: { workDir: string }) => Promise<{ success: true }>
 
   init: (msg: InitRequestMessage) => Promise<{ success: true }>
   clone: (msg: CloneRequestMessage) => Promise<{ success: true }>
@@ -79,26 +94,122 @@ export interface Methods {
   push: (msg: PushRequestMessage) => Promise<{ success: true }>
   delete: (msg: DeleteRequestMessage) => Promise<{ success: true }>
 
-  deleteTree: (msg: AuthoringGitOperationParams & { treeRoot: string, commitMessage: string }) => Promise<CommitOutcome>
+
+  // Working with structured datasets
+
+  /* Associates object specs with dataset path.
+     Specs are used when reading and updating objects and when building indexes.
+     Kicks off background (re)building of base object index, if needed.
+     Base object index is used when querying objects by path.
+  */
+  registerObjectSpecs:
+    (msg: GitOperationParams & {
+      specs: { [datasetDir: string]: SerializableObjectSpec[] }
+    }) => void
+
+  /* Returns structured data of objects matching given paths.
+     Uses object specs to build objects from buffers. */
+  readObjects:
+    (msg: GitOperationParams & { objectPaths: string[] }) =>
+    Promise<{ [objectPath: string]: Record<string, any> }>
+
+  /* Converts given objects to buffers using previously registered object specs,
+     makes changes to buffers in working area, stages, commits, and returns commit hash. */
+  updateObjects:
+    (msg: AuthoringGitOperationParams & DatasetOperationParams & {
+      objectPaths: string[]
+      objectData: {
+        [objectPath: string]: {
+          // A null value below means nonexistend object at this path.
+          // newValue: null means delete object, if it exists.
+          newValue: Record<string, any> | null
+          oldValue?: Record<string, any> | null
+          // Undefined oldValue means no consistency check
+        }
+      }
+      commitMessage: string
+      _dangerouslySkipValidation: true
+    }) =>
+    Promise<{ commitHash: string }>
+
+
+  // Working with indexes
+
+  /* Queues building an index according to given query expression.
+     Query expression is evaluated in context of given object data.
+     Returns index ID, which can be used to monitor for status. */
+  getOrCreateIndex:
+    (msg: DatasetOperationParams & { queryExpression: string }) =>
+    { indexID: string }
+
+  getIndexStatus:
+    (msg: DatasetOperationParams & { indexID: string }) =>
+    { status: IndexStatus, stream: Observable<IndexStatus> }
+
+
+  /* Called when e.g. dataset window is closed. */
+  stopIndexing: (msg: DatasetOperationParams) => void
+
+  refreshIndex: (msg: { indexID: string }) => void
+
+  countIndexedObjects:
+    (msg: DatasetOperationParams & { indexID: string }) =>
+    Promise<{ objectCount: number }>
+
+  getIndexedObjectData:
+    (msg: DatasetOperationParams & { indexID: string, start: number, end: number }) =>
+    Promise<{ [itemID: number]: { path: string, data: Record<string, any> } }>
+
+  listObjects:
+    (msg: DatasetOperationParams & { queryExpression?: string }) =>
+    Promise<{ objectPaths: string[] }>
+
+
+  // Working with raw unstructured data (deprecated/internal)
+
+  getObjectContents: (msg: ObjectDataRequestMessage) =>
+    Promise<ObjectDataset>
+
+  getBlobs: (msg: GitOperationParams & { paths: string[] }) =>
+    Promise<Record<string, Uint8Array | null>>
 
   changeObjects: (msg: CommitRequestMessage) => Promise<CommitOutcome>
-  getObjectContents: (msg: ObjectDataRequestMessage) => Promise<ObjectDataset>
 
-  /* Non-recursively lists files and directories under given prefix, optionally checking for substring. */
-  listObjectPaths: (msg: { workDir: string, query: { pathPrefix: string, contentSubstring?: string } }) => Promise<string[]>
+  deleteTree: (msg: AuthoringGitOperationParams & {
+    treeRoot: string
+    commitMessage: string
+  }) => Promise<CommitOutcome>
+
+  /* Non-recursively lists files and directories under given prefix,
+     optionally checking for substring. */
+  listObjectPaths: (msg: GitOperationParams & {
+    query: {
+      pathPrefix: string
+      contentSubstring?: string
+    }
+  }) => Promise<string[]>
 
   /* Recursively lists files, and checks sync status against latest remote commit (if available).
      Returns { path: sync status } as one big flat object.
      NOTE: Paths are relative to repo root and have leading slashes. */
-  listAllObjectPathsWithSyncStatus: (msg: { workDir: string }) => Promise<Record<string, FileChangeType>>
+  listAllObjectPathsWithSyncStatus:
+    (msg: GitOperationParams) => Promise<Record<string, FileChangeType>>
 
   /* Recursively lists files. Returns paths as one big flat list.
      NOTE: Paths are relative to repo root and have leading slashes. */
-  listAllObjectPaths: (msg: { workDir: string }) => Promise<string[]>
+  listAllObjectPaths:
+    (msg: GitOperationParams) => Promise<string[]>
+
 
   // These are not supposed to be commonly used.
-  _resetUncommittedChanges: (msg: { workDir: string, pathSpec?: string }) => Promise<{ success: true }>
-  _commitAnyOutstandingChanges: (msg: AuthoringGitOperationParams & { commitMessage: string }) => Promise<{ newCommitHash: string }>
+
+  _resetUncommittedChanges:
+    (msg: GitOperationParams & { pathSpec?: string }) =>
+    Promise<{ success: true }>
+
+  _commitAnyOutstandingChanges:
+    (msg: AuthoringGitOperationParams & { commitMessage: string }) =>
+    Promise<{ newCommitHash: string }>
 }
 
 export type WorkerSpec = ModuleMethods & Methods;
@@ -297,6 +408,22 @@ const methods: WorkerSpec = {
     return true;
   },
 
+  async getObjectContents2({ workDir, pathPrefix }) {
+    const paths = await listAllObjectPaths({ workDir });
+    const filteredPaths = pathPrefix
+      ? paths.filter(p => p.startsWith(pathPrefix))
+      : paths;
+
+    return (await Promise.all(filteredPaths.map(async (path) => {
+      const p = pathPrefix
+        ? path.replace(pathPrefix, '')
+        : path;
+      return {
+        [p]: await __readFileAt(path, workDir),
+      };
+    }))).reduce((prev, curr) => ({ ...prev, ...curr }), {});
+  },
+
   async getObjectContents({ workDir, readObjectContents }) {
     return await lockFree_getObjectContents(workDir, readObjectContents);
   },
@@ -337,14 +464,7 @@ const methods: WorkerSpec = {
   },
 
   async listAllObjectPaths({ workDir }) {
-    const latestCommit = await git.resolveRef({ fs, dir: workDir, ref: 'HEAD' });
-    return Object.entries(await getObjectPathsChangedBetweenCommits(
-      latestCommit,
-      latestCommit,
-      workDir,
-      { returnUnchanged: true })).
-    filter(([_, status]) => status !== 'removed').
-    map(([path, _]) => path);
+    return await listAllObjectPaths({ workDir });
   },
 
   async deleteTree({ workDir, treeRoot, commitMessage, author }) {
@@ -401,7 +521,7 @@ const methods: WorkerSpec = {
     return { success: true };
   },
 
-  // WARNING: Adds everything inside given working directory, then commits.
+  // WARNING: Stages everything inside given working directory, then commits.
   async _commitAnyOutstandingChanges({ workDir, commitMessage, author }) {
     const repo = { fs, dir: workDir };
 
@@ -521,6 +641,19 @@ const methods: WorkerSpec = {
 }
 
 expose(methods);
+
+
+async function listAllObjectPaths(opts: { workDir: string }) {
+  const { workDir } = opts;
+  const latestCommit = await git.resolveRef({ fs, dir: workDir, ref: 'HEAD' });
+  return Object.entries(await getObjectPathsChangedBetweenCommits(
+    latestCommit,
+    latestCommit,
+    workDir,
+    { returnUnchanged: true })).
+  filter(([_, status]) => status !== 'removed').
+  map(([path, _]) => path);
+}
 
 
 /* Returns an object where keys are object paths that have conflicts and values are “true”. */

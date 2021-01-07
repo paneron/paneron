@@ -16,32 +16,46 @@ import {
   UL,
 } from '@blueprintjs/core';
 import {
-  ObjectsChangedEventHook,
   RendererPlugin,
-  ObjectDataHook, ObjectPathsHook, ObjectSyncStatusHook,
   DatasetContext,
+  IndexedObjectPathsHook,
+  IndexedObjectDataHook,
+  RawObjectsChangedEventHook,
+  RawObjectPathsHook,
+  RawObjectSyncStatusHook,
+  RawObjectDataHook,
 } from '@riboseinc/paneron-extension-kit/types';
 
 import { WindowComponentProps } from 'window';
 import { makeRandomID, chooseFileFromFilesystem } from 'common';
-import {
-  commitChanges,
-  listAllObjectPathsWithSyncStatus,
-  listObjectPaths, readContents,
-  repositoryContentsChanged,
-  repositoryStatusChanged,
-} from 'repositories';
 import { ErrorBoundary } from 'renderer/widgets';
-import { getPluginInfo, getPluginManagerProps, installPlugin } from 'plugins';
+import { DatasetInfo } from 'datasets/types';
+
+// IPC endpoints
+import {
+  getPluginInfo,
+  getPluginManagerProps,
+  installPlugin,
+} from 'plugins';
 import {
   getDatasetInfo,
+  loadDataset,
   makeChangesetRepoRelative,
   makeDataRequestRepoRelative,
   makeDatasetDatasetRelative,
   makeObjectPathDatasetRelative,
   makeObjectStatusSetDatasetRelative,
+  listObjectPaths,
+  readObjects,
 } from 'datasets';
-import { DatasetInfo } from 'datasets/types';
+import {
+  commitChanges,
+  listAllObjectPathsWithSyncStatus,
+  listObjectPaths as listRawObjectPaths,
+  readContents,
+  repositoryContentsChanged,
+  repositoryStatusChanged,
+} from 'repositories';
 
 
 const NODE_MODULES_PATH = process.env.NODE_ENV === 'production'
@@ -55,8 +69,44 @@ const query = new URLSearchParams(window.location.search);
 const workingCopyPath = (query.get('workingCopyPath') || '').trim();
 const datasetPath = (query.get('datasetPath') || '').trim() || undefined;
 
+if (!datasetPath) {
+  throw new Error("Missing dataset path");
+}
 
-const useObjectsChanged: ObjectsChangedEventHook = (eventCallback, args) => {
+//repositoryContentsChanged.renderer!.handle(async (evt) => {
+//  if (workingCopyPath === evt.workingCopyPath) {
+//    for (const objPath of Object.keys(evt.objects || {})) {
+//      delete _index[makeObjectPathDatasetRelative(objPath, datasetPath)];
+//    }
+//  }
+//});
+
+
+// Hooks
+
+
+const useObjectData: IndexedObjectDataHook = (dataRequest) => {
+  const result = readObjects.renderer!.useValue({
+    workingCopyPath,
+    datasetPath,
+    objectPaths: Object.keys(dataRequest),
+  }, { data: {} });
+
+  return result;
+};
+
+
+const useObjectPaths: IndexedObjectPathsHook = () => {
+  const result = listObjectPaths.renderer!.useValue({
+    workingCopyPath,
+    datasetPath,
+  }, { objectPaths: [] });
+
+  return result;
+};
+
+
+const useRawObjectsChangedEvent: RawObjectsChangedEventHook = (eventCallback, args) => {
   return repositoryContentsChanged.renderer!.useEvent(async (evt) => {
     if (evt.workingCopyPath === workingCopyPath) {
       log.silly("Dataset view: got objects changed event", Object.keys(evt.objects || {}));
@@ -66,11 +116,7 @@ const useObjectsChanged: ObjectsChangedEventHook = (eventCallback, args) => {
   }, args);
 };
 
-const useObjectPaths: ObjectPathsHook = (datasetQuery) => {
-  if (!datasetPath) {
-    throw new Error("useObjectData: Dataset path is required");
-  }
-
+const useRawObjectPaths: RawObjectPathsHook = (datasetQuery) => {
   // Make requested path prefix dataset-relative (prepend dataset path)
   const query = {
     ...datasetQuery,
@@ -81,12 +127,12 @@ const useObjectPaths: ObjectPathsHook = (datasetQuery) => {
 
   //log.silly("Dataset view: using objects path", query);
 
-  const result = listObjectPaths.renderer!.useValue({
+  const result = listRawObjectPaths.renderer!.useValue({
     workingCopyPath,
     query,
   }, []);
 
-  useObjectsChanged(async (evt) => {
+  useRawObjectsChangedEvent(async (evt) => {
     if (evt.objects === undefined) {
       result.refresh();
     } else {
@@ -104,18 +150,14 @@ const useObjectPaths: ObjectPathsHook = (datasetQuery) => {
   };
 };
 
-const useObjectSyncStatus: ObjectSyncStatusHook = () => {
-  if (!datasetPath) {
-    throw new Error("useObjectSyncStatus: Dataset path is required");
-  }
-
+const useRawObjectSyncStatus: RawObjectSyncStatusHook = () => {
   const result = listAllObjectPathsWithSyncStatus.renderer!.useValue({
     workingCopyPath,
   }, {});
 
   //log.silly("Dataset view: using object sync status", Object.keys(result.value));
 
-  useObjectsChanged(async (evt) => {
+  useRawObjectsChangedEvent(async (evt) => {
     result.refresh();
   }, []);
 
@@ -133,11 +175,7 @@ const useObjectSyncStatus: ObjectSyncStatusHook = () => {
   };
 };
 
-const useObjectData: ObjectDataHook = (datasetDataRequest) => {
-  if (!datasetPath) {
-    throw new Error("useObjectData: Dataset path is required");
-  }
-
+const useRawObjectData: RawObjectDataHook = (datasetDataRequest) => {
   const repoDataRequest = makeDataRequestRepoRelative(datasetDataRequest, datasetPath);
 
   const result = readContents.renderer!.useValue({
@@ -147,7 +185,7 @@ const useObjectData: ObjectDataHook = (datasetDataRequest) => {
 
   //log.silly("Dataset view: Using object data", Object.keys(repoDataRequest), result.value);
 
-  useObjectsChanged(async (evt) => {
+  useRawObjectsChangedEvent(async (evt) => {
     result.refresh();
   }, [Object.keys(repoDataRequest).length]);
 
@@ -201,10 +239,6 @@ const _makeRandomID: DatasetContext["makeRandomID"] = async () => {
 }
 
 const changeObjects: DatasetContext["changeObjects"] = async (changeset, commitMessage, ignoreConflicts) => {
-  if (!datasetPath) {
-    throw new Error("changeObjects: Dataset path is required");
-  }
-
   const result = (await commitChanges.renderer!.trigger({
     workingCopyPath,
     changeset: makeChangesetRepoRelative(changeset, datasetPath),
@@ -222,15 +256,21 @@ const changeObjects: DatasetContext["changeObjects"] = async (changeset, commitM
 
 const repoView: Promise<React.FC<WindowComponentProps>> = new Promise((resolve, reject) => {
 
-  getDataset(workingCopyPath, datasetPath).then(({ dataset, MainView }) => {
+  getDataset(workingCopyPath, datasetPath).then(({ dataset, MainView, getObjectView }) => {
 
     const Details: React.FC<Record<never, never>> = function () {
       const datasetContext: DatasetContext = {
         title: dataset.title,
-        useObjectsChangedEvent: useObjectsChanged,
-        useObjectPaths,
-        useObjectSyncStatus,
+
         useObjectData,
+        useObjectPaths,
+
+        useRawObjectsChangedEvent,
+        useRawObjectPaths,
+        useRawObjectSyncStatus,
+        useRawObjectData,
+
+        getObjectView,
 
         //useRemoteUsername,
         //useAuthorEmail,
@@ -299,7 +339,11 @@ const repoView: Promise<React.FC<WindowComponentProps>> = new Promise((resolve, 
 
 
 async function getDataset(workingCopyPath: string, datasetPath?: string):
-Promise<{ dataset: DatasetInfo, MainView: React.FC<DatasetContext> }> {
+Promise<{
+  dataset: DatasetInfo
+  MainView: React.FC<DatasetContext>
+  getObjectView: RendererPlugin["getObjectView"]
+}> {
 
   if (workingCopyPath === '') {
     throw new Error("Invalid repository working copy path");
@@ -307,6 +351,7 @@ Promise<{ dataset: DatasetInfo, MainView: React.FC<DatasetContext> }> {
 
   let MainView: React.FC<DatasetContext>;
   let dataset: DatasetInfo;
+  let getObjectView: RendererPlugin["getObjectView"];
 
   let pluginManager: PluginManager;
   let pluginID: string;
@@ -414,14 +459,24 @@ Promise<{ dataset: DatasetInfo, MainView: React.FC<DatasetContext> }> {
     }
 
     MainView = plugin.mainView;
+    getObjectView = plugin.getObjectView;
     log.silly("Dataset view: Got renderer plugin and dataset view", plugin);
+
+    log.silly("Dataset view: Loading dataset…");
+    const dataset = (await loadDataset.renderer!.trigger({
+      workingCopyPath,
+      datasetPath: datasetPath!,
+    })).result;
+    if (!dataset || !dataset.success) {
+      throw new Error("Unable to load dataset");
+    }
 
   } catch (e) {
     log.error("Dataset view: Error requiring plugin", workingCopyPath, pluginName, pluginVersion, e);
     throw e;
   }
 
-  return { MainView, dataset };
+  return { MainView, dataset, getObjectView };
 }
 
 

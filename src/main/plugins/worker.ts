@@ -10,6 +10,7 @@ import AsyncLock from 'async-lock';
 import { IPluginInfo, PluginManager } from 'live-plugin-manager';
 
 import { InstalledPluginInfo } from 'plugins/types';
+import { MainPlugin } from '@riboseinc/paneron-extension-kit/types';
 
 
 interface InstalledPlugins {
@@ -32,8 +33,12 @@ const pluginLock = new AsyncLock();
 
 const installedPlugins: InstalledPlugins = {};
 
+// { datasetID: { objectPath: { field1: value1, ... }}}
+const datasetIndexes: Record<string, Record<string, Record<string, any>>> = {};
+
 
 export interface Methods {
+
   /* Initialize plugin manager and config file.
      Must be called before anything else on freshly started worker. */
   initialize: (msg: { cwd: string, pluginsPath: string, pluginConfigPath: string }) => Promise<void>
@@ -49,12 +54,25 @@ export interface Methods {
   /* Development environment helper. Installs from a special path in user’s app data. */
   _installDev: (msg: { name: string, fromPath: string }) => Promise<{ installedVersion: string }>
 
-  /* Returns information about a plugin, either installed or from NPM */
-  //getInfo: (msg: { name: string, doOnlineCheck?: boolean }) => Promise<InstalledPluginInfo>
-
   getInstalledVersion: (msg: { name: string }) => Promise<{ installedVersion: string | null }>
 
   listInstalledPlugins: () => Promise<IPluginInfo[]>
+
+
+  /* Given raw data, creates or updates object index. */
+  indexData: (msg: { pluginName: string, datasetID: string, rawData: Record<string, Uint8Array> }) =>
+    Promise<{ success: true, indexedKeys: number }>
+
+  clearIndex: (msg: { datasetID: string }) => Promise<{ success: true }>
+
+  // Following methods operate on indexed dataset data.
+
+  readObjects: (msg: { datasetID: string, objectPaths: string[] }) =>
+    Promise<{ data: Record<string, Record<string, any>> }>
+
+  listObjectPaths: (msg: { datasetID: string, queryExpression?: string }) =>
+    Promise<{ objectPaths: string[] }>
+
 }
 
 
@@ -127,38 +145,8 @@ const methods: WorkerSpec = {
   },
 
   async getInstalledVersion({ name }) {
-    return { installedVersion: (await readConfig()).installedPlugins[name]?.installedVersion || null };
+    return { installedVersion: await getInstalledVersion(name) };
   },
-
-  //async getInfo({ name, doOnlineCheck }) {
-  //  const installedVersion = (await readConfig()).installedPlugins[name]?.installedVersion;
-  //  const runtimePluginInfoCache = installedPlugins[name];
-  //  const doRefreshCache = (
-  //    runtimePluginInfoCache?.npm.version === undefined ||
-  //    runtimePluginInfoCache?.installedVersion !== installedVersion);
-
-  //  if (doRefreshCache) {
-  //    const info: InstalledPluginInfo = { id: name, title: name };
-  //    info.installedVersion = installedVersion;
-
-  //    try {
-  //      const npmInfo = await manager!.queryPackageFromNpm(name);
-  //      info.latestVersion = npmInfo.version;
-  //    } catch (e) {
-  //      // If latest version failed to be fetched but there is a version already installed,
-  //      // suppress the error and just report latest version as undefined.
-  //      if (info.installedVersion) {
-  //        info.latestVersion = undefined;
-  //      } else {
-  //        throw e;
-  //      }
-  //    }
-
-  //    installedPlugins[name] = info;
-  //  }
-
-  //  return installedPlugins[name];
-  //},
 
   async remove({ name }) {
     await pluginLock.acquire('1', async () => {
@@ -247,7 +235,68 @@ const methods: WorkerSpec = {
     return { installedVersion };
   },
 
+  async indexData({ pluginName, datasetID, rawData }) {
+    const plugin = await requireMainPlugin(pluginName);
+    datasetIndexes[datasetID] = plugin.indexObjects(rawData);
+    return {
+      success: true,
+      indexedKeys: Object.keys(datasetIndexes[datasetID]).length,
+    };
+  },
+
+  async clearIndex({ datasetID }) {
+    delete datasetIndexes[datasetID];
+    return { success: true };
+  },
+
+  async readObjects({ datasetID, objectPaths }) {
+    const index = datasetIndexes[datasetID];
+    const requestedObjectData = objectPaths.
+      map(path => ({ [path]: index[path] })).
+      reduce((p, c) => ({ ...p, ...c }), {});
+    return { data: requestedObjectData };
+  },
+
+  async listObjectPaths({ datasetID }) {
+    const index = datasetIndexes[datasetID];
+    return { objectPaths: Object.keys(index) };
+  },
+
 };
 
 
 expose(methods);
+
+
+
+// Requiring plugins in worker
+
+const _runtimePluginInstanceCache: Record<string, MainPlugin> = {};
+
+async function getInstalledVersion(name: string): Promise<string | null> {
+  return (await readConfig()).installedPlugins[name]?.installedVersion || null;
+
+}
+
+export async function requireMainPlugin(name: string, version?: string): Promise<MainPlugin> {
+  if (!manager) {
+    throw new Error("Plugin manager is not initialized");
+  }
+
+  if (!_runtimePluginInstanceCache[name]) {
+    const installedVersion = await getInstalledVersion(name);
+    if (!installedVersion) {
+      throw new Error("Extension is not installed");
+    }
+    if (version !== undefined && installedVersion !== version) {
+      throw new Error("Installed extension version is different from requested");
+    }
+
+    // XXX: this does not work in worker thread!
+    const plugin: MainPlugin = await manager!.require(name).default;
+
+    _runtimePluginInstanceCache[name] = plugin;
+  }
+
+  return _runtimePluginInstanceCache[name];
+}

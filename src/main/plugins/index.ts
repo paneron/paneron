@@ -55,18 +55,6 @@ if (devFolder) {
 }
 
 
-let _extensionCache: { [packageID: string]: Extension } | undefined = undefined;
-
-export async function fetchExtensions(): Promise<{ [packageID: string]: Extension }> {
-  if (_extensionCache === undefined) {
-    _extensionCache = (
-      (await axios.get("https://extensions.paneron.org/extensions.json")).
-      data.extensions);
-  }
-  return _extensionCache!;
-}
-
-
 listAvailablePlugins.main!.handle(async () => {
   const packages = await fetchExtensions();
 
@@ -174,26 +162,55 @@ async function _installPlugin(name: string, versionToInstall?: string): Promise<
 async function _removePlugin(name: string): Promise<true> {
   (await (await worker).remove({ name }));
 
+  delete _runtimePluginInstanceCache[name];
+
   return true;
 }
 
 
+
+// Requiring plugins in main thread
+
+const _runtimePluginInstanceCache: Record<string, MainPlugin> = {};
+
+const _appVersion = process.env.NODE_ENV === 'development'
+  ? process.env.npm_package_version!
+  : app.getVersion();
+
 export async function requireMainPlugin(name: string, version?: string): Promise<MainPlugin> {
-  const { installedVersion } = await (await worker).getInstalledVersion({ name });
-  if (!installedVersion) {
-    log.error("Plugins: Requiring main plugin that is not installed", name);
-    throw new Error("Extension is not installed");
+  if (!_runtimePluginInstanceCache[name]) {
+    log.debug("Plugins: Require main plugin: Instance not cached");
+
+    const { installedVersion } = await (await worker).getInstalledVersion({ name });
+    if (!installedVersion) {
+      log.error("Plugins: Requiring main plugin that is not installed", name);
+      throw new Error("Extension is not installed");
+    }
+
+    if (version !== undefined && installedVersion !== version) {
+      log.error("Plugins: Requiring main plugin: requested version is different from installed", name, version);
+      throw new Error("Installed extension version is different from requested");
+    }
+
+    // TODO: Cache each plugin instance at runtime
+    const plugin: MainPlugin = await (await pluginManager).require(name).default;
+    log.silly("Plugins: Required main plugin", name, version, plugin);
+
+    if (!plugin.isCompatible(_appVersion)) {
+      log.error(
+        "Plugins: Extension version is not compatible with host application version",
+        `${name}@${version || '??'}`,
+        _appVersion);
+      throw new Error("Extension version is not compatible with host application version");
+    }
+
+    _runtimePluginInstanceCache[name] = plugin;
+
+  } else {
+    log.debug("Plugins: Require main plugin: Got cached instance");
   }
 
-  if (version !== undefined && installedVersion !== version) {
-    log.error("Plugins: Requiring main plugin: requested version is different from installed", name, version);
-    throw new Error("Installed extension version is different from requested");
-  }
-
-  const plugin: MainPlugin = await (await pluginManager).require(name).default;
-  log.silly("Plugins: Required main plugin", name, version, plugin);
-
-  return plugin;
+  return _runtimePluginInstanceCache[name];
 }
 
 
@@ -210,6 +227,22 @@ export const pluginManager: Promise<PluginManager> = new Promise((resolve, _) =>
     pluginsPath: PLUGINS_PATH,
   }));
 });
+
+
+
+// Querying extension directory
+
+let _extensionCache: { [packageID: string]: Extension } | undefined = undefined;
+
+export async function fetchExtensions(): Promise<{ [packageID: string]: Extension }> {
+  if (_extensionCache === undefined) {
+    _extensionCache = (
+      (await axios.get("https://extensions.paneron.org/extensions.json")).
+      data.extensions);
+  }
+  return _extensionCache!;
+}
+
 
 
 // Worker
