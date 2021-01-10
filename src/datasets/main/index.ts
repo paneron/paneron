@@ -122,7 +122,17 @@ loadDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
     throw new Error("Dataset migration is required");
   }
 
-  log.debug("Datasets: Load: Reading raw data…");
+  const objectSpecs = plugin.getObjectSpecs();
+
+  log.debug("Datasets: Load: Registering object specs…", objectSpecs);
+
+  (await repoWorker).registerObjectSpecs({
+    workDir: workingCopyPath,
+    datasetDir: datasetPath,
+    specs: objectSpecs,
+  });
+
+  log.debug("Datasets: Load: Registering object specs… Done");
 
   const rawData: Record<string, Uint8Array> =
     Object.entries(await (await repoWorker).getObjectContents2({

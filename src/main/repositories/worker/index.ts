@@ -52,6 +52,8 @@ import {
   __readFileAt,
 } from './git-methods';
 import { ObjectDataRequest } from '@riboseinc/paneron-extension-kit/types';
+import { SerializableObjectSpec } from '@riboseinc/paneron-extension-kit/types/object-spec';
+import datasets from './datasets';
 
 
 const gitLock = new AsyncLock({ timeout: 60000, maxPending: 100 });
@@ -412,6 +414,27 @@ const methods: WorkerSpec = {
       return { success: true };
     }
   },
+
+
+  // Working with structured data
+
+  async registerObjectSpecs({ workDir, datasetDir, specs }) {
+    const dID = path.join(workDir, datasetDir);
+    await datasets.registerSpecs(dID, specs);
+  },
+
+  async deregisterObjectSpecs({ workDir, datasetDir }) {
+    const dID = path.join(workDir, datasetDir);
+    await datasets.destroy(dID);
+  },
+
+  async updateObjects({ workDir, datasetDir, commitMessage, objectData, _dangerouslySkipValidation }) {
+    const dID = path.join(workDir, datasetDir);
+    const data = datasets.objectsToBuffers(dID, objectData);
+  },
+
+
+  // Working with unstructured data
 
   async getObjectContents2({ workDir, pathPrefix }) {
     const paths = await listAllObjectPaths({ workDir });

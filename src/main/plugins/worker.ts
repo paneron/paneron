@@ -10,7 +10,6 @@ import AsyncLock from 'async-lock';
 import { IPluginInfo, PluginManager } from 'live-plugin-manager';
 
 import { InstalledPluginInfo } from 'plugins/types';
-import { MainPlugin } from '@riboseinc/paneron-extension-kit/types';
 
 
 interface InstalledPlugins {
@@ -32,9 +31,6 @@ let configPath: string | null = null;
 const pluginLock = new AsyncLock();
 
 const installedPlugins: InstalledPlugins = {};
-
-// { datasetID: { objectPath: { field1: value1, ... }}}
-const datasetIndexes: Record<string, Record<string, Record<string, any>>> = {};
 
 
 export interface Methods {
@@ -235,68 +231,12 @@ const methods: WorkerSpec = {
     return { installedVersion };
   },
 
-  async indexData({ pluginName, datasetID, rawData }) {
-    const plugin = await requireMainPlugin(pluginName);
-    datasetIndexes[datasetID] = plugin.indexObjects(rawData);
-    return {
-      success: true,
-      indexedKeys: Object.keys(datasetIndexes[datasetID]).length,
-    };
-  },
-
-  async clearIndex({ datasetID }) {
-    delete datasetIndexes[datasetID];
-    return { success: true };
-  },
-
-  async readObjects({ datasetID, objectPaths }) {
-    const index = datasetIndexes[datasetID];
-    const requestedObjectData = objectPaths.
-      map(path => ({ [path]: index[path] })).
-      reduce((p, c) => ({ ...p, ...c }), {});
-    return { data: requestedObjectData };
-  },
-
-  async listObjectPaths({ datasetID }) {
-    const index = datasetIndexes[datasetID];
-    return { objectPaths: Object.keys(index) };
-  },
-
 };
 
 
 expose(methods);
 
 
-
-// Requiring plugins in worker
-
-const _runtimePluginInstanceCache: Record<string, MainPlugin> = {};
-
 async function getInstalledVersion(name: string): Promise<string | null> {
   return (await readConfig()).installedPlugins[name]?.installedVersion || null;
-
-}
-
-export async function requireMainPlugin(name: string, version?: string): Promise<MainPlugin> {
-  if (!manager) {
-    throw new Error("Plugin manager is not initialized");
-  }
-
-  if (!_runtimePluginInstanceCache[name]) {
-    const installedVersion = await getInstalledVersion(name);
-    if (!installedVersion) {
-      throw new Error("Extension is not installed");
-    }
-    if (version !== undefined && installedVersion !== version) {
-      throw new Error("Installed extension version is different from requested");
-    }
-
-    // XXX: this does not work in worker thread!
-    const plugin: MainPlugin = await manager!.require(name).default;
-
-    _runtimePluginInstanceCache[name] = plugin;
-  }
-
-  return _runtimePluginInstanceCache[name];
 }
