@@ -4,6 +4,19 @@ image:https://img.shields.io/badge/commitizen-friendly-brightgreen.svg[alt="Comm
 
 == Development
 
+=== Pre-requisites
+
+NOTE: Development environment has been tested on macOS Catalina and Ubuntu 18.
+
+You’ll need the following installed:
+
+* macOS: Xcode and the accompanying command-line tools
+* Node 15 (installation:
+  link:https://github.com/nodesource/distributions/blob/master/README.md#installation-instructions[Ubuntu],
+  link:https://nodejs.org/en/download/package-manager/#macos[macOS])
+* Yarn (link:https://classic.yarnpkg.com/en/docs/install/[installation])
+* Ubuntu: `libsecret-1-dev` (may or may not be installed by default)
+
 === Committing
 
 This repository is set up with AngularJS commit message convention.
