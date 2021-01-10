@@ -38,7 +38,7 @@ import {
   GitOperationParams,
   DatasetOperationParams,
   IndexStatus,
-} from '../../repositories/types';
+} from '../../../repositories/types';
 
 import {
   clone,
@@ -52,7 +52,6 @@ import {
   __readFileAt,
 } from './git-methods';
 import { ObjectDataRequest } from '@riboseinc/paneron-extension-kit/types';
-import { SerializableObjectSpec } from '@riboseinc/paneron-extension-kit/types/object-spec';
 
 
 const gitLock = new AsyncLock({ timeout: 60000, maxPending: 100 });
@@ -98,30 +97,32 @@ export interface Methods {
   // Working with structured datasets
 
   /* Associates object specs with dataset path.
+     Typically called when dataset is opened.
      Specs are used when reading and updating objects and when building indexes.
-     Kicks off background (re)building of base object index, if needed.
      Base object index is used when querying objects by path.
   */
   registerObjectSpecs:
-    (msg: GitOperationParams & {
-      specs: { [datasetDir: string]: SerializableObjectSpec[] }
-    }) => void
+    (msg: DatasetOperationParams & { specs: SerializableObjectSpec[] }) => void
+
+  /* Called when e.g. dataset window is closed. */
+  deregisterObjectSpecs:
+    (msg: DatasetOperationParams) => void
 
   /* Returns structured data of objects matching given paths.
      Uses object specs to build objects from buffers. */
-  readObjects:
-    (msg: GitOperationParams & { objectPaths: string[] }) =>
-    Promise<{ [objectPath: string]: Record<string, any> }>
+  // readObjects:
+  //   (msg: GitOperationParams & { objectPaths: string[] }) =>
+  //   Promise<{ [objectPath: string]: Record<string, any> }>
 
   /* Converts given objects to buffers using previously registered object specs,
      makes changes to buffers in working area, stages, commits, and returns commit hash. */
   updateObjects:
     (msg: AuthoringGitOperationParams & DatasetOperationParams & {
-      objectPaths: string[]
       objectData: {
         [objectPath: string]: {
           // A null value below means nonexistend object at this path.
           // newValue: null means delete object, if it exists.
+          // oldValue: null means the object previously did not exist.
           newValue: Record<string, any> | null
           oldValue?: Record<string, any> | null
           // Undefined oldValue means no consistency check
@@ -147,7 +148,6 @@ export interface Methods {
     { status: IndexStatus, stream: Observable<IndexStatus> }
 
 
-  /* Called when e.g. dataset window is closed. */
   stopIndexing: (msg: DatasetOperationParams) => void
 
   refreshIndex: (msg: { indexID: string }) => void
@@ -215,6 +215,8 @@ export interface Methods {
 export type WorkerSpec = ModuleMethods & Methods;
 
 
+// Repositories
+
 let repositoryStatus: {
   [workingCopyPath: string]: {
     statusSubject: Subject<RepoStatus>
@@ -281,34 +283,16 @@ const methods: WorkerSpec = {
     return Observable.from(repositoryStatus[msg.workDir].statusSubject);
   },
 
-  async delete(msg) {
-    if (gitLock.isBusy(msg.workDir)) {
-      throw new Error("Lock is busy");
-    } else {
-      fs.remove(msg.workDir);
-      return { success: true };
+
+  // Git features
+
+  async workingCopyIsValid({ workDir }) {
+    try {
+      await git.resolveRef({ fs, dir: workDir, ref: 'HEAD' });
+    } catch (e) {
+      return false;
     }
-  },
-
-  async init(msg) {
-    await gitLock.acquire(msg.workDir, async () => {
-      if (await pathIsTaken(msg.workDir)) {
-        throw new Error("Selected directory already exists");
-      }
-      await fs.ensureDir(msg.workDir);
-
-      try {
-        await git.init({
-          fs,
-          dir: msg.workDir,
-          defaultBranch: 'master',
-        });
-      } catch (e) {
-        await fs.remove(msg.workDir);
-        throw e;
-      }
-    });
-    return { success: true };
+    return true;
   },
 
   async queryRemote({ url, auth }) {
@@ -365,6 +349,27 @@ const methods: WorkerSpec = {
     return { success: true };
   },
 
+  async init(msg) {
+    await gitLock.acquire(msg.workDir, async () => {
+      if (await pathIsTaken(msg.workDir)) {
+        throw new Error("Selected directory already exists");
+      }
+      await fs.ensureDir(msg.workDir);
+
+      try {
+        await git.init({
+          fs,
+          dir: msg.workDir,
+          defaultBranch: 'master',
+        });
+      } catch (e) {
+        await fs.remove(msg.workDir);
+        throw e;
+      }
+    });
+    return { success: true };
+  },
+
   async clone(msg) {
     if (gitLock.isBusy(msg.workDir)) {
       throw new Error("Lock is busy");
@@ -399,13 +404,13 @@ const methods: WorkerSpec = {
     return { success: true };
   },
 
-  async workingCopyIsValid({ workDir }) {
-    try {
-      await git.resolveRef({ fs, dir: workDir, ref: 'HEAD' });
-    } catch (e) {
-      return false;
+  async delete(msg) {
+    if (gitLock.isBusy(msg.workDir)) {
+      throw new Error("Lock is busy");
+    } else {
+      fs.remove(msg.workDir);
+      return { success: true };
     }
-    return true;
   },
 
   async getObjectContents2({ workDir, pathPrefix }) {

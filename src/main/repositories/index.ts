@@ -10,6 +10,9 @@ import log from 'electron-log';
 
 import { Subscription } from 'observable-fns';
 
+import { stripLeadingSlash } from '@riboseinc/paneron-extension-kit/util';
+import { FileChangeType, ObjectDataRequest, ObjectDataset } from '@riboseinc/paneron-extension-kit/types';
+
 import {
   addRepository, createRepository, deleteRepository,
   getRepositoryStatus,
@@ -36,10 +39,8 @@ import { Repository, NewRepositoryDefaults, RepoStatus, CommitOutcome, PaneronRe
 import { forceSlug } from 'utils';
 import { DatasetInfo } from 'datasets/types';
 import { fetchExtensions } from 'main/plugins';
-import { stripLeadingSlash } from './git-methods';
 import cache from './cache';
 import worker from './workerInterface';
-import { FileChangeType, ObjectDataRequest, ObjectDataset } from '@riboseinc/paneron-extension-kit/types';
 import { DATASET_FILENAME } from 'datasets/main/util';
 
 

@@ -9,8 +9,8 @@ import leveldown from 'leveldown';
 import encode from 'encoding-down';
 import { ObjectChangeset, ObjectData, ObjectDataRequest, ObjectDataset } from '@riboseinc/paneron-extension-kit/types';
 import { PANERON_REPOSITORY_META_FILENAME } from 'repositories';
-import { stripLeadingSlash } from './git-methods';
-import getDecoder from './decoders';
+import { stripLeadingSlash } from './worker/git-methods';
+import getDecoder from './worker/decoders';
 import worker from './workerInterface';
 
 
