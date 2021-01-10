@@ -110,7 +110,6 @@ initializeDataset.main!.handle(async ({ workingCopyPath, meta, datasetPath }) =>
 
 loadDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
   const dataset = await readDatasetMeta(workingCopyPath, datasetPath);
-  const datasetID = path.join(workingCopyPath, datasetPath);
 
   const plugin = await requireMainPlugin(dataset.type.id);
 
@@ -133,24 +132,6 @@ loadDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
   });
 
   log.debug("Datasets: Load: Registering object specs… Done");
-
-  const rawData: Record<string, Uint8Array> =
-    Object.entries(await (await repoWorker).getObjectContents2({
-      workDir: workingCopyPath,
-      pathPrefix: datasetPath,
-    })).
-    filter(([_, d]) => d !== null).
-    reduce((p, c) => ({ ...p, ...c }), {});
-
-  log.debug("Datasets: Load: Indexing raw data…");
-
-  const { indexedKeys } = await (await pluginWorker).indexData({
-    pluginName: dataset.type.id,
-    datasetID,
-    rawData,
-  });
-
-  log.debug("Datasets: Load: Done, indexed keys", indexedKeys);
 
   // TODO: Build custom indexes, if any, here
   // const dbDirName = crypto.createHash('sha1').
