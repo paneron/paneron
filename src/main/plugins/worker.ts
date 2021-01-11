@@ -54,21 +54,6 @@ export interface Methods {
 
   listInstalledPlugins: () => Promise<IPluginInfo[]>
 
-
-  /* Given raw data, creates or updates object index. */
-  indexData: (msg: { pluginName: string, datasetID: string, rawData: Record<string, Uint8Array> }) =>
-    Promise<{ success: true, indexedKeys: number }>
-
-  clearIndex: (msg: { datasetID: string }) => Promise<{ success: true }>
-
-  // Following methods operate on indexed dataset data.
-
-  readObjects: (msg: { datasetID: string, objectPaths: string[] }) =>
-    Promise<{ data: Record<string, Record<string, any>> }>
-
-  listObjectPaths: (msg: { datasetID: string, queryExpression?: string }) =>
-    Promise<{ objectPaths: string[] }>
-
 }
 
 
