@@ -6,25 +6,28 @@ import { SerializableObjectSpec } from '@riboseinc/paneron-extension-kit/types/o
 import { matchesPath } from '@riboseinc/paneron-extension-kit/object-specs';
 
 import { IndexStatus } from 'repositories/types';
-import { stripLeadingSlash } from './git-methods';
+import { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
+import { stripLeadingSlash } from 'utils';
 
 
 // { datasetID: { objectPath: { field1: value1, ... }}}
 const datasets: {
-  [id: string]: {
-    specs: SerializableObjectSpec[]
-    indexes: {
-      [id: string]: {
-        dbHandle: LevelUp
-        statusSubject: Subject<IndexStatus>
+  [workDir: string]: {
+    [datasetDir: string]: {
+      specs: SerializableObjectSpec[]
+      indexes: {
+        [id: string]: {
+          dbHandle: LevelUp
+          statusSubject: Subject<IndexStatus>
+        }
       }
     }
   }
 } = {};
 
 
-async function destroy(datasetID: string) {
-  const ds = datasets[datasetID];
+async function destroy(workDir: string, datasetDir: string) {
+  const ds = datasets[workDir]?.[datasetDir];
   if (ds) {
     for (const { dbHandle, statusSubject } of Object.values(ds.indexes)) {
       await dbHandle.close();
@@ -34,36 +37,45 @@ async function destroy(datasetID: string) {
 }
 
 
-async function registerSpecs(datasetID: string, specs: SerializableObjectSpec[]) {
-  await destroy(datasetID);
+async function registerSpecs(
+  workDir: string,
+  datasetDir: string,
+  specs: SerializableObjectSpec[],
+) {
+  await destroy(workDir, datasetDir);
 
-  datasets[datasetID] = {
+  datasets[workDir] ||= {};
+  datasets[workDir][datasetDir] = {
     specs,
     indexes: {},
   };
 }
 
 
-async function getOrCreateIndex(datasetID: string, queryExpression: string) {
-  const ds = datasets[datasetID];
+async function getOrCreateIndex(workDir: string, datasetDir: string, queryExpression: string) {
+  const ds = datasets[workDir]?.[datasetDir];
   if (!ds || !ds.specs) {
     throw new Error("Dataset does not exist or specs not registered");
   }
 }
 
 
-// Converts a record that maps paths to object data
-// to a record that maps paths to buffers / byte arrays
-// ready for storage.
-function objectsToBuffers(datasetID: string, objects: { [objectPath: string]: Record<string, any> }) {
-  const ds = datasets[datasetID];
+/* Converts a record that maps paths to object data
+   to a record that maps paths to buffers / byte arrays
+   ready for storage. */
+function toBufferDataset(
+  workDir: string,
+  datasetDir: string,
+  objectDataset: ObjectDataset,
+) {
+  const ds = datasets[workDir]?.[datasetDir];
   if (!ds || !ds.specs) {
     throw new Error("Dataset does not exist or specs not registered");
   }
   const objectSpecs = ds.specs;
 
   const buffers: Record<string, Uint8Array> = {};
-  for (const [objectPath, obj] of Object.entries(objects)) {
+  for (const [objectPath, obj] of Object.entries(objectDataset)) {
     const spec = Object.values(objectSpecs).
       find(c => matchesPath(objectPath, c.matches));
 
@@ -87,15 +99,18 @@ function objectsToBuffers(datasetID: string, objects: { [objectPath: string]: Re
 }
 
 
-// Converts buffers with raw file data per path
-// to structured records (as JS objects) per path.
-// Specs for conversion can be provided to makeExtension to customize
-// how object is represented.
-// NOTE: Slow, when processing full repository data
-// it is supposed to be called from a worker thread only.
-function indexObjects(datasetID: string, rawData: Record<string, Uint8Array>,):
-{ [objectPath: string]: Record<string, any> } {
-  const ds = datasets[datasetID];
+/* Converts buffers with raw file data per path
+   to structured records (as JS objects) per path.
+   Specs for conversion can be provided to makeExtension to customize
+   how object is represented.
+   NOTE: Slow, when processing full repository data
+   it is supposed to be called from a worker thread only. */
+function toObjectDataset(
+  workDir: string,
+  datasetDir: string,
+  bufferDataset: Record<string, Uint8Array>,
+): ObjectDataset {
+  const ds = datasets[workDir]?.[datasetDir];
   if (!ds || !ds.specs) {
     throw new Error("Dataset does not exist or specs not registered");
   }
@@ -112,7 +127,7 @@ function indexObjects(datasetID: string, rawData: Record<string, Uint8Array>,):
   }[] = [];
 
   // Sorted paths will appear in fashion [/, /foo/, /foo/bar.yaml, /baz/, /baz/qux.yaml, ...]
-  const paths = Object.keys(rawData).sort();
+  const paths = Object.keys(bufferDataset).sort();
 
   let currentSpec: SerializableObjectSpec | undefined;
   let currentObject: {
@@ -128,7 +143,7 @@ function indexObjects(datasetID: string, rawData: Record<string, Uint8Array>,):
 
       // Accumulate current path into current object for deserialization later.
       const objectRelativePath = stripLeadingSlash(p.replace(currentObject.path, ''));
-      currentObject.buffers[`/${objectRelativePath}`] = rawData[p];
+      currentObject.buffers[`/${objectRelativePath}`] = bufferDataset[p];
 
       //log.debug("Matched path to object", p, currentObject.path, objectRelativePath);
 
@@ -152,7 +167,7 @@ function indexObjects(datasetID: string, rawData: Record<string, Uint8Array>,):
         // If a matching spec was found, start a new object.
         currentObject = { path: p, buffers: {} };
         // Current path will be the root path for the object.
-        currentObject.buffers['/'] = rawData[p];
+        currentObject.buffers['/'] = bufferDataset[p];
       }
     }
   }
@@ -171,6 +186,6 @@ export default {
   destroy,
   registerSpecs,
   getOrCreateIndex,
-  objectsToBuffers,
-  indexObjects,
+  toBufferDataset,
+  toObjectDataset,
 };

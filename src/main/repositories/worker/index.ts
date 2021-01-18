@@ -18,6 +18,10 @@ import { throttle } from 'throttle-debounce';
 import git, { ServerRef } from 'isomorphic-git';
 import http from 'isomorphic-git/http/node';
 
+import { BufferDataset, BufferChangeset, ChangeStatus } from '@riboseinc/paneron-extension-kit/types/buffers';
+import { SerializableObjectSpec } from '@riboseinc/paneron-extension-kit/types/object-spec';
+import { ObjectChangeset } from '@riboseinc/paneron-extension-kit/types/objects';
+
 import {
   RepoStatus,
   CloneRequestMessage,
@@ -27,32 +31,16 @@ import {
   StatusRequestMessage,
   InitRequestMessage,
   CommitRequestMessage,
-  ObjectDataRequestMessage,
-  ObjectDataset,
   GitAuthentication,
   CommitOutcome,
-  ObjectChangeset,
-  ObjectData,
-  FileChangeType,
   AuthoringGitOperationParams,
   GitOperationParams,
   DatasetOperationParams,
   IndexStatus,
 } from '../../../repositories/types';
 
-import {
-  clone,
-  lockFree_getObjectContents,
-  getObjectPathsChangedBetweenCommits,
-  makeChanges,
-  pull,
-  push,
-  stripLeadingSlash,
-  normalizeURL,
-  __readFileAt,
-} from './git-methods';
-import { ObjectDataRequest } from '@riboseinc/paneron-extension-kit/types';
-import { SerializableObjectSpec } from '@riboseinc/paneron-extension-kit/types/object-spec';
+import { clone, pull, push } from './git/sync';
+//import { ObjectDataRequest } from '@riboseinc/paneron-extension-kit/types';
 import datasets from './datasets';
 
 
@@ -90,7 +78,7 @@ export interface Methods {
   clone: (msg: CloneRequestMessage) => Promise<{ success: true }>
   pull: (msg: PullRequestMessage) => Promise<{
     success: true
-    changedObjects: Record<string, Exclude<FileChangeType, "unchanged">> | null
+    changedObjects: Record<string, Exclude<ChangeStatus, "unchanged">> | null
   }>
   push: (msg: PushRequestMessage) => Promise<{ success: true }>
   delete: (msg: DeleteRequestMessage) => Promise<{ success: true }>
@@ -117,23 +105,19 @@ export interface Methods {
   //   Promise<{ [objectPath: string]: Record<string, any> }>
 
   /* Converts given objects to buffers using previously registered object specs,
-     makes changes to buffers in working area, stages, commits, and returns commit hash. */
+     checks for conflicts,
+     makes changes to buffers in working area,
+     stages and commits.
+     Returns commit hash and/or conflicts, if any. */
   updateObjects:
     (msg: AuthoringGitOperationParams & DatasetOperationParams & {
-      objectData: {
-        [objectPath: string]: {
-          // A null value below means nonexistend object at this path.
-          // newValue: null means delete object, if it exists.
-          // oldValue: null means the object previously did not exist.
-          newValue: Record<string, any> | null
-          oldValue?: Record<string, any> | null
-          // Undefined oldValue means no consistency check
-        }
-      }
+      changeset: ObjectChangeset
       commitMessage: string
       _dangerouslySkipValidation: true
     }) =>
     Promise<{ commitHash: string }>
+
+  changeObjects: (msg: CommitRequestMessage) => Promise<CommitOutcome>
 
 
   // Working with indexes
@@ -169,13 +153,11 @@ export interface Methods {
 
   // Working with raw unstructured data (deprecated/internal)
 
-  getObjectContents: (msg: ObjectDataRequestMessage) =>
-    Promise<ObjectDataset>
+  //getObjectContents: (msg: ObjectDataRequestMessage) =>
+  //  Promise<ObjectDataset>
 
-  getBlobs: (msg: GitOperationParams & { paths: string[] }) =>
+  getBufferData: (msg: GitOperationParams & { paths: string[] }) =>
     Promise<Record<string, Uint8Array | null>>
-
-  changeObjects: (msg: CommitRequestMessage) => Promise<CommitOutcome>
 
   deleteTree: (msg: AuthoringGitOperationParams & {
     treeRoot: string
@@ -194,12 +176,12 @@ export interface Methods {
   /* Recursively lists files, and checks sync status against latest remote commit (if available).
      Returns { path: sync status } as one big flat object.
      NOTE: Paths are relative to repo root and have leading slashes. */
-  listAllObjectPathsWithSyncStatus:
-    (msg: GitOperationParams) => Promise<Record<string, FileChangeType>>
+  listAllBufferPathsWithSyncStatus:
+    (msg: GitOperationParams) => Promise<Record<string, ChangeStatus>>
 
   /* Recursively lists files. Returns paths as one big flat list.
      NOTE: Paths are relative to repo root and have leading slashes. */
-  listAllObjectPaths:
+  listAllBufferPaths:
     (msg: GitOperationParams) => Promise<string[]>
 
 
@@ -389,13 +371,12 @@ const methods: WorkerSpec = {
   async pull(msg) {
     const { workDir } = msg;
 
-    const changedObjects:
-    Record<string, Exclude<FileChangeType, "unchanged">> | null =
+    const changedBuffers:
+    Record<string, Exclude<ChangeStatus, "unchanged">> | null =
     await gitLock.acquire(workDir, async () => {
-
       return await pull(msg, getRepoStatusUpdater(workDir));
-
     });
+
     return { success: true, changedObjects };
   },
 
@@ -419,18 +400,15 @@ const methods: WorkerSpec = {
   // Working with structured data
 
   async registerObjectSpecs({ workDir, datasetDir, specs }) {
-    const dID = path.join(workDir, datasetDir);
-    await datasets.registerSpecs(dID, specs);
+    await datasets.registerSpecs(workDir, datasetDir, specs);
   },
 
   async deregisterObjectSpecs({ workDir, datasetDir }) {
-    const dID = path.join(workDir, datasetDir);
-    await datasets.destroy(dID);
+    await datasets.destroy(workDir, datasetDir);
   },
 
-  async updateObjects({ workDir, datasetDir, commitMessage, objectData, _dangerouslySkipValidation }) {
-    const dID = path.join(workDir, datasetDir);
-    const data = datasets.objectsToBuffers(dID, objectData);
+  async updateObjects({ workDir, datasetDir, commitMessage, changeset, _dangerouslySkipValidation }) {
+    const buffers = datasets.toBufferDataset(workDir, datasetDir, changeset);
   },
 
 
@@ -586,7 +564,7 @@ const methods: WorkerSpec = {
   },
 
   async changeObjects(msg) {
-    const { workDir, writeObjectContents, author, commitMessage, _dangerouslySkipValidation } = msg;
+    const { workDir, objectChangeset, author, commitMessage, _dangerouslySkipValidation } = msg;
 
     const onNewStatus = getRepoStatusUpdater(workDir);
 
@@ -640,8 +618,8 @@ const methods: WorkerSpec = {
       let conflicts: Record<string, true>;
       if (!firstCommit) {
         try {
-          const oldData = await lockFree_getObjectContents(workDir, dataRequest);
-          conflicts = canBeApplied(changeset, oldData, !_dangerouslySkipValidation);
+          const oldData = await lockFree_readBufferData(workDir, dataRequest);
+          conflicts = findConflicts(changeset, oldData, !_dangerouslySkipValidation);
         } catch (e) {
           throw e;
         } finally {
@@ -684,13 +662,22 @@ async function listAllObjectPaths(opts: { workDir: string }) {
 }
 
 
-/* Returns an object where keys are object paths that have conflicts and values are “true”. */
-export function canBeApplied(changeset: ObjectChangeset, dataset: ObjectDataset, strict = true): Record<string, true> {
+/* Returns a record where keys are buffer paths that have conflicts and values are “true”.
+
+   A conflict is where a buffer in given changeset
+   specifies oldValue that is different from buffer at the same path in given dataset.
+
+   If the strict flag is set to false, oldValue can be undefined, in which case
+   no conflict check will be attempted for that buffer.
+
+   Ideally returned record is empty. */
+export function findConflicts(changeset: BufferChangeset, dataset: BufferDataset, strict = true):
+Record<string, true> {
   const dPaths = new Set(Object.keys(dataset));
   const cPaths = new Set(Object.keys(changeset));
 
   if (dPaths.size !== cPaths.size || JSON.stringify([...dPaths].sort()) !== JSON.stringify([...cPaths].sort())) {
-    throw new Error("Cannot compare changeset and dataset containing different sets of object paths");
+    throw new Error("Unable to check for conflicts: Changeset and dataset contain different sets of buffer paths");
   }
 
   const conflicts: Record<string, true> = {};
@@ -698,24 +685,22 @@ export function canBeApplied(changeset: ObjectChangeset, dataset: ObjectDataset,
   for (const path of dPaths) {
     const cRecord = changeset[path];
 
-    // NOTE: Skipping conflict check because old snapshot was not provided
+    // Skipping conflict check because old snapshot was not provided
     if (cRecord.oldValue === undefined) {
       if (strict === true) {
-        throw new Error("Missing reference value in changeset for comparison");
+        throw new Error("Unable to check for conflicts: Missing reference value in changeset for comparison");
       } else {
         continue;
       }
     }
 
-    const existingData = dataset[path];
+    const existingData: Uint8Array | null  = dataset[path];
 
-    let referenceData: ObjectData;
+    let referenceData: Uint8Array | null;
     if (cRecord.oldValue === null) {
       referenceData = null;
-    } else if (cRecord.encoding === undefined) {
-      referenceData = { value: cRecord.oldValue, encoding: undefined };
     } else {
-      referenceData = { value: cRecord.oldValue, encoding: cRecord.encoding };
+      referenceData = cRecord.oldValue;
     }
 
     if (existingData === null || referenceData === null) {
@@ -723,30 +708,11 @@ export function canBeApplied(changeset: ObjectChangeset, dataset: ObjectDataset,
         // Only one is null
         conflicts[path] = true;
       }
-    } else {
-      if (existingData.encoding === undefined &&
-          (referenceData.encoding !== undefined || !_arrayBuffersAreEqual(existingData.value.buffer, referenceData.value.buffer))) {
-        // Mismatching binary contents (or reference data encoding is unexpectedly not binary)
-        conflicts[path] = true;
-      } else if (existingData.encoding !== undefined &&
-          (referenceData.encoding === undefined || existingData.value !== referenceData.value)) {
-        // Mismatching string contents (or reference data encoding is unexpectedly binary)
-        conflicts[path] = true;
-      }
+    } else if (!_arrayBuffersAreEqual(existingData.buffer, referenceData.buffer)) {
+      // Mismatching buffer contents
+      conflicts[path] = true;
     }
   }
 
   return conflicts;
-}
-
-function _arrayBuffersAreEqual(a: ArrayBuffer, b: ArrayBuffer) {
-  return _dataViewsAreEqual(new DataView(a), new DataView(b));
-}
-
-function _dataViewsAreEqual(a: DataView, b: DataView) {
-  if (a.byteLength !== b.byteLength) return false;
-  for (let i=0; i < a.byteLength; i++) {
-    if (a.getUint8(i) !== b.getUint8(i)) return false;
-  }
-  return true;
 }
