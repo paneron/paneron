@@ -18,3 +18,14 @@ export async function checkPathIsOccupied(absolutePath: string): Promise<boolean
   }
   return true;
 }
+
+
+
+export function stripLeadingSlash(aPath: string): string {
+  return aPath.replace(/^\//, '');
+}
+
+
+export function stripTrailingSlash(aPath: string): string {
+  return aPath.replace(/\/$/, '');
+}
