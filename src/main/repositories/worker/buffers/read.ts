@@ -3,6 +3,7 @@ import fs from 'fs-extra';
 import git from 'isomorphic-git';
 import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 import { stripLeadingSlash } from 'utils';
+import { listDescendantPaths } from './list';
 
 
 /* Given a path, yields */
