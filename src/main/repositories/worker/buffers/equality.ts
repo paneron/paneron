@@ -1,18 +1,39 @@
-import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
+import type { ChangeStatus } from '@riboseinc/paneron-extension-kit/types/buffers';
 
 
-/* Returns paths to buffers that change between dataset1 and dataset2. */
-export function diffBufferDatasets(dataset1: BufferDataset, dataset2: BufferDataset) {
-  const paths1 = new Set(Object.keys(dataset1));
-  const paths2 = new Set(Object.keys(dataset2));
+/* Yields paths to buffers that differ between dataset1 and dataset2,
+   and ChangeStatus for each path.
 
-  const samePaths: boolean = (
-    paths1.size === paths2.size &&
-    JSON.stringify([...paths1].sort()) === JSON.stringify([...paths2].sort())
-  );
+   Behavior mimics `listDescendantPathsAtVersion()`
+   with `diffOpts.onlyChanged` set to true,
+   i.e. unchanged paths will not be returned.
+   
+   Intended to check for conflicts before committing changes.
+*/
+export async function* diffBufferDatasets(
+  bufferPaths: AsyncGenerator<string>,
+  readBuffers:
+    (bufferPath: string) =>
+      Promise<[ buffer1: Uint8Array | null, buffer2: Uint8Array | null ]>,
+): AsyncGenerator<[ path: string, changeStatus: ChangeStatus ]> {
 
-  if (!samePaths) {
-    throw new Error("Unable to check for conflicts: Changeset and dataset contain different buffer paths");
+  for await (const bufferPath of bufferPaths) {
+    const [data1, data2] = await readBuffers(bufferPath);
+
+    if (data1 === null || data2 === null) {
+      if (data1 !== data2) {
+        // Only one is null, so buffer either added or removed
+
+        if (data1 === null) {
+          yield [bufferPath, 'added'];
+        } else if (data2 === null) {
+          yield [bufferPath, 'removed'];
+        }
+      }
+    } else if (!_arrayBuffersAreEqual(data1.buffer, data2.buffer)) {
+      // Mismatching buffer contents
+      yield [bufferPath, 'modified'];
+    }
   }
 }
 
