@@ -1,6 +1,4 @@
-import path from 'path';
-import { listDescendantPaths } from '../buffers/list';
-import { readBuffer } from '../buffers/read';
+import { readBuffers } from '../buffers/read';
 
 
 /* Given a generator of buffer paths, yields strings representing object paths.
@@ -19,12 +17,14 @@ export async function* listObjectPaths(
 }
 
 
+/* Given a generator of object paths, yields objects.
+   Each object is created using the provided makeObject. */
 export async function* readObjects(
   objectPaths: AsyncGenerator<string>,
-  makeObject: (fromBuffers: Record<string, Uint8Array>) => Promise<Record<string, any>>,
+  makeObject: (fromBuffers: Record<string, Uint8Array>) => Record<string, any>,
 ): AsyncGenerator<Record<string, any>> {
   for await (const objectPath of objectPaths) {
     const buffers = await readBuffers(objectPath);
-    yield await makeObject(buffers);
+    yield makeObject(buffers);
   }
 }
