@@ -6,7 +6,8 @@ import { stripLeadingSlash } from 'utils';
 import { listDescendantPaths } from './list';
 
 
-/* Given a path, yields */
+/* Given a root path, returns a BufferDataset containing data under that path.
+   Paths in buffer dataset will be slash-prepended and relative to root path. */
 export async function readBuffers(
   rootPath: string,
 ): Promise<Record<string, Uint8Array>> {
