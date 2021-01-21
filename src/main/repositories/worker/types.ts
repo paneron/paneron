@@ -182,7 +182,7 @@ export default interface WorkerMethods {
   git_init: Git.WorkDir.Init
   git_delete: Git.WorkDir.Delete
 
-  git_clone: Git.Clone
+  git_clone: Git.Sync.Clone
 
   git_pull: Git.Sync.Pull
   git_push: Git.Sync.Push
