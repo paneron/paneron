@@ -1,16 +1,21 @@
-import fsExtra from 'fs-extra';
+import { ensureFile, removeSync, remove } from 'fs-extra';
 import fs from 'fs/promises';
 import path from 'path';
 import git from 'isomorphic-git';
-import { BufferChangeset } from '@riboseinc/paneron-extension-kit/types/buffers';
-import { AuthoringGitOperationParams, RepoStatusUpdater } from 'repositories/types';
+//import { BufferChangeset } from '@riboseinc/paneron-extension-kit/types/buffers';
+//import { AuthoringGitOperationParams, RepoStatusUpdater } from 'repositories/types';
+import { Repositories } from '../types';
 
 
-/* Applies given BufferChangeset and commits changes. Does not check for conflicts. */
-export async function makeChanges(
-  opts: AuthoringGitOperationParams & { bufferChangeset: BufferChangeset, commitMessage: string },
-  updateStatus: RepoStatusUpdater,
-): Promise<string> {
+/* Applies given BufferChangeset and commits changes.
+   Does not check for conflicts.
+
+   TODO: Check for conflicts.
+*/
+export const updateBuffers: Repositories.Data.UpdateBuffers = async function (
+  opts,
+  updateStatus,
+) {
   const bufferPaths = Object.keys(opts.bufferChangeset);
   const changeset = opts.bufferChangeset;
 
@@ -24,10 +29,10 @@ export async function makeChanges(
     await Promise.all(bufferPaths.map(async (bufferPath) => {
       const absolutePath = path.join(opts.workDir, bufferPath);
       const { newValue } = changeset[bufferPath];
-      await fsExtra.ensureFile(absolutePath);
+      await ensureFile(absolutePath);
 
       if (newValue === null) {
-        fsExtra.removeSync(absolutePath);
+        removeSync(absolutePath);
       } else {
         await fs.writeFile(absolutePath, Buffer.from(newValue));
       }
@@ -91,5 +96,50 @@ export async function makeChanges(
     });
   }
 
-  return newCommitHash;
+  return { newCommitHash };
+}
+
+
+export const deleteTree: Repositories.Data.DeleteTree = async function ({
+  workDir,
+  treeRoot,
+  commitMessage,
+  author,
+}) {
+  // This will throw in case something is off
+  // and workDir is not a Git repository.
+  await git.resolveRef({ fs, dir: workDir, ref: 'HEAD' });
+
+  try {
+    const fullPath = path.join(workDir, treeRoot);
+
+    await remove(fullPath);
+
+    const WORKDIR = 2, FILE = 0;
+    const deletedPaths = (await git.statusMatrix({ fs, dir: workDir })).
+      filter(row => row[WORKDIR] === 0).
+      filter(row => row[FILE].startsWith(`${treeRoot}/`)).
+      map(row => row[FILE]);
+
+    for (const dp of deletedPaths) {
+      await git.remove({ fs, dir: workDir, filepath: dp });
+    }
+  } catch (e) {
+    await git.checkout({
+      fs,
+      dir: workDir,
+      force: true,
+      filepaths: [treeRoot],
+    });
+    throw e;
+  }
+
+  const newCommitHash = await git.commit({
+    fs,
+    dir: workDir,
+    message: commitMessage,
+    author: author,
+  });
+
+  return { newCommitHash };
 }

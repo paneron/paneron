@@ -8,6 +8,7 @@ import { matchesPath } from '@riboseinc/paneron-extension-kit/object-specs';
 import { IndexStatus } from 'repositories/types';
 import { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
 import { stripLeadingSlash } from 'utils';
+import { Datasets } from './types';
 
 
 // { datasetID: { objectPath: { field1: value1, ... }}}
@@ -26,7 +27,10 @@ const datasets: {
 } = {};
 
 
-async function destroy(workDir: string, datasetDir: string) {
+const unload: Datasets.Lifecycle.Unload = async function ({
+  workDir,
+  datasetDir,
+}) {
   const ds = datasets[workDir]?.[datasetDir];
   if (ds) {
     for (const { dbHandle, statusSubject } of Object.values(ds.indexes)) {
@@ -37,22 +41,26 @@ async function destroy(workDir: string, datasetDir: string) {
 }
 
 
-async function registerSpecs(
-  workDir: string,
-  datasetDir: string,
-  specs: SerializableObjectSpec[],
-) {
-  await destroy(workDir, datasetDir);
+const load: Datasets.Lifecycle.Load = async function ({
+  workDir,
+  datasetDir,
+  objectSpecs,
+}) {
+  await unload({ workDir, datasetDir });
 
   datasets[workDir] ||= {};
   datasets[workDir][datasetDir] = {
-    specs,
+    specs: objectSpecs,
     indexes: {},
   };
 }
 
 
-async function getOrCreateIndex(workDir: string, datasetDir: string, queryExpression: string) {
+const getOrCreateIndex: Datasets.Indexes.GetOrCreate = async function ({
+  workDir,
+  datasetDir,
+  queryExpression,
+}) {
   const ds = datasets[workDir]?.[datasetDir];
   if (!ds || !ds.specs) {
     throw new Error("Dataset does not exist or specs not registered");
@@ -183,9 +191,12 @@ function toObjectDataset(
 
 
 export default {
-  destroy,
-  registerSpecs,
+  load,
+  unload,
   getOrCreateIndex,
-  toBufferDataset,
-  toObjectDataset,
+  updateObjects,
+  getOrCreateIndex,
+  describeIndex,
+  getIndexedObject,
+  countIndexedObjects,
 };

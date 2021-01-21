@@ -1,8 +1,8 @@
 import { resolve, relative } from 'path';
 import fs, { readdir } from 'fs/promises';
 import git, { WalkerEntry } from 'isomorphic-git';
-import { ChangeStatus } from '@riboseinc/paneron-extension-kit/types/buffers';
 import { stripLeadingSlash } from 'utils';
+import { DiffStatus } from '@riboseinc/paneron-extension-kit/types/changes';
 
 
 /* Streams paths that are descendants of given root path
@@ -60,7 +60,7 @@ export async function listDescendantPathsAtVersion(
   workDir: string,
   ref: string,
   diffOpts?: { refToCompare: string, onlyChanged: boolean },
-): Promise<[ path: string, status: ChangeStatus | null ][]> {
+): Promise<[ path: string, status: DiffStatus | null ][]> {
 
   const ref2 = diffOpts?.refToCompare || ref;
   const doCompare = ref2 !== ref;
@@ -100,26 +100,26 @@ export async function listDescendantPathsAtVersion(
         const Aoid = await A?.oid();
         const Boid = await B?.oid();
 
-        let changeStatus: ChangeStatus;
+        let diffStatus: DiffStatus;
         if (Aoid === Boid) {
           if (Aoid === undefined && Boid === undefined) {
             // Well this would be very unexpected!
           }
           // Buffer at this path did not change.
           if (diffOpts?.onlyChanged !== true) {
-            changeStatus = 'unchanged';
+            diffStatus = 'unchanged';
           } else {
             return;
           }
         } else if (Aoid === undefined) {
-          changeStatus = 'added';
+          diffStatus = 'added';
         } else if (Boid === undefined) {
-          changeStatus = 'removed';
+          diffStatus = 'removed';
         } else {
-          changeStatus = 'modified';
+          diffStatus = 'modified';
         }
 
-        return [relativeFilepath, changeStatus];
+        return [relativeFilepath, diffStatus];
       } else {
         return [relativeFilepath, null];
       }
@@ -143,7 +143,7 @@ export async function listDescendantPathsAtVersion(
 */
 export async function listBufferStatuses
 (oid1: string, oid2: string, workDir: string, opts?: { onlyChanged?: boolean }):
-Promise<Record<string, ChangeStatus>> {
+Promise<Record<string, DiffStatus>> {
   return git.walk({
     fs,
     dir: workDir,
@@ -172,7 +172,7 @@ Promise<Record<string, ChangeStatus>> {
       const Aoid = await A?.oid();
       const Boid = await B?.oid();
 
-      let type: ChangeStatus;
+      let type: DiffStatus;
       if (Aoid === Boid) {
         if (Aoid === undefined && Boid === undefined) {
           // Well this would be super unexpected!

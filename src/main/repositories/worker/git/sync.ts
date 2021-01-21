@@ -1,12 +1,12 @@
 // NOTE: Functions for use by worker only.
 
 import fs from 'fs/promises';
-import fsExtra from 'fs-extra';
+import { removeSync, ensureDir } from 'fs-extra';
 
 import git from 'isomorphic-git';
 import http from 'isomorphic-git/http/node';
 
-import { ChangeStatus } from '@riboseinc/paneron-extension-kit/types/buffers';
+import { PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
 
 import {
   CloneRequestMessage,
@@ -17,13 +17,18 @@ import {
 
 import { normalizeURL } from '../../util';
 import { listBufferStatuses } from '../buffers/list';
+import { checkPathIsOccupied } from 'utils';
 
 
 //import getDecoder from './decoders';
 //const UTF_DECODER = getDecoder('utf-8');
 
 
-export async function clone(opts: CloneRequestMessage, updateStatus: RepoStatusUpdater) {
+async function clone(opts: CloneRequestMessage, updateStatus: RepoStatusUpdater) {
+  if (checkPathIsOccupied(opts.workDir)) {
+    throw new Error("Cannot clone into an already existing directory");
+  }
+  await ensureDir(opts.workDir);
   try {
     await git.clone({
       url: normalizeURL(opts.repoURL),
@@ -69,13 +74,13 @@ export async function clone(opts: CloneRequestMessage, updateStatus: RepoStatusU
       });
     }
     // Clean up failed clone
-    fsExtra.removeSync(opts.workDir);
+    removeSync(opts.workDir);
     throw e;
   }
 }
 
 
-export async function push(opts: PushRequestMessage, updateStatus: RepoStatusUpdater) {
+async function push(opts: PushRequestMessage, updateStatus: RepoStatusUpdater) {
   const {
     workDir,
     auth,
@@ -138,7 +143,7 @@ export async function push(opts: PushRequestMessage, updateStatus: RepoStatusUpd
 }
 
 
-export async function pull(opts: PullRequestMessage, updateStatus: RepoStatusUpdater) {
+async function pull(opts: PullRequestMessage, updateStatus: RepoStatusUpdater) {
   const oidBeforePull = await git.resolveRef({ fs, dir: opts.workDir, ref: 'HEAD' });
 
   try {
@@ -197,7 +202,7 @@ export async function pull(opts: PullRequestMessage, updateStatus: RepoStatusUpd
         opts.workDir, {
           onlyChanged: true,
         });
-      return changeStatus as Record<string, Exclude<ChangeStatus, "unchanged">>;
+      return changeStatus as PathChanges;
     } catch (e) {
       return null;
     }
@@ -205,3 +210,10 @@ export async function pull(opts: PullRequestMessage, updateStatus: RepoStatusUpd
     return {};
   }
 }
+
+
+export default {
+  clone,
+  pull,
+  push,
+};

@@ -2,13 +2,13 @@ import fs from 'fs/promises';
 import git, { ServerRef } from 'isomorphic-git';
 import http from 'isomorphic-git/http/node';
 import { normalizeURL } from 'main/repositories/util';
-import { Remotes } from '../types';
+import { Git } from '../types';
 
 
 const ORIGIN_REMOTE_NAME = 'origin';
 
 
-export const queryRemote: Remotes.QueryRemote = async function ({ url, auth }) {
+const describe: Git.Remotes.Describe = async function ({ url, auth }) {
   const normalizedURL = normalizeURL(url);
 
   let canPush: boolean;
@@ -44,7 +44,7 @@ export const queryRemote: Remotes.QueryRemote = async function ({ url, auth }) {
 };
 
 
-export const addOrigin: Remotes.AddOrigin = async function ({ workDir, url }) {
+const addOrigin: Git.Remotes.AddOrigin = async function ({ workDir, url }) {
   await git.addRemote({
     fs,
     dir: workDir,
@@ -55,7 +55,7 @@ export const addOrigin: Remotes.AddOrigin = async function ({ workDir, url }) {
 }
 
 
-export const deleteOrigin: Remotes.DeleteOrigin = async function ({ workDir }) {
+const deleteOrigin: Git.Remotes.DeleteOrigin = async function ({ workDir }) {
   await git.deleteRemote({
     fs,
     dir: workDir,
@@ -66,7 +66,7 @@ export const deleteOrigin: Remotes.DeleteOrigin = async function ({ workDir }) {
 
 
 export default {
-  queryRemote,
+  describe,
   addOrigin,
   deleteOrigin,
 };
