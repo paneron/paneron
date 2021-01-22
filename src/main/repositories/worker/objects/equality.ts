@@ -1,5 +1,4 @@
 import { DiffStatus } from '@riboseinc/paneron-extension-kit/types/changes';
-import { Object } from '@riboseinc/paneron-extension-kit/types/objects';
 import { diffDatasets } from 'main/repositories/util';
 
 
@@ -21,10 +20,10 @@ export async function* diffObjectDatasets(
         object2: Record<string, any> | null,
       ]>,
 ): AsyncGenerator<[ path: string, changeStatus: DiffStatus ]> {
-  return diffDatasets<Object>(objectPaths, readObjects, objectsAreSame);
+  return diffDatasets<Record<string, any>>(objectPaths, readObjects, objectsAreSame);
 }
 
 
-function objectsAreSame(obj1: Object, obj2: Object): boolean {
+function objectsAreSame(obj1: Record<string, any>, obj2: Record<string, any>): boolean {
   return JSON.stringify(obj1) === JSON.stringify(obj2);
 }
