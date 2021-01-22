@@ -1,4 +1,5 @@
-import fs from 'fs';
+import crypto from 'crypto';
+import { statSync } from 'fs';
 
 
 export function forceSlug(val: string): string {
@@ -6,9 +7,9 @@ export function forceSlug(val: string): string {
 }
 
 
-export async function checkPathIsOccupied(absolutePath: string): Promise<boolean> {
+export function checkPathIsOccupied(absolutePath: string): boolean {
   try {
-    fs.statSync(absolutePath);
+    statSync(absolutePath);
   } catch (e) {
     if (e.code === 'ENOENT') {
       return false;
@@ -20,7 +21,6 @@ export async function checkPathIsOccupied(absolutePath: string): Promise<boolean
 }
 
 
-
 export function stripLeadingSlash(aPath: string): string {
   return aPath.replace(/^\//, '');
 }
@@ -28,4 +28,9 @@ export function stripLeadingSlash(aPath: string): string {
 
 export function stripTrailingSlash(aPath: string): string {
   return aPath.replace(/\/$/, '');
+}
+
+
+export function hash(val: string): string {
+  return crypto.createHash('sha1').update(val).digest('hex');
 }

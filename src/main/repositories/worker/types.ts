@@ -1,4 +1,6 @@
-import { Observable } from 'threads/observable';
+import type { Observable, Subject } from 'threads/observable';
+import type { LevelUp } from 'levelup';
+import type { AbstractLevelDOWN, AbstractIterator } from 'abstract-leveldown';
 import { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
 import { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
 import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
@@ -108,6 +110,7 @@ export namespace Datasets {
        that contains all objects in the dataset. */
     export type Load = (msg: DatasetOperationParams & {
       objectSpecs: SerializableObjectSpec[]
+      cacheRoot: string
     }) => Promise<void>
 
 
@@ -125,7 +128,7 @@ export namespace Datasets {
 
        Returns index ID that can be used to query items.
     */
-    export type GetOrCreate = (msg: DatasetOperationParams & {
+    export type GetOrCreateFiltered = (msg: DatasetOperationParams & {
       queryExpression: string
     }) => { indexID: string }
 
@@ -135,9 +138,10 @@ export namespace Datasets {
     }) => { status: IndexStatus, stream: Observable<IndexStatus> }
 
     /* If indexID is omitted, objects in default index are counted. */
-    export type CountObjects = (msg: DatasetOperationParams & {
-      indexID?: string
-    }) => Promise<{ objectCount: number }>
+    // Unnecessary. Use describe.
+    // export type CountObjects = (msg: DatasetOperationParams & {
+    //   indexID?: string
+    // }) => Promise<{ objectCount: number }>
 
     /* Retrieves dataset-relative path of an object
        in the index at specified position. */
@@ -167,6 +171,33 @@ export namespace Datasets {
       Returns commit hash and/or conflicts, if any. */
     export type UpdateObjects =
       (msg: CommitRequestMessage) => Promise<CommitOutcome>
+  }
+
+  export namespace Util {
+
+    export interface LoadedDataset {
+      specs: SerializableObjectSpec[]
+
+      // Absolute path to directory that will contain index caches
+      indexDBRoot: string
+
+      indexes: {
+        // Includes `default` index and any custom indexes.
+        [id: string]: ActiveDatasetIndex<any, any>
+      }
+    }
+
+    export interface ActiveDatasetIndex<K, V> {
+      dbHandle: LevelUp<AbstractLevelDOWN<K, V>, AbstractIterator<K, V>>
+      status: IndexStatus
+      statusSubject: Subject<IndexStatus>
+    }
+
+    export type DefaultIndex = ActiveDatasetIndex<string, Record<string, any> | undefined>;
+    export type FilteredIndex = ActiveDatasetIndex<number, string>;
+
+    export type FilteredIndexPredicate = (item: Record<string, any>) => boolean;
+
   }
 }
 
@@ -216,9 +247,8 @@ export default interface WorkerMethods {
 
   // Working with indexes
 
-  ds_index_getOrCreate: Datasets.Indexes.GetOrCreate
+  ds_index_getOrCreateFiltered: Datasets.Indexes.GetOrCreateFiltered
   ds_index_describe: Datasets.Indexes.Describe
-  ds_index_countObjects: Datasets.Indexes.CountObjects
   ds_index_getObject: Datasets.Indexes.GetObject
 
 
