@@ -1,4 +1,5 @@
-import type { ChangeStatus } from '@riboseinc/paneron-extension-kit/types/buffers';
+import { DiffStatus } from '@riboseinc/paneron-extension-kit/types/changes';
+import { diffDatasets } from 'main/repositories/util';
 
 
 /* Yields paths to buffers that differ between dataset1 and dataset2,
@@ -15,26 +16,8 @@ export async function* diffBufferDatasets(
   readBuffers:
     (bufferPath: string) =>
       Promise<[ buffer1: Uint8Array | null, buffer2: Uint8Array | null ]>,
-): AsyncGenerator<[ path: string, changeStatus: ChangeStatus ]> {
-
-  for await (const bufferPath of bufferPaths) {
-    const [data1, data2] = await readBuffers(bufferPath);
-
-    if (data1 === null || data2 === null) {
-      if (data1 !== data2) {
-        // Only one is null, so buffer either added or removed
-
-        if (data1 === null) {
-          yield [bufferPath, 'added'];
-        } else if (data2 === null) {
-          yield [bufferPath, 'removed'];
-        }
-      }
-    } else if (!_arrayBuffersAreEqual(data1.buffer, data2.buffer)) {
-      // Mismatching buffer contents
-      yield [bufferPath, 'modified'];
-    }
-  }
+): AsyncGenerator<[ path: string, changeStatus: DiffStatus ]> {
+  return diffDatasets<Uint8Array>(bufferPaths, readBuffers, _arrayBuffersAreEqual);
 }
 
 
