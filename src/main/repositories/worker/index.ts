@@ -9,10 +9,7 @@ import { Observable, Subject } from 'threads/observable';
 import { ModuleMethods } from 'threads/dist/types/master';
 
 import * as fs from 'fs-extra';
-import * as path from 'path';
-
 import * as AsyncLock from 'async-lock';
-import * as globby from 'globby';
 import { throttle } from 'throttle-debounce';
 
 import git from 'isomorphic-git';
@@ -23,12 +20,16 @@ import {
   RepoStatusUpdater,
 } from '../../../repositories/types';
 
+import WorkerMethods from './types';
+
 import datasets from './datasets';
+import { getObjectDataset } from './objects/read';
+import { updateObjects } from './objects/update';
+import { getBufferDataset } from './buffers/read';
+import { deleteTree, updateBuffers } from './buffers/update';
 import remotes from './git/remotes';
 import sync from './git/sync';
 import workDir from './git/work-dir';
-import WorkerMethods from './types';
-import { deleteTree, updateBuffers } from './buffers/update';
 
 
 const gitLock = new AsyncLock({ timeout: 60000, maxPending: 100 });
@@ -168,71 +169,21 @@ const methods: WorkerSpec = {
 
   ds_load: datasets.load,
   ds_unload: datasets.unload,
-  ds_updateObjects: datasets.updateObjects,
+  ds_updateObjects: updateObjects,
+  ds_getObjectDataset: getObjectDataset,
 
-  async updateObjects({ workDir, datasetDir, commitMessage, changeset, _dangerouslySkipValidation }) {
-    const buffers = datasets.toBufferDataset(workDir, datasetDir, changeset);
-  },
-
-  ds_index_getOrCreate: datasets.getOrCreateIndex,
+  ds_index_getOrCreateFiltered: datasets.getOrCreateFilteredIndex,
   ds_index_describe: datasets.describeIndex,
   ds_index_getObject: datasets.getIndexedObject,
-  ds_index_countObjects: datasets.countIndexedObjects,
 
   repo_updateBuffers: updateBuffers,
-  repo_readBuffers: readBuffers,
+  repo_getBufferDataset: getBufferDataset,
   repo_deleteTree: lockingRepoOperation(deleteTree),
+
+  git_workDir_discardUncommittedChanges: lockingRepoOperation(workDir.discardUncommitted),
 
 
   // TBD: migration
-
-  async _resetUncommittedChanges({ workDir, pathSpec }) {
-    await gitLock.acquire(workDir, async () => {
-      await git.checkout({
-        fs,
-        dir: workDir,
-        force: true,
-        filepaths: pathSpec ? [pathSpec] : undefined,
-      });
-    });
-    return { success: true };
-  },
-
-  // WARNING: Stages everything inside given working directory, then commits.
-  async _commitAnyOutstandingChanges({ workDir, commitMessage, author }) {
-    const repo = { fs, dir: workDir };
-
-    // Add any modified or unstaged files (git add --no-all)
-    const modifiedOrUntrackedPaths: string[] =
-    await globby(['./**', './**/.*'], {
-      gitignore: true,
-      cwd: workDir,
-    });
-    for (const filepath of modifiedOrUntrackedPaths) {
-      await git.add({ ...repo, filepath });
-    }
-
-    // Delete deleted files (git add -A)
-    const removedPaths: string[] =
-    await git.statusMatrix(repo).then((status) =>
-      status.
-        filter(([_1, _2, worktreeStatus]) => worktreeStatus < 1).
-        map(([filepath, _1, _2]) => filepath)
-    );
-    for (const filepath of removedPaths) {
-      await git.remove({ ...repo, filepath });
-    }
-
-    // Commit staged
-    const newCommitHash = await git.commit({
-      fs,
-      dir: workDir,
-      message: commitMessage,
-      author,
-    });
-
-    return { newCommitHash };
-  },
 
   async changeObjects(msg) {
     const { workDir, objectChangeset, author, commitMessage, _dangerouslySkipValidation } = msg;

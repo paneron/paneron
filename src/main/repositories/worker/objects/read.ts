@@ -6,7 +6,7 @@ import { SerializableObjectSpec } from '@riboseinc/paneron-extension-kit/types/o
 
 
 /* Do not read too many objects at once. May be slow. */
-export const readObjects: Datasets.Data.ReadObjects = async function ({
+export const getObjectDataset: Datasets.Data.GetObjectDataset = async function ({
   workDir,
   datasetDir,
   objectPaths,
