@@ -39,6 +39,26 @@ getDatasetInfo.main!.handle(async ({ workingCopyPath, datasetPath }) => {
 });
 
 
+proposeDatasetPath.main!.handle(async ({ workingCopyPath, datasetPath }) => {
+  if (!datasetPath) {
+    throw new Error("Single-dataset repositories are not currently supported.");
+  }
+
+  const dir = forceSlug(datasetPath);
+  const fullPath = path.join(workingCopyPath, dir);
+
+  // For check to succeed, the path must not exist at all.
+  // TODO: We could accept empty directory, but would vave to validate it’s absolutely empty.
+  const isOccupied = await checkPathIsOccupied(fullPath);
+
+  if (isOccupied) {
+    return { path: undefined };
+  } else {
+    return { path: dir };
+  }
+});
+
+
 initializeDataset.main!.handle(async ({ workingCopyPath, meta, datasetPath }) => {
   if (!datasetPath) {
     throw new Error("Single-dataset repositories are not currently supported");
@@ -210,24 +230,4 @@ deleteDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
     throw new Error("Recording dataset deletion failed to return a commit hash");
   }
 
-});
-
-
-proposeDatasetPath.main!.handle(async ({ workingCopyPath, datasetPath }) => {
-  if (!datasetPath) {
-    throw new Error("Single-dataset repositories are not currently supported.");
-  }
-
-  const dir = forceSlug(datasetPath);
-  const fullPath = path.join(workingCopyPath, dir);
-
-  // For check to succeed, the path must not exist at all.
-  // TODO: We could accept empty directory, but would vave to validate it’s absolutely empty.
-  const isOccupied = await checkPathIsOccupied(fullPath);
-
-  if (isOccupied) {
-    return { path: undefined };
-  } else {
-    return { path: dir };
-  }
 });
