@@ -4,6 +4,20 @@ import git from 'isomorphic-git';
 import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 import { stripLeadingSlash } from 'utils';
 import { listDescendantPaths } from './list';
+import { Repositories } from '../types';
+
+
+export const getBufferDataset: Repositories.Data.GetBufferDataset = async function ({ workDir, paths }) {
+  const bufferDataset: BufferDataset = (await Promise.all(
+    paths.map(async (bufferPath) => {
+      return {
+        [bufferPath]: await readBuffer(path.join(workDir, bufferPath)),
+      };
+    })
+  )).reduce((prev, curr) => ({ ...prev, ...curr }), {});
+
+  return bufferDataset;
+}
 
 
 /* Given a root path, returns a BufferDataset containing data under that path.
