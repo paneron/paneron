@@ -42,7 +42,7 @@ export async function* listDescendantPaths(
 
    Only returns paths found at given ref (repository commit).
 
-   Optionally can return change status of the path
+   Optionally can compare change status of the path
    relative to another commit. If `opts.onlyChanged` is also specified,
    will not return paths that are unchanged.
 
