@@ -85,7 +85,7 @@ export namespace Repositories {
 
   export namespace Data {
 
-    export type ReadBuffers = (msg: GitOperationParams & {
+    export type GetBufferDataset = (msg: GitOperationParams & {
       paths: string[]
     }) => Promise<BufferDataset>
 
@@ -160,7 +160,7 @@ export namespace Datasets {
 
     /* Returns structured data of objects matching given paths.
        Uses object specs to build objects from buffers. */
-    export type ReadObjects = (msg: DatasetOperationParams & {
+    export type GetObjectDataset = (msg: DatasetOperationParams & {
       objectPaths: string[]
     }) => Promise<ObjectDataset>
 
@@ -241,7 +241,7 @@ export default interface WorkerMethods {
   /* Called when e.g. dataset window is closed. */
   ds_unload: Datasets.Lifecycle.Unload
 
-  ds_readObjects: Datasets.Data.ReadObjects
+  ds_getObjectDataset: Datasets.Data.GetObjectDataset
   ds_updateObjects: Datasets.Data.UpdateObjects
 
 
@@ -254,7 +254,7 @@ export default interface WorkerMethods {
 
   // Working with raw unstructured data (internal)
 
-  repo_readBuffers: Repositories.Data.ReadBuffers
+  repo_getBufferDataset: Repositories.Data.GetBufferDataset
   repo_updateBuffers: Repositories.Data.UpdateBuffers
   repo_deleteTree: Repositories.Data.DeleteTree
 }
