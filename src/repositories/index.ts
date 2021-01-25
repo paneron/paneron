@@ -1,17 +1,14 @@
 import { makeWindowForComponent } from '../window';
 import { EmptyPayload, makeEndpoint, _ } from '../ipc';
 import {
-  CommitOutcome,
-  FileChangeType,
   GitAuthor,
   NewRepositoryDefaults,
-  ObjectChangeset,
-  ObjectDataset,
   PaneronRepository,
   Repository,
   RepoStatus,
 } from './types';
-import { ObjectDataRequest } from '@riboseinc/paneron-extension-kit/types';
+import { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
+import { BufferChangeset, BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 export * from './types';
 
 
@@ -147,29 +144,17 @@ export const migrateRepositoryFormat = makeEndpoint.main(
 );
 
 
-// Making changes
+// Working with buffers
 
-export const listObjectPaths = makeEndpoint.main(
-  'listObjectPaths',
-  <{ workingCopyPath: string, query: { pathPrefix: string, contentSubstring?: string } }>_,
-  <string[]>_,
+export const getBufferDataset = makeEndpoint.main(
+  'getBufferDataset',
+  <{ workingCopyPath: string, paths: string[] }>_,
+  <BufferDataset>_,
 );
 
-export const listAllObjectPathsWithSyncStatus = makeEndpoint.main(
-  'listAllObjectPathsWithSyncStatus',
-  <{ workingCopyPath: string }>_,
-  <Record<string, FileChangeType>>_,
-);
-
-export const readContents = makeEndpoint.main(
-  'readContents',
-  <{ workingCopyPath: string, objects: ObjectDataRequest }>_,
-  <ObjectDataset>_,
-);
-
-export const commitChanges = makeEndpoint.main(
+export const updateBuffers = makeEndpoint.main(
   'commitChanges',
-  <{ workingCopyPath: string, changeset: ObjectChangeset, commitMessage: string, ignoreConflicts?: true }>_,
+  <{ workingCopyPath: string, bufferChangeset: BufferChangeset, commitMessage: string, ignoreConflicts?: true }>_,
   <CommitOutcome>_,
 );
 
@@ -186,9 +171,9 @@ export const repositoryStatusChanged = makeEndpoint.renderer(
   <{ workingCopyPath: string, status: RepoStatus }>_,
 );
 
-export const repositoryContentsChanged = makeEndpoint.renderer(
-  'repositoryContentsChanged',
-  <{ workingCopyPath: string, objects?: Record<string, Exclude<FileChangeType, 'unchanged'> | true> }>_,
+export const repositoryBuffersChanged = makeEndpoint.renderer(
+  'repositoryBuffersChanged',
+  <{ workingCopyPath: string, changedPaths?: Record<string, ChangeStatus | true> }>_,
 );
 
 

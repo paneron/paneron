@@ -1,8 +1,5 @@
-export type { ObjectData, ObjectDataset, ObjectChange, ObjectChangeset } from '@riboseinc/paneron-extension-kit/types';
-import type { ObjectChangeset, ObjectDataRequest } from '@riboseinc/paneron-extension-kit/types';
-
-
-export type FileChangeType = 'modified' | 'added' | 'removed' | 'unchanged';
+import { BufferChangeset } from '@riboseinc/paneron-extension-kit/types/buffers';
+import type { ObjectChangeset } from '@riboseinc/paneron-extension-kit/types/objects';
 
 
 interface Progress {
@@ -99,24 +96,15 @@ export type RepoStatus = {
   status?: undefined
 }
 
-
-// A map of object path and true
-export type Conflicts = Record<string, true>;
-
-
-export interface CommitOutcome {
-  newCommitHash?: string
-  conflicts?: Conflicts
-}
+export type RepoStatusUpdater = (newStatus: RepoStatus) => void;
 
 
 
 // Git-related types used by worker
 // TODO: Consolidate Git-related types
 
+/* Authentication as expected by Isomorphic Git */
 export interface GitAuthentication {
-  /* Authentication as expected by isomorphic-git */
-
   username?: string
   password?: string
 
@@ -166,12 +154,22 @@ export interface PushRequestMessage extends RemoteGitOperationParams {
 
 export interface FetchRequestMessage extends RemoteGitOperationParams {}
 
-export interface ObjectDataRequestMessage extends GitOperationParams {
-  readObjectContents: ObjectDataRequest
+export interface BufferDataRequestMessage extends GitOperationParams {
+  bufferPaths: string[]
 }
 
-export interface CommitRequestMessage extends AuthoringGitOperationParams {
-  writeObjectContents: ObjectChangeset
+export interface ObjectDataRequestMessage extends GitOperationParams {
+  objectPaths: string[]
+}
+
+export interface BufferCommitRequestMessage extends AuthoringGitOperationParams {
+  bufferChangeset: BufferChangeset
+  commitMessage: string
+  _dangerouslySkipValidation?: true
+}
+
+export interface CommitRequestMessage extends AuthoringGitOperationParams, DatasetOperationParams {
+  objectChangeset: ObjectChangeset
   commitMessage: string
   _dangerouslySkipValidation?: true
 }

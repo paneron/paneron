@@ -1,19 +1,18 @@
+import { ensureDir } from 'fs-extra';
 import path from 'path';
 import yaml from 'js-yaml';
+import { app } from 'electron';
 import log from 'electron-log';
 import {
   deleteDataset,
   getDatasetInfo,
   initializeDataset,
   loadDataset,
-  makeChangesetRepoRelative,
   proposeDatasetPath,
-  listObjectPaths,
-  readObjects,
+  getObjectDataset,
 } from 'datasets';
 import { readPaneronRepoMeta, readRepoConfig } from 'main/repositories';
 import repoWorker from 'main/repositories/workerInterface';
-import { worker as pluginWorker } from 'main/plugins';
 import cache from 'main/repositories/cache';
 import { requireMainPlugin } from 'main/plugins';
 import { checkPathIsOccupied, forceSlug } from 'utils';
@@ -22,7 +21,7 @@ import {
 
   // TODO: Define a more specific datasets changed event
   repositoriesChanged,
-  repositoryContentsChanged,
+  repositoryBuffersChanged,
 } from 'repositories';
 
 import { DATASET_FILENAME, readDatasetMeta } from './util';
@@ -59,7 +58,10 @@ proposeDatasetPath.main!.handle(async ({ workingCopyPath, datasetPath }) => {
 });
 
 
-initializeDataset.main!.handle(async ({ workingCopyPath, meta, datasetPath }) => {
+const encoder = new TextEncoder();
+
+
+initializeDataset.main!.handle(async ({ workingCopyPath, meta: datasetMeta, datasetPath }) => {
   if (!datasetPath) {
     throw new Error("Single-dataset repositories are not currently supported");
   }
@@ -69,7 +71,9 @@ initializeDataset.main!.handle(async ({ workingCopyPath, meta, datasetPath }) =>
     throw new Error("Repository configuration is missing author information");
   }
 
-  const plugin = await requireMainPlugin(meta.type.id, meta.type.version);
+  const plugin = await requireMainPlugin(
+    datasetMeta.type.id,
+    datasetMeta.type.version);
   const initialMigration = await plugin.getInitialMigration();
   const initialMigrationResult = await initialMigration.default({
     datasetRootPath: path.join(workingCopyPath, datasetPath),
@@ -77,33 +81,38 @@ initializeDataset.main!.handle(async ({ workingCopyPath, meta, datasetPath }) =>
   });
 
   const repoMeta = await readPaneronRepoMeta(workingCopyPath);
+  const newRepoMeta = {
+    ...repoMeta,
+    datasets: {
+      ...(repoMeta.datasets || {}),
+      [datasetPath]: true,
+    },
+  };
 
-  const datasetMetaPath = path.join(datasetPath, DATASET_FILENAME);
+  const repoMetaBuffer =
+    encoder.encode(yaml.dump(repoMeta, { noRefs: true }));
+  const newRepoMetaBuffer =
+    encoder.encode(yaml.dump(newRepoMeta, { noRefs: true }));
 
   const repos = await repoWorker;
 
-  const { newCommitHash } = await repos.changeObjects({
+  const datasetMetaPath = path.join(datasetPath, DATASET_FILENAME);
+  const migrationChangeset = initialMigrationResult.bufferChangeset;
+
+  const { newCommitHash } = await repos.repo_updateBuffers({
     workDir: workingCopyPath,
     commitMessage: `Initialize dataset at ${datasetPath}`,
     author,
-    writeObjectContents: {
+    bufferChangeset: {
       [datasetMetaPath]: {
         oldValue: null,
-        newValue: yaml.dump(meta, { noRefs: true }),
-        encoding: 'utf-8',
+        newValue: encoder.encode(yaml.dump(datasetMeta, { noRefs: true })),
       },
       [PANERON_REPOSITORY_META_FILENAME]: {
-        oldValue: yaml.dump(repoMeta, { noRefs: true }),
-        newValue: yaml.dump({
-          ...repoMeta,
-          datasets: {
-            ...(repoMeta.datasets || {}),
-            [datasetPath]: true,
-          },
-        }, { noRefs: true }),
-        encoding: 'utf-8',
+        oldValue: repoMetaBuffer,
+        newValue: newRepoMetaBuffer,
       },
-      ...makeChangesetRepoRelative(initialMigrationResult.changeset, datasetPath),
+      ...migrationChangeset,
     },
   });
 
@@ -114,14 +123,14 @@ initializeDataset.main!.handle(async ({ workingCopyPath, meta, datasetPath }) =>
     await repositoriesChanged.main!.trigger({
       changedWorkingPaths: [workingCopyPath],
     });
-    await repositoryContentsChanged.main!.trigger({
+    await repositoryBuffersChanged.main!.trigger({
       workingCopyPath,
-      objects: {
+      changedPaths: {
         [datasetMetaPath]: true,
         [PANERON_REPOSITORY_META_FILENAME]: true,
       },
     });
-    return { info: meta };
+    return { info: datasetMeta };
   } else {
     throw new Error("Dataset initialization failed to return a commit hash");
   }
@@ -130,7 +139,6 @@ initializeDataset.main!.handle(async ({ workingCopyPath, meta, datasetPath }) =>
 
 loadDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
   const dataset = await readDatasetMeta(workingCopyPath, datasetPath);
-
   const plugin = await requireMainPlugin(dataset.type.id);
 
   const migration = plugin.getMigration(dataset.type.version);
@@ -142,13 +150,19 @@ loadDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
   }
 
   const objectSpecs = plugin.getObjectSpecs();
+  const cacheRoot = path.join(app.getPath('userData'), 'index-dbs');
+
+  log.debug("Datasets: Load: Ensuring cache root dir…", cacheRoot);
+
+  await ensureDir(cacheRoot);
 
   log.debug("Datasets: Load: Registering object specs…", objectSpecs);
 
-  (await repoWorker).registerObjectSpecs({
+  (await repoWorker).ds_load({
     workDir: workingCopyPath,
     datasetDir: datasetPath,
-    specs: objectSpecs,
+    objectSpecs,
+    cacheRoot,
   });
 
   log.debug("Datasets: Load: Registering object specs… Done");
@@ -164,16 +178,12 @@ loadDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
 });
 
 
-listObjectPaths.main!.handle(async ({ workingCopyPath, datasetPath }) => {
-  const datasetID = path.join(workingCopyPath, datasetPath);
-  const { objectPaths } = await (await pluginWorker).listObjectPaths({ datasetID });
-  return { objectPaths };
-});
-
-
-readObjects.main!.handle(async ({ workingCopyPath, datasetPath, objectPaths }) => {
-  const datasetID = path.join(workingCopyPath, datasetPath);
-  const { data } = await (await pluginWorker).readObjects({ datasetID, objectPaths });
+getObjectDataset.main!.handle(async ({ workingCopyPath, datasetPath, objectPaths }) => {
+  const data = await (await repoWorker).ds_getObjectDataset({
+    workDir: workingCopyPath,
+    datasetDir: datasetPath,
+    objectPaths,
+  });
   return { data };
 });
 
@@ -194,7 +204,7 @@ deleteDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
   // To ensure we are deleting a Paneron dataset
   await readDatasetMeta(workingCopyPath, datasetPath);
 
-  const deletionResult = await w.deleteTree({
+  const deletionResult = await w.repo_deleteTree({
     workDir: workingCopyPath,
     commitMessage: `Delete dataset at ${datasetPath}`,
     author,
@@ -205,18 +215,18 @@ deleteDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
     throw new Error("Failed while deleting dataset object tree");
   }
 
-  const snapshot = yaml.dump(repoMeta, { noRefs: true });
+  const oldMetaBuffer = encoder.encode(yaml.dump(repoMeta, { noRefs: true }));
   delete repoMeta.datasets[datasetPath];
+  const newMetaBuffer = encoder.encode(yaml.dump(repoMeta, { noRefs: true }));
 
-  const repoMetaUpdateResult = await w.changeObjects({
+  const repoMetaUpdateResult = await w.repo_updateBuffers({
     workDir: workingCopyPath,
     commitMessage: "Record dataset deletion",
     author,
-    writeObjectContents: {
+    bufferChangeset: {
       [PANERON_REPOSITORY_META_FILENAME]: {
-        oldValue: snapshot,
-        newValue: yaml.dump(repoMeta, { noRefs: true }),
-        encoding: 'utf-8',
+        oldValue: oldMetaBuffer,
+        newValue: newMetaBuffer,
       }
     },
   });

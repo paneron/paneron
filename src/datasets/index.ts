@@ -1,8 +1,12 @@
-import path from 'path';
-import { ObjectChangeset, ObjectChangeStatusSet, ObjectDataRequest, ObjectDataset } from '@riboseinc/paneron-extension-kit/types';
+import {
+  ObjectChangeset,
+  ObjectDataset,
+} from '@riboseinc/paneron-extension-kit/types/objects';
+import { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
 import { makeWindowForComponent } from 'window';
 import { EmptyPayload, makeEndpoint, _ } from '../ipc';
 import { DatasetInfo, DatasetType, MigrationSequenceOutcome } from './types';
+import { IndexStatus } from 'repositories/types';
 
 
 /* List dataset types, provided by extensions, available for dataset initialization */
@@ -18,14 +22,12 @@ export const getDatasetInfo = makeEndpoint.main(
   <{ info: DatasetInfo | null }>_
 );
 
-
 /* Checks whether a dataset can be initialized at given location. Returns a path if it’s valid, undefined otherwise. */
 export const proposeDatasetPath = makeEndpoint.main(
   'proposeDatasetPath',
   <{ workingCopyPath: string, datasetPath?: string /* Can be undefined, meaning dataset is at repository root */}>_,
   <{ path?: string }>_,
 );
-
 
 /* Initializes a new dataset using dataset type extension specified in meta.type */
 export const initializeDataset = makeEndpoint.main(
@@ -38,7 +40,6 @@ export const initializeDataset = makeEndpoint.main(
   <{ info: DatasetInfo }>_,
 );
 
-
 /* Loads dataset. This may call extension to run indexing, etc.
    throw if a migration is outstanding. */
 export const loadDataset = makeEndpoint.main(
@@ -46,7 +47,6 @@ export const loadDataset = makeEndpoint.main(
   <{ workingCopyPath: string, datasetPath: string }>_,
   <{ success: true }>_,
 );
-
 
 export const deleteDataset = makeEndpoint.main(
   'deleteDataset',
@@ -57,16 +57,52 @@ export const deleteDataset = makeEndpoint.main(
 
 // Working with data
 
-export const listObjectPaths = makeEndpoint.main(
-  'datasets_listObjectPaths',
-  <{ workingCopyPath: string, datasetPath: string, queryExpression?: string }>_,
-  <{ objectPaths: string[] }>_,
+export const getOrCreateFilteredIndex = makeEndpoint.main(
+  'datasets_getOrCreateFilteredIndex',
+  <{ workingCopyPath: string, datasetPath: string, queryExpression: string }>_,
+  <{ indexID: string }>_,
 );
 
-export const readObjects = makeEndpoint.main(
-  'datasets_readObjects',
+export const describeIndex = makeEndpoint.main(
+  'datasets_describeIndex',
+  <{ workingCopyPath: string, datasetPath: string, indexID?: string }>_,
+  <{ status: IndexStatus }>_,
+);
+
+export const getFilteredObject = makeEndpoint.main(
+  'datasets_getFilteredObject',
+  <{ workingCopyPath: string, datasetPath: string, indexID: string, position: number }>_,
+  <{ objectPath: string }>_,
+);
+
+export const getObjectDataset = makeEndpoint.main(
+  'datasets_getObjectDataset',
   <{ workingCopyPath: string, datasetPath: string, objectPaths: string[] }>_,
-  <{ data: Record<string, Record<string, any>> }>_,
+  <{ data: ObjectDataset }>_,
+);
+
+export const updateObjects = makeEndpoint.main(
+  'datasets_updateObjects',
+  <{ workingCopyPath: string, datasetPath: string, objectChangeset: ObjectChangeset }>_,
+  <CommitOutcome>_,
+);
+
+
+// Events
+
+export const objectsChanged = makeEndpoint.renderer(
+  'dataset_objectsChanged',
+  <{ workingCopyPath: string, datasetPath: string, objects?: Record<string, ChangeStatus | true> }>_,
+);
+
+export const filteredIndexUpdated = makeEndpoint.renderer(
+  'dataset_indexContentsChanged',
+  <{ workingCopyPath: string, datasetPath: string, indexID: string }>_,
+);
+
+export const indexStatusChanged = makeEndpoint.renderer(
+  'dataset_indexStatusChanged',
+  <{ workingCopyPath: string, datasetPath: string, indexID?: string, status?: IndexStatus }>_,
 );
 
 
@@ -94,7 +130,7 @@ export const reportMigrationStatus = makeEndpoint.renderer(
 
 export const datasetDetails = makeWindowForComponent(
   'datasetDetails',
-  () => import('datasets/View'),
+  () => import('datasets/renderer/View'),
   'Dataset',
   {
     dimensions: {
@@ -110,38 +146,38 @@ export const datasetDetails = makeWindowForComponent(
 // Operations on object changesets, object datasets and object paths
 // that make them dataset-relative or repo-relative.
 
-export function makeChangesetRepoRelative(changeset: ObjectChangeset, datasetPath: string): ObjectChangeset {
-  return Object.entries(changeset).
-    map(([objPath, data]) =>
-      ({ [makeObjectPathRepoRelative(objPath, datasetPath)]: data })
-    ).reduce((prev, curr) => ({ ...prev, ...curr }), {});
-}
-
-export function makeObjectStatusSetDatasetRelative(statuses: ObjectChangeStatusSet, datasetPath: string): ObjectChangeStatusSet {
-  return Object.entries(statuses).
-    map(([repoPath, payload]) =>
-      ({ [makeObjectPathDatasetRelative(repoPath, datasetPath)]: payload })
-    ).reduce((prev, curr) => ({ ...prev, ...curr }), {});
-}
-
-export function makeDataRequestRepoRelative(request: ObjectDataRequest, datasetPath: string): ObjectDataRequest {
-  return Object.entries(request).
-    map(([datasetObjectPath, reqParams]) =>
-      ({ [makeObjectPathRepoRelative(datasetObjectPath, datasetPath)]: reqParams })
-    ).reduce((prev, curr) => ({ ...prev, ...curr }), {});
-}
-
-export function makeDatasetDatasetRelative(dataset: ObjectDataset, datasetPath: string): ObjectDataset {
-  return Object.entries(dataset).
-    map(([objPath, data]) =>
-      ({ [makeObjectPathDatasetRelative(objPath, datasetPath)]: data })
-    ).reduce((prev, curr) => ({ ...prev, ...curr }), {});
-}
-
-export function makeObjectPathDatasetRelative(repoObjectPath: string, datasetPath: string): string {
-  return repoObjectPath.replace(`${datasetPath}/`, '');
-}
-
-export function makeObjectPathRepoRelative(datasetObjectPath: string, datasetPath: string): string {
-  return datasetPath ? path.join(datasetPath, datasetObjectPath) : datasetObjectPath;
-}
+// export function makeChangesetRepoRelative(changeset: ObjectChangeset, datasetPath: string): ObjectChangeset {
+//   return Object.entries(changeset).
+//     map(([objPath, data]) =>
+//       ({ [makeObjectPathRepoRelative(objPath, datasetPath)]: data })
+//     ).reduce((prev, curr) => ({ ...prev, ...curr }), {});
+// }
+// 
+// export function makeObjectStatusSetDatasetRelative(statuses: ObjectChangeStatusSet, datasetPath: string): ObjectChangeStatusSet {
+//   return Object.entries(statuses).
+//     map(([repoPath, payload]) =>
+//       ({ [makeObjectPathDatasetRelative(repoPath, datasetPath)]: payload })
+//     ).reduce((prev, curr) => ({ ...prev, ...curr }), {});
+// }
+// 
+// export function makeDataRequestRepoRelative(request: ObjectDataRequest, datasetPath: string): ObjectDataRequest {
+//   return Object.entries(request).
+//     map(([datasetObjectPath, reqParams]) =>
+//       ({ [makeObjectPathRepoRelative(datasetObjectPath, datasetPath)]: reqParams })
+//     ).reduce((prev, curr) => ({ ...prev, ...curr }), {});
+// }
+// 
+// export function makeDatasetDatasetRelative(dataset: ObjectDataset, datasetPath: string): ObjectDataset {
+//   return Object.entries(dataset).
+//     map(([objPath, data]) =>
+//       ({ [makeObjectPathDatasetRelative(objPath, datasetPath)]: data })
+//     ).reduce((prev, curr) => ({ ...prev, ...curr }), {});
+// }
+// 
+// export function makeObjectPathDatasetRelative(repoObjectPath: string, datasetPath: string): string {
+//   return repoObjectPath.replace(`${datasetPath}/`, '');
+// }
+// 
+// export function makeObjectPathRepoRelative(datasetObjectPath: string, datasetPath: string): string {
+//   return datasetPath ? path.join(datasetPath, datasetObjectPath) : datasetObjectPath;
+// }
