@@ -1,4 +1,5 @@
 import path from 'path';
+import R from 'ramda';
 import levelup from 'levelup';
 import leveldown from 'leveldown';
 import encode from 'encoding-down';
@@ -6,14 +7,15 @@ import lexint from 'lexicographic-integer';
 import { CodecOptions } from 'level-codec';
 import { Observable, Subject } from 'threads/observable';
 
-import { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
+import { ChangeStatus } from '@riboseinc/paneron-extension-kit/types/changes';
 import { SerializableObjectSpec } from '@riboseinc/paneron-extension-kit/types/object-spec';
 import { matchesPath } from '@riboseinc/paneron-extension-kit/object-specs';
 
 import { IndexStatus } from 'repositories/types';
-import { stripLeadingSlash, stripTrailingSlash } from 'utils';
+import { hash, stripLeadingSlash, stripTrailingSlash } from 'utils';
 import { Datasets } from './types';
-import { listDescendantPaths } from './buffers/list';
+import { listDescendantPaths, listDescendantPathsAtVersion } from './buffers/list';
+import { readBuffersAtVersion } from './buffers/read';
 import { listObjectPaths } from './objects/list';
 import { readObjectCold } from './objects/read';
 
@@ -34,12 +36,15 @@ const unload: Datasets.Lifecycle.Unload = async function ({
   workDir,
   datasetDir,
 }) {
-  const ds = datasets[workDir]?.[datasetDir];
-  if (ds) {
+  const normalizedDatasetDir = normalizeDatasetDir(datasetDir);
+  try {
+    const ds = getLoadedDataset(workDir, normalizedDatasetDir);
     for (const { dbHandle, statusSubject } of Object.values(ds.indexes)) {
       await dbHandle.close();
       statusSubject.complete();
     }
+  } catch (e) {
+    // TODO: Implement logging in worker
   }
 }
 
@@ -49,8 +54,9 @@ const load: Datasets.Lifecycle.Load = async function ({
   objectSpecs,
   cacheRoot,
 }) {
-  const normalizedDatasetDir = normalizeDatasetDir(datasetDir);
   await unload({ workDir, datasetDir });
+
+  const normalizedDatasetDir = normalizeDatasetDir(datasetDir);
 
   const defaultIndex: Datasets.Util.DefaultIndex = createIndex(
     workDir,
@@ -63,7 +69,7 @@ const load: Datasets.Lifecycle.Load = async function ({
   );
 
   datasets[workDir] ||= {};
-  datasets[workDir][datasetDir] = {
+  datasets[workDir][normalizedDatasetDir] = {
     specs: objectSpecs,
     indexDBRoot: cacheRoot,
     indexes: {
@@ -71,7 +77,7 @@ const load: Datasets.Lifecycle.Load = async function ({
     },
   };
 
-  fillInDefaultIndex(workDir, datasetDir, defaultIndex, objectSpecs);
+  fillInDefaultIndex(workDir, normalizedDatasetDir, defaultIndex, objectSpecs);
 }
 
 const getOrCreateFilteredIndex: Datasets.Indexes.GetOrCreateFiltered = function ({
@@ -84,7 +90,7 @@ const getOrCreateFilteredIndex: Datasets.Indexes.GetOrCreateFiltered = function 
   const defaultIndex: Datasets.Util.DefaultIndex =
     getIndex(workDir, normalizedDatasetDir);
 
-  const filteredIndexID = queryExpression; // XXX
+  const filteredIndexID = hash(queryExpression); // XXX
 
   let filteredIndex: Datasets.Util.FilteredIndex;
   try {
@@ -93,7 +99,7 @@ const getOrCreateFilteredIndex: Datasets.Indexes.GetOrCreateFiltered = function 
       workDir,
       normalizedDatasetDir,
       filteredIndexID,
-    );
+    ) as Datasets.Util.FilteredIndex;
 
   } catch (e) {
 
@@ -110,7 +116,7 @@ const getOrCreateFilteredIndex: Datasets.Indexes.GetOrCreateFiltered = function 
         },
         valueEncoding: 'string',
       },
-    );
+    ) as Datasets.Util.FilteredIndex;
 
     let predicate: Datasets.Util.FilteredIndexPredicate;
     try {
@@ -119,15 +125,17 @@ const getOrCreateFilteredIndex: Datasets.Indexes.GetOrCreateFiltered = function 
       throw new Error("Unable to parse submitted predicate expression");
     }
 
-    // TODO: Report index status as it happens
     fillInFilteredIndex(defaultIndex, filteredIndex, predicate);
-
   }
 
   return { indexID: filteredIndexID };
 }
 
-const describeIndex: Datasets.Indexes.Describe = function ({ workDir, datasetDir, indexID }) {
+const describeIndex: Datasets.Indexes.Describe = function ({
+  workDir,
+  datasetDir,
+  indexID,
+}) {
   const idxID = indexID || 'default';
   const normalizedDatasetDir = normalizeDatasetDir(datasetDir);
   const idx = getIndex(workDir, normalizedDatasetDir, idxID);
@@ -137,14 +145,18 @@ const describeIndex: Datasets.Indexes.Describe = function ({ workDir, datasetDir
   };
 }
 
-const getIndexedObject: Datasets.Indexes.GetObject = async function ({ workDir, datasetDir, indexID, position }) {
+const getFilteredObject: Datasets.Indexes.GetFilteredObject = async function ({
+  workDir,
+  datasetDir,
+  indexID,
+  position,
+}) {
   if (indexID === 'default') {
     throw new Error("Default index is not supported by getIndexedObject");
   }
 
   const normalizedDatasetDir = normalizeDatasetDir(datasetDir);
-  const idx: Datasets.Util.FilteredIndex =
-    getIndex(workDir, normalizedDatasetDir, indexID);
+  const idx = getIndex(workDir, normalizedDatasetDir, indexID) as Datasets.Util.FilteredIndex;
   const db = idx.dbHandle;
   const objectPath = await db.get(position);
 
@@ -157,8 +169,206 @@ export default {
   unload,
   getOrCreateFilteredIndex,
   describeIndex,
-  getIndexedObject,
+  getFilteredObject,
 };
+
+
+// Events
+
+/* Takes commit hash before and after a change.
+
+   Infers which buffer paths changed,
+   infers which object paths in which datasets are affected,
+   reindexes objects as appropriate,
+   and sends IPC events to let app windows refresh shown data.
+*/
+export async function applyRepositoryChanges(
+  workDir: string,
+  oid1: string,
+  oid2: string,
+) {
+  const changedBufferPaths = await listDescendantPathsAtVersion(
+    '/',
+    workDir,
+    oid1,
+    {
+      refToCompare: oid2,
+      onlyChanged: true,
+    },
+  ) as [path: string, changeStatus: ChangeStatus][];
+
+  const changedBuffersPerDataset:
+  { [datasetDir: string]: [ path: string, change: ChangeStatus | null ][] } =
+    R.map(() => [], datasets[workDir]);
+
+  for (const [bufferPath, changeStatus] of changedBufferPaths) {
+    const datasetDir = bufferPath.split(path.posix.sep)[0];
+
+    if (datasets[workDir]?.[datasetDir]) {
+      const datasetRelativeBufferPath = path.relative(`/${datasetDir}`, bufferPath);
+      changedBuffersPerDataset[datasetDir].push([
+        datasetRelativeBufferPath,
+        changeStatus,
+      ]);
+    }
+  }
+
+  async function* changedBufferPathsInDataset(datasetDir: string) {
+    for (const [bufferPath, _] of changedBuffersPerDataset[datasetDir]) {
+      yield bufferPath;
+    }
+  }
+
+  function bufferPathBelongsToObjectInDataset(
+    datasetDir: string,
+    specs: SerializableObjectSpec[],
+  ): (bufferPath: string) => string | null {
+    return (bufferPath: string): string | null => {
+      if (bufferPath.startsWith(`/${datasetDir}`)) {
+        const spec = getSpec(specs, path.relative(`/${datasetDir}`, bufferPath));
+        if (spec) {
+          let objectPath: string;
+          if (spec.getContainingObjectPath) {
+            objectPath = spec.getContainingObjectPath(bufferPath) || bufferPath;
+          } else {
+            objectPath = bufferPath;
+          }
+          return objectPath;
+        }
+      }
+      return null;
+    };
+  }
+
+  for (const changedDatasetDir of Object.keys(changedBuffersPerDataset)) {
+    const specs = getSpecs(workDir, changedDatasetDir);
+    const findObjectPath = bufferPathBelongsToObjectInDataset(changedDatasetDir, specs);
+    const objectPaths = listObjectPaths(
+      changedBufferPathsInDataset(changedDatasetDir),
+      findObjectPath);
+
+    await applyDatasetChanges(
+      workDir,
+      changedDatasetDir,
+      objectPaths,
+      specs,
+      oid1,
+      oid2);
+  }
+}
+
+async function applyDatasetChanges(
+  workDir: string,
+  datasetDir: string,
+  changedObjectPaths: AsyncGenerator<string>,
+  objectSpecs: SerializableObjectSpec[],
+  oid1: string,
+  oid2: string,
+) {
+  const ds = getLoadedDataset(workDir, datasetDir);
+  const defaultIndex: Datasets.Util.DefaultIndex = getIndex(workDir, datasetDir);
+  const defaultIdxDB = defaultIndex.dbHandle;
+
+  const affectedFilteredIndexes: string[] = [];
+  const unaffectedFilteredIndexes: string[] =
+    Object.keys(ds.indexes).filter(k => k !== 'default');
+
+  async function readObjectVersions(objectPath: string):
+  Promise<[ Record<string, any> | null, Record<string, any> | null ]> {
+    const spec = getSpec(objectSpecs, objectPath);
+    if (!spec) {
+      throw new Error("Cannot find object spec");
+    }
+    return [
+      spec.deserialize(await readBuffersAtVersion(workDir, path.join(datasetDir, objectPath), oid1)),
+      spec.deserialize(await readBuffersAtVersion(workDir, path.join(datasetDir, objectPath), oid2)),
+    ];
+  }
+
+  for await (const objectPath of changedObjectPaths) {
+    // Read “before” and “after” object versions
+    const [objv1, objv2] = await readObjectVersions(objectPath);
+
+    // Update or delete structured object data in default index
+    if (objv2 !== null) {
+      // Object was changed or added
+      defaultIdxDB.put(objectPath, objv2);
+    } else {
+      // Object was deleted
+      try {
+        defaultIdxDB.del(objectPath);
+      } catch (e) {
+        if (e.type === 'NotFoundError') {
+          // (or even never existed)
+        } else {
+          throw e;
+        }
+      }
+    }
+
+    // Check all filtered indexes that have not yet been marked as affected
+    for (const idxID of unaffectedFilteredIndexes) {
+      const idx = ds.indexes[idxID] as Datasets.Util.FilteredIndex;
+      // If either object version matches given filtered index’s predicate,
+      // mark that index as affected and exclude from further checks
+      if (idx.predicate(objv1) || idx.predicate(objv2)) {
+        affectedFilteredIndexes.push(idxID);
+        unaffectedFilteredIndexes.splice(unaffectedFilteredIndexes.indexOf(idxID, 1));
+      }
+    }
+  }
+
+  // Rebuild all affected filtered indexes
+}
+
+
+async function updateFilteredIndex(
+  workDir: string,
+  datasetDir: string,
+  indexID: string,
+  obj: string,
+) {
+  const idx = getIndex(workDir, datasetDir, indexID) as Datasets.Util.FilteredIndex;
+
+  let doUpdate: boolean = false;
+
+  if (idx.predicate(obj)) {
+    doUpdate = true;
+  }
+
+  if (doUpdate) {
+  }
+
+  await idx.dbHandle.clear();
+}
+
+async function updateDefaultIndex(
+  workDir: string,
+  datasetDir: string,
+  index: Datasets.Util.DefaultIndex,
+  objectPaths: AsyncGenerator<string>,
+  objectSpecs: SerializableObjectSpec[],
+) {
+  for await (const objectPath of objectPaths) {
+    const spec = getSpec(objectSpecs, objectPath);
+    if (!spec) {
+      throw new Error("Unexpectedly missing object spec while updating default index");
+    }
+
+    const obj = await readObjectCold(path.join(workDir, datasetDir, objectPath), spec);
+    if (obj !== null) {
+      await index.dbHandle.put(objectPath, obj);
+    } else {
+      try {
+        await index.dbHandle.del(objectPath);
+      } catch (e) {
+        if (e.type !== 'NotFoundError') {
+          throw e;
+        }
+      }
+    }
+  }
+}
 
 
 // Utility functions
@@ -208,6 +418,7 @@ async function fillInDefaultIndex(
     }
   }
 
+  // Collect object paths
   const rootDir = path.join(workDir, datasetDir);
   const objectPaths = listObjectPaths(listDescendantPaths(rootDir), belongsToObject);
   for await (const objectPath of objectPaths) {
@@ -223,17 +434,18 @@ async function fillInDefaultIndex(
     total += 1;
   }
 
-  for await (const _key of index.dbHandle.createKeyStream()) {
-    const objectPath = _key as string;
-    const spec = getSpec(objectSpecs, objectPath);
-    if (!spec) {
-      throw new Error("Unexpectedly missing object spec while creating default dataset index");
-    }
-    const obj = await readObjectCold(path.join(workDir, datasetDir, objectPath), spec);
-    if (obj !== null) {
-      await index.dbHandle.put(objectPath, obj);
+  async function* changedObjectPaths(): AsyncGenerator<string> {
+    for await (const _key of index.dbHandle.createKeyStream()) {
+      yield _key as string;
     }
   }
+
+  await updateDefaultIndex(
+    workDir,
+    datasetDir,
+    index,
+    changedObjectPaths(),
+    objectSpecs);
 }
 
 async function fillInFilteredIndex(
@@ -321,131 +533,3 @@ export function getSpec(
     find(c => matchesPath(objectOrBufferPath, c.matches));
   return spec || null;
 }
-
-
-/* Converts a record that maps paths to object data
-   to a record that maps paths to buffers / byte arrays
-   ready for storage.
-
-   Repository working diretory should be absolute.
-   Dataset root should be relative to working directory,
-   and must not contain leading slash.
-
-   Accepted object paths are relative to given dataset root,
-   returned buffer paths are relative to working directory.
-*/
-export function toBufferDataset(
-  workDir: string,
-  datasetDirNormalized: string,
-  objectDataset: ObjectDataset,
-) {
-  const objectSpecs = getSpecs(workDir, datasetDirNormalized);
-
-  const buffers: Record<string, Uint8Array> = {};
-
-  for (const [objectPath, obj] of Object.entries(objectDataset)) {
-    const spec = getSpec(objectSpecs, objectPath);
-
-    if (spec) {
-      const objectBuffersRelative = (spec as SerializableObjectSpec).serialize(obj);
-
-      const objectBuffers: Record<string, Uint8Array> =
-        Object.entries(objectBuffersRelative).
-        map(([objectRelativePath, data]) => ({
-          [`/${path.join(datasetDirNormalized, objectPath, objectRelativePath)}`]: data,
-        })).
-        reduce((p, c) => ({ ...p, ...c }), {});
-
-      Object.assign(buffers, objectBuffers);
-
-    } else {
-      //log.error("Unable to find object spec for object path", objectPath);
-      throw new Error("Unable to find object spec for path");
-    }
-  }
-  return buffers;
-}
-
-
-/* Converts buffers with raw file data per path
-   to structured records (as JS objects) per path.
-   Specs for conversion can be provided to makeExtension to customize
-   how object is represented.
-   NOTE: Slow, when processing full repository data
-   it is supposed to be called from a worker thread only. */
-// function toObjectDataset(
-//   workDir: string,
-//   datasetDir: string,
-//   bufferDataset: Record<string, Uint8Array>,
-// ): ObjectDataset {
-//   const ds = datasets[workDir]?.[datasetDir];
-//   if (!ds || !ds.specs) {
-//     throw new Error("Dataset does not exist or specs not registered");
-//   }
-//   const objectSpecs = ds.specs;
-// 
-//   // 1. Go through paths and organize them by matching object spec.
-//   // If a path matches some spec, that path is considered new object root,
-//   // and subsequent paths are considered to belong to this object
-//   // if they are descendants of object root path.
-//   const toProcess: {
-//     objectPath: string
-//     data: Record<string, Uint8Array>
-//     spec: SerializableObjectSpec
-//   }[] = [];
-// 
-//   // Sorted paths will appear in fashion [/, /foo/, /foo/bar.yaml, /baz/, /baz/qux.yaml, ...]
-//   const paths = Object.keys(bufferDataset).sort();
-// 
-//   let currentSpec: SerializableObjectSpec | undefined;
-//   let currentObject: {
-//     path: string
-//     buffers: Record<string, Uint8Array>
-//   } | null = null;
-// 
-//   for (const p of paths) {
-// 
-//     if (currentObject && p.startsWith(currentObject.path)) {
-//       // We are in the middle of processing an object
-//       // and current path is a descendant of object’s path.
-// 
-//       // Accumulate current path into current object for deserialization later.
-//       const objectRelativePath = stripLeadingSlash(p.replace(currentObject.path, ''));
-//       currentObject.buffers[`/${objectRelativePath}`] = bufferDataset[p];
-// 
-//       //log.debug("Matched path to object", p, currentObject.path, objectRelativePath);
-// 
-//     } else {
-//       // Were we in the middle of processing a spec and an object?
-//       if (currentSpec && currentObject) {
-//         // If yes, add that spec and accumulated object to list for further processing...
-//         toProcess.push({
-//           objectPath: currentObject.path,
-//           data: { ...currentObject.buffers },
-//           spec: currentSpec,
-//         });
-//         // ...and reset/flush accumulated object.
-//         currentObject = null;
-//       }
-// 
-//       // Find a matching spec for current path.
-//       currentSpec = Object.values(objectSpecs).find(c => matchesPath(p, c.matches));
-// 
-//       if (currentSpec) {
-//         // If a matching spec was found, start a new object.
-//         currentObject = { path: p, buffers: {} };
-//         // Current path will be the root path for the object.
-//         currentObject.buffers['/'] = bufferDataset[p];
-//       }
-//     }
-//   }
-// 
-//   // 2. Deserialize accumulated buffers into objects.
-//   const index: Record<string, Record<string, any>> = {};
-//   for (const { objectPath, data, spec } of toProcess) {
-//     index[objectPath] = spec.deserialize(data);
-//   }
-// 
-//   return index;
-// }
-// 

@@ -73,15 +73,17 @@ export async function listDescendantPathsAtVersion(
     dir: workDir,
     trees: [git.TREE({ ref }), git.TREE({ ref: ref2 })],
     map: async function (filepath, walkerEntry) {
-      // Note: filepath is not expected to have leading slash.
-
       if (walkerEntry === null) {
         return;
       }
       if (filepath === '.') {
         return;
       }
-      if (!filepath.startsWith(rootWithoutLeadingSlash)) {
+
+      // Note: filepath is not expected to have leading slash.
+      const filepathWithLeadingSlash = `/${filepath}`;
+
+      if (!filepathWithLeadingSlash.startsWith(rootWithLeadingSlash)) {
         return;
       }
 
@@ -93,7 +95,6 @@ export async function listDescendantPathsAtVersion(
         return;
       }
 
-      const filepathWithLeadingSlash = `/${filepath}`;
       const relativeFilepath = relative(rootWithLeadingSlash, filepathWithLeadingSlash);
 
       if (doCompare) {

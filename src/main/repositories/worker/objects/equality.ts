@@ -24,6 +24,9 @@ export async function* diffObjectDatasets(
 }
 
 
-function objectsAreSame(obj1: Record<string, any>, obj2: Record<string, any>): boolean {
+export function objectsAreSame(
+  obj1: Record<string, any>,
+  obj2: Record<string, any>,
+): boolean {
   return JSON.stringify(obj1) === JSON.stringify(obj2);
 }

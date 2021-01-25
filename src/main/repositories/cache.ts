@@ -3,7 +3,6 @@ import { app } from 'electron';
 
 import fs from 'fs-extra';
 import path from 'path';
-import crypto from 'crypto';
 import levelup, { LevelUp } from 'levelup';
 import leveldown from 'leveldown';
 import encode from 'encoding-down';
@@ -11,7 +10,7 @@ import { ObjectChangeset, ObjectData, ObjectDataRequest, ObjectDataset } from '@
 import { PANERON_REPOSITORY_META_FILENAME } from 'repositories';
 import getDecoder from './worker/decoders';
 import worker from './workerInterface';
-import { stripLeadingSlash } from 'utils';
+import { hash, stripLeadingSlash } from 'utils';
 
 
 const UTF_DECODER = getDecoder('utf-8');
@@ -19,11 +18,6 @@ const UTF_ENCODER = new TextEncoder();
 
 
 const cacheDBs: { [workingCopyPath: string]: Promise<LevelUp> } = {};
-
-
-function hash(val: string): string {
-  return crypto.createHash('sha1').update(val).digest('hex');
-}
 
 
 function getDBPath(workingCopyPath: string): string {

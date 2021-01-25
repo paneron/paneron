@@ -6,18 +6,15 @@ import { removeSync, ensureDir } from 'fs-extra';
 import git from 'isomorphic-git';
 import http from 'isomorphic-git/http/node';
 
-import { PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
-
 import {
   CloneRequestMessage,
   PullRequestMessage,
   PushRequestMessage,
   RepoStatusUpdater,
 } from 'repositories/types';
-
-import { normalizeURL } from '../../util';
-import { listBufferStatuses } from '../buffers/list';
 import { checkPathIsOccupied } from 'utils';
+import { normalizeURL } from '../../util';
+import { applyRepositoryChanges } from '../datasets';
 
 
 //import getDecoder from './decoders';
@@ -195,19 +192,7 @@ async function pull(opts: PullRequestMessage, updateStatus: RepoStatusUpdater) {
   const oidAfterPull = await git.resolveRef({ fs, dir: opts.workDir, ref: 'HEAD' });
 
   if (oidAfterPull !== oidBeforePull) {
-    try {
-      const changeStatus = await listBufferStatuses(
-        oidBeforePull,
-        oidAfterPull,
-        opts.workDir, {
-          onlyChanged: true,
-        });
-      return changeStatus as PathChanges;
-    } catch (e) {
-      return null;
-    }
-  } else {
-    return {};
+    await applyRepositoryChanges(opts.workDir, oidBeforePull, oidAfterPull);
   }
 }
 

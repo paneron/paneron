@@ -3,11 +3,14 @@ import fs from 'fs-extra';
 import git from 'isomorphic-git';
 import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 import { stripLeadingSlash } from 'utils';
-import { listDescendantPaths } from './list';
+import { listDescendantPaths, listDescendantPathsAtVersion } from './list';
 import { Repositories } from '../types';
 
 
-export const getBufferDataset: Repositories.Data.GetBufferDataset = async function ({ workDir, paths }) {
+export const getBufferDataset: Repositories.Data.GetBufferDataset = async function ({
+  workDir,
+  paths,
+}) {
   const bufferDataset: BufferDataset = (await Promise.all(
     paths.map(async (bufferPath) => {
       return {
@@ -28,6 +31,32 @@ export async function readBuffers(
   const buffers: Record<string, Uint8Array> = {};
   for await (const relativeBufferPath of listDescendantPaths(rootPath)) {
     const bufferData = await readBuffer(path.join(rootPath, relativeBufferPath));
+    if (bufferData) {
+      buffers[relativeBufferPath] = bufferData;
+    }
+  }
+  return buffers;
+}
+
+
+/* Given a root path, returns a BufferDataset containing data under that path.
+   Paths in buffer dataset will be slash-prepended and relative to root path. */
+export async function readBuffersAtVersion(
+  workDir: string,
+  rootPath: string,
+  atCommitHash: string,
+): Promise<Record<string, Uint8Array>> {
+  const buffers: Record<string, Uint8Array> = {};
+  const bufferPathsRelativeToRoot = await listDescendantPathsAtVersion(
+    rootPath,
+    workDir,
+    atCommitHash);
+  for (const [relativeBufferPath, _] of bufferPathsRelativeToRoot) {
+    const bufferPath = path.join(rootPath, relativeBufferPath);
+    const bufferData = await readBufferAtVersion(
+      bufferPath,
+      workDir,
+      atCommitHash);
     if (bufferData) {
       buffers[relativeBufferPath] = bufferData;
     }

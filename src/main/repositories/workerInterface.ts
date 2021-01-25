@@ -1,7 +1,8 @@
 import { spawn, Worker, Thread } from 'threads';
 import { app } from 'electron';
 import log from 'electron-log';
-import { Methods as WorkerMethods, WorkerSpec } from './worker';
+import WorkerMethods from './worker/types';
+import { WorkerSpec } from './worker';
 
 
 const worker: Promise<Thread & WorkerMethods> = new Promise((resolve, reject) => {

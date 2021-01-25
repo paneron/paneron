@@ -12,7 +12,7 @@ import { Repositories } from '../types';
 
    TODO: Check for conflicts.
 */
-export const updateBuffers: Repositories.Data.UpdateBuffers = async function (
+export const updateBuffers: Repositories.Data.UpdateBuffersWithStatusReporter = async function (
   opts,
   updateStatus,
 ) {

@@ -8,11 +8,8 @@ import { expose } from 'threads/worker';
 import { Observable, Subject } from 'threads/observable';
 import { ModuleMethods } from 'threads/dist/types/master';
 
-import * as fs from 'fs-extra';
-import * as AsyncLock from 'async-lock';
+import AsyncLock from 'async-lock';
 import { throttle } from 'throttle-debounce';
-
-import git from 'isomorphic-git';
 
 import {
   GitOperationParams,
@@ -174,9 +171,9 @@ const methods: WorkerSpec = {
 
   ds_index_getOrCreateFiltered: datasets.getOrCreateFilteredIndex,
   ds_index_describe: datasets.describeIndex,
-  ds_index_getObject: datasets.getIndexedObject,
+  ds_index_getFilteredObject: datasets.getFilteredObject,
 
-  repo_updateBuffers: updateBuffers,
+  repo_updateBuffers: lockingRepoOperationWithStatusReporter(updateBuffers),
   repo_getBufferDataset: getBufferDataset,
   repo_deleteTree: lockingRepoOperation(deleteTree),
 
@@ -185,86 +182,86 @@ const methods: WorkerSpec = {
 
   // TBD: migration
 
-  async changeObjects(msg) {
-    const { workDir, objectChangeset, author, commitMessage, _dangerouslySkipValidation } = msg;
+  // async changeObjects(msg) {
+  //   const { workDir, objectChangeset, author, commitMessage, _dangerouslySkipValidation } = msg;
 
-    const onNewStatus = getRepoStatusUpdater(workDir);
+  //   const onNewStatus = getRepoStatusUpdater(workDir);
 
-    // Isomorphic Git doesn’t like leading slashes in filepath parameter
-    // TODO: Should probably catch inconsistent use of slashes earlier and fail loudly?
-    const objectPaths = Object.keys(writeObjectContents).map(stripLeadingSlash);
-    const changeset = Object.entries(writeObjectContents).
-    map(([path, data]) => ({ [stripLeadingSlash(path)]: data })).
-    reduce((p, c) => ({ ...p, ...c }), {});
+  //   // Isomorphic Git doesn’t like leading slashes in filepath parameter
+  //   // TODO: Should probably catch inconsistent use of slashes earlier and fail loudly?
+  //   const objectPaths = Object.keys(writeObjectContents).map(stripLeadingSlash);
+  //   const changeset = Object.entries(writeObjectContents).
+  //   map(([path, data]) => ({ [stripLeadingSlash(path)]: data })).
+  //   reduce((p, c) => ({ ...p, ...c }), {});
 
-    if (objectPaths.length < 1) {
-      throw new Error("Nothing to commit");
-    }
-    if ((author.email || '').trim() === '' || (author.name || '').trim() === '') {
-      throw new Error("Missing author information");
-    }
-    if ((commitMessage || '').trim() === '') {
-      throw new Error("Missing commit message");
-    }
-    if (Object.values(changeset).find(val => val.encoding !== 'utf-8' && val.encoding !== undefined) !== undefined) {
-      throw new Error("Supplied encoding is not supported");
-    }
+  //   if (objectPaths.length < 1) {
+  //     throw new Error("Nothing to commit");
+  //   }
+  //   if ((author.email || '').trim() === '' || (author.name || '').trim() === '') {
+  //     throw new Error("Missing author information");
+  //   }
+  //   if ((commitMessage || '').trim() === '') {
+  //     throw new Error("Missing commit message");
+  //   }
+  //   if (Object.values(changeset).find(val => val.encoding !== 'utf-8' && val.encoding !== undefined) !== undefined) {
+  //     throw new Error("Supplied encoding is not supported");
+  //   }
 
-    const result: CommitOutcome = await gitLock.acquire(workDir, async () => {
-      onNewStatus({
-        busy: {
-          operation: 'committing',
-        },
-      });
+  //   const result: CommitOutcome = await gitLock.acquire(workDir, async () => {
+  //     onNewStatus({
+  //       busy: {
+  //         operation: 'committing',
+  //       },
+  //     });
 
-      const dataRequest = objectPaths.
-      map(p => ({ [p]: !changeset[p].encoding ? 'binary' : changeset[p].encoding } as ObjectDataRequest)).
-      reduce((prev, curr) => ({ ...prev, ...curr }));
+  //     const dataRequest = objectPaths.
+  //     map(p => ({ [p]: !changeset[p].encoding ? 'binary' : changeset[p].encoding } as ObjectDataRequest)).
+  //     reduce((prev, curr) => ({ ...prev, ...curr }));
 
-      let firstCommit = false;
-      try {
-        await git.resolveRef({ fs, dir: workDir, ref: 'HEAD' });
-        firstCommit = false;
-      } catch (e) {
-        if (e.name === 'NotFoundError') {
-          // Presume the first commit is being created.
-          firstCommit = true;
-        } else {
-          throw e;
-        }
-      } finally {
-        onNewStatus({
-          status: 'ready',
-        });
-      }
-      let conflicts: Record<string, true>;
-      if (!firstCommit) {
-        try {
-          const oldData = await lockFree_readBufferData(workDir, dataRequest);
-          conflicts = findConflicts(changeset, oldData, !_dangerouslySkipValidation);
-        } catch (e) {
-          throw e;
-        } finally {
-          onNewStatus({
-            status: 'ready',
-          });
-        }
-      } else {
-        conflicts = {};
-      }
-      if (Object.keys(conflicts).length > 0) {
-        return { newCommitHash: undefined, conflicts };
-      }
+  //     let firstCommit = false;
+  //     try {
+  //       await git.resolveRef({ fs, dir: workDir, ref: 'HEAD' });
+  //       firstCommit = false;
+  //     } catch (e) {
+  //       if (e.name === 'NotFoundError') {
+  //         // Presume the first commit is being created.
+  //         firstCommit = true;
+  //       } else {
+  //         throw e;
+  //       }
+  //     } finally {
+  //       onNewStatus({
+  //         status: 'ready',
+  //       });
+  //     }
+  //     let conflicts: Record<string, true>;
+  //     if (!firstCommit) {
+  //       try {
+  //         const oldData = await lockFree_readBufferData(workDir, dataRequest);
+  //         conflicts = findConflicts(changeset, oldData, !_dangerouslySkipValidation);
+  //       } catch (e) {
+  //         throw e;
+  //       } finally {
+  //         onNewStatus({
+  //           status: 'ready',
+  //         });
+  //       }
+  //     } else {
+  //       conflicts = {};
+  //     }
+  //     if (Object.keys(conflicts).length > 0) {
+  //       return { newCommitHash: undefined, conflicts };
+  //     }
 
-      // Write objects
-      const newCommitHash: string = await makeChanges(
-        { ...msg, writeObjectContents: changeset },
-        getRepoStatusUpdater(msg.workDir));
-      return { newCommitHash, conflicts };
-    });
+  //     // Write objects
+  //     const newCommitHash: string = await makeChanges(
+  //       { ...msg, writeObjectContents: changeset },
+  //       getRepoStatusUpdater(msg.workDir));
+  //     return { newCommitHash, conflicts };
+  //   });
 
-    return result;
-  },
+  //   return result;
+  // },
 
 }
 

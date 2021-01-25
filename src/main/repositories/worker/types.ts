@@ -90,6 +90,10 @@ export namespace Repositories {
     }) => Promise<BufferDataset>
 
     export type UpdateBuffers =
+      (msg: BufferCommitRequestMessage) =>
+        Promise<CommitOutcome>
+
+    export type UpdateBuffersWithStatusReporter =
       (msg: BufferCommitRequestMessage, statusUpdater: RepoStatusUpdater) =>
         Promise<CommitOutcome>
 
@@ -145,7 +149,7 @@ export namespace Datasets {
 
     /* Retrieves dataset-relative path of an object
        in the index at specified position. */
-    export type GetObject = (msg: DatasetOperationParams & {
+    export type GetFilteredObject = (msg: DatasetOperationParams & {
       indexID: string
       position: number
     }) => Promise<{ objectPath: string }>
@@ -191,10 +195,14 @@ export namespace Datasets {
       dbHandle: LevelUp<AbstractLevelDOWN<K, V>, AbstractIterator<K, V>>
       status: IndexStatus
       statusSubject: Subject<IndexStatus>
+
+      predicate?: Function
     }
 
     export type DefaultIndex = ActiveDatasetIndex<string, Record<string, any> | undefined>;
-    export type FilteredIndex = ActiveDatasetIndex<number, string>;
+    export type FilteredIndex = ActiveDatasetIndex<number, string> & {
+      predicate: Function
+    };
 
     export type FilteredIndexPredicate = (item: Record<string, any>) => boolean;
 
@@ -249,7 +257,7 @@ export default interface WorkerMethods {
 
   ds_index_getOrCreateFiltered: Datasets.Indexes.GetOrCreateFiltered
   ds_index_describe: Datasets.Indexes.Describe
-  ds_index_getObject: Datasets.Indexes.GetObject
+  ds_index_getFilteredObject: Datasets.Indexes.GetFilteredObject
 
 
   // Working with raw unstructured data (internal)
