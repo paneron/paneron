@@ -29,7 +29,7 @@ import {
   deleteRepository,
   listPaneronRepositories,
   setPaneronRepositoryInfo,
-  readContents,
+  getBufferDataset,
   migrateRepositoryFormat,
 } from 'repositories';
 import { PaneronRepository, Repository } from 'repositories/types';
@@ -56,6 +56,7 @@ import {
 
 import { forceSlug } from 'utils';
 import { AuthorDetails, Button } from '../widgets';
+import { deserializeMeta } from 'main/meta-serdes';
 
 
 const Window: React.FC<WindowComponentProps> = function () {
@@ -629,14 +630,19 @@ const InvalidPaneronRepository: React.FC<{ repo: Repository }> = function ({ rep
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
 
-  const legacyMetaResp = readContents.renderer!.useValue({
+  const legacyMetaResp = getBufferDataset.renderer!.useValue({
     workingCopyPath: repo.workingCopyPath,
-    objects: { 'meta.yaml': 'utf-8' },
+    paths: ['meta.yaml'],
   }, {});
 
-  const legacyMeta = legacyMetaResp.value['meta.yaml']?.encoding === 'utf-8'
-    ? yaml.load(legacyMetaResp.value['meta.yaml'].value)
-    : null;
+  const legacyMetaRaw = legacyMetaResp.value['meta.yaml'];
+  let legacyMeta: Record<string, any> | null;
+
+  if (legacyMetaRaw) {
+    legacyMeta = deserializeMeta(legacyMetaRaw);
+  } else {
+    legacyMeta = null;
+  }
 
   const writeAccess = !repo.remote || (repo.remote?.writeAccess === true);
 

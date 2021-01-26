@@ -11,8 +11,6 @@ import log from 'electron-log';
 import { Subscription } from 'observable-fns';
 
 import { stripLeadingSlash } from '@riboseinc/paneron-extension-kit/util';
-import { ObjectDataRequest, ObjectDataset } from '@riboseinc/paneron-extension-kit/types';
-import { CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
 
 import {
   addRepository, createRepository, deleteRepository,
@@ -32,6 +30,8 @@ import {
   setPaneronRepositoryInfo,
   migrateRepositoryFormat,
   unsetWriteAccess,
+  getBufferDataset,
+  updateBuffers,
 } from '../../repositories';
 import { Repository, NewRepositoryDefaults, RepoStatus, PaneronRepository, GitRemote } from '../../repositories/types';
 import { forceSlug } from 'utils';
@@ -603,96 +603,93 @@ savePassword.main!.handle(async ({ workingCopyPath, remoteURL, username, passwor
 // });
 
 
-readContents.main!.handle(async ({ workingCopyPath, objects }) => {
-  if (Object.keys(objects).length < 1) {
+getBufferDataset.main!.handle(async ({ workingCopyPath, paths }) => {
+  if (paths.length < 1) {
     return {};
   }
 
-  // Try cache
-  let data: ObjectDataset = await cache.getObjectContents({ workingCopyPath, objects });
-
-  // Below can be avoided if we ensure repo cache is populated before dataset is open.
-  // If any data is null (cache key was not found), request from filesystem.
-  // TODO: This is suboptimal in case object is known to not exist.
-  // We could extend the type and e.g. cache “null” for known-nonexistent objects
-  // and “undefined” if LevelDB returned NotFoundError.
-  if (Object.values(data).indexOf(null) >= 0) {
-    const fsRequest: ObjectDataRequest = Object.entries(data).
-      filter(([key, data]) => data === null && objects[key] !== undefined).
-      map(([key, _]) => ({ [key]: objects[key] })).
-      reduce((prev, curr) => ({ ...prev, ...curr }));
-
-    log.silly("Repositories: requesting data: cache miss", Object.keys(fsRequest));
-
-    try {
-      const w = await worker;
-      data = {
-        ...data,
-        ...(await w.getObjectContents({
-          workDir: workingCopyPath,
-          readObjectContents: fsRequest,
-        })),
-      };
-    } catch (e) {
-      log.error("Repositories: Failed to read object contents from Git repository", e);
-      throw e;
-    }
-  }
-
-  return data;
+  const w = await worker;
+  return await w.repo_getBufferDataset({
+    workDir: workingCopyPath,
+    paths,
+  });
 });
 
 
-commitChanges.main!.handle(async ({ workingCopyPath, commitMessage, changeset, ignoreConflicts }) => {
-  const w = await worker;
+updateBuffers.main!.handle(async ({
+  workingCopyPath,
+  commitMessage,
+  bufferChangeset,
+  ignoreConflicts,
+}) => {
   const repoCfg = await readRepoConfig(workingCopyPath);
 
   if (!repoCfg.author) {
     throw new Error("Author information is missing in repository config");
   }
 
-  // Update Git repository
-  let outcome: CommitOutcome;
-  try {
-    outcome = await w.repo_updateBuffers({
-      workDir: workingCopyPath,
-      commitMessage,
-      bufferChangeset: changeset,
-      author: repoCfg.author,
-      _dangerouslySkipValidation: ignoreConflicts,
-    });
-  } catch (e) {
-    log.error("Repositories: Failed to change objects", workingCopyPath, Object.keys(changeset), commitMessage, e);
-    throw e;
-  }
+  const w = await worker;
 
-  // Check outcome for conflicts
-  if (Object.keys(outcome.conflicts || {}).length > 0) {
-    if (!ignoreConflicts) {
-      log.error("Repositories: Conflicts while changing objects", outcome.conflicts);
-      throw new Error("Conflicts while changing objects");
-    } else {
-      log.warn("Repositories: Ignoring conflicts while changing objects", outcome.conflicts);
-    }
-  }
-
-  // Update cache
-  await cache.applyChangeset({ workingCopyPath, changeset });
-
-  // Send signals
-  if (outcome.newCommitHash) {
-    await repositoryContentsChanged.main!.trigger({
-      workingCopyPath,
-      objects: Object.keys(changeset).
-        map(path => ({ [path]: true as const })).
-        reduce((p, c) => ({ ...p, ...c }), {}),
-    });
-  } else {
-    log.warn("Repositories: Commit did not return commit hash");
-  }
-
-  return outcome;
+  return await w.repo_updateBuffers({
+    workDir: workingCopyPath,
+    author: repoCfg.author,
+    commitMessage,
+    bufferChangeset,
+    _dangerouslySkipValidation: ignoreConflicts,
+  });
 });
+
+
+// commitChanges.main!.handle(async ({ workingCopyPath, commitMessage, changeset, ignoreConflicts }) => {
+//   const w = await worker;
+//   const repoCfg = await readRepoConfig(workingCopyPath);
+// 
+//   if (!repoCfg.author) {
+//     throw new Error("Author information is missing in repository config");
+//   }
+// 
+//   // Update Git repository
+//   let outcome: CommitOutcome;
+//   try {
+//     outcome = await w.repo_updateBuffers({
+//       workDir: workingCopyPath,
+//       commitMessage,
+//       bufferChangeset: changeset,
+//       author: repoCfg.author,
+//       _dangerouslySkipValidation: ignoreConflicts,
+//     });
+//   } catch (e) {
+//     log.error("Repositories: Failed to change objects", workingCopyPath, Object.keys(changeset), commitMessage, e);
+//     throw e;
+//   }
+// 
+//   // Check outcome for conflicts
+//   if (Object.keys(outcome.conflicts || {}).length > 0) {
+//     if (!ignoreConflicts) {
+//       log.error("Repositories: Conflicts while changing objects", outcome.conflicts);
+//       throw new Error("Conflicts while changing objects");
+//     } else {
+//       log.warn("Repositories: Ignoring conflicts while changing objects", outcome.conflicts);
+//     }
+//   }
+// 
+//   // Update cache
+//   await cache.applyChangeset({ workingCopyPath, changeset });
+// 
+//   // Send signals
+//   if (outcome.newCommitHash) {
+//     await repositoryContentsChanged.main!.trigger({
+//       workingCopyPath,
+//       objects: Object.keys(changeset).
+//         map(path => ({ [path]: true as const })).
+//         reduce((p, c) => ({ ...p, ...c }), {}),
+//     });
+//   } else {
+//     log.warn("Repositories: Commit did not return commit hash");
+//   }
+// 
+//   return outcome;
+// });
 
 
 migrateRepositoryFormat.main!.handle(async ({ workingCopyPath }) => {
@@ -891,7 +888,7 @@ function syncRepoRepeatedly(workingCopyPath: string): void {
       if (repoCfg.remote) {
         const auth = await getAuth(repoCfg.remote.url, repoCfg.remote.username);
         try {
-          await w.clone({
+          await w.git_clone({
             workDir: workingCopyPath,
             repoURL: repoCfg.remote.url,
             auth,
@@ -918,7 +915,7 @@ function syncRepoRepeatedly(workingCopyPath: string): void {
       if (repoCfg.remote) {
         const auth = await getAuth(repoCfg.remote.url, repoCfg.remote.username);
 
-        const { changedObjects } = await w.pull({
+        const { changedObjects } = await w.git_pull({
           workDir: workingCopyPath,
           repoURL: repoCfg.remote.url,
           auth,
@@ -944,7 +941,7 @@ function syncRepoRepeatedly(workingCopyPath: string): void {
         }
 
         if (repoCfg.remote.writeAccess) {
-          await w.push({
+          await w.git_push({
             workDir: workingCopyPath,
             repoURL: repoCfg.remote.url,
             auth,
