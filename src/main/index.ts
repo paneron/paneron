@@ -1,4 +1,4 @@
-import fs from 'fs-extra';
+import fs from 'fs/promises';
 import crypto from 'crypto';
 import { app, BrowserWindow, dialog, protocol } from 'electron';
 import log from 'electron-log';
@@ -10,7 +10,7 @@ if (process.platform === 'linux' && process.env.SNAP && process.env.SNAP_USER_CO
   app.setAppLogsPath();
 }
 
-import { ObjectData, ObjectDataset, repositoryDashboard } from '../repositories';
+import { repositoryDashboard } from '../repositories';
 
 import 'main/plugins';
 import 'main/repositories';
@@ -18,19 +18,13 @@ import 'datasets/main';
 
 import { chooseFileFromFilesystem, makeRandomID } from 'common';
 import path from 'path';
+import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 
 
 function preventDefault(e: Electron.Event) {
   log.debug("Not quitting app (windows closed)");
   e.preventDefault();
 }
-
-const FILE_ENCODINGS: { [extension: string]: 'utf-8' | undefined } = {
-  '.svg': 'utf-8' as const,
-  '.png': undefined,
-  '.jpeg': undefined,
-  '.jpg': undefined,
-};
 
 async function initMain() {
 
@@ -78,7 +72,7 @@ async function initMain() {
       return {};
     }
 
-    let filedata: ObjectDataset = {};
+    let filedata: BufferDataset = {};
 
     for (const _f of filepaths) {
       const blob = await fs.readFile(_f);
@@ -86,24 +80,7 @@ async function initMain() {
 
       log.info("Choose file from filesystem: got file", _f, filepath, result);
 
-      const ext = path.extname(filepath);
-      if (Object.keys(FILE_ENCODINGS).indexOf(ext) < 0) {
-        log.error("Choosing file from filesystem: unknown file type", ext);
-        throw new Error("Unknown file type");
-      }
-      const encoding = FILE_ENCODINGS[ext];
-
-      let parsedData: string | Uint8Array;
-
-      if (encoding === 'utf-8') {
-        parsedData = new TextDecoder(encoding).decode(blob);
-      } else {
-        parsedData = blob;
-      }
-      filedata[filepath] = {
-        encoding,
-        value: parsedData,
-      } as ObjectData;
+      filedata[filepath] = blob;
     }
 
     return filedata;
