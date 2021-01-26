@@ -1,12 +1,6 @@
-import { BufferChangeset } from '@riboseinc/paneron-extension-kit/types/buffers';
+import type { Progress } from '@riboseinc/paneron-extension-kit/types/progress';
+import type { BufferChangeset } from '@riboseinc/paneron-extension-kit/types/buffers';
 import type { ObjectChangeset } from '@riboseinc/paneron-extension-kit/types/objects';
-
-
-interface Progress {
-  phase: string
-  loaded: number
-  total: number
-}
 
 
 // Repository info
@@ -187,12 +181,3 @@ export type WorkerMessage =
   | PullRequestMessage
   | FetchRequestMessage
   | PushRequestMessage;
-
-
-
-// Indexes
-
-export interface IndexStatus {
-  objectCount: number
-  progress?: Progress
-}

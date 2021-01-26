@@ -1,11 +1,12 @@
 import type { Observable, Subject } from 'threads/observable';
 import type { LevelUp } from 'levelup';
 import type { AbstractLevelDOWN, AbstractIterator } from 'abstract-leveldown';
-import { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
-import { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
-import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
-import { SerializableObjectSpec } from '@riboseinc/paneron-extension-kit/types/object-spec';
-import {
+import type { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
+import type { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
+import type { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
+import type { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
+import type { SerializableObjectSpec } from '@riboseinc/paneron-extension-kit/types/object-spec';
+import type {
   AuthoringGitOperationParams,
   BufferCommitRequestMessage,
   CloneRequestMessage,
@@ -14,7 +15,6 @@ import {
   DeleteRequestMessage,
   GitAuthentication,
   GitOperationParams,
-  IndexStatus,
   PullRequestMessage,
   PushRequestMessage,
   RepoStatus,
