@@ -29,7 +29,6 @@ import {
   listPaneronRepositories,
   setPaneronRepositoryInfo,
   getBufferDataset,
-  migrateRepositoryFormat,
 } from 'repositories';
 import { PaneronRepository, Repository } from 'repositories/types';
 import RepoStatus from './RepoStatus';
@@ -626,8 +625,10 @@ function ({ onEdit, repo, paneronRepo }) {
 
 /* Shows a notice about invalid Paneron repository, and checks for possible legacy repo. */
 const InvalidPaneronRepository: React.FC<{ repo: Repository }> = function ({ repo }) {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | undefined>(undefined);
+
+  // TODO: These are unnecessary now.
+  const busy = false;
+  const error = undefined;
 
   const legacyMetaResp = getBufferDataset.renderer!.useValue({
     workingCopyPath: repo.workingCopyPath,
@@ -648,16 +649,7 @@ const InvalidPaneronRepository: React.FC<{ repo: Repository }> = function ({ rep
   const legacyMetaFound = legacyMeta?.pluginID !== undefined;
 
   async function handleUpgrade() {
-    setBusy(true);
-    try {
-      await migrateRepositoryFormat.renderer!.trigger({
-        workingCopyPath: repo.workingCopyPath,
-      });
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setBusy(false);
-    }
+    remote.shell.openExternal('https://paneron.com/docs/migrating-repository-format/');
   }
 
   return (
@@ -676,7 +668,7 @@ const InvalidPaneronRepository: React.FC<{ repo: Repository }> = function ({ rep
                             : <p>Make sure to notify your collaborators before you do.</p>
                         }>
                       <Button onClick={handleUpgrade} loading={busy} fill>
-                        Upgrade repository format
+                        Read how to upgrade repository format
                       </Button>
                     </FormGroup>
                   </>

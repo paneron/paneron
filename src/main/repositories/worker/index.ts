@@ -38,14 +38,14 @@ const gitLock = new AsyncLock({ timeout: 60000, maxPending: 100 });
 // under user’s home?
 
 
-type RepoOperation<T extends GitOperationParams> =
-  (opts: T) => any;
+type RepoOperation<I extends GitOperationParams, O> =
+  (opts: I) => Promise<O>;
 
-function lockingRepoOperation(
-  func: RepoOperation<any>,
+function lockingRepoOperation<I extends GitOperationParams, O>(
+  func: RepoOperation<I, O>,
   lockOpts?: { failIfBusy?: boolean },
-): RepoOperation<any> {
-  return async function (args: { workDir: string }) {
+): RepoOperation<I, O> {
+  return async function (args: I) {
     if (lockOpts?.failIfBusy === true && gitLock.isBusy(args.workDir)) {
       throw new Error("Lock is busy");
     }
@@ -56,14 +56,14 @@ function lockingRepoOperation(
 }
 
 
-type RepoOperationWithStatusReporter<T extends GitOperationParams> =
-  (opts: T, updateStatus: RepoStatusUpdater) => any;
+type RepoOperationWithStatusReporter<I extends GitOperationParams, O> =
+  (opts: I, updateStatus: RepoStatusUpdater) => Promise<O>;
 
-function lockingRepoOperationWithStatusReporter(
-  func: RepoOperationWithStatusReporter<any>,
+function lockingRepoOperationWithStatusReporter<I extends GitOperationParams, O>(
+  func: RepoOperationWithStatusReporter<I, O>,
   lockOpts?: { failIfBusy?: boolean },
-): RepoOperation<any> {
-  return async function (opts: { workDir: string }) {
+): RepoOperation<I, O> {
+  return async function (opts: I) {
     if (lockOpts?.failIfBusy === true && gitLock.isBusy(opts.workDir)) {
       throw new Error("Lock is busy");
     }
@@ -166,6 +166,8 @@ const methods: WorkerSpec = {
 
   ds_load: datasets.load,
   ds_unload: datasets.unload,
+  ds_unloadAll: datasets.unloadAll,
+
   ds_updateObjects: updateObjects,
   ds_getObjectDataset: getObjectDataset,
 

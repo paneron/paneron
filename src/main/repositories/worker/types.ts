@@ -1,7 +1,7 @@
 import type { Observable, Subject } from 'threads/observable';
 import type { LevelUp } from 'levelup';
 import type { AbstractLevelDOWN, AbstractIterator } from 'abstract-leveldown';
-import type { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
+import type { CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
 import type { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
 import type { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
 import type { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
@@ -77,8 +77,8 @@ export namespace Git {
     export type Pull =
       (msg: PullRequestMessage) =>
         Promise<{
-          success: true
-          changedObjects: Record<string, ChangeStatus> | null
+          oidBeforePull: string
+          oidAfterPull: string
         }>
 
     export type Push =
@@ -124,9 +124,12 @@ export namespace Datasets {
       cacheRoot: string
     }) => Promise<void>
 
-
     /* Stops all indexing, deregisters object specs. */
-    export type Unload = (msg: DatasetOperationParams) => Promise<void>
+    export type Unload =
+      (msg: DatasetOperationParams) => Promise<void>
+
+    export type UnloadAll =
+      (msg: GitOperationParams) => Promise<void>
   }
 
 
@@ -255,6 +258,9 @@ export default interface WorkerMethods {
 
   /* Called when e.g. dataset window is closed. */
   ds_unload: Datasets.Lifecycle.Unload
+
+  /* Called when e.g. repository is deleted. */
+  ds_unloadAll: Datasets.Lifecycle.UnloadAll
 
   ds_getObjectDataset: Datasets.Data.GetObjectDataset
   ds_updateObjects: Datasets.Data.UpdateObjects

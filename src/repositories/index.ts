@@ -135,14 +135,6 @@ export const deleteRepository = makeEndpoint.main(
   <{ deleted: true }>_,
 );
 
-// TODO: Remove when possible.
-/* Converts an old single-dataset repository to Paneron format. */
-export const migrateRepositoryFormat = makeEndpoint.main(
-  'migrateRepositoryFormat',
-  <{ workingCopyPath: string }>_,
-  <{ newCommitHash: string }>_,
-);
-
 
 // Working with buffers
 

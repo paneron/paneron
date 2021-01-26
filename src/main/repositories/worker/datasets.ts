@@ -1,5 +1,5 @@
 import path from 'path';
-import R from 'ramda';
+import * as R from 'ramda';
 import levelup from 'levelup';
 import leveldown from 'leveldown';
 import encode from 'encoding-down';
@@ -8,10 +8,11 @@ import { CodecOptions } from 'level-codec';
 import { Observable, Subject } from 'threads/observable';
 
 import { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
-import { ChangeStatus } from '@riboseinc/paneron-extension-kit/types/changes';
+import { ChangeStatus, PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
 import { SerializableObjectSpec } from '@riboseinc/paneron-extension-kit/types/object-spec';
 import { matchesPath } from '@riboseinc/paneron-extension-kit/object-specs';
 
+import { repositoryBuffersChanged } from 'repositories';
 import { hash, stripLeadingSlash, stripTrailingSlash } from 'utils';
 import WorkerMethods, { Datasets } from './types';
 import { listDescendantPaths, listDescendantPathsAtVersion } from './buffers/list';
@@ -31,22 +32,6 @@ const datasets: {
 
 
 // Main API
-
-const unload: Datasets.Lifecycle.Unload = async function ({
-  workDir,
-  datasetDir,
-}) {
-  const normalizedDatasetDir = normalizeDatasetDir(datasetDir);
-  try {
-    const ds = getLoadedDataset(workDir, normalizedDatasetDir);
-    for (const { dbHandle, statusSubject } of Object.values(ds.indexes)) {
-      await dbHandle.close();
-      statusSubject.complete();
-    }
-  } catch (e) {
-    // TODO: Implement logging in worker
-  }
-}
 
 const load: Datasets.Lifecycle.Load = async function ({
   workDir,
@@ -78,6 +63,30 @@ const load: Datasets.Lifecycle.Load = async function ({
   };
 
   fillInDefaultIndex(workDir, normalizedDatasetDir, defaultIndex, objectSpecs);
+}
+
+const unload: Datasets.Lifecycle.Unload = async function ({
+  workDir,
+  datasetDir,
+}) {
+  const normalizedDatasetDir = normalizeDatasetDir(datasetDir);
+  try {
+    const ds = getLoadedDataset(workDir, normalizedDatasetDir);
+    for (const { dbHandle, statusSubject } of Object.values(ds.indexes)) {
+      await dbHandle.close();
+      statusSubject.complete();
+    }
+  } catch (e) {
+    // TODO: Implement logging in worker
+  }
+}
+
+const unloadAll: Datasets.Lifecycle.UnloadAll = async function ({
+  workDir,
+}) {
+  for (const datasetDir of Object.keys(datasets[workDir])) {
+    await unload({ workDir, datasetDir });
+  }
 }
 
 const getOrCreateFilteredIndex: WorkerMethods["ds_index_getOrCreateFiltered"] = async function ({
@@ -125,7 +134,10 @@ const getOrCreateFilteredIndex: WorkerMethods["ds_index_getOrCreateFiltered"] = 
       throw new Error("Unable to parse submitted predicate expression");
     }
 
-    fillInFilteredIndex(defaultIndex, filteredIndex, predicate);
+    filteredIndex.predicate = predicate;
+
+    // This will proceed in background.
+    fillInFilteredIndex(defaultIndex, filteredIndex);
   }
 
   return { indexID: filteredIndexID };
@@ -167,6 +179,7 @@ const getFilteredObject: Datasets.Indexes.GetFilteredObject = async function ({
 export default {
   load,
   unload,
+  unloadAll,
   getOrCreateFilteredIndex,
   describeIndex,
   getFilteredObject,
@@ -180,13 +193,15 @@ export default {
    Infers which buffer paths changed,
    infers which object paths in which datasets are affected,
    reindexes objects as appropriate,
-   and sends IPC events to let app windows refresh shown data.
+   and sends IPC events to let Paneron & extension windows
+   refresh shown data.
 */
 export async function applyRepositoryChanges(
   workDir: string,
   oid1: string,
   oid2: string,
 ) {
+  // Find which buffers were added/removed/modified
   const changedBufferPaths = await listDescendantPathsAtVersion(
     '/',
     workDir,
@@ -197,6 +212,21 @@ export async function applyRepositoryChanges(
     },
   ) as [path: string, changeStatus: ChangeStatus][];
 
+
+  // Notify Paneron of buffer changes
+  const pathChanges: PathChanges = changedBufferPaths.
+  map(([path, change]) => ({ [path]: change })).
+  reduce((prev, curr) => ({ ...prev, ...curr }));
+
+  if (Object.keys(pathChanges).length > 0) {
+    await repositoryBuffersChanged.main!.trigger({
+      workingCopyPath: workDir,
+      changedPaths: pathChanges,
+    });
+  }
+
+
+  // Calculate affected objects in datasets
   const changedBuffersPerDataset:
   { [datasetDir: string]: [ path: string, change: ChangeStatus | null ][] } =
     R.map(() => [], datasets[workDir]);
@@ -267,11 +297,12 @@ async function applyDatasetChanges(
 ) {
   const ds = getLoadedDataset(workDir, datasetDir);
   const defaultIndex: Datasets.Util.DefaultIndex = getIndex(workDir, datasetDir);
-  const defaultIdxDB = defaultIndex.dbHandle;
+  const affectedFilteredIndexes: Datasets.Util.FilteredIndex[] = [];
 
-  const affectedFilteredIndexes: string[] = [];
-  const unaffectedFilteredIndexes: string[] =
+  const filteredIndexIDsToCheck: string[] =
     Object.keys(ds.indexes).filter(k => k !== 'default');
+
+  const defaultIdxDB = defaultIndex.dbHandle;
 
   async function readObjectVersions(objectPath: string):
   Promise<[ Record<string, any> | null, Record<string, any> | null ]> {
@@ -285,6 +316,7 @@ async function applyDatasetChanges(
     ];
   }
 
+  // Update default index and infer which filtered indexes are affected
   for await (const objectPath of changedObjectPaths) {
     // Read “before” and “after” object versions
     const [objv1, objv2] = await readObjectVersions(objectPath);
@@ -307,18 +339,22 @@ async function applyDatasetChanges(
     }
 
     // Check all filtered indexes that have not yet been marked as affected
-    for (const idxID of unaffectedFilteredIndexes) {
+    for (const idxID of filteredIndexIDsToCheck) {
       const idx = ds.indexes[idxID] as Datasets.Util.FilteredIndex;
       // If either object version matches given filtered index’s predicate,
       // mark that index as affected and exclude from further checks
       if (idx.predicate(objv1) || idx.predicate(objv2)) {
-        affectedFilteredIndexes.push(idxID);
-        unaffectedFilteredIndexes.splice(unaffectedFilteredIndexes.indexOf(idxID, 1));
+        affectedFilteredIndexes.push(idx);
+        filteredIndexIDsToCheck.splice(filteredIndexIDsToCheck.indexOf(idxID, 1));
       }
     }
   }
 
-  // XXX: Rebuild all affected filtered indexes
+  // Rebuild affected filtered indexes
+  for (const filteredIndex of affectedFilteredIndexes) {
+    await filteredIndex.dbHandle.clear();
+    await fillInFilteredIndex(defaultIndex, filteredIndex);
+  }
 }
 
 
@@ -358,6 +394,20 @@ async function updateDefaultIndex(
 export function normalizeDatasetDir(datasetDir: string) {
   return stripTrailingSlash(stripLeadingSlash(datasetDir));
 }
+
+function getLoadedDataset(
+  workDir: string,
+  datasetDir: string,
+): Datasets.Util.LoadedDataset {
+  const ds = datasets[workDir]?.[datasetDir];
+  if (!ds) {
+    throw new Error("Dataset does not exist or is not loaded");
+  }
+  return ds;
+}
+
+
+// Indexes
 
 export function getIndex<K, V>(
   workDir: string,
@@ -399,8 +449,9 @@ async function fillInDefaultIndex(
   }
 
   // Collect object paths
-  const rootDir = path.join(workDir, datasetDir);
-  const objectPaths = listObjectPaths(listDescendantPaths(rootDir), belongsToObject);
+  const objectPaths = listObjectPaths(
+    listDescendantPaths(path.join(workDir, datasetDir)),
+    belongsToObject);
   for await (const objectPath of objectPaths) {
     index.statusSubject.next({
       objectCount: 0,
@@ -431,17 +482,17 @@ async function fillInDefaultIndex(
 async function fillInFilteredIndex(
   defaultIndex: Datasets.Util.DefaultIndex,
   filteredIndex: Datasets.Util.FilteredIndex,
-  predicate: Datasets.Util.FilteredIndexPredicate,
 ) {
   const defaultIndexDB = defaultIndex.dbHandle;
   const filteredIndexDB = filteredIndex.dbHandle;
+  const predicate = filteredIndex.predicate;
 
   const total = defaultIndex.status.objectCount;
 
   let indexed: number = 0;
   let loaded: number = 0;
   for await (const data of defaultIndexDB.createReadStream()) {
-    // TODO: Upstream: NodeJS.ReadableStream is poorly typed.
+    // TODO: [upstream] NodeJS.ReadableStream is poorly typed.
     const { key, value } = data as unknown as { key: string, value: Record<string, any> };
     const objectPath: string = key;
     const objectData: Record<string, any> = value;
@@ -483,16 +534,8 @@ function createIndex<K, V>(
   return idx;
 }
 
-function getLoadedDataset(
-  workDir: string,
-  datasetDir: string,
-): Datasets.Util.LoadedDataset {
-  const ds = datasets[workDir]?.[datasetDir];
-  if (!ds) {
-    throw new Error("Dataset does not exist or is not loaded");
-  }
-  return ds;
-}
+
+// Specs
 
 export function getSpecs(
   workDir: string,

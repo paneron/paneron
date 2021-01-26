@@ -10,8 +10,6 @@ import log from 'electron-log';
 
 import { Subscription } from 'observable-fns';
 
-import { stripLeadingSlash } from '@riboseinc/paneron-extension-kit/util';
-
 import {
   addRepository, createRepository, deleteRepository,
   getRepositoryStatus,
@@ -28,19 +26,15 @@ import {
   setAuthorInfo,
   listPaneronRepositories,
   setPaneronRepositoryInfo,
-  migrateRepositoryFormat,
   unsetWriteAccess,
   getBufferDataset,
   updateBuffers,
+  repositoryBuffersChanged,
 } from '../../repositories';
 import { Repository, NewRepositoryDefaults, RepoStatus, PaneronRepository, GitRemote } from '../../repositories/types';
-import { forceSlug } from 'utils';
-import { DatasetInfo } from 'datasets/types';
-import { fetchExtensions } from 'main/plugins';
-import cache from './cache';
 import worker from './workerInterface';
-import { DATASET_FILENAME } from 'datasets/main/util';
 import { deserializeMeta, serializeMeta } from 'main/meta-serdes';
+import { applyRepositoryChanges } from './worker/datasets';
 
 
 const REPOSITORY_SYNC_INTERVAL_MS = 5000;
@@ -462,10 +456,6 @@ addRepository.main!.handle(async ({ gitRemoteURL, workingCopyPath, username, pas
     auth,
   });
 
-  await cache.invalidatePaths({
-    workingCopyPath,
-  });
-
   repositoriesChanged.main!.trigger({
     changedWorkingPaths: [workingCopyPath],
     deletedWorkingPaths: [],
@@ -541,11 +531,11 @@ createRepository.main!.handle(async ({ workingCopyPath, author, title }) => {
 deleteRepository.main!.handle(async ({ workingCopyPath }) => {
   removeRepoStatus(workingCopyPath);
 
-  await cache.destroy({
-    workingCopyPath,
-  });
+  const w = await worker;
 
-  await (await worker).git_delete({
+  await w.ds_unloadAll({ workDir: workingCopyPath });
+
+  await w.git_delete({
     workDir: workingCopyPath,
 
     // TODO: Make it so that this flag has to be passed all the way from calling code?
@@ -692,122 +682,6 @@ updateBuffers.main!.handle(async ({
 // });
 
 
-migrateRepositoryFormat.main!.handle(async ({ workingCopyPath }) => {
-  // TODO: Move dataset-specific stuff into datasets
-  const w = await worker;
-
-  const { author } = await readRepoConfig(workingCopyPath);
-  if (!author) {
-    throw new Error("Author information is missing");
-  }
-
-  const legacyMetaResp = (await w.repo_getBufferDataset({
-    workDir: workingCopyPath,
-    paths: ['meta.yaml'],
-  }))['meta.yaml'];
-
-  if (!legacyMetaResp) {
-    throw new Error("Legacy repository meta could not be retrieved");
-  }
-
-  const legacyMeta = deserializeMeta(legacyMetaResp);
-
-  const pluginID = legacyMeta?.pluginID;
-  const title = legacyMeta?.title;
-
-  if (!pluginID || !title) {
-    throw new Error("Legacy metadata was not found or is incomplete");
-  }
-
-  const datasetDir = forceSlug(title);
-  const datasetPath = path.join(workingCopyPath, datasetDir);
-
-  const paneronMeta: PaneronRepository = {
-    title,
-    datasets: {
-      [datasetDir]: true,
-    },
-  };
-
-  const extension = (await fetchExtensions())[`@riboseinc/paneron-extension-${pluginID}`];
-
-  if (!extension) {
-    throw new Error("Unable to find extension corresponding to legacy metadata");
-  }
-
-  const datasetMeta: DatasetInfo = {
-    title,
-    type: {
-      id: extension.npm.name,
-      version: extension.npm.version,
-    },
-  };
-
-  if (fs.existsSync(datasetPath)) {
-    throw new Error("Auto-generated dataset path already exists");
-  }
-
-  const LEAVE_AT_ROOT: { [key: string]: boolean } = {
-    'meta.yaml': true,
-    '.git': true,
-    '.gitignore': true,
-  };
-
-  log.info("Upgrading repository: listing objects to move");
-  const moveIntoDatasetDir = (await w.listObjectPaths({
-    workDir: workingCopyPath,
-    query: { pathPrefix: '' },
-  })).filter(fn => (LEAVE_AT_ROOT[stripLeadingSlash(fn)]) !== true);
-
-  log.info(`Upgrading repository: about to move ${moveIntoDatasetDir.length} objects…`);
-  try {
-    await w._resetUncommittedChanges({ workDir: workingCopyPath });
-
-    fs.mkdirSync(datasetPath);
-    fs.removeSync(path.join(workingCopyPath, 'meta.yaml'));
-    fs.writeFileSync(
-      path.join(datasetPath, DATASET_FILENAME),
-      yaml.dump(datasetMeta, { noRefs: true }));
-    fs.writeFileSync(
-      path.join(workingCopyPath, PANERON_REPOSITORY_META_FILENAME),
-      yaml.dump(paneronMeta, { noRefs: true }));
-
-    for (const fp of moveIntoDatasetDir) {
-      const fpSrc = path.join(workingCopyPath, fp);
-      const fpTrg = path.join(datasetPath, fp);
-      log.info("Upgrading repository: moving", fpSrc, fpTrg);
-      await fs.move(fpSrc, fpTrg);
-    }
-  } catch (e) {
-    log.error("Upgrading repository: error", e);
-    log.debug("Undoing migration…");
-    await w.git_workDir_discardUncommittedChanges({ workDir: workingCopyPath });
-    fs.removeSync(datasetPath);
-    fs.removeSync(path.join(workingCopyPath, PANERON_REPOSITORY_META_FILENAME));
-    log.debug("Undoing migration… Done");
-    throw e;
-  }
-
-  log.info("Committing migration changeset…");
-  const { newCommitHash } = await w._commitAnyOutstandingChanges({
-    workDir: workingCopyPath,
-    commitMessage: "Migrate repository format",
-    author,
-  });
-  log.info("Committing migration changeset… Done, commit hash:", newCommitHash);
-
-  await repositoriesChanged.main!.trigger({
-    changedWorkingPaths: [workingCopyPath],
-    deletedWorkingPaths: [],
-    createdWorkingPaths: [],
-  });
-
-  return { newCommitHash };
-
-});
-
-
-
 // Sync helpers
 // TODO: Must move sync to worker
 
@@ -893,10 +767,7 @@ function syncRepoRepeatedly(workingCopyPath: string): void {
             repoURL: repoCfg.remote.url,
             auth,
           });
-          await cache.invalidatePaths({
-            workingCopyPath,
-          });
-          await repositoryContentsChanged.main!.trigger({
+          await repositoryBuffersChanged.main!.trigger({
             workingCopyPath,
           });
         } catch (e) {
@@ -915,7 +786,7 @@ function syncRepoRepeatedly(workingCopyPath: string): void {
       if (repoCfg.remote) {
         const auth = await getAuth(repoCfg.remote.url, repoCfg.remote.username);
 
-        const { changedObjects } = await w.git_pull({
+        const { oidBeforePull, oidAfterPull } = await w.git_pull({
           workDir: workingCopyPath,
           repoURL: repoCfg.remote.url,
           auth,
@@ -923,22 +794,7 @@ function syncRepoRepeatedly(workingCopyPath: string): void {
           _presumeCanceledErrorMeansAwaitingAuth: true,
         });
 
-        await cache.invalidatePaths({
-          workingCopyPath,
-          paths: changedObjects ? Object.keys(changedObjects) : undefined,
-        });
-
-        if (changedObjects === null) {
-          log.error("Repositories: Apparently unable to compare for changes after pull!");
-          await repositoryContentsChanged.main!.trigger({
-            workingCopyPath,
-          });
-        } else if (Object.keys(changedObjects).length > 0) {
-          await repositoryContentsChanged.main!.trigger({
-            workingCopyPath,
-            objects: changedObjects,
-          });
-        }
+        await applyRepositoryChanges(workingCopyPath, oidBeforePull, oidAfterPull);
 
         if (repoCfg.remote.writeAccess) {
           await w.git_push({
