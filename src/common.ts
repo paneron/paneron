@@ -1,12 +1,12 @@
 import type { OpenDialogProps } from '@riboseinc/paneron-extension-kit/types';
-import { ObjectDataset } from '@riboseinc/paneron-extension-kit/types';
+import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 import { EmptyPayload, makeEndpoint, _ } from './ipc';
 
 
 export const chooseFileFromFilesystem = makeEndpoint.main(
   'chooseFileFromFilesystem',
   <OpenDialogProps>_,
-  <ObjectDataset>_,
+  <BufferDataset>_,
 );
 
 

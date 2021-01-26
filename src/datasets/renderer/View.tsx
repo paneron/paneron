@@ -7,6 +7,7 @@ import { css, jsx } from '@emotion/core';
 import { remote } from 'electron';
 import React, { useState } from 'react';
 import { PluginManager } from 'live-plugin-manager';
+
 import {
   Button, ButtonGroup,
   Callout,
@@ -15,21 +16,11 @@ import {
   NonIdealState,
   UL,
 } from '@blueprintjs/core';
-import {
-  RendererPlugin,
-  DatasetContext,
-  IndexedObjectPathsHook,
-  IndexedObjectDataHook,
-  RawObjectsChangedEventHook,
-  RawObjectPathsHook,
-  RawObjectSyncStatusHook,
-  RawObjectDataHook,
-} from '@riboseinc/paneron-extension-kit/types';
+
+import { RendererPlugin, DatasetContext } from '@riboseinc/paneron-extension-kit/types';
 
 import { WindowComponentProps } from 'window';
-import { makeRandomID, chooseFileFromFilesystem } from 'common';
 import { ErrorBoundary } from 'renderer/widgets';
-import { DatasetInfo } from 'datasets/types';
 
 // IPC endpoints
 import {
@@ -37,25 +28,12 @@ import {
   getPluginManagerProps,
   installPlugin,
 } from 'plugins';
-import {
-  getDatasetInfo,
-  loadDataset,
-  makeChangesetRepoRelative,
-  makeDataRequestRepoRelative,
-  makeDatasetDatasetRelative,
-  makeObjectPathDatasetRelative,
-  makeObjectStatusSetDatasetRelative,
-  listObjectPaths,
-  readObjects,
-} from 'datasets';
-import {
-  commitChanges,
-  listAllObjectPathsWithSyncStatus,
-  listObjectPaths as listRawObjectPaths,
-  readContents,
-  repositoryContentsChanged,
-  repositoryStatusChanged,
-} from 'repositories';
+
+import { getRepositoryInfo } from 'repositories';
+import { DatasetInfo } from 'datasets/types';
+import { getDatasetInfo, loadDataset } from 'datasets';
+
+import { ContextGetterProps, getContext } from './context';
 
 
 const NODE_MODULES_PATH = process.env.NODE_ENV === 'production'
@@ -82,209 +60,21 @@ if (!datasetPath) {
 //});
 
 
-// Hooks
-
-
-const useObjectData: IndexedObjectDataHook = (dataRequest) => {
-  const result = readObjects.renderer!.useValue({
-    workingCopyPath,
-    datasetPath,
-    objectPaths: Object.keys(dataRequest),
-  }, { data: {} });
-
-  return result;
-};
-
-
-const useObjectPaths: IndexedObjectPathsHook = () => {
-  const result = listObjectPaths.renderer!.useValue({
-    workingCopyPath,
-    datasetPath,
-  }, { objectPaths: [] });
-
-  return result;
-};
-
-
-const useRawObjectsChangedEvent: RawObjectsChangedEventHook = (eventCallback, args) => {
-  return repositoryContentsChanged.renderer!.useEvent(async (evt) => {
-    if (evt.workingCopyPath === workingCopyPath) {
-      log.silly("Dataset view: got objects changed event", Object.keys(evt.objects || {}));
-      // TODO: Make dataset relative
-      eventCallback({ objects: evt.objects });
-    }
-  }, args);
-};
-
-const useRawObjectPaths: RawObjectPathsHook = (datasetQuery) => {
-  // Make requested path prefix dataset-relative (prepend dataset path)
-  const query = {
-    ...datasetQuery,
-    pathPrefix: datasetPath
-      ? path.join(datasetPath, datasetQuery.pathPrefix)
-      : datasetPath,
-  };
-
-  //log.silly("Dataset view: using objects path", query);
-
-  const result = listRawObjectPaths.renderer!.useValue({
-    workingCopyPath,
-    query,
-  }, []);
-
-  useRawObjectsChangedEvent(async (evt) => {
-    if (evt.objects === undefined) {
-      result.refresh();
-    } else {
-      const paths = Object.keys(evt.objects);
-      if (paths.find(p => p.startsWith(query.pathPrefix))) {
-        result.refresh();
-      }
-    }
-  }, [JSON.stringify(query)]);
-
-  return {
-    ...result,
-    // Make each detected path relative to dataset (un-prepend dataset path)
-    value: result.value.map(path => makeObjectPathDatasetRelative(path, datasetPath)),
-  };
-};
-
-const useRawObjectSyncStatus: RawObjectSyncStatusHook = () => {
-  const result = listAllObjectPathsWithSyncStatus.renderer!.useValue({
-    workingCopyPath,
-  }, {});
-
-  //log.silly("Dataset view: using object sync status", Object.keys(result.value));
-
-  useRawObjectsChangedEvent(async (evt) => {
-    result.refresh();
-  }, []);
-
-  repositoryStatusChanged.renderer!.useEvent(async (evt) => {
-    if (workingCopyPath === evt.workingCopyPath) {
-      if (evt.status.status === 'ready') {
-        result.refresh();
-      }
-    }
-  }, []);
-
-  return {
-    ...result,
-    value: makeObjectStatusSetDatasetRelative(result.value, datasetPath),
-  };
-};
-
-const useRawObjectData: RawObjectDataHook = (datasetDataRequest) => {
-  const repoDataRequest = makeDataRequestRepoRelative(datasetDataRequest, datasetPath);
-
-  const result = readContents.renderer!.useValue({
-    workingCopyPath,
-    objects: repoDataRequest,
-  }, {});
-
-  //log.silly("Dataset view: Using object data", Object.keys(repoDataRequest), result.value);
-
-  useRawObjectsChangedEvent(async (evt) => {
-    result.refresh();
-  }, [Object.keys(repoDataRequest).length]);
-
-  return {
-    ...result,
-    value: makeDatasetDatasetRelative(result.value, datasetPath),
-  };
-};
-
-//const useRepositoryInfo = () => {
-//  return getRepositoryInfo.renderer!.useValue({ workingCopyPath }, { info: { workingCopyPath } });
-//}
-
-//const useRemoteUsername: RemoteUsernameHook = () => {
-//  const repoCfg = useRepositoryInfo();
-//  return {
-//    ...repoCfg,
-//    value: { username: repoCfg.value.info?.remote?.username || undefined },
-//  }
-//};
-//
-//const useAuthorEmail: AuthorEmailHook = () => {
-//  const repoCfg = useRepositoryInfo();
-//
-//  if (!repoCfg.value.info.author?.email) {
-//    throw new Error("Misconfigured repository: missing author email");
-//  }
-//
-//  return {
-//    ...repoCfg,
-//    value: { email: repoCfg.value.info.author?.email },
-//  }
-//};
-
-const requestFileFromFilesystem: DatasetContext["requestFileFromFilesystem"] = async (props) => {
-  const result = await chooseFileFromFilesystem.renderer!.trigger(props);
-  if (result.result) {
-    return result.result;
-  } else {
-    log.error("Unable to request file from filesystem", result.errors);
-    throw new Error("Unable to request file from filesystem");
-  }
-}
-
-const _makeRandomID: DatasetContext["makeRandomID"] = async () => {
-  const id = (await makeRandomID.renderer!.trigger({})).result?.id;
-  if (!id) {
-    throw new Error("Unable to obtain a random ID")
-  }
-  return id;
-}
-
-const changeObjects: DatasetContext["changeObjects"] = async (changeset, commitMessage, ignoreConflicts) => {
-  const result = (await commitChanges.renderer!.trigger({
-    workingCopyPath,
-    changeset: makeChangesetRepoRelative(changeset, datasetPath),
-    commitMessage,
-    ignoreConflicts: ignoreConflicts || undefined,
-  }));
-  if (result.result) {
-    return result.result;
-  } else {
-    log.error("Unable to change objects", result.errors)
-    throw new Error("Unable to change objects");
-  }
-}
-
-
 const repoView: Promise<React.FC<WindowComponentProps>> = new Promise((resolve, reject) => {
 
-  getDataset(workingCopyPath, datasetPath).then(({ dataset, MainView, getObjectView }) => {
+  getDataset(workingCopyPath, datasetPath).then(({ writeAccess, dataset, MainView, getObjectView }) => {
 
     const Details: React.FC<Record<never, never>> = function () {
-      const datasetContext: DatasetContext = {
-        title: dataset.title,
-
-        useObjectData,
-        useObjectPaths,
-
-        useRawObjectsChangedEvent,
-        useRawObjectPaths,
-        useRawObjectSyncStatus,
-        useRawObjectData,
-
+      const datasetGetterProps: ContextGetterProps = {
+        writeAccess,
+        workingCopyPath,
+        datasetPath,
+        nodeModulesPath: NODE_MODULES_PATH,
+        datasetInfo: dataset,
         getObjectView,
+      }
+      const datasetContext = getContext(datasetGetterProps);
 
-        //useRemoteUsername,
-        //useAuthorEmail,
-
-        getRuntimeNodeModulePath: moduleName =>
-          path.join(NODE_MODULES_PATH, moduleName),
-
-        makeAbsolutePath: relativeDatasetPath =>
-          path.join(workingCopyPath, datasetPath || '', relativeDatasetPath),
-
-        requestFileFromFilesystem,
-        makeRandomID: _makeRandomID,
-        changeObjects,
-      };
       const [datasetSettingsState, toggleDatasetSettingsState] = useState(false);
 
       return (
@@ -340,6 +130,7 @@ const repoView: Promise<React.FC<WindowComponentProps>> = new Promise((resolve, 
 
 async function getDataset(workingCopyPath: string, datasetPath?: string):
 Promise<{
+  writeAccess: boolean
   dataset: DatasetInfo
   MainView: React.FC<DatasetContext>
   getObjectView: RendererPlugin["getObjectView"]
@@ -350,6 +141,7 @@ Promise<{
   }
 
   let MainView: React.FC<DatasetContext>;
+  let writeAccess: boolean;
   let dataset: DatasetInfo;
   let getObjectView: RendererPlugin["getObjectView"];
 
@@ -359,13 +151,18 @@ Promise<{
 
   // Prepare plugin info and manager
   try {
-    const [datasetInfo, pluginManagerProps] = await Promise.all([
+    const [repoInfo, datasetInfo, pluginManagerProps] = await Promise.all([
+      getRepositoryInfo.renderer!.trigger({ workingCopyPath }),
       getDatasetInfo.renderer!.trigger({ workingCopyPath, datasetPath }),
       getPluginManagerProps.renderer!.trigger({}),
     ]);
 
+    const _repoInfo = repoInfo.result?.info;
     const _datasetInfo = datasetInfo.result?.info;
 
+    if (!_repoInfo) {
+      throw new Error("This does not seem to be a Paneron repository");
+    }
     if (!_datasetInfo) {
       throw new Error("This does not seem to be a Paneron dataset");
     }
@@ -381,6 +178,7 @@ Promise<{
       throw new Error("Error configuring extension manager");
     }
 
+    writeAccess = _repoInfo.remote === undefined || _repoInfo.remote.writeAccess === true;
     dataset = _datasetInfo;
 
     pluginManager = new PluginManager({ cwd, pluginsPath });
@@ -476,7 +274,7 @@ Promise<{
     throw e;
   }
 
-  return { MainView, dataset, getObjectView };
+  return { MainView, writeAccess, dataset, getObjectView };
 }
 
 

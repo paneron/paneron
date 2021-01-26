@@ -1,12 +1,9 @@
-import {
-  ObjectChangeset,
-  ObjectDataset,
-} from '@riboseinc/paneron-extension-kit/types/objects';
+import { ObjectChangeset, ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
 import { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
+import { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
 import { makeWindowForComponent } from 'window';
 import { EmptyPayload, makeEndpoint, _ } from '../ipc';
 import { DatasetInfo, DatasetType, MigrationSequenceOutcome } from './types';
-import { IndexStatus } from 'repositories/types';
 
 
 /* List dataset types, provided by extensions, available for dataset initialization */
@@ -83,7 +80,13 @@ export const getObjectDataset = makeEndpoint.main(
 
 export const updateObjects = makeEndpoint.main(
   'datasets_updateObjects',
-  <{ workingCopyPath: string, datasetPath: string, objectChangeset: ObjectChangeset }>_,
+  <{
+    workingCopyPath: string
+    datasetPath: string
+    commitMessage: string
+    objectChangeset: ObjectChangeset
+    _dangerouslySkipValidation?: true
+  }>_,
   <CommitOutcome>_,
 );
 
@@ -102,7 +105,7 @@ export const filteredIndexUpdated = makeEndpoint.renderer(
 
 export const indexStatusChanged = makeEndpoint.renderer(
   'dataset_indexStatusChanged',
-  <{ workingCopyPath: string, datasetPath: string, indexID?: string, status?: IndexStatus }>_,
+  <{ workingCopyPath: string, datasetPath: string, indexID?: string, status: IndexStatus }>_,
 );
 
 
