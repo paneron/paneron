@@ -199,6 +199,7 @@ async function pull(opts: PullRequestMessage, updateStatus: RepoStatusUpdater) {
   const oidAfterPull = await git.resolveRef({ fs, dir: opts.workDir, ref: 'HEAD' });
 
   if (oidAfterPull !== oidBeforePull) {
+    // TODO: Move out of worker
     await applyRepositoryChanges(opts.workDir, oidBeforePull, oidAfterPull);
   }
 }
