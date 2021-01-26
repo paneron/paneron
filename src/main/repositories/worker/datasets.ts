@@ -7,11 +7,11 @@ import lexint from 'lexicographic-integer';
 import { CodecOptions } from 'level-codec';
 import { Observable, Subject } from 'threads/observable';
 
+import { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
 import { ChangeStatus } from '@riboseinc/paneron-extension-kit/types/changes';
 import { SerializableObjectSpec } from '@riboseinc/paneron-extension-kit/types/object-spec';
 import { matchesPath } from '@riboseinc/paneron-extension-kit/object-specs';
 
-import { IndexStatus } from 'repositories/types';
 import { hash, stripLeadingSlash, stripTrailingSlash } from 'utils';
 import { Datasets } from './types';
 import { listDescendantPaths, listDescendantPathsAtVersion } from './buffers/list';
