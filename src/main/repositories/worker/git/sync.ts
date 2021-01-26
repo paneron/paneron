@@ -15,16 +15,21 @@ import {
 import { checkPathIsOccupied } from 'utils';
 import { normalizeURL } from '../../util';
 import { applyRepositoryChanges } from '../datasets';
+import { Git, WithStatusUpdater } from '../types';
 
 
 //import getDecoder from './decoders';
 //const UTF_DECODER = getDecoder('utf-8');
 
 
-async function clone(opts: CloneRequestMessage, updateStatus: RepoStatusUpdater) {
+const clone: WithStatusUpdater<Git.Sync.Clone> = async function (
+  opts: CloneRequestMessage,
+  updateStatus: RepoStatusUpdater,
+) {
   if (checkPathIsOccupied(opts.workDir)) {
     throw new Error("Cannot clone into an already existing directory");
   }
+
   await ensureDir(opts.workDir);
   try {
     await git.clone({
@@ -74,6 +79,8 @@ async function clone(opts: CloneRequestMessage, updateStatus: RepoStatusUpdater)
     removeSync(opts.workDir);
     throw e;
   }
+
+  return { success: true };
 }
 
 
