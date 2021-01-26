@@ -23,6 +23,10 @@ import type {
 } from 'repositories/types';
 
 
+export type WithStatusUpdater<F extends (opts: any) => any> =
+  (opts: Parameters<F>[0], statusUpdater: RepoStatusUpdater) => ReturnType<F>
+
+
 export namespace Git {
 
   export namespace WorkDir {
@@ -63,18 +67,18 @@ export namespace Git {
   export namespace Sync {
 
     export type Clone =
-      (msg: CloneRequestMessage, statusUpdater: RepoStatusUpdater) =>
+      (msg: CloneRequestMessage) =>
         Promise<{ success: true }>
 
     export type Pull =
-      (msg: PullRequestMessage, statusUpdater: RepoStatusUpdater) =>
+      (msg: PullRequestMessage) =>
         Promise<{
           success: true
           changedObjects: Record<string, ChangeStatus> | null
         }>
 
     export type Push =
-      (msg: PushRequestMessage, statusUpdater: RepoStatusUpdater) =>
+      (msg: PushRequestMessage) =>
         Promise<{ success: true }>
 
   }
@@ -94,8 +98,7 @@ export namespace Repositories {
         Promise<CommitOutcome>
 
     export type UpdateBuffersWithStatusReporter =
-      (msg: BufferCommitRequestMessage, statusUpdater: RepoStatusUpdater) =>
-        Promise<CommitOutcome>
+      WithStatusUpdater<UpdateBuffers>
 
     export type DeleteTree = (msg: AuthoringGitOperationParams & {
       treeRoot: string
