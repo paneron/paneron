@@ -27,6 +27,10 @@ export type WithStatusUpdater<F extends (opts: any) => any> =
   (opts: Parameters<F>[0], statusUpdater: RepoStatusUpdater) => ReturnType<F>
 
 
+type ReturnsPromise<F extends (...opts: any[]) => any> =
+  (...opts: Parameters<F>) => Promise<ReturnType<F>>
+
+
 export namespace Git {
 
   export namespace WorkDir {
@@ -258,8 +262,8 @@ export default interface WorkerMethods {
 
   // Working with indexes
 
-  ds_index_getOrCreateFiltered: Datasets.Indexes.GetOrCreateFiltered
-  ds_index_describe: Datasets.Indexes.Describe
+  ds_index_getOrCreateFiltered: ReturnsPromise<Datasets.Indexes.GetOrCreateFiltered>
+  ds_index_describe: ReturnsPromise<Datasets.Indexes.Describe>
   ds_index_getFilteredObject: Datasets.Indexes.GetFilteredObject
 
 

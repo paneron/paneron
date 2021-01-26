@@ -13,7 +13,7 @@ import { SerializableObjectSpec } from '@riboseinc/paneron-extension-kit/types/o
 import { matchesPath } from '@riboseinc/paneron-extension-kit/object-specs';
 
 import { hash, stripLeadingSlash, stripTrailingSlash } from 'utils';
-import { Datasets } from './types';
+import WorkerMethods, { Datasets } from './types';
 import { listDescendantPaths, listDescendantPathsAtVersion } from './buffers/list';
 import { readBuffersAtVersion } from './buffers/read';
 import { listObjectPaths } from './objects/list';
@@ -80,7 +80,7 @@ const load: Datasets.Lifecycle.Load = async function ({
   fillInDefaultIndex(workDir, normalizedDatasetDir, defaultIndex, objectSpecs);
 }
 
-const getOrCreateFilteredIndex: Datasets.Indexes.GetOrCreateFiltered = function ({
+const getOrCreateFilteredIndex: WorkerMethods["ds_index_getOrCreateFiltered"] = async function ({
   workDir,
   datasetDir,
   queryExpression,
@@ -131,14 +131,14 @@ const getOrCreateFilteredIndex: Datasets.Indexes.GetOrCreateFiltered = function 
   return { indexID: filteredIndexID };
 }
 
-const describeIndex: Datasets.Indexes.Describe = function ({
+const describeIndex: WorkerMethods["ds_index_describe"] = async function ({
   workDir,
   datasetDir,
   indexID,
 }) {
-  const idxID = indexID || 'default';
   const normalizedDatasetDir = normalizeDatasetDir(datasetDir);
-  const idx = getIndex(workDir, normalizedDatasetDir, idxID);
+  const idx = getIndex(workDir, normalizedDatasetDir, indexID);
+
   return {
     status: idx.status,
     stream: Observable.from(idx.statusSubject),
@@ -318,29 +318,9 @@ async function applyDatasetChanges(
     }
   }
 
-  // Rebuild all affected filtered indexes
+  // XXX: Rebuild all affected filtered indexes
 }
 
-
-async function updateFilteredIndex(
-  workDir: string,
-  datasetDir: string,
-  indexID: string,
-  obj: string,
-) {
-  const idx = getIndex(workDir, datasetDir, indexID) as Datasets.Util.FilteredIndex;
-
-  let doUpdate: boolean = false;
-
-  if (idx.predicate(obj)) {
-    doUpdate = true;
-  }
-
-  if (doUpdate) {
-  }
-
-  await idx.dbHandle.clear();
-}
 
 async function updateDefaultIndex(
   workDir: string,
