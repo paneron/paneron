@@ -26,6 +26,9 @@ export interface ContextGetterProps {
 }
 
 
+const decoder = new TextDecoder('utf-8');
+
+
 export function getContext(opts: ContextGetterProps): DatasetContext {
   const {
     writeAccess,
@@ -43,6 +46,12 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
 
   return {
     title: datasetInfo.title,
+
+    useDecodedBlob: ({ blob }) => {
+      return {
+        asString: decoder.decode(blob),
+      };
+    },
 
     useObjectData: function _useObjectData (opts) {
       const result = getObjectDataset.renderer!.useValue({
