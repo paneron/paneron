@@ -3,7 +3,6 @@
 
 import path from 'path';
 
-import yaml from 'js-yaml';
 import { remote } from 'electron';
 
 import { css, jsx } from '@emotion/core';
