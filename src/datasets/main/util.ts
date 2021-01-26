@@ -1,25 +1,11 @@
 import path from 'path';
-import yaml from 'js-yaml';
 import repoWorker from 'main/repositories/workerInterface';
 import { normalizeDatasetDir } from 'main/repositories/worker/datasets';
+import { deserializeMeta } from 'main/meta-serdes';
 import { DatasetInfo } from '../types';
 
 
 export const DATASET_FILENAME = 'panerondataset.yaml';
-
-
-const encoder = new TextEncoder();
-const decoder = new TextDecoder('utf-8');
-
-
-export function deserializeMeta<T = Record<string, any>>(data: Uint8Array): T {
-  return yaml.load(decoder.decode(data));
-}
-
-
-export function serializeMeta(data: Record<string, any>) {
-  return encoder.encode(yaml.dump(data, { noRefs: true }));
-}
 
 
 export async function readDatasetMeta
