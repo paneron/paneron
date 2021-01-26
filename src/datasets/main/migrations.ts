@@ -3,14 +3,16 @@ import log from 'electron-log';
 
 import { throttle } from 'throttle-debounce';
 import { BufferChange } from '@riboseinc/paneron-extension-kit/types/buffers';
+
+import { GitAuthor } from 'repositories/types';
 import { requireMainPlugin } from 'main/plugins';
 import { readRepoConfig } from 'main/repositories';
 import repoWorker from 'main/repositories/workerInterface';
+import { serializeMeta } from 'main/meta-serdes';
 
 import { applyOutstandingMigrations, getOutstandingMigration, reportMigrationStatus } from '..';
 import { MigrationSequenceOutcome } from '../types';
-import { DATASET_FILENAME, readDatasetMeta, serializeMeta } from './util';
-import { GitAuthor } from 'repositories/types';
+import { DATASET_FILENAME, readDatasetMeta } from './util';
 
 
 getOutstandingMigration.main!.handle(async ({ workingCopyPath, datasetPath }) => {

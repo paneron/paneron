@@ -11,7 +11,8 @@ import log from 'electron-log';
 import { Subscription } from 'observable-fns';
 
 import { stripLeadingSlash } from '@riboseinc/paneron-extension-kit/util';
-import { FileChangeType, ObjectDataRequest, ObjectDataset } from '@riboseinc/paneron-extension-kit/types';
+import { ObjectDataRequest, ObjectDataset } from '@riboseinc/paneron-extension-kit/types';
+import { CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
 
 import {
   addRepository, createRepository, deleteRepository,
@@ -22,9 +23,6 @@ import {
   selectWorkingDirectoryContainer, validateNewWorkingDirectoryPath,
   getNewRepoDefaults,
   getRepositoryInfo, savePassword, setRemote,
-  listObjectPaths, readContents, commitChanges,
-  repositoryContentsChanged,
-  listAllObjectPathsWithSyncStatus,
   getPaneronRepositoryInfo,
   PANERON_REPOSITORY_META_FILENAME,
   queryGitRemote,
@@ -35,13 +33,14 @@ import {
   migrateRepositoryFormat,
   unsetWriteAccess,
 } from '../../repositories';
-import { Repository, NewRepositoryDefaults, RepoStatus, CommitOutcome, PaneronRepository, GitRemote } from '../../repositories/types';
+import { Repository, NewRepositoryDefaults, RepoStatus, PaneronRepository, GitRemote } from '../../repositories/types';
 import { forceSlug } from 'utils';
 import { DatasetInfo } from 'datasets/types';
 import { fetchExtensions } from 'main/plugins';
 import cache from './cache';
 import worker from './workerInterface';
 import { DATASET_FILENAME } from 'datasets/main/util';
+import { deserializeMeta, serializeMeta } from 'main/meta-serdes';
 
 
 const REPOSITORY_SYNC_INTERVAL_MS = 5000;
@@ -167,7 +166,7 @@ getRepositoryStatus.main!.handle(async ({ workingCopyPath }) => {
 
   app.on('quit', () => { removeRepoStatus(workingCopyPath); });
 
-  if (!copyIsInvalid && !copyIsMissing && !(await w.workingCopyIsValid({ workDir: workingCopyPath }))) {
+  if (!copyIsInvalid && !copyIsMissing && !(await w.git_workDir_validate({ workDir: workingCopyPath }))) {
     log.warn("Repositories: Working copy in filesystem is invalid (not a Git repo?)", workingCopyPath);
     return { busy: { operation: 'initializing' } };
   } else {
@@ -181,7 +180,7 @@ setRemote.main!.handle(async ({ workingCopyPath, url, username, password }) => {
   const w = await worker;
 
   const auth = { username, password };
-  const { isBlank, canPush } = await w.queryRemote({ url, auth });
+  const { isBlank, canPush } = await w.git_describeRemote({ url, auth });
 
   if (isBlank && canPush) {
     await updateRepositories((data) => {
@@ -202,7 +201,7 @@ setRemote.main!.handle(async ({ workingCopyPath, url, username, password }) => {
       }
     });
 
-    await w.addOrigin({
+    await w.git_addOrigin({
       workDir: workingCopyPath,
       url,
     });
@@ -213,7 +212,7 @@ setRemote.main!.handle(async ({ workingCopyPath, url, username, password }) => {
         deletedWorkingPaths: [],
         createdWorkingPaths: [],
       });
-      await w.push({
+      await w.git_push({
         workDir: workingCopyPath,
         repoURL: url,
         auth,
@@ -289,7 +288,7 @@ unsetRemote.main!.handle(async ({ workingCopyPath }) => {
     }
   });
 
-  await w.deleteOrigin({
+  await w.git_deleteOrigin({
     workDir: workingCopyPath,
   });
 
@@ -390,18 +389,17 @@ setPaneronRepositoryInfo.main!.handle(async ({ workingCopyPath, info }) => {
     throw new Error("Repository configuration is missing author information");
   }
   const w = await worker;
-  const { newCommitHash } = await w.changeObjects({
+  const { newCommitHash } = await w.repo_updateBuffers({
     workDir: workingCopyPath,
     commitMessage: "Change repository title",
     author,
-    writeObjectContents: {
+    bufferChangeset: {
       [PANERON_REPOSITORY_META_FILENAME]: {
-        oldValue: yaml.dump(existingMeta, { noRefs: true }),
-        newValue: yaml.dump({
+        oldValue: serializeMeta(existingMeta),
+        newValue: serializeMeta({
           ...existingMeta,
           title: info.title,
-        }, { noRefs: true }),
-        encoding: 'utf-8',
+        }),
       }
     },
   });
@@ -425,7 +423,7 @@ queryGitRemote.main!.handle(async ({ url, username, password }) => {
   if (!auth.password) {
     auth.password = (await getAuth(url, username)).password;
   }
-  return await (await worker).queryRemote({ url, auth });
+  return await (await worker).git_describeRemote({ url, auth });
 });
 
 
@@ -434,7 +432,7 @@ addRepository.main!.handle(async ({ gitRemoteURL, workingCopyPath, username, pas
   if (!auth.password) {
     auth.password = (await getAuth(gitRemoteURL, username)).password;
   }
-  const { canPush } = await (await worker).queryRemote({ url: gitRemoteURL, auth });
+  const { canPush } = await (await worker).git_describeRemote({ url: gitRemoteURL, auth });
 
   await updateRepositories((data) => {
     if (data.workingCopies[workingCopyPath] !== undefined) {
@@ -458,7 +456,7 @@ addRepository.main!.handle(async ({ gitRemoteURL, workingCopyPath, username, pas
     createdWorkingPaths: [workingCopyPath],
   });
 
-  await (await worker).clone({
+  await (await worker).git_clone({
     workDir: workingCopyPath,
     repoURL: gitRemoteURL,
     auth,
@@ -503,7 +501,7 @@ createRepository.main!.handle(async ({ workingCopyPath, author, title }) => {
 
   const w = await worker;
 
-  await w.init({
+  await w.git_init({
     workDir: workingCopyPath,
   });
 
@@ -512,16 +510,15 @@ createRepository.main!.handle(async ({ workingCopyPath, author, title }) => {
     datasets: {},
   };
 
-  const { newCommitHash, conflicts } = await w.changeObjects({
+  const { newCommitHash, conflicts } = await w.repo_updateBuffers({
     workDir: workingCopyPath,
     commitMessage: "Initial commit",
     author,
     // _dangerouslySkipValidation: true, // Have to, since we cannot validate data
-    writeObjectContents: {
+    bufferChangeset: {
       [PANERON_REPOSITORY_META_FILENAME]: {
         oldValue: null,
-        newValue: yaml.dump(paneronMeta, { noRefs: true }),
-        encoding: 'utf-8',
+        newValue: serializeMeta(paneronMeta),
       },
     },
   });
@@ -548,7 +545,7 @@ deleteRepository.main!.handle(async ({ workingCopyPath }) => {
     workingCopyPath,
   });
 
-  await (await worker).delete({
+  await (await worker).git_delete({
     workDir: workingCopyPath,
 
     // TODO: Make it so that this flag has to be passed all the way from calling code?
@@ -586,24 +583,24 @@ savePassword.main!.handle(async ({ workingCopyPath, remoteURL, username, passwor
 // Manipulating data
 
 
-listObjectPaths.main!.handle(async ({ workingCopyPath, query }) => {
-  return await cache.listPaths({ workingCopyPath, query });
-});
-
-
-listAllObjectPathsWithSyncStatus.main!.handle(async ({ workingCopyPath }) => {
-  // TODO: Rename to just list all paths; implement proper sync status checker for subsets of files.
-
-  const paths = await cache.listPaths({ workingCopyPath });
-
-  const result: Record<string, FileChangeType> =
-    paths.map(p => ({ [`/${p}`]: 'unchanged' as const })).reduce((p, c) => ({ ...p, ...c }), {});
-
-  //const result = await w.listAllObjectPathsWithSyncStatus({ workDir: workingCopyPath });
-  log.info("Got sync status", JSON.stringify(result));
-
-  return result;
-});
+// listObjectPaths.main!.handle(async ({ workingCopyPath, query }) => {
+//   return await cache.listPaths({ workingCopyPath, query });
+// });
+// 
+// 
+// listAllObjectPathsWithSyncStatus.main!.handle(async ({ workingCopyPath }) => {
+//   // TODO: Rename to just list all paths; implement proper sync status checker for subsets of files.
+// 
+//   const paths = await cache.listPaths({ workingCopyPath });
+// 
+//   const result: Record<string, FileChangeType> =
+//     paths.map(p => ({ [`/${p}`]: 'unchanged' as const })).reduce((p, c) => ({ ...p, ...c }), {});
+// 
+//   //const result = await w.listAllObjectPathsWithSyncStatus({ workDir: workingCopyPath });
+//   log.info("Got sync status", JSON.stringify(result));
+// 
+//   return result;
+// });
 
 
 readContents.main!.handle(async ({ workingCopyPath, objects }) => {
@@ -657,10 +654,10 @@ commitChanges.main!.handle(async ({ workingCopyPath, commitMessage, changeset, i
   // Update Git repository
   let outcome: CommitOutcome;
   try {
-    outcome = await w.changeObjects({
+    outcome = await w.repo_updateBuffers({
       workDir: workingCopyPath,
       commitMessage,
-      writeObjectContents: changeset,
+      bufferChangeset: changeset,
       author: repoCfg.author,
       _dangerouslySkipValidation: ignoreConflicts,
     });
@@ -707,16 +704,16 @@ migrateRepositoryFormat.main!.handle(async ({ workingCopyPath }) => {
     throw new Error("Author information is missing");
   }
 
-  const legacyMetaResp = (await w.getObjectContents({
+  const legacyMetaResp = (await w.repo_getBufferDataset({
     workDir: workingCopyPath,
-    readObjectContents: {
-      'meta.yaml': 'utf-8',
-    },
+    paths: ['meta.yaml'],
   }))['meta.yaml'];
 
-  const legacyMeta = legacyMetaResp?.encoding === 'utf-8'
-    ? yaml.load(legacyMetaResp.value)
-    : null;
+  if (!legacyMetaResp) {
+    throw new Error("Legacy repository meta could not be retrieved");
+  }
+
+  const legacyMeta = deserializeMeta(legacyMetaResp);
 
   const pluginID = legacyMeta?.pluginID;
   const title = legacyMeta?.title;
@@ -787,7 +784,7 @@ migrateRepositoryFormat.main!.handle(async ({ workingCopyPath }) => {
   } catch (e) {
     log.error("Upgrading repository: error", e);
     log.debug("Undoing migration…");
-    await w._resetUncommittedChanges({ workDir: workingCopyPath });
+    await w.git_workDir_discardUncommittedChanges({ workDir: workingCopyPath });
     fs.removeSync(datasetPath);
     fs.removeSync(path.join(workingCopyPath, PANERON_REPOSITORY_META_FILENAME));
     log.debug("Undoing migration… Done");
@@ -1059,17 +1056,15 @@ async function _updateNewRepoDefaults(defaults: Partial<NewRepositoryDefaults>) 
 }
 
 export async function readPaneronRepoMeta(workingCopyPath: string): Promise<PaneronRepository> {
-  const meta = (await (await worker).getObjectContents({
+  const meta = (await (await worker).repo_getBufferDataset({
     workDir: workingCopyPath,
-    readObjectContents: { [PANERON_REPOSITORY_META_FILENAME]: 'utf-8' },
+    paths: [PANERON_REPOSITORY_META_FILENAME],
   }))[PANERON_REPOSITORY_META_FILENAME];
 
   if (meta === null) {
     throw new Error("Paneron repository metadata file is not found");
-  } else if (meta?.encoding !== 'utf-8') {
-    throw new Error("Invalid paneron repository metadata file format");
   } else {
-    return yaml.load(meta.value);
+    return deserializeMeta(meta);
   }
 }
 

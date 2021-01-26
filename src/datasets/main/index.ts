@@ -4,19 +4,6 @@ import { app } from 'electron';
 import log from 'electron-log';
 import { BufferChange } from '@riboseinc/paneron-extension-kit/types/buffers';
 import {
-  deleteDataset,
-  getDatasetInfo,
-  initializeDataset,
-  loadDataset,
-  proposeDatasetPath,
-  getObjectDataset,
-} from 'datasets';
-import { readPaneronRepoMeta, readRepoConfig } from 'main/repositories';
-import repoWorker from 'main/repositories/workerInterface';
-import cache from 'main/repositories/cache';
-import { requireMainPlugin } from 'main/plugins';
-import { checkPathIsOccupied, forceSlug } from 'utils';
-import {
   PaneronRepository,
   PANERON_REPOSITORY_META_FILENAME,
 
@@ -24,8 +11,21 @@ import {
   repositoriesChanged,
   repositoryBuffersChanged,
 } from 'repositories';
-
-import { DATASET_FILENAME, readDatasetMeta, serializeMeta } from './util';
+import {
+  deleteDataset,
+  getDatasetInfo,
+  initializeDataset,
+  loadDataset,
+  proposeDatasetPath,
+  getObjectDataset,
+} from 'datasets';
+import { checkPathIsOccupied, forceSlug } from 'utils';
+import { readPaneronRepoMeta, readRepoConfig } from 'main/repositories';
+import repoWorker from 'main/repositories/workerInterface';
+import cache from 'main/repositories/cache';
+import { requireMainPlugin } from 'main/plugins';
+import { serializeMeta } from 'main/meta-serdes';
+import { DATASET_FILENAME, readDatasetMeta } from './util';
 
 import './migrations';
 
