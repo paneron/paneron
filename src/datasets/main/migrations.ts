@@ -1,15 +1,15 @@
 import path from 'path';
-import yaml from 'js-yaml';
 import log from 'electron-log';
 
 import { throttle } from 'throttle-debounce';
+import { BufferChange } from '@riboseinc/paneron-extension-kit/types/buffers';
 import { requireMainPlugin } from 'main/plugins';
 import { readRepoConfig } from 'main/repositories';
 import repoWorker from 'main/repositories/workerInterface';
 
 import { applyOutstandingMigrations, getOutstandingMigration, reportMigrationStatus } from '..';
 import { MigrationSequenceOutcome } from '../types';
-import { DATASET_FILENAME, readDatasetMeta } from './util';
+import { DATASET_FILENAME, readDatasetMeta, serializeMeta } from './util';
 import { GitAuthor } from 'repositories/types';
 
 
@@ -90,6 +90,10 @@ applyOutstandingMigrations.main!.handle(async ({ workingCopyPath, datasetPath })
           version: migrationSpec.versionAfter,
         },
       };
+      const datasetMetaChange: BufferChange = {
+        oldValue: serializeMeta(oldDatasetMeta),
+        newValue: serializeMeta(newDatasetMeta),
+      };
 
       reportMigrationStatus.main!.trigger({
         operation: "Committing gathered changes and updated dataset metadata",
@@ -97,27 +101,29 @@ applyOutstandingMigrations.main!.handle(async ({ workingCopyPath, datasetPath })
         currentMigrationVersionSpec,
       });
 
-      const { newCommitHash, conflicts } = await repos.changeObjects({
+      const { newCommitHash, conflicts } = await repos.repo_updateBuffers({
         workDir: workingCopyPath,
         commitMessage: `Migrate from ${datasetVersion} (matched ${currentMigrationVersionSpec})`,
         author,
-        writeObjectContents: {
-          ...migrationSpec.changeset,
-          [datasetMetaPath]: {
-            oldValue: yaml.dump(oldDatasetMeta, { noRefs: true }),
-            newValue: yaml.dump(newDatasetMeta, { noRefs: true }),
-            encoding: 'utf-8',
-          },
+        bufferChangeset: {
+          ...migrationSpec.bufferChangeset,
+          [datasetMetaPath]: datasetMetaChange,
         },
       });
 
       if (newCommitHash) {
-        changesApplied.push({ changeset: migrationSpec.changeset, commitHash: newCommitHash });
+        changesApplied.push({
+          bufferChangeset: migrationSpec.bufferChangeset,
+          commitHash: newCommitHash,
+        });
         reportMigrationStatus.main!.trigger({
           operation: "Checking for further outstanding migrations",
           datasetVersion: migrationSpec.versionAfter,
         });
-        return await applyMigrationsRecursively(migrationSpec.versionAfter, author);
+        return await applyMigrationsRecursively(
+          migrationSpec.versionAfter,
+          author);
+
       } else {
         if (conflicts) {
           return {

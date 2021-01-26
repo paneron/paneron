@@ -1,25 +1,40 @@
 import path from 'path';
 import yaml from 'js-yaml';
-import { DatasetInfo } from '../types';
 import repoWorker from 'main/repositories/workerInterface';
+import { normalizeDatasetDir } from 'main/repositories/worker/datasets';
+import { DatasetInfo } from '../types';
 
 
 export const DATASET_FILENAME = 'panerondataset.yaml';
 
 
+const encoder = new TextEncoder();
+const decoder = new TextDecoder('utf-8');
+
+
+export function deserializeMeta<T = Record<string, any>>(data: Uint8Array): T {
+  return yaml.load(decoder.decode(data));
+}
+
+
+export function serializeMeta(data: Record<string, any>) {
+  return encoder.encode(yaml.dump(data, { noRefs: true }));
+}
+
+
 export async function readDatasetMeta
-(workingCopyPath: string, datasetPath?: string):
+(workDir: string, datasetDir: string):
 Promise<DatasetInfo> {
-  const meta = (await (await repoWorker).getObjectContents({
-    workDir: path.join(workingCopyPath, datasetPath || ''),
-    readObjectContents: { [DATASET_FILENAME]: 'utf-8' },
-  }))[DATASET_FILENAME];
+  const datasetDirNormalized = normalizeDatasetDir(datasetDir);
+  const datasetMetaPath = `/${path.join(datasetDirNormalized, DATASET_FILENAME)}`;
+  const meta = (await (await repoWorker).repo_getBufferDataset({
+    workDir,
+    paths: [datasetMetaPath],
+  }))[datasetMetaPath];
 
   if (meta === null) {
     throw new Error("Missing dataset metadata file");
-  } else if (meta?.encoding !== 'utf-8') {
-    throw new Error("Invalid dataset metadata file format");
   } else {
-    return yaml.load(meta.value);
+    return deserializeMeta(meta);
   }
 }

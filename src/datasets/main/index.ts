@@ -1,8 +1,8 @@
 import { ensureDir } from 'fs-extra';
 import path from 'path';
-import yaml from 'js-yaml';
 import { app } from 'electron';
 import log from 'electron-log';
+import { BufferChange } from '@riboseinc/paneron-extension-kit/types/buffers';
 import {
   deleteDataset,
   getDatasetInfo,
@@ -17,6 +17,7 @@ import cache from 'main/repositories/cache';
 import { requireMainPlugin } from 'main/plugins';
 import { checkPathIsOccupied, forceSlug } from 'utils';
 import {
+  PaneronRepository,
   PANERON_REPOSITORY_META_FILENAME,
 
   // TODO: Define a more specific datasets changed event
@@ -24,12 +25,15 @@ import {
   repositoryBuffersChanged,
 } from 'repositories';
 
-import { DATASET_FILENAME, readDatasetMeta } from './util';
+import { DATASET_FILENAME, readDatasetMeta, serializeMeta } from './util';
 
 import './migrations';
 
 
 getDatasetInfo.main!.handle(async ({ workingCopyPath, datasetPath }) => {
+  if (!datasetPath) {
+    throw new Error("Dataset path is required.");
+  }
   try {
     return { info: await readDatasetMeta(workingCopyPath, datasetPath) };
   } catch (e) {
@@ -58,9 +62,6 @@ proposeDatasetPath.main!.handle(async ({ workingCopyPath, datasetPath }) => {
 });
 
 
-const encoder = new TextEncoder();
-
-
 initializeDataset.main!.handle(async ({ workingCopyPath, meta: datasetMeta, datasetPath }) => {
   if (!datasetPath) {
     throw new Error("Single-dataset repositories are not currently supported");
@@ -74,25 +75,33 @@ initializeDataset.main!.handle(async ({ workingCopyPath, meta: datasetMeta, data
   const plugin = await requireMainPlugin(
     datasetMeta.type.id,
     datasetMeta.type.version);
+
   const initialMigration = await plugin.getInitialMigration();
   const initialMigrationResult = await initialMigration.default({
     datasetRootPath: path.join(workingCopyPath, datasetPath),
     onProgress: (msg) => log.debug("Migration progress:", msg),
   });
 
-  const repoMeta = await readPaneronRepoMeta(workingCopyPath);
-  const newRepoMeta = {
-    ...repoMeta,
+  // Prepare repo meta update
+  const oldRepoMeta = await readPaneronRepoMeta(workingCopyPath);
+  const newRepoMeta: PaneronRepository = {
+    ...oldRepoMeta,
+    dataset: undefined,
     datasets: {
-      ...(repoMeta.datasets || {}),
+      ...(oldRepoMeta.datasets || {}),
       [datasetPath]: true,
     },
   };
+  const repoMetaChange: BufferChange = {
+    oldValue: serializeMeta(oldRepoMeta),
+    newValue: serializeMeta(newRepoMeta),
+  };
 
-  const repoMetaBuffer =
-    encoder.encode(yaml.dump(repoMeta, { noRefs: true }));
-  const newRepoMetaBuffer =
-    encoder.encode(yaml.dump(newRepoMeta, { noRefs: true }));
+  // Prepare dataset meta addition
+  const datasetMetaAddition: BufferChange = {
+    oldValue: null,
+    newValue: serializeMeta(datasetMeta),
+  };
 
   const repos = await repoWorker;
 
@@ -104,14 +113,8 @@ initializeDataset.main!.handle(async ({ workingCopyPath, meta: datasetMeta, data
     commitMessage: `Initialize dataset at ${datasetPath}`,
     author,
     bufferChangeset: {
-      [datasetMetaPath]: {
-        oldValue: null,
-        newValue: encoder.encode(yaml.dump(datasetMeta, { noRefs: true })),
-      },
-      [PANERON_REPOSITORY_META_FILENAME]: {
-        oldValue: repoMetaBuffer,
-        newValue: newRepoMetaBuffer,
-      },
+      [datasetMetaPath]: datasetMetaAddition,
+      [PANERON_REPOSITORY_META_FILENAME]: repoMetaChange,
       ...migrationChangeset,
     },
   });
@@ -204,6 +207,7 @@ deleteDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
   // To ensure we are deleting a Paneron dataset
   await readDatasetMeta(workingCopyPath, datasetPath);
 
+  // Delete dataset tree
   const deletionResult = await w.repo_deleteTree({
     workDir: workingCopyPath,
     commitMessage: `Delete dataset at ${datasetPath}`,
@@ -215,9 +219,10 @@ deleteDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
     throw new Error("Failed while deleting dataset object tree");
   }
 
-  const oldMetaBuffer = encoder.encode(yaml.dump(repoMeta, { noRefs: true }));
+  // Update repo meta
+  const oldMetaBuffer = serializeMeta(repoMeta);
   delete repoMeta.datasets[datasetPath];
-  const newMetaBuffer = encoder.encode(yaml.dump(repoMeta, { noRefs: true }));
+  const newMetaBuffer = serializeMeta(repoMeta);
 
   const repoMetaUpdateResult = await w.repo_updateBuffers({
     workDir: workingCopyPath,
