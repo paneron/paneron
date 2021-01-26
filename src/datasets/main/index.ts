@@ -22,7 +22,6 @@ import {
 import { checkPathIsOccupied, forceSlug } from 'utils';
 import { readPaneronRepoMeta, readRepoConfig } from 'main/repositories';
 import repoWorker from 'main/repositories/workerInterface';
-import cache from 'main/repositories/cache';
 import { requireMainPlugin } from 'main/plugins';
 import { serializeMeta } from 'main/meta-serdes';
 import { DATASET_FILENAME, readDatasetMeta } from './util';
@@ -120,9 +119,6 @@ initializeDataset.main!.handle(async ({ workingCopyPath, meta: datasetMeta, data
   });
 
   if (newCommitHash) {
-    await cache.invalidatePaths({
-      workingCopyPath,
-    });
     await repositoriesChanged.main!.trigger({
       changedWorkingPaths: [workingCopyPath],
     });
