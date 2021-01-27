@@ -168,7 +168,7 @@ const methods: WorkerSpec = {
   ds_unload: datasets.unload,
   ds_unloadAll: datasets.unloadAll,
 
-  ds_updateObjects: updateObjects,
+  ds_updateObjects: lockingRepoOperationWithStatusReporter(updateObjects),
   ds_getObjectDataset: getObjectDataset,
 
   ds_index_getOrCreateFiltered: datasets.getOrCreateFilteredIndex,

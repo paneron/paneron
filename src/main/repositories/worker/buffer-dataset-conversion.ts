@@ -1,6 +1,6 @@
 import path from 'path';
-import { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
-import { SerializableObjectSpec } from '@riboseinc/paneron-extension-kit/types/object-spec';
+import { ObjectChangeset, ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
+import { BufferChange, BufferChangeset, BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 import { getSpecs, getSpec } from './datasets';
 
 
@@ -18,8 +18,8 @@ import { getSpecs, getSpec } from './datasets';
 export function toBufferDataset(
   workDir: string,
   datasetDirNormalized: string,
-  objectDataset: ObjectDataset
-) {
+  objectDataset: ObjectDataset,
+): BufferDataset {
   const objectSpecs = getSpecs(workDir, datasetDirNormalized);
 
   const buffers: Record<string, Uint8Array> = {};
@@ -28,7 +28,7 @@ export function toBufferDataset(
     const spec = getSpec(objectSpecs, objectPath);
 
     if (spec) {
-      const objectBuffersRelative = (spec as SerializableObjectSpec).serialize(obj);
+      const objectBuffersRelative = spec.serialize(obj);
 
       const objectBuffers: Record<string, Uint8Array> = Object.entries(objectBuffersRelative).
         map(([objectRelativePath, data]) => ({
@@ -44,6 +44,59 @@ export function toBufferDataset(
     }
   }
   return buffers;
+}
+
+
+export function toBufferChangeset(
+  workDir: string,
+  datasetDirNormalized: string,
+  objectChangeset: ObjectChangeset,
+): BufferChangeset {
+  const objectSpecs = getSpecs(workDir, datasetDirNormalized);
+
+  const buffers: BufferChangeset = {};
+
+  for (const [objectPath, change] of Object.entries(objectChangeset)) {
+    const spec = getSpec(objectSpecs, objectPath);
+
+    if (spec) {
+      const newObjectBuffersRelative = spec.serialize(change.newValue);
+      const oldObjectBuffersRelative = spec.serialize(change.oldValue);
+
+      const bufferChanges = mergeBufferDatasetsIntoChangeset(
+        newObjectBuffersRelative,
+        oldObjectBuffersRelative);
+
+      Object.assign(buffers, bufferChanges);
+
+    } else {
+      throw new Error("Unable to find object spec for path");
+    }
+  }
+  return buffers;
+}
+
+
+function mergeBufferDatasetsIntoChangeset(
+  oldValues: BufferDataset,
+  newValues: BufferDataset,
+): BufferChangeset {
+  const paths = Array.from(new Set([
+    ...Object.keys(oldValues),
+    ...Object.keys(newValues),
+  ]));
+
+  const changeset: BufferChangeset = {};
+
+  for (const p of paths) {
+    const change: BufferChange = {
+      newValue: newValues[p] || null,
+      oldValue: oldValues[p] || null,
+    };
+    changeset[p] = change;
+  }
+
+  return changeset;
 }
 
 
