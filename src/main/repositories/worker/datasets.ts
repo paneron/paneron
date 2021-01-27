@@ -167,7 +167,10 @@ const getFilteredObject: Datasets.Indexes.GetFilteredObject = async function ({
   }
 
   const normalizedDatasetDir = normalizeDatasetDir(datasetDir);
-  const idx = getIndex(workDir, normalizedDatasetDir, indexID) as Datasets.Util.FilteredIndex;
+  const idx = getIndex(
+    workDir,
+    normalizedDatasetDir,
+    indexID) as Datasets.Util.FilteredIndex;
   const db = idx.dbHandle;
   const objectPath = await db.get(position);
 
@@ -218,7 +221,7 @@ const resolveRepositoryChanges: Repositories.Data.ResolveChanges = async functio
     }
   }
 
-  async function* getChangedPaths(changes: [ path: string, change: ChangeStatus ][]) {
+  async function* getChangedPaths(changes: [ string, ChangeStatus ][]) {
     for (const [p, _] of changes) {
       yield p;
     }
