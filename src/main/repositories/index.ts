@@ -36,6 +36,7 @@ import worker from './workerInterface';
 import { deserializeMeta, serializeMeta } from 'main/meta-serdes';
 import { PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
 import { objectsChanged } from 'datasets';
+import { changesetToPathChanges } from './worker/datasets';
 
 
 const REPOSITORY_SYNC_INTERVAL_MS = 5000;
@@ -621,6 +622,10 @@ updateBuffers.main!.handle(async ({
 
   const w = await worker;
 
+  const pathChanges = changesetToPathChanges(bufferChangeset);
+
+  await reportBufferChanges(workingCopyPath, pathChanges);
+
   return await w.repo_updateBuffers({
     workDir: workingCopyPath,
     author: repoCfg.author,
@@ -714,6 +719,19 @@ app.on('quit', () => {
 });
 
 
+async function reportBufferChanges(
+  workingCopyPath: string,
+  changedPaths: PathChanges,
+) {
+  if (Object.keys(changedPaths).length > 0) {
+    await repositoryBuffersChanged.main!.trigger({
+      workingCopyPath,
+      changedPaths,
+    });
+  }
+}
+
+
 async function reportRepositoryChanges(
   workingCopyPath: string,
   changes: {
@@ -728,12 +746,7 @@ async function reportRepositoryChanges(
     changedObjects: datasetChanges,
   } = changes;
 
-  if (Object.keys(changedPaths).length > 0) {
-    await repositoryBuffersChanged.main!.trigger({
-      workingCopyPath,
-      changedPaths,
-    });
-  }
+  await reportBufferChanges(workingCopyPath, changedPaths);
 
   for (const [datasetPath, changedPaths] of Object.entries(datasetChanges)) {
     await objectsChanged.main!.trigger({
@@ -830,7 +843,7 @@ function syncRepoRepeatedly(workingCopyPath: string): void {
           workDir: workingCopyPath,
           oidBefore: oidBeforePull,
           oidAfter: oidAfterPull,
-        })
+        });
 
         await reportRepositoryChanges(workingCopyPath, changes);
 

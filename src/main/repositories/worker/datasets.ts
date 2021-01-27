@@ -8,7 +8,7 @@ import { CodecOptions } from 'level-codec';
 import { Observable, Subject } from 'threads/observable';
 
 import { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
-import { ChangeStatus, PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
+import { Changeset, ChangeStatus, PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
 import { SerializableObjectSpec } from '@riboseinc/paneron-extension-kit/types/object-spec';
 import { matchesPath } from '@riboseinc/paneron-extension-kit/object-specs';
 
@@ -182,14 +182,6 @@ const getFilteredObject: Datasets.Indexes.GetFilteredObject = async function ({
   return { objectPath };
 }
 
-function convertPathChanges(
-  changedPaths: [path: string, change: ChangeStatus][]
-): PathChanges {
-  const pathChanges: PathChanges = changedPaths.
-    map(([path, change]) => ({ [path]: change })).
-    reduce((prev, curr) => ({ ...prev, ...curr }));
-  return pathChanges;
-}
 
 const resolveRepositoryChanges: Repositories.Data.ResolveChanges = async function ({
   workDir,
@@ -207,7 +199,7 @@ const resolveRepositoryChanges: Repositories.Data.ResolveChanges = async functio
     },
   ) as [path: string, changeStatus: ChangeStatus][];
 
-  const bufferPathChanges = convertPathChanges(changedBufferPaths);
+  const bufferPathChanges = changedPathsToPathChanges(changedBufferPaths);
 
   // Calculate affected objects in datasets
   const changedBuffersPerDataset:
@@ -253,13 +245,12 @@ const resolveRepositoryChanges: Repositories.Data.ResolveChanges = async functio
     };
   }
 
-  const objectPathChanges:
-  { [datasetDir: string]: PathChanges } = {};
+  const objectPathChanges: { [datasetDir: string]: PathChanges } = {};
 
   for (const [changedDatasetDir, changes] of Object.entries(changedBuffersPerDataset)) {
     const specs = getSpecs(workDir, changedDatasetDir);
     const findObjectPath = bufferPathBelongsToObjectInDataset(changedDatasetDir, specs);
-    const pathChanges = convertPathChanges(changes);
+    const pathChanges = changedPathsToPathChanges(changes);
     const objectPaths = listObjectPaths(getChangedPaths(changes), findObjectPath);
 
     objectPathChanges[changedDatasetDir] = pathChanges;
@@ -394,6 +385,34 @@ async function updateDefaultIndex(
 
 
 // Utility functions
+
+function changedPathsToPathChanges(
+  changedPaths: [path: string, change: ChangeStatus][]
+): PathChanges {
+  const pathChanges: PathChanges = changedPaths.
+    map(([path, change]) => ({ [path]: change })).
+    reduce((prev, curr) => ({ ...prev, ...curr }));
+  return pathChanges;
+}
+
+export function changesetToPathChanges(
+  changeset: Changeset<any>,
+): PathChanges {
+  const changes: PathChanges = {};
+  for (const [path, change] of Object.entries(changeset)) {
+    if (change.newValue === null && change.oldValue === null) {
+      throw new Error("Encountered a non-change in a changeset");
+    } else if (change.newValue === null && change.oldValue !== null) {
+      changes[path] = 'removed';
+    } else if (change.newValue !== null && change.oldValue === null) {
+      changes[path] = 'added';
+    } else if (change.newValue !== change.oldValue) {
+      changes[path] = 'modified';
+    }
+  }
+  return changes;
+}
+
 
 // Below, datasetDir is expected to be normalized (no leading slash).
 
