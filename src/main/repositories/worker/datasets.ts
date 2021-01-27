@@ -174,6 +174,15 @@ const getFilteredObject: Datasets.Indexes.GetFilteredObject = async function ({
   return { objectPath };
 }
 
+function convertPathChanges(
+  changedPaths: [path: string, change: ChangeStatus][]
+): PathChanges {
+  const pathChanges: PathChanges = changedPaths.
+    map(([path, change]) => ({ [path]: change })).
+    reduce((prev, curr) => ({ ...prev, ...curr }));
+  return pathChanges;
+}
+
 const resolveRepositoryChanges: Repositories.Data.ResolveChanges = async function ({
   workDir,
   oidBefore,
@@ -190,13 +199,11 @@ const resolveRepositoryChanges: Repositories.Data.ResolveChanges = async functio
     },
   ) as [path: string, changeStatus: ChangeStatus][];
 
-  const bufferPathChanges: PathChanges = changedBufferPaths.
-  map(([path, change]) => ({ [path]: change })).
-  reduce((prev, curr) => ({ ...prev, ...curr }));
+  const bufferPathChanges = convertPathChanges(changedBufferPaths);
 
   // Calculate affected objects in datasets
   const changedBuffersPerDataset:
-  { [datasetDir: string]: [ path: string, change: ChangeStatus | null ][] } =
+  { [datasetDir: string]: [ path: string, change: ChangeStatus ][] } =
     R.map(() => [], datasets[workDir]);
 
   for (const [bufferPath, changeStatus] of changedBufferPaths) {
@@ -211,9 +218,9 @@ const resolveRepositoryChanges: Repositories.Data.ResolveChanges = async functio
     }
   }
 
-  async function* changedBufferPathsInDataset(datasetDir: string) {
-    for (const [bufferPath, _] of changedBuffersPerDataset[datasetDir]) {
-      yield bufferPath;
+  async function* getChangedPaths(changes: [ path: string, change: ChangeStatus ][]) {
+    for (const [p, _] of changes) {
+      yield p;
     }
   }
 
@@ -238,14 +245,20 @@ const resolveRepositoryChanges: Repositories.Data.ResolveChanges = async functio
     };
   }
 
-  for (const changedDatasetDir of Object.keys(changedBuffersPerDataset)) {
+  const objectPathChanges:
+  { [datasetDir: string]: PathChanges } = {};
+
+  for (const [changedDatasetDir, changes] of Object.entries(changedBuffersPerDataset)) {
     const specs = getSpecs(workDir, changedDatasetDir);
     const findObjectPath = bufferPathBelongsToObjectInDataset(changedDatasetDir, specs);
+    const pathChanges = convertPathChanges(changes);
     const objectPaths = listObjectPaths(
-      changedBufferPathsInDataset(changedDatasetDir),
+      getChangedPaths(changes),
       findObjectPath);
 
-    await applyDatasetChanges(
+    objectPathChanges[changedDatasetDir] = pathChanges;
+
+    await updateIndexes(
       workDir,
       changedDatasetDir,
       objectPaths,
@@ -256,7 +269,7 @@ const resolveRepositoryChanges: Repositories.Data.ResolveChanges = async functio
 
   return {
     changedBuffers: bufferPathChanges,
-    changedObjects: {},
+    changedObjects: objectPathChanges,
   };
 }
 
@@ -274,7 +287,7 @@ export default {
 
 // Events
 
-async function applyDatasetChanges(
+async function updateIndexes(
   workDir: string,
   datasetDir: string,
   changedObjectPaths: AsyncGenerator<string>,
