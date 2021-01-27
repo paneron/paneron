@@ -1,12 +1,13 @@
-import path from 'path';
-import { ObjectChangeset, ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
+import { ObjectChangeset } from '@riboseinc/paneron-extension-kit/types/objects';
 import { BufferChange, BufferChangeset, BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 import { getSpecs, getSpec } from './datasets';
 
 
-/* Converts a record that maps paths to object data
-   to a record that maps paths to buffers / byte arrays
-   ready for storage.
+/* Converts object changeset
+   (a record that maps paths to object changes)
+   to buffer changeset
+   (a record that maps paths to buffer changes)
+   ready for commit.
 
    Repository working diretory should be absolute.
    Dataset root should be relative to working directory,
@@ -15,38 +16,6 @@ import { getSpecs, getSpec } from './datasets';
    Accepted object paths are relative to given dataset root,
    returned buffer paths are relative to working directory.
 */
-export function toBufferDataset(
-  workDir: string,
-  datasetDirNormalized: string,
-  objectDataset: ObjectDataset,
-): BufferDataset {
-  const objectSpecs = getSpecs(workDir, datasetDirNormalized);
-
-  const buffers: Record<string, Uint8Array> = {};
-
-  for (const [objectPath, obj] of Object.entries(objectDataset)) {
-    const spec = getSpec(objectSpecs, objectPath);
-
-    if (spec) {
-      const objectBuffersRelative = spec.serialize(obj);
-
-      const objectBuffers: Record<string, Uint8Array> = Object.entries(objectBuffersRelative).
-        map(([objectRelativePath, data]) => ({
-          [`/${path.join(datasetDirNormalized, objectPath, objectRelativePath)}`]: data,
-        })).
-        reduce((p, c) => ({ ...p, ...c }), {});
-
-      Object.assign(buffers, objectBuffers);
-
-    } else {
-      //log.error("Unable to find object spec for object path", objectPath);
-      throw new Error("Unable to find object spec for path");
-    }
-  }
-  return buffers;
-}
-
-
 export function toBufferChangeset(
   workDir: string,
   datasetDirNormalized: string,
@@ -78,26 +47,68 @@ export function toBufferChangeset(
 
 
 function mergeBufferDatasetsIntoChangeset(
-  oldValues: BufferDataset,
-  newValues: BufferDataset,
+  oldDataset: BufferDataset,
+  newDataset: BufferDataset,
 ): BufferChangeset {
   const paths = Array.from(new Set([
-    ...Object.keys(oldValues),
-    ...Object.keys(newValues),
+    ...Object.keys(oldDataset),
+    ...Object.keys(newDataset),
   ]));
 
   const changeset: BufferChangeset = {};
 
   for (const p of paths) {
     const change: BufferChange = {
-      newValue: newValues[p] || null,
-      oldValue: oldValues[p] || null,
+      newValue: newDataset[p] || null,
+      oldValue: oldDataset[p] || null,
     };
     changeset[p] = change;
   }
 
   return changeset;
 }
+
+
+/* Converts a record that maps paths to object data
+   to a record that maps paths to buffers / byte arrays.
+
+   Repository working diretory should be absolute.
+   Dataset root should be relative to working directory,
+   and must not contain leading slash.
+
+   Accepted object paths are relative to given dataset root,
+   returned buffer paths are relative to working directory.
+*/
+// export function toBufferDataset(
+//   workDir: string,
+//   datasetDirNormalized: string,
+//   objectDataset: ObjectDataset,
+// ): BufferDataset {
+//   const objectSpecs = getSpecs(workDir, datasetDirNormalized);
+// 
+//   const buffers: Record<string, Uint8Array> = {};
+// 
+//   for (const [objectPath, obj] of Object.entries(objectDataset)) {
+//     const spec = getSpec(objectSpecs, objectPath);
+// 
+//     if (spec) {
+//       const objectBuffersRelative = spec.serialize(obj);
+// 
+//       const objectBuffers: Record<string, Uint8Array> = Object.entries(objectBuffersRelative).
+//         map(([objectRelativePath, data]) => ({
+//           [`/${path.join(datasetDirNormalized, objectPath, objectRelativePath)}`]: data,
+//         })).
+//         reduce((p, c) => ({ ...p, ...c }), {});
+// 
+//       Object.assign(buffers, objectBuffers);
+// 
+//     } else {
+//       //log.error("Unable to find object spec for object path", objectPath);
+//       throw new Error("Unable to find object spec for path");
+//     }
+//   }
+//   return buffers;
+// }
 
 
 /* Converts buffers with raw file data per path
