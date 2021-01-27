@@ -64,6 +64,7 @@ const load: Datasets.Lifecycle.Load = async function ({
   fillInDefaultIndex(workDir, normalizedDatasetDir, defaultIndex, objectSpecs);
 }
 
+
 const unload: Datasets.Lifecycle.Unload = async function ({
   workDir,
   datasetDir,
@@ -80,6 +81,7 @@ const unload: Datasets.Lifecycle.Unload = async function ({
   }
 }
 
+
 const unloadAll: Datasets.Lifecycle.UnloadAll = async function ({
   workDir,
 }) {
@@ -87,6 +89,7 @@ const unloadAll: Datasets.Lifecycle.UnloadAll = async function ({
     await unload({ workDir, datasetDir });
   }
 }
+
 
 const getOrCreateFilteredIndex: WorkerMethods["ds_index_getOrCreateFiltered"] = async function ({
   workDir,
@@ -142,6 +145,7 @@ const getOrCreateFilteredIndex: WorkerMethods["ds_index_getOrCreateFiltered"] = 
   return { indexID: filteredIndexID };
 }
 
+
 const describeIndex: WorkerMethods["ds_index_describe"] = async function ({
   workDir,
   datasetDir,
@@ -155,6 +159,7 @@ const describeIndex: WorkerMethods["ds_index_describe"] = async function ({
     stream: Observable.from(idx.statusSubject),
   };
 }
+
 
 const getFilteredObject: Datasets.Indexes.GetFilteredObject = async function ({
   workDir,
