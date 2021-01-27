@@ -254,6 +254,10 @@
         1,
         "string"
       ],
+      "@typescript-eslint/no-namespace": [
+        1,
+        { "allowDeclarations": true }
+      ],
       "@typescript-eslint/no-empty-function": 0,
       "@typescript-eslint/no-inferrable-types": 0,
       "@typescript-eslint/no-extra-semi": 0,
