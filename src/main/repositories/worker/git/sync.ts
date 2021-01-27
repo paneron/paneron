@@ -147,7 +147,10 @@ async function push(opts: PushRequestMessage, updateStatus: RepoStatusUpdater) {
 }
 
 
-async function pull(opts: PullRequestMessage, updateStatus: RepoStatusUpdater) {
+const pull: WithStatusUpdater<Git.Sync.Pull> = async function (
+  opts: PullRequestMessage,
+  updateStatus: RepoStatusUpdater,
+) {
   const oidBeforePull = await git.resolveRef({ fs, dir: opts.workDir, ref: 'HEAD' });
 
   try {

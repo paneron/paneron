@@ -12,9 +12,8 @@ import { ChangeStatus, PathChanges } from '@riboseinc/paneron-extension-kit/type
 import { SerializableObjectSpec } from '@riboseinc/paneron-extension-kit/types/object-spec';
 import { matchesPath } from '@riboseinc/paneron-extension-kit/object-specs';
 
-import { repositoryBuffersChanged } from 'repositories';
 import { hash, stripLeadingSlash, stripTrailingSlash } from 'utils';
-import WorkerMethods, { Datasets } from './types';
+import WorkerMethods, { Datasets, Repositories } from './types';
 import { listDescendantPaths, listDescendantPathsAtVersion } from './buffers/list';
 import { readBuffersAtVersion } from './buffers/read';
 import { listObjectPaths } from './objects/list';
@@ -175,56 +174,25 @@ const getFilteredObject: Datasets.Indexes.GetFilteredObject = async function ({
   return { objectPath };
 }
 
-
-export default {
-  load,
-  unload,
-  unloadAll,
-  getOrCreateFilteredIndex,
-  describeIndex,
-  getFilteredObject,
-};
-
-
-// Events
-
-/* Takes commit hash before and after a change.
-
-   Infers which buffer paths changed,
-   infers which object paths in which datasets are affected,
-   reindexes objects as appropriate,
-   and sends IPC events to let Paneron & extension windows
-   refresh shown data.
-*/
-export async function applyRepositoryChanges(
-  workDir: string,
-  oid1: string,
-  oid2: string,
-) {
+const resolveRepositoryChanges: Repositories.Data.ResolveChanges = async function ({
+  workDir,
+  oidBefore,
+  oidAfter,
+}) {
   // Find which buffers were added/removed/modified
   const changedBufferPaths = await listDescendantPathsAtVersion(
     '/',
     workDir,
-    oid1,
+    oidBefore,
     {
-      refToCompare: oid2,
+      refToCompare: oidAfter,
       onlyChanged: true,
     },
   ) as [path: string, changeStatus: ChangeStatus][];
 
-
-  // Notify Paneron of buffer changes
-  const pathChanges: PathChanges = changedBufferPaths.
+  const bufferPathChanges: PathChanges = changedBufferPaths.
   map(([path, change]) => ({ [path]: change })).
   reduce((prev, curr) => ({ ...prev, ...curr }));
-
-  if (Object.keys(pathChanges).length > 0) {
-    await repositoryBuffersChanged.main!.trigger({
-      workingCopyPath: workDir,
-      changedPaths: pathChanges,
-    });
-  }
-
 
   // Calculate affected objects in datasets
   const changedBuffersPerDataset:
@@ -282,10 +250,29 @@ export async function applyRepositoryChanges(
       changedDatasetDir,
       objectPaths,
       specs,
-      oid1,
-      oid2);
+      oidBefore,
+      oidAfter);
   }
+
+  return {
+    changedBuffers: bufferPathChanges,
+    changedObjects: {},
+  };
 }
+
+
+export default {
+  load,
+  unload,
+  unloadAll,
+  getOrCreateFilteredIndex,
+  describeIndex,
+  getFilteredObject,
+  resolveRepositoryChanges,
+};
+
+
+// Events
 
 async function applyDatasetChanges(
   workDir: string,

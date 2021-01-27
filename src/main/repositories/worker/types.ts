@@ -1,7 +1,7 @@
 import type { Observable, Subject } from 'threads/observable';
 import type { LevelUp } from 'levelup';
 import type { AbstractLevelDOWN, AbstractIterator } from 'abstract-leveldown';
-import type { CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
+import type { CommitOutcome, PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
 import type { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
 import type { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
 import type { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
@@ -92,6 +92,24 @@ export namespace Git {
 export namespace Repositories {
 
   export namespace Data {
+
+    /* Takes commit hash before and after a change.
+
+      Infers which buffer paths changed,
+      infers which object paths in which datasets are affected,
+      reindexes objects as appropriate,
+      and sends IPC events to let Paneron & extension windows
+      refresh shown data.
+    */
+    export type ResolveChanges = (msg: GitOperationParams & {
+      oidBefore: string
+      oidAfter: string
+    }) => Promise<{
+      changedBuffers: PathChanges
+      changedObjects: {
+        [datasetDir: string]: PathChanges
+      }
+    }>
 
     export type GetBufferDataset = (msg: GitOperationParams & {
       paths: string[]
@@ -278,4 +296,5 @@ export default interface WorkerMethods {
   repo_getBufferDataset: Repositories.Data.GetBufferDataset
   repo_updateBuffers: Repositories.Data.UpdateBuffers
   repo_deleteTree: Repositories.Data.DeleteTree
+  repo_resolveChanges: Repositories.Data.ResolveChanges
 }

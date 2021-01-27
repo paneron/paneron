@@ -178,6 +178,7 @@ const methods: WorkerSpec = {
   repo_updateBuffers: lockingRepoOperationWithStatusReporter(updateBuffers),
   repo_getBufferDataset: getBufferDataset,
   repo_deleteTree: lockingRepoOperation(deleteTree),
+  repo_resolveChanges: datasets.resolveRepositoryChanges,
 
   git_workDir_discardUncommittedChanges: lockingRepoOperation(workDir.discardUncommitted),
 
