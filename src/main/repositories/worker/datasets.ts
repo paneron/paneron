@@ -255,9 +255,7 @@ const resolveRepositoryChanges: Repositories.Data.ResolveChanges = async functio
     const specs = getSpecs(workDir, changedDatasetDir);
     const findObjectPath = bufferPathBelongsToObjectInDataset(changedDatasetDir, specs);
     const pathChanges = convertPathChanges(changes);
-    const objectPaths = listObjectPaths(
-      getChangedPaths(changes),
-      findObjectPath);
+    const objectPaths = listObjectPaths(getChangedPaths(changes), findObjectPath);
 
     objectPathChanges[changedDatasetDir] = pathChanges;
 
