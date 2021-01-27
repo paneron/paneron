@@ -34,7 +34,8 @@ import {
 import { Repository, NewRepositoryDefaults, RepoStatus, PaneronRepository, GitRemote } from '../../repositories/types';
 import worker from './workerInterface';
 import { deserializeMeta, serializeMeta } from 'main/meta-serdes';
-import { applyRepositoryChanges } from './worker/datasets';
+import { PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
+import { objectsChanged } from 'datasets';
 
 
 const REPOSITORY_SYNC_INTERVAL_MS = 5000;
@@ -713,6 +714,37 @@ app.on('quit', () => {
 });
 
 
+async function reportRepositoryChanges(
+  workingCopyPath: string,
+  changes: {
+    changedBuffers: PathChanges
+    changedObjects: {
+      [datasetDir: string]: PathChanges
+    }
+  },
+) {
+  const {
+    changedBuffers: changedPaths,
+    changedObjects: datasetChanges,
+  } = changes;
+
+  if (Object.keys(changedPaths).length > 0) {
+    await repositoryBuffersChanged.main!.trigger({
+      workingCopyPath,
+      changedPaths,
+    });
+  }
+
+  for (const [datasetPath, changedPaths] of Object.entries(datasetChanges)) {
+    await objectsChanged.main!.trigger({
+      workingCopyPath,
+      datasetPath,
+      objects: changedPaths,
+    });
+  }
+}
+
+
 /* Sync sequence */
 function syncRepoRepeatedly(workingCopyPath: string): void {
   async function _sync(): Promise<void> {
@@ -794,7 +826,13 @@ function syncRepoRepeatedly(workingCopyPath: string): void {
           _presumeCanceledErrorMeansAwaitingAuth: true,
         });
 
-        await applyRepositoryChanges(workingCopyPath, oidBeforePull, oidAfterPull);
+        const changes = await w.repo_resolveChanges({
+          workDir: workingCopyPath,
+          oidBefore: oidBeforePull,
+          oidAfter: oidAfterPull,
+        })
+
+        await reportRepositoryChanges(workingCopyPath, changes);
 
         if (repoCfg.remote.writeAccess) {
           await w.git_push({
