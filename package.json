@@ -256,7 +256,9 @@
       ],
       "@typescript-eslint/no-namespace": [
         1,
-        { "allowDeclarations": true }
+        {
+          "allowDeclarations": true
+        }
       ],
       "@typescript-eslint/no-empty-function": 0,
       "@typescript-eslint/no-inferrable-types": 0,
