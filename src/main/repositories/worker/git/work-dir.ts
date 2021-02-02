@@ -1,5 +1,5 @@
 import git from 'isomorphic-git';
-import fs from 'fs/promises';
+import { promises as fs } from 'fs';
 import { remove, ensureDir } from 'fs-extra';
 
 import { checkPathIsOccupied } from 'utils';

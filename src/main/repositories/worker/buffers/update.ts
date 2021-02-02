@@ -1,5 +1,5 @@
 import { ensureFile, removeSync, remove } from 'fs-extra';
-import fs from 'fs/promises';
+import { promises as fs } from 'fs';
 import path from 'path';
 import git from 'isomorphic-git';
 //import { BufferChangeset } from '@riboseinc/paneron-extension-kit/types/buffers';

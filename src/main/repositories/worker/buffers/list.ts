@@ -1,8 +1,10 @@
 import { resolve, relative } from 'path';
-import fs, { readdir } from 'fs/promises';
+import { promises as fs } from 'fs';
 import git, { WalkerEntry } from 'isomorphic-git';
 import { stripLeadingSlash } from 'utils';
 import { DiffStatus } from '@riboseinc/paneron-extension-kit/types/changes';
+
+const readdir = fs.readdir;
 
 
 /* Streams paths that are descendants of given root path

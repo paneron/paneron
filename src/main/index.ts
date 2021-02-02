@@ -1,4 +1,4 @@
-import fs from 'fs/promises';
+import { promises as fs } from 'fs';
 import crypto from 'crypto';
 import { app, BrowserWindow, dialog, protocol } from 'electron';
 import log from 'electron-log';

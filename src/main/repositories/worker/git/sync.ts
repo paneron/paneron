@@ -1,6 +1,6 @@
 // NOTE: Functions for use by worker only.
 
-import fs from 'fs/promises';
+import { promises as fs } from 'fs';
 import { removeSync, ensureDir } from 'fs-extra';
 
 import git from 'isomorphic-git';
