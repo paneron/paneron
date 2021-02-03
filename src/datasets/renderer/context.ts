@@ -7,9 +7,12 @@ import { DatasetInfo } from 'datasets/types';
 import {
   makeRandomID,
   chooseFileFromFilesystem,
+} from 'common';
+
+import {
   copyObjects,
   requestCopiedObjects,
-} from 'common';
+} from 'clipboard';
 
 import {
   describeIndex,
@@ -22,8 +25,8 @@ import {
 
 
 export interface ContextGetterProps {
-  writeAccess: boolean
   nodeModulesPath: string
+  writeAccess: boolean
   workingCopyPath: string
   datasetPath: string
   datasetInfo: DatasetInfo
@@ -36,9 +39,9 @@ const decoder = new TextDecoder('utf-8');
 
 export function getContext(opts: ContextGetterProps): DatasetContext {
   const {
+    nodeModulesPath,
     writeAccess,
     workingCopyPath,
-    nodeModulesPath,
     datasetPath,
     datasetInfo,
     getObjectView,
@@ -53,7 +56,11 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
     title: datasetInfo.title,
 
     copyObjects: async (dataset) => {
-      await copyObjects.renderer!.trigger(dataset);
+      await copyObjects.renderer!.trigger({
+        workDir: workingCopyPath,
+        datasetDir: datasetPath,
+        objects: dataset,
+      });
     },
 
     requestCopiedObjects: async () => {

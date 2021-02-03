@@ -14,6 +14,8 @@ import {
   Classes, Colors,
   Navbar,
   NonIdealState,
+  Tag,
+  Tooltip,
   UL,
 } from '@blueprintjs/core';
 
@@ -34,6 +36,7 @@ import { DatasetInfo } from 'datasets/types';
 import { getDatasetInfo, loadDataset } from 'datasets';
 
 import { ContextGetterProps, getContext } from './context';
+import { getClipboardStatus } from 'clipboard';
 
 
 const NODE_MODULES_PATH = process.env.NODE_ENV === 'production'
@@ -72,7 +75,7 @@ const repoView: Promise<React.FC<WindowComponentProps>> = new Promise((resolve, 
         nodeModulesPath: NODE_MODULES_PATH,
         datasetInfo: dataset,
         getObjectView,
-      }
+      };
 
       const datasetContext = getContext(datasetGetterProps);
 
@@ -291,9 +294,55 @@ interface ToolbarProps {
 
 const Toolbar: React.FC<ToolbarProps> =
 function ({ dataset, datasetSettingsOpen, onToggleDatasetSettings }) {
+
   const pluginInfo = getPluginInfo.renderer!.useValue({
     id: dataset.type.id || '',
   }, { plugin: null });
+
+  const clipboardStatus = getClipboardStatus.renderer!.useValue({
+    workDir: workingCopyPath,
+    datasetDir: datasetPath,
+  }, {
+    contents: null,
+    canPaste: false,
+  });
+
+  const cbContents = clipboardStatus.value.contents;
+  const cbCanPaste = clipboardStatus.value.canPaste;
+
+  let clipboardTooltip: JSX.Element;
+  if (cbContents !== null) {
+    clipboardTooltip = <>
+      <p>
+        {cbContents.objectCount} object(s).
+      </p>
+      {cbCanPaste
+        ? <>
+            <p>
+              Copied from dataset {cbContents.source.dataset.meta.title}
+              in repository {cbContents.source.repository.title}
+              (local: {cbContents.source.repository.workDir}).
+            </p>
+            <p>
+              Paste in supported datasets.
+            </p>
+          </>
+        : <>
+            <p>
+              Cannot paste in this dataset.
+              Paste objects in a compatible dataset
+              other than the dataset those objects were copied from.
+            </p>
+          </>}
+    </>;
+  } else {
+    clipboardTooltip = <>
+      <p>
+        Clipboard is empty.
+        Copy and paste objects between supported datasets.
+      </p>
+    </>;
+  }
 
   return (
     <Navbar css={css`background: ${Colors.LIGHT_GRAY2}; height: 35px;`}>
@@ -311,6 +360,15 @@ function ({ dataset, datasetSettingsOpen, onToggleDatasetSettings }) {
             disabled={!onToggleDatasetSettings}
             onClick={onToggleDatasetSettings}
             active={datasetSettingsOpen} />
+          <Tooltip content={clipboardTooltip}>
+            <Button
+                icon="clipboard"
+                intent={cbCanPaste ? 'primary' : undefined}>
+              {cbContents !== null
+                ? <Tag>{cbContents.objectCount}</Tag>
+                : null}
+            </Button>
+          </Tooltip>
         </ButtonGroup>
       </Navbar.Group>
     </Navbar>
