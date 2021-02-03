@@ -16,9 +16,10 @@ import 'main/plugins';
 import 'main/repositories';
 import 'datasets/main';
 
-import { chooseFileFromFilesystem, makeRandomID } from 'common';
+import { chooseFileFromFilesystem, copyObjects, makeRandomID, requestCopiedObjects } from 'common';
 import path from 'path';
 import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
+import { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
 
 
 function preventDefault(e: Electron.Event) {
@@ -49,6 +50,21 @@ async function initMain() {
 
 
   // Shared IPC
+
+  const clipboard: { copiedObjects: null | ObjectDataset } = { copiedObjects: null };
+
+  copyObjects.main!.handle(async (dataset) => {
+    clipboard.copiedObjects = dataset;
+    return { success: true };
+  });
+
+  requestCopiedObjects.main!.handle(async () => {
+    if (clipboard.copiedObjects) {
+      return clipboard.copiedObjects;
+    } else {
+      throw new Error("Clipboard is empty");
+    }
+  });
 
   makeRandomID.main!.handle(async () => {
     return { id: crypto.randomBytes(16).toString("hex") };

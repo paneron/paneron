@@ -73,6 +73,7 @@ const repoView: Promise<React.FC<WindowComponentProps>> = new Promise((resolve, 
         datasetInfo: dataset,
         getObjectView,
       }
+
       const datasetContext = getContext(datasetGetterProps);
 
       const [datasetSettingsState, toggleDatasetSettingsState] = useState(false);

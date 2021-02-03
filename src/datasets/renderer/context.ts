@@ -4,7 +4,7 @@ import { DatasetContext, RendererPlugin } from '@riboseinc/paneron-extension-kit
 import { INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/context';
 import { DatasetInfo } from 'datasets/types';
 
-import { makeRandomID, chooseFileFromFilesystem } from 'common';
+import { makeRandomID, chooseFileFromFilesystem, copyObjects, requestCopiedObjects } from 'common';
 
 import {
   describeIndex,
@@ -46,6 +46,20 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
 
   return {
     title: datasetInfo.title,
+
+    copyObjects: async (dataset) => {
+      await copyObjects.renderer!.trigger(dataset);
+    },
+
+    requestCopiedObjects: async () => {
+      const { result, errors } = await requestCopiedObjects.renderer!.trigger({});
+      if (result) {
+        return result;
+      } else {
+        log.error("Failed to request copied objects, errors were:", errors.join('; '));
+        throw new Error("Failed to request copied objects");
+      }
+    },
 
     useDecodedBlob: ({ blob }) => {
       return {
