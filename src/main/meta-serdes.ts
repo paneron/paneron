@@ -1,7 +1,5 @@
 import yaml from 'js-yaml';
-
-const encoder = new TextEncoder();
-const decoder = new TextDecoder('utf-8');
+import { decoder, encoder } from './encoders';
 
 
 export function deserializeMeta<T = Record<string, any>>(data: Uint8Array): T {
