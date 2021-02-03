@@ -4,7 +4,12 @@ import { DatasetContext, RendererPlugin } from '@riboseinc/paneron-extension-kit
 import { INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/context';
 import { DatasetInfo } from 'datasets/types';
 
-import { makeRandomID, chooseFileFromFilesystem, copyObjects, requestCopiedObjects } from 'common';
+import {
+  makeRandomID,
+  chooseFileFromFilesystem,
+  copyObjects,
+  requestCopiedObjects,
+} from 'common';
 
 import {
   describeIndex,
