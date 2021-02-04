@@ -82,21 +82,26 @@ listAvailablePlugins.main!.handle(async () => {
 });
 
 
-installPlugin.main!.handle(async ({ id }) => {
+installPlugin.main!.handle(async ({ id, version: versionToInstall }) => {
   const name = id;
 
-  const version = await _installPlugin(name);
-  (await pluginManager).install(name, version);
+  let version: string;
 
-  await pluginsUpdated.main!.trigger({
-    changedIDs: [id],
-  });
+  try {
+    version = await _installPlugin(name, versionToInstall);
+  } finally {
+    await pluginsUpdated.main!.trigger({
+      changedIDs: [id],
+    });
+  }
+
+  (await pluginManager).install(name, version);
 
   return { installed: true, installedVersion: version };
 });
 
 
-upgradePlugin.main!.handle(async ({ id }) => {
+upgradePlugin.main!.handle(async ({ id, version: versionToUpgradeTo }) => {
   const name = id;
 
   try {
@@ -106,12 +111,17 @@ upgradePlugin.main!.handle(async ({ id }) => {
   }
 
   (await pluginManager).uninstall(name);
-  const version = await _installPlugin(name);
-  (await pluginManager).install(name, version);
 
-  await pluginsUpdated.main!.trigger({
-    changedIDs: [id],
-  });
+  let version: string;
+  try {
+    version = await _installPlugin(name, versionToUpgradeTo);
+  } finally {
+    await pluginsUpdated.main!.trigger({
+      changedIDs: [id],
+    });
+  }
+
+  (await pluginManager).install(name, version);
 
   return { installed: true };
 });
@@ -149,10 +159,10 @@ getPluginManagerProps.main!.handle(async () => {
 // }
 
 
-async function _installPlugin(name: string): Promise<string> {
+async function _installPlugin(name: string, versionToInstall?: string): Promise<string> {
   let version: string;
   if (devFolder === undefined) {
-    version = (await (await worker).install({ name })).installedVersion;
+    version = (await (await worker).install({ name, version: versionToInstall })).installedVersion;
   } else {
     version = (await (await worker)._installDev({ name, fromPath: devFolder })).installedVersion;
   }

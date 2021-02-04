@@ -39,10 +39,14 @@ function ({ extension, full, searchString }) {
         </small>
       </H5>
       {full && extension?.npm.name
-        ? <ControlGroup css={css`margin-bottom: 1rem;`}>
-            <PluginStatusButton id={extension.npm.name} />
-            <InputGroup fill disabled value={extension.npm.name} />
-          </ControlGroup>
+        ? <>
+            <ControlGroup css={css`margin-bottom: 1rem;`} fill>
+              <PluginStatusButton id={extension.npm.name} />
+            </ControlGroup>
+            <ControlGroup css={css`margin-bottom: 1rem;`}>
+              <InputGroup title="Extension’s NPM package ID" fill disabled value={extension.npm.name} />
+            </ControlGroup>
+          </>
         : null}
       <p
           className={!extension ? Classes.SKELETON : undefined}
@@ -51,7 +55,7 @@ function ({ extension, full, searchString }) {
             ${!full ? css`white-space: nowrap; overflow: hidden; text-overflow: ellipsis;` : ''}
           `}>
         {extension?.featured
-          ? <span css={css`margin-right: 1em;`}><Icon icon="tick-circle" intent="success" />&ensp;Featured</span>
+          ? <span css={css`margin-right: 1em;`}><Icon icon="star" css={{ color: 'gold' }} />&ensp;Featured</span>
           : null}
         <MarkedText text={description} term={searchString} />
       </p>

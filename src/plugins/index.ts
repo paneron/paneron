@@ -35,14 +35,14 @@ export const getPluginInfo = makeEndpoint.main(
 
 export const installPlugin = makeEndpoint.main(
   'installPlugin',
-  <{ id: string }>_,
+  <{ id: string, version?: string }>_,
   <{ installed: true, installedVersion: string }>_,
 );
 
 
 export const upgradePlugin = makeEndpoint.main(
   'upgradePlugin',
-  <{ id: string }>_,
+  <{ id: string, version?: string }>_,
   <{ installed: true }>_,
 );
 

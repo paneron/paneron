@@ -42,7 +42,7 @@ export interface Methods {
      if already installed, do nothing;
      if already installed but version recorded in the configuration does not match installed version, update that;
      return factually installed version. */
-  install: (msg: { name: string }) => Promise<{ installedVersion: string }>
+  install: (msg: { name: string, version?: string }) => Promise<{ installedVersion: string }>
 
   remove: (msg: { name: string }) => Promise<{ success: true }>
 
@@ -180,18 +180,22 @@ const methods: WorkerSpec = {
     return { success: true };
   },
 
-  async install({ name }) {
+  async install({ name, version }) {
     const installedVersion: string | undefined = await pluginLock.acquire('1', async () => {
       assertInitialized();
 
       let installedVersion: string | undefined;
 
-      const foundVersion = (await manager!.getInfo(name))?.version;
-      if (foundVersion) {
-        installedVersion = foundVersion;
-
+      if (version === undefined) {
+        const foundVersion = (await manager!.getInfo(name))?.version;
+        if (foundVersion) {
+          installedVersion = foundVersion;
+        } else {
+          await manager!.installFromNpm(name);
+          installedVersion = (await manager!.getInfo(name))?.version;
+        }
       } else {
-        await manager!.installFromNpm(name);
+        await manager!.installFromNpm(name, version);
         installedVersion = (await manager!.getInfo(name))?.version;
       }
 
