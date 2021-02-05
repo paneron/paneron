@@ -4,6 +4,10 @@ import crypto from 'crypto';
 import { app, BrowserWindow, dialog, protocol } from 'electron';
 import log from 'electron-log';
 
+
+require('events').EventEmitter.defaultMaxListeners = 20;
+
+
 if (process.platform === 'linux' && process.env.SNAP && process.env.SNAP_USER_COMMON) {
   app.setPath(
     'userData',

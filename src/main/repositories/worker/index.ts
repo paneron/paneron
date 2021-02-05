@@ -32,6 +32,9 @@ import workDir from './git/work-dir';
 const gitLock = new AsyncLock({ timeout: 60000, maxPending: 100 });
 
 
+require('events').EventEmitter.defaultMaxListeners = 20;
+
+
 // TODO: Split methods into sub-modules?
 
 // TODO: Validate that `msg.workDir` is a descendant of a safe directory

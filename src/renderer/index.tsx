@@ -14,6 +14,9 @@ import { getComponent } from 'window';
 import { ErrorState } from './widgets';
 
 
+require('events').EventEmitter.defaultMaxListeners = 20;
+
+
 async function renderApp() {
   // electron-webpack guarantees presence of #app in index.html it bundles
   const containerEl: HTMLElement | null = document.getElementById('app');
