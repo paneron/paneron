@@ -12,7 +12,7 @@ import {
   PushRequestMessage,
   RepoStatusUpdater,
 } from 'repositories/types';
-import { checkPathIsOccupied } from 'utils';
+import { checkPathIsOccupied } from 'checkPathIsOccupied';
 import { normalizeURL } from '../../util';
 import { Git, WithStatusUpdater } from '../types';
 

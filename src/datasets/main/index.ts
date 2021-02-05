@@ -19,7 +19,8 @@ import {
   proposeDatasetPath,
   getObjectDataset,
 } from 'datasets';
-import { checkPathIsOccupied, forceSlug } from 'utils';
+import { forceSlug } from 'utils';
+import { checkPathIsOccupied } from 'checkPathIsOccupied';
 import { readPaneronRepoMeta, readRepoConfig } from 'main/repositories';
 import repoWorker from 'main/repositories/workerInterface';
 import { requireMainPlugin } from 'main/plugins';
