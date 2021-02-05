@@ -780,7 +780,10 @@ async function reportRepositoryChanges(
 
 
 /* Sync sequence */
-function syncRepoRepeatedly(workingCopyPath: string, logLevel: 'all' | 'warnings' = 'warnings'): void {
+function syncRepoRepeatedly(
+  workingCopyPath: string,
+  logLevel: 'all' | 'warnings' = 'warnings',
+): void {
   const repoSyncLog: (
     meth: 'silly' | 'debug' | 'info' | 'warn' | 'error',
     ...args: Parameters<typeof log.debug>
