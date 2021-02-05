@@ -1,4 +1,5 @@
 import fs from 'fs';
+import path from 'path';
 import crypto from 'crypto';
 import { app, BrowserWindow, dialog, protocol } from 'electron';
 import log from 'electron-log';
@@ -18,7 +19,6 @@ import 'datasets/main';
 import 'clipboard/main';
 
 import { chooseFileFromFilesystem, makeRandomID } from 'common';
-import path from 'path';
 import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 
 
