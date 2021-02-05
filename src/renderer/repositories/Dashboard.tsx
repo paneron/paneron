@@ -92,7 +92,7 @@ const RepoListPanel: React.FC<IPanelProps> = function ({ openPanel }) {
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    if (!initialized && !repos.isUpdating) {
+    if (!initialized && !repos.isUpdating && !paneronRepos.isUpdating) {
       setInitialized(true);
 
       const selectedItemWorkingPath = selectedItem.workingCopyPath || null;
@@ -104,7 +104,7 @@ const RepoListPanel: React.FC<IPanelProps> = function ({ openPanel }) {
         selectItem({ type: 'newrepository' });
       }
     }
-  }, [initialized, repos.isUpdating, selectedItem.workingCopyPath]);
+  }, [initialized, repos.isUpdating, paneronRepos.isUpdating, selectedItem.workingCopyPath]);
 
   const isBusy = repos.isUpdating || paneronRepos.isUpdating || !initialized;
 
@@ -180,7 +180,10 @@ const RepoListPanel: React.FC<IPanelProps> = function ({ openPanel }) {
   const repoNodes:
   ITreeNode<NodeData>[] =
   repos.value.objects.map(repo => {
-    const paneronRepo = paneronRepos.value.objects[repo.workingCopyPath] || undefined;
+    const paneronRepo = (
+      paneronRepos.value.objects[repo.workingCopyPath] ||
+      (paneronRepos.isUpdating ? undefined : null));
+
     const isReadOnly =
       repo.remote !== undefined &&
       repo.remote?.writeAccess !== true;
@@ -222,7 +225,11 @@ const RepoListPanel: React.FC<IPanelProps> = function ({ openPanel }) {
 
     return {
       id: repo.workingCopyPath,
-      icon: !paneronRepo ? "warning-sign" : "git-repo",
+      icon: paneronRepo === null
+        ? "warning-sign"
+        : paneronRepo === undefined
+          ? "blank"
+          : "git-repo",
       isSelected:
         selectedItem.type === 'repository' &&
         repo.workingCopyPath === selectedItem.workingCopyPath,
