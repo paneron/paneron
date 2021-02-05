@@ -1,4 +1,4 @@
-import { promises as fs } from 'fs';
+import fs from 'fs';
 import crypto from 'crypto';
 import { app, BrowserWindow, dialog, protocol } from 'electron';
 import log from 'electron-log';
@@ -75,7 +75,7 @@ async function initMain() {
     let filedata: BufferDataset = {};
 
     for (const _f of filepaths) {
-      const blob = await fs.readFile(_f);
+      const blob = await fs.promises.readFile(_f);
       const filepath = path.basename(_f);
 
       log.info("Choose file from filesystem: got file", _f, filepath, result);

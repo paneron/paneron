@@ -1,10 +1,11 @@
 import { resolve, relative } from 'path';
-import { promises as fs } from 'fs';
+import fs from 'fs';
 import git, { WalkerEntry } from 'isomorphic-git';
 import { stripLeadingSlash } from 'utils';
 import { DiffStatus } from '@riboseinc/paneron-extension-kit/types/changes';
 
-const readdir = fs.readdir;
+
+const { lstat, readdir } = fs.promises;
 
 
 /* Streams paths that are descendants of given root path
@@ -19,7 +20,7 @@ const readdir = fs.readdir;
 export async function* listDescendantPaths(
   root: string,
 ): AsyncGenerator<string> {
-  const rootStat = await fs.lstat(root);
+  const rootStat = await lstat(root);
   if (rootStat.isDirectory()) {
     const dirents = await readdir(root, { withFileTypes: true });
     for (const dirent of dirents) {

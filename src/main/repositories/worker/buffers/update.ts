@@ -1,5 +1,5 @@
 import { ensureFile, removeSync, remove } from 'fs-extra';
-import { promises as fs } from 'fs';
+import fs from 'fs';
 import path from 'path';
 import git from 'isomorphic-git';
 //import { BufferChangeset } from '@riboseinc/paneron-extension-kit/types/buffers';
@@ -34,7 +34,7 @@ export const updateBuffers: Repositories.Data.UpdateBuffersWithStatusReporter = 
       if (newValue === null) {
         removeSync(absolutePath);
       } else {
-        await fs.writeFile(absolutePath, Buffer.from(newValue));
+        await fs.promises.writeFile(absolutePath, Buffer.from(newValue));
       }
     }));
 
