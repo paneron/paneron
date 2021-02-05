@@ -357,7 +357,7 @@ const DatasetDetails: React.FC<IPanelProps & {
   }, { info: null });
 
   const pluginInfo = getPluginInfo.renderer!.useValue({
-    id: datasetInfo.value.info?.type.id || '',
+    id: datasetInfo.value.info?.type.id ?? '',
   }, { plugin: null });
 
   return (
