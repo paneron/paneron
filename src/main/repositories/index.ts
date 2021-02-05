@@ -104,10 +104,15 @@ selectWorkingDirectoryContainer.main!.handle(async ({ _default }) => {
 
 getRepositoryStatus.main!.handle(async ({ workingCopyPath }) => {
   if (repositoryStatuses[workingCopyPath]) {
+    log.silly("Repositories: Status: Reporting cached", workingCopyPath);
     return repositoryStatuses[workingCopyPath]?.latestStatus || { status: 'ready' };
   }
 
+  log.debug("Repositories: Status: Streaming: Setup", workingCopyPath);
+
   const w = await worker;
+
+  log.debug("Repositories: Status: Streaming: Setup: Reading config", workingCopyPath);
 
   let repoCfg: Repository;
   try {
@@ -117,30 +122,35 @@ getRepositoryStatus.main!.handle(async ({ workingCopyPath }) => {
     return { status: 'invalid-working-copy' };
   }
 
-  let copyIsInvalid: boolean;
-  let copyIsMissing: boolean;
+  log.debug("Repositories: Status: Streaming: Setup: Validating working directory path", workingCopyPath);
+
+  let workDirPathExists: boolean;
+  let workDirPathIsWorkable: boolean;
   try {
-    copyIsInvalid = (await fs.stat(workingCopyPath)).isDirectory() !== true;
-    copyIsMissing = false;
+    workDirPathIsWorkable = (await fs.stat(workingCopyPath)).isDirectory() === true;
+    workDirPathExists = true;
   } catch (e) {
     if (!repoCfg.remote?.url) {
       log.error("Repositories: Configuration for working copy exists, but working copy directory is missing and no remote is specified.", workingCopyPath);
       return { status: 'invalid-working-copy' };
     } else {
       log.warn("Repositories: Configuration for working copy exists, but working copy directory is missing. Will attempt to clone again.", workingCopyPath);
-      copyIsMissing = true;
-      copyIsInvalid = false;
+      workDirPathExists = false;
+      workDirPathIsWorkable = true;
     }
   }
 
-  if (copyIsInvalid) {
+  if (!workDirPathIsWorkable) {
     log.error("Repositories: Working copy in filesystem is invalid (not a directory?)", workingCopyPath);
     return { status: 'invalid-working-copy' };
   }
 
   async function reportStatus(status: RepoStatus) {
     if (repositoryStatuses[workingCopyPath]) {
-      if (JSON.stringify(repositoryStatuses[workingCopyPath].latestStatus) !== JSON.stringify(status)) {
+      const statusChanged = (
+        JSON.stringify(repositoryStatuses[workingCopyPath].latestStatus) !==
+        JSON.stringify(status));
+      if (statusChanged) {
         await repositoryStatusChanged.main!.trigger({
           workingCopyPath,
           status,
@@ -152,20 +162,31 @@ getRepositoryStatus.main!.handle(async ({ workingCopyPath }) => {
     }
   }
 
-  const streamSubscription = w.streamStatus({ workDir: workingCopyPath }).subscribe(reportStatus);
+  log.debug("Repositories: Status: Streaming: Setup: Subscribing", workingCopyPath);
+
+  const streamSubscription = w.
+    streamStatus({ workDir: workingCopyPath }).
+    subscribe(reportStatus);
 
   repositoryStatuses[workingCopyPath] = {
     stream: streamSubscription,
   };
 
+  log.debug("Repositories: Status: Streaming: Setup: Kicking off sync", workingCopyPath);
+
   syncRepoRepeatedly(workingCopyPath);
 
   app.on('quit', () => { removeRepoStatus(workingCopyPath); });
 
-  if (!copyIsInvalid && !copyIsMissing && !(await w.git_workDir_validate({ workDir: workingCopyPath }))) {
+  log.debug("Repositories: Status: Streaming: Setup: Validating working directory", workingCopyPath);
+
+  const workDirIsValid = await w.git_workDir_validate({ workDir: workingCopyPath });
+
+  if (workDirPathExists && !workDirIsValid) {
     log.warn("Repositories: Working copy in filesystem is invalid (not a Git repo?)", workingCopyPath);
     return { busy: { operation: 'initializing' } };
   } else {
+    log.debug("Repositories: Status: Streaming: Setup: Finishing", workingCopyPath);
     return { status: 'ready' };
   }
 
