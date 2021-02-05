@@ -104,7 +104,7 @@ selectWorkingDirectoryContainer.main!.handle(async ({ _default }) => {
 
 getRepositoryStatus.main!.handle(async ({ workingCopyPath }) => {
   if (repositoryStatuses[workingCopyPath]) {
-    log.silly("Repositories: Status: Reporting cached", workingCopyPath);
+    log.silly("Repositories: Status: Reporting cached", workingCopyPath, repositoryStatuses[workingCopyPath]?.latestStatus);
     return repositoryStatuses[workingCopyPath]?.latestStatus || { status: 'ready' };
   }
 
