@@ -204,7 +204,7 @@ const resolveRepositoryChanges: Repositories.Data.ResolveChanges = async functio
   // Calculate affected objects in datasets
   const changedBuffersPerDataset:
   { [datasetDir: string]: [ path: string, change: ChangeStatus ][] } =
-    R.map(() => [], datasets[workDir]);
+    R.map(() => [], datasets[workDir] || {});
 
   for (const [bufferPath, changeStatus] of changedBufferPaths) {
     const datasetDir = bufferPath.split(path.posix.sep)[0];
