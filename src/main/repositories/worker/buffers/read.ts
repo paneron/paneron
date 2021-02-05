@@ -1,5 +1,5 @@
 import path from 'path';
-import fs from 'fs-extra';
+import fs from 'fs';
 import git from 'isomorphic-git';
 import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 import { stripLeadingSlash } from 'utils';
@@ -11,13 +11,12 @@ export const getBufferDataset: Repositories.Data.GetBufferDataset = async functi
   workDir,
   paths,
 }) {
-  const bufferDataset: BufferDataset = (await Promise.all(
-    paths.map(async (bufferPath) => {
-      return {
-        [bufferPath]: await readBuffer(path.join(workDir, bufferPath)),
-      };
-    })
-  )).reduce((prev, curr) => ({ ...prev, ...curr }), {});
+  console.debug("Reading buffers at paths", workDir, paths);
+  const bufferDataset: BufferDataset = paths.map((bufferPath) => {
+    return {
+      [bufferPath]: readBuffer(path.join(workDir, bufferPath)),
+    };
+  }).reduce((prev, curr) => ({ ...prev, ...curr }), {});
 
   return bufferDataset;
 }
@@ -30,7 +29,7 @@ export async function readBuffers(
 ): Promise<Record<string, Uint8Array>> {
   const buffers: Record<string, Uint8Array> = {};
   for await (const relativeBufferPath of listDescendantPaths(rootPath)) {
-    const bufferData = await readBuffer(path.join(rootPath, relativeBufferPath));
+    const bufferData = readBuffer(path.join(rootPath, relativeBufferPath));
     if (bufferData) {
       buffers[relativeBufferPath] = bufferData;
     }
@@ -73,7 +72,7 @@ export async function readBuffers2(
 ): Promise<BufferDataset> {
   const normalizedPaths = bufferPaths.map(stripLeadingSlash);
 
-  let reader: (path: string) => Promise<null | Uint8Array>;
+  let reader: (path: string) => Promise<null | Uint8Array> | null | Uint8Array;
   if (atCommitHash === undefined) {
     reader = (p) => readBuffer(path.join(workDir, p));
   } else {
@@ -93,9 +92,9 @@ export async function readBuffers2(
 
    Buffer is considered nonexistent if ENOENT is received,
    other errors are thrown. */
-export async function readBuffer(fullPath: string): Promise<Uint8Array | null> {
+export function readBuffer(fullPath: string): Uint8Array | null {
   try {
-    return await fs.readFile(fullPath);
+    return fs.readFileSync(fullPath);
   } catch (e) {
     if (e.code === 'ENOENT') {
       return null;
