@@ -5,12 +5,20 @@ import { throttle } from 'throttle-debounce';
 import { IButtonProps, Icon, InputGroup, Spinner } from '@blueprintjs/core';
 import { jsx } from '@emotion/core';
 import React, { useState } from 'react';
-import { getRepositoryStatus, Repository, repositoryStatusChanged, savePassword } from 'repositories';
+import {
+  getRepositoryStatus,
+  Repository,
+  repositoryStatusChanged,
+  savePassword,
+} from 'repositories';
 import type { RepoStatus as IRepoStatus } from 'repositories/types';
 import { Button } from '../widgets';
 
 
-const formatStatusOrOperation = (txt: string) => txt.replace(/[-]/g, ' ').replace(/^\w/, (txt) => txt.toUpperCase());
+const formatStatusOrOperation =
+  (txt: string) => txt.
+    replace(/[-]/g, ' ').
+    replace(/^\w/, (txt) => txt.toUpperCase());
 
 
 const OP_LABELS = {
@@ -25,11 +33,13 @@ const RepoStatus: React.FC<{ repo: Repository }> = function ({ repo }) {
     { workingCopyPath: repo.workingCopyPath },
     { busy: { operation: 'initializing' } });
 
-  const [latestStatus, setLatestStatus] = useState<IRepoStatus | null>(null);
+  const [latestStatus, setLatestStatus] =
+    useState<IRepoStatus | null>(null);
 
   const throttledSetStatus = throttle(300, setLatestStatus, false);
 
-  repositoryStatusChanged.renderer!.useEvent(async ({ workingCopyPath, status }) => {
+  repositoryStatusChanged.renderer!.
+  useEvent(async ({ workingCopyPath, status }) => {
     if (workingCopyPath !== repo.workingCopyPath) {
       return;
     }
@@ -63,17 +73,24 @@ const RepoStatus: React.FC<{ repo: Repository }> = function ({ repo }) {
           }
         } else {
           buttonText = formatStatusOrOperation(OP_LABELS[status.busy.operation]);
-          buttonProps.icon = status.busy.operation === 'pushing' ? 'cloud-upload' : 'cloud-download';
+          buttonProps.icon = status.busy.operation === 'pushing'
+            ? 'cloud-upload'
+            : 'cloud-download';
           const progress = status.busy.progress;
-          const progressValue = progress ? (1 / progress.total * progress.loaded) : undefined;
+          const progressValue = progress
+            ? (1 / progress.total * progress.loaded)
+            : undefined;
           const phase = progress?.phase;
-          const formattedPhase = (phase && phase.toLowerCase() !== 'analyzing workdir')
-            ? formatStatusOrOperation(phase)
-            : null;
+          const formattedPhase =
+            (phase && phase.toLowerCase() !== 'analyzing workdir')
+              ? formatStatusOrOperation(phase)
+              : null;
           extraWidget = <Button small disabled
               icon={<Spinner
                 size={Icon.SIZE_STANDARD}
-                value={(progressValue !== undefined && !isNaN(progressValue)) ? progressValue : undefined} />}>
+                value={(progressValue !== undefined && !isNaN(progressValue))
+                  ? progressValue
+                  : undefined} />}>
             {formattedPhase}
           </Button>;
         }
@@ -110,15 +127,23 @@ const RepoStatus: React.FC<{ repo: Repository }> = function ({ repo }) {
 
 
 
-const PasswordInput: React.FC<{ workingCopyPath: string, remoteURL: string, username: string }> =
-function ({ workingCopyPath, remoteURL, username }) {
+const PasswordInput: React.FC<{
+  workingCopyPath: string
+  remoteURL: string
+  username: string
+}> = function ({ workingCopyPath, remoteURL, username }) {
   const [value, setValue] = useState<string>('');
   const [isBusy, setBusy] = useState(false);
 
   async function handlePasswordConfirm() {
     setBusy(true);
     try {
-      await savePassword.renderer!.trigger({ workingCopyPath, remoteURL, username, password: value });
+      await savePassword.renderer!.trigger({
+        workingCopyPath,
+        remoteURL,
+        username,
+        password: value,
+      });
     } catch (e) {
       setBusy(false);
     }
