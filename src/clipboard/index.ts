@@ -1,5 +1,5 @@
 import { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
-import { EmptyPayload, makeEndpoint, _ } from 'ipc';
+import { EmptyPayload, makeEndpoint, _ } from '../ipc';
 import { ClipboardSource } from './types';
 
 
