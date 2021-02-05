@@ -1,6 +1,7 @@
 import { ipcMain, IpcRendererEvent, IpcMainInvokeEvent, ipcRenderer } from 'electron';
 import log from 'electron-log';
 import { useEffect, useState } from 'react';
+import { hash } from 'utils';
 import { notifyAll, notifyWithTitle } from './main/window';
 
 
@@ -35,6 +36,7 @@ export type MainHandler<I extends Payload, O extends Payload> = (params: I) => P
 export type MainEndpointResponse<O extends Payload> = {
   result: O | undefined
   errors: Error[]
+  payloadHash: string
 }
 
 /* Endpoint handled by the main thread */
@@ -134,10 +136,13 @@ export const makeEndpoint: EndpointMaker = {
             async function _handler(_: IpcMainInvokeEvent, payload: I):
             Promise<MainEndpointResponse<O>> {
               let result: O | undefined;
-              let errors: Error[] = [];
-              result = await handler(payload);
+
               // Originally we caught errors, but now we just let it throw.
-              return { result, errors };
+              let errors: Error[] = [];
+
+              result = await handler(payload);
+
+              return { result, errors, payloadHash: hash(JSON.stringify(payload)) };
             }
 
             ipcMain.removeHandler(name);
@@ -167,14 +172,16 @@ export const makeEndpoint: EndpointMaker = {
             const [isUpdating, setUpdating] = useState(true);
 
             const [reqCounter, updateReqCounter] = useState(0);
+
             const payloadSnapshot = JSON.stringify(
               payload || {},
               (_, v) => (v === undefined) ? '__undefined' : v).replace(/\"__undefined\"/g, 'undefined');
 
+            const payloadHash = hash(payloadSnapshot);
+
             const payloadSliceToLog = payloadSnapshot.slice(0, LOG_PAYLOAD_SLICE);
 
             useEffect(() => {
-              let cancelled = false;
 
               async function doQuery() {
                 setUpdating(true);
@@ -183,14 +190,18 @@ export const makeEndpoint: EndpointMaker = {
                   log.debug("IPC: Invoking", name, payloadSliceToLog);
                   const maybeResp: any = await ipcRenderer.invoke(name, payload);
 
-                  if (cancelled) { setUpdating(false); return; }
-
                   if (maybeResp.errors  !== undefined) {
                     // NOTE: Presence of `errors` here does not mean there are errors.
                     // It is a duck-typing check that we are getting a properly formatted response structure.
                     // TODO: Hook into TypeScript with some macros to validate the value against expected type?
 
                     const resp = maybeResp as MainEndpointResponse<O>;
+
+                    if (resp.payloadHash !== payloadHash) {
+                      log.warn("IPC: useValue: Original payload doesn’t match, will retry", name, payloadSliceToLog);
+                      updateReqCounter(c => c + 1);
+                      return;
+                    }
 
                     if (resp.result === undefined) {
                       if (resp.errors.length > 0) {
@@ -223,12 +234,7 @@ export const makeEndpoint: EndpointMaker = {
               log.debug("IPC: Querying", name, payloadSliceToLog);
               doQuery();
 
-              return () => {
-                log.debug("IPC: Cancelling query", name, payloadSliceToLog);
-                cancelled = true;
-              }
-
-            }, [name, reqCounter, payloadSnapshot]);
+            }, [name, reqCounter, payloadHash]);
 
             return {
               value,
