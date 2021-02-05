@@ -7,7 +7,7 @@ import { BufferChange } from '@riboseinc/paneron-extension-kit/types/buffers';
 import { GitAuthor } from 'repositories/types';
 import { requireMainPlugin } from 'main/plugins';
 import { readRepoConfig } from 'main/repositories';
-import repoWorker from 'main/repositories/workerInterface';
+import { syncWorker as repoWorker } from 'main/repositories/workerInterface';
 import { serializeMeta } from 'main/meta-serdes';
 
 import { applyOutstandingMigrations, getOutstandingMigration, reportMigrationStatus } from '..';

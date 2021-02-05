@@ -1,5 +1,5 @@
 import path from 'path';
-import repoWorker from 'main/repositories/workerInterface';
+import { readerWorker as repoWorker } from 'main/repositories/workerInterface';
 import { normalizeDatasetDir } from 'main/repositories/worker/datasets';
 import { deserializeMeta } from 'main/meta-serdes';
 import { DatasetInfo } from '../types';

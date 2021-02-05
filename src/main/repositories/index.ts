@@ -32,7 +32,7 @@ import {
   repositoryBuffersChanged,
 } from '../../repositories';
 import { Repository, NewRepositoryDefaults, RepoStatus, PaneronRepository, GitRemote } from '../../repositories/types';
-import worker from './workerInterface';
+import { syncWorker, readerWorker } from './workerInterface';
 import { deserializeMeta, serializeMeta } from 'main/meta-serdes';
 import { PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
 import { objectsChanged } from 'datasets';
@@ -110,7 +110,7 @@ getRepositoryStatus.main!.handle(async ({ workingCopyPath }) => {
 
   log.debug("Repositories: Status: Streaming: Setup", workingCopyPath);
 
-  const w = await worker;
+  const w = await syncWorker;
 
   log.debug("Repositories: Status: Streaming: Setup: Reading config", workingCopyPath);
 
@@ -194,7 +194,7 @@ getRepositoryStatus.main!.handle(async ({ workingCopyPath }) => {
 
 
 setRemote.main!.handle(async ({ workingCopyPath, url, username, password }) => {
-  const w = await worker;
+  const w = await syncWorker;
 
   const auth = { username, password };
   const { isBlank, canPush } = await w.git_describeRemote({ url, auth });
@@ -287,7 +287,7 @@ unsetWriteAccess.main!.handle(async ({ workingCopyPath }) => {
 
 
 unsetRemote.main!.handle(async ({ workingCopyPath }) => {
-  const w = await worker;
+  const w = await syncWorker;
 
   await updateRepositories((data) => {
     const existingConfig = data.workingCopies?.[workingCopyPath];
@@ -357,6 +357,8 @@ listRepositories.main!.handle(async () => {
 
 
 listPaneronRepositories.main!.handle(async ({ workingCopyPaths }) => {
+  log.info("Listing paneron repositories…", workingCopyPaths);
+
   const maybeRepoMetaList:
   [ workingCopyPath: string, meta: PaneronRepository | null ][] =
   await Promise.all(workingCopyPaths.map(async (workDir) => {
@@ -368,13 +370,19 @@ listPaneronRepositories.main!.handle(async ({ workingCopyPaths }) => {
     }
   }));
 
+  log.info("Got data");
+
+  const objects = maybeRepoMetaList.
+    filter(([_, meta]) => meta !== null).
+    reduce((prev, [ workDir, meta ]) => ({
+      ...prev,
+      [workDir]: meta!,
+    }), {});
+
+  log.info("Objects", objects);
+
   return {
-    objects: maybeRepoMetaList.
-      filter(([_, meta]) => meta !== null).
-      reduce((prev, [ workDir, meta ]) => ({
-        ...prev,
-        [workDir]: meta!,
-      }), {}),
+    objects,
   };
 });
 
@@ -405,7 +413,7 @@ setPaneronRepositoryInfo.main!.handle(async ({ workingCopyPath, info }) => {
   if (!author) {
     throw new Error("Repository configuration is missing author information");
   }
-  const w = await worker;
+  const w = await syncWorker;
   const { newCommitHash } = await w.repo_updateBuffers({
     workDir: workingCopyPath,
     commitMessage: "Change repository title",
@@ -440,7 +448,7 @@ queryGitRemote.main!.handle(async ({ url, username, password }) => {
   if (!auth.password) {
     auth.password = (await getAuth(url, username)).password;
   }
-  return await (await worker).git_describeRemote({ url, auth });
+  return await (await readerWorker).git_describeRemote({ url, auth });
 });
 
 
@@ -449,7 +457,7 @@ addRepository.main!.handle(async ({ gitRemoteURL, workingCopyPath, username, pas
   if (!auth.password) {
     auth.password = (await getAuth(gitRemoteURL, username)).password;
   }
-  const { canPush } = await (await worker).git_describeRemote({ url: gitRemoteURL, auth });
+  const { canPush } = await (await readerWorker).git_describeRemote({ url: gitRemoteURL, auth });
 
   await updateRepositories((data) => {
     if (data.workingCopies[workingCopyPath] !== undefined) {
@@ -473,7 +481,7 @@ addRepository.main!.handle(async ({ gitRemoteURL, workingCopyPath, username, pas
     createdWorkingPaths: [workingCopyPath],
   });
 
-  await (await worker).git_clone({
+  await (await syncWorker).git_clone({
     workDir: workingCopyPath,
     repoURL: gitRemoteURL,
     auth,
@@ -512,7 +520,7 @@ createRepository.main!.handle(async ({ workingCopyPath, author, title }) => {
     author,
   });
 
-  const w = await worker;
+  const w = await syncWorker;
 
   await w.git_init({
     workDir: workingCopyPath,
@@ -554,7 +562,7 @@ createRepository.main!.handle(async ({ workingCopyPath, author, title }) => {
 deleteRepository.main!.handle(async ({ workingCopyPath }) => {
   removeRepoStatus(workingCopyPath);
 
-  const w = await worker;
+  const w = await syncWorker;
 
   await w.ds_unloadAll({ workDir: workingCopyPath });
 
@@ -621,7 +629,7 @@ getBufferDataset.main!.handle(async ({ workingCopyPath, paths }) => {
     return {};
   }
 
-  const w = await worker;
+  const w = await readerWorker;
   return await w.repo_getBufferDataset({
     workDir: workingCopyPath,
     paths,
@@ -641,7 +649,7 @@ updateBuffers.main!.handle(async ({
     throw new Error("Author information is missing in repository config");
   }
 
-  const w = await worker;
+  const w = await syncWorker;
 
   const pathChanges = changesetToPathChanges(bufferChangeset);
 
@@ -780,6 +788,7 @@ async function reportRepositoryChanges(
 
 
 /* Sync sequence */
+// TODO: Only sync a repository if one of its datasets is opened.
 function syncRepoRepeatedly(
   workingCopyPath: string,
   logLevel: 'all' | 'warnings' = 'warnings',
@@ -799,7 +808,7 @@ function syncRepoRepeatedly(
   };
 
   async function _sync(): Promise<void> {
-    const w = await worker;
+    const w = await syncWorker;
 
     repoSyncLog('info', "Beginning sync attempt");
 
@@ -1021,7 +1030,7 @@ async function _updateNewRepoDefaults(defaults: Partial<NewRepositoryDefaults>) 
 }
 
 export async function readPaneronRepoMeta(workingCopyPath: string): Promise<PaneronRepository> {
-  const meta = (await (await worker).repo_getBufferDataset({
+  const meta = (await (await readerWorker).repo_getBufferDataset({
     workDir: workingCopyPath,
     paths: [PANERON_REPOSITORY_META_FILENAME],
   }))[PANERON_REPOSITORY_META_FILENAME];

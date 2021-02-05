@@ -22,7 +22,7 @@ import {
 import { forceSlug } from 'utils';
 import { checkPathIsOccupied } from 'checkPathIsOccupied';
 import { readPaneronRepoMeta, readRepoConfig } from 'main/repositories';
-import repoWorker from 'main/repositories/workerInterface';
+import { syncWorker as repoWorker } from 'main/repositories/workerInterface';
 import { requireMainPlugin } from 'main/plugins';
 import { serializeMeta } from 'main/meta-serdes';
 import { DATASET_FILENAME, readDatasetMeta } from './util';
