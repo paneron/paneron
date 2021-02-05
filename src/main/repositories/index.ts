@@ -780,9 +780,25 @@ async function reportRepositoryChanges(
 
 
 /* Sync sequence */
-function syncRepoRepeatedly(workingCopyPath: string): void {
+function syncRepoRepeatedly(workingCopyPath: string, logLevel: 'all' | 'warnings' = 'warnings'): void {
+  const repoSyncLog: (
+    meth: 'silly' | 'debug' | 'info' | 'warn' | 'error',
+    ...args: Parameters<typeof log.debug>
+  ) => ReturnType<typeof log.debug> = (meth, ...args) => {
+    const _msg = args.shift();
+    const doLog = (
+      logLevel === 'all' ||
+      logLevel === 'warnings' && (meth === 'warn' || meth === 'error'));
+    if (doLog) {
+      const msg = `Repositories: Syncing ${workingCopyPath}: ${_msg}`;
+      log[meth](msg, ...args);
+    }
+  };
+
   async function _sync(): Promise<void> {
     const w = await worker;
+
+    repoSyncLog('info', "Beginning sync attempt");
 
     // Do our best to avoid multiple concurrent sync runs on one repo and clear sync timeout, if exists.
     const timeout = repositoryStatuses[workingCopyPath]?.updateTimeout;
@@ -796,16 +812,18 @@ function syncRepoRepeatedly(workingCopyPath: string): void {
     // 1.1. Check configuration
     let repoCfg: Repository | null;
     if (!repositoryStatuses[workingCopyPath]) {
+      repoSyncLog('warn', "Removing status and aborting sync");
       return removeRepoStatus(workingCopyPath);
     } else {
+      repoSyncLog('debug', "Checking configuration");
       try {
         repoCfg = await readRepoConfig(workingCopyPath);
         if (!repoCfg.author) {
-          log.error("Repositories: Configuration for working copy is missing author info.");
+          repoSyncLog('error', "Configuration is missing author info");
           return removeRepoStatus(workingCopyPath);
         }
       } catch (e) {
-        log.error("Repositories: Configuration for working copy cannot be read.");
+        repoSyncLog('error', "Configuration cannot be read");
         return removeRepoStatus(workingCopyPath);
       }
 
@@ -815,9 +833,11 @@ function syncRepoRepeatedly(workingCopyPath: string): void {
         case 'pushing':
         case 'cloning':
           if (isBusy.awaitingPassword) {
+            repoSyncLog('warn', "An operation is already in progress", JSON.stringify(isBusy.operation));
             return;
           }
       }
+      repoSyncLog('debug', "No operation is in progress, proceeding…");
     }
 
     // 1.2. Check that working copy is OK.
@@ -825,7 +845,9 @@ function syncRepoRepeatedly(workingCopyPath: string): void {
     try {
       await fs.stat(workingCopyPath);
     } catch (e) {
+      repoSyncLog('warn', "Working copy path failed to stat", e);
       if (repoCfg.remote) {
+        repoSyncLog('info', "Attempting to re-clone");
         const auth = await getAuth(repoCfg.remote.url, repoCfg.remote.username);
         try {
           await w.git_clone({
@@ -837,10 +859,11 @@ function syncRepoRepeatedly(workingCopyPath: string): void {
             workingCopyPath,
           });
         } catch (e) {
-          log.error("Repositories: Error re-cloning repository", workingCopyPath, e);
+          repoSyncLog('error', "Re-cloning failed", e);
         }
       }
       if (repositoryStatuses[workingCopyPath]) {
+        repoSyncLog('debug', "Cooldown before next sync", REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
         repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
       }
       return;
@@ -852,6 +875,8 @@ function syncRepoRepeatedly(workingCopyPath: string): void {
       if (repoCfg.remote) {
         const auth = await getAuth(repoCfg.remote.url, repoCfg.remote.username);
 
+        repoSyncLog('info', "Got auth data; pulling…");
+
         const { oidBeforePull, oidAfterPull } = await w.git_pull({
           workDir: workingCopyPath,
           repoURL: repoCfg.remote.url,
@@ -860,15 +885,20 @@ function syncRepoRepeatedly(workingCopyPath: string): void {
           _presumeCanceledErrorMeansAwaitingAuth: true,
         });
 
+        repoSyncLog('debug', "Resolving changes…");
+
         const changes = await w.repo_resolveChanges({
           workDir: workingCopyPath,
           oidBefore: oidBeforePull,
           oidAfter: oidAfterPull,
         });
 
+        repoSyncLog('debug', "Reporting changes…");
+
         await reportRepositoryChanges(workingCopyPath, changes);
 
         if (repoCfg.remote.writeAccess) {
+          repoSyncLog('debug', "Got write access; pushing…");
           await w.git_push({
             workDir: workingCopyPath,
             repoURL: repoCfg.remote.url,
@@ -878,24 +908,31 @@ function syncRepoRepeatedly(workingCopyPath: string): void {
           });
         }
 
+        repoSyncLog('info', "Finishing sync attemtp");
+
         if (repositoryStatuses[workingCopyPath]) {
+          repoSyncLog('debug', "Cooldown before next sync", REPOSITORY_SYNC_INTERVAL_MS);
           repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_MS);
         }
 
       } else {
+        repoSyncLog('warn', "Remote is not specified");
+        repoSyncLog('debug', "Cooldown before next sync", REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
         if (repositoryStatuses[workingCopyPath]) {
           repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
         }
       }
 
     } catch (e) {
-      log.error("Repositories: Error syncing repository", workingCopyPath, e);
+      repoSyncLog('error', "Sync failed", e);
+      repoSyncLog('debug', "Cooldown before next sync", REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
       if (repositoryStatuses[workingCopyPath]) {
         repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
       }
     }
   }
 
+  repoSyncLog('debug', "Scheduling sync immediately");
   const timeout = repositoryStatuses[workingCopyPath]?.updateTimeout;
   timeout ? clearTimeout(timeout) : void 0;
   if (repositoryStatuses[workingCopyPath]) {
