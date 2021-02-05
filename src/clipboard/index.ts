@@ -14,7 +14,7 @@ export const getClipboardStatus = makeEndpoint.main(
 
 
 export const copyObjects = makeEndpoint.main(
-  'requestCopiedObjects',
+  'copyObjects',
   <{ workDir: string, datasetDir: string, objects: ObjectDataset }>_,
   <{ success: true }>_,
 );
