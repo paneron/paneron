@@ -52,7 +52,7 @@ async function renderApp() {
         topLevelEl = <ErrorState
           viewName="window"
           error={e}
-          technicalDetails={<>Unable to import component <code>{componentID}</code>.</>} />;
+          technicalDetails={<>Unable to initialize component <code>{componentID}</code>.</>} />;
       }
     }
   } else {
