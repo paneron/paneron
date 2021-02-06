@@ -12,7 +12,7 @@ import {
 import {
   copyObjects,
   requestCopiedObjects,
-} from 'clipboard';
+} from '../../clipboard';
 
 import {
   describeIndex,

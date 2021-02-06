@@ -20,6 +20,7 @@ import {
 } from '@blueprintjs/core';
 
 import { RendererPlugin, DatasetContext } from '@riboseinc/paneron-extension-kit/types';
+import { DatasetInfo } from 'datasets/types';
 
 import { WindowComponentProps } from 'window';
 import { ErrorBoundary } from 'renderer/widgets';
@@ -30,14 +31,11 @@ import {
   getPluginManagerProps,
   installPlugin,
 } from 'plugins';
-
+import { getClipboardStatus } from '../../clipboard';
 import { getRepositoryInfo } from 'repositories';
-import { DatasetInfo } from 'datasets/types';
 import { getDatasetInfo, loadDataset } from 'datasets';
-import { getClipboardStatus } from 'clipboard';
 
 import { ContextGetterProps, getContext } from './context';
-
 
 const NODE_MODULES_PATH = process.env.NODE_ENV === 'production'
   ? `${__static}/../../app.asar.unpacked/node_modules`
