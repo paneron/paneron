@@ -124,7 +124,7 @@ function ({ workingCopyPath, name, email }) {
 
 
 // TODO: Support suggestions to resolve (move from dataset view)
-export const ErrorState: React.FC<{ technicalDetails?: string, error?: Error, viewName?: string }> =
+export const ErrorState: React.FC<{ technicalDetails?: string | JSX.Element, error?: Error, viewName?: string }> =
 function ({ technicalDetails, error, viewName }) {
   return (
     <NonIdealState
@@ -137,10 +137,12 @@ function ({ technicalDetails, error, viewName }) {
           </p>
           {technicalDetails || error
             ? <Callout style={{ textAlign: 'left', transform: 'scale(0.9)' }} title="Technical details">
-                <pre style={{ overflow: 'auto', paddingBottom: '1em' }}>
-                  {technicalDetails
-                    || `${error?.name || 'Unknown error'}: ${error?.message || 'no details provided'}`}
-                </pre>
+                {technicalDetails}
+                {error
+                  ? <pre style={{ overflow: 'auto', paddingBottom: '1em' }}>
+                      {error?.name || 'Unknown error'}: {error?.message || 'no details provided'}
+                    </pre>
+                  : null}
               </Callout>
             : null}
         </>

@@ -49,7 +49,10 @@ async function renderApp() {
         topLevelEl = <Component query={searchParams} />;
       } catch (e) {
         log.error(`Unable to import or initialize top-level window component ${componentID}`, e);
-        topLevelEl = <ErrorState viewName="window" error={e} />;
+        topLevelEl = <ErrorState
+          viewName="window"
+          error={e}
+          technicalDetails={<>Unable to import component <code>{componentID}</code>.</>} />;
       }
     }
   } else {
