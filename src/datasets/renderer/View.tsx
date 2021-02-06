@@ -34,9 +34,9 @@ import {
 import { getRepositoryInfo } from 'repositories';
 import { DatasetInfo } from 'datasets/types';
 import { getDatasetInfo, loadDataset } from 'datasets';
+import { getClipboardStatus } from 'clipboard';
 
 import { ContextGetterProps, getContext } from './context';
-import { getClipboardStatus } from 'clipboard';
 
 
 const NODE_MODULES_PATH = process.env.NODE_ENV === 'production'
