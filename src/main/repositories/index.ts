@@ -357,8 +357,6 @@ listRepositories.main!.handle(async () => {
 
 
 listPaneronRepositories.main!.handle(async ({ workingCopyPaths }) => {
-  log.info("Listing paneron repositories…", workingCopyPaths);
-
   const maybeRepoMetaList:
   [ workingCopyPath: string, meta: PaneronRepository | null ][] =
   await Promise.all(workingCopyPaths.map(async (workDir) => {
@@ -370,19 +368,13 @@ listPaneronRepositories.main!.handle(async ({ workingCopyPaths }) => {
     }
   }));
 
-  log.info("Got data");
-
-  const objects = maybeRepoMetaList.
-    filter(([_, meta]) => meta !== null).
-    reduce((prev, [ workDir, meta ]) => ({
-      ...prev,
-      [workDir]: meta!,
-    }), {});
-
-  log.info("Objects", objects);
-
   return {
-    objects,
+    objects: maybeRepoMetaList.
+      filter(([_, meta]) => meta !== null).
+      reduce((prev, [ workDir, meta ]) => ({
+        ...prev,
+        [workDir]: meta!,
+      }), {}),
   };
 });
 
