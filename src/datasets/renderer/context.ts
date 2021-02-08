@@ -1,7 +1,7 @@
 import path from 'path';
 import log from 'electron-log';
 import { DatasetContext, RendererPlugin } from '@riboseinc/paneron-extension-kit/types';
-import { INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/context';
+import { INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
 import { DatasetInfo } from 'datasets/types';
 
 import {
