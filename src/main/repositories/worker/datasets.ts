@@ -158,11 +158,20 @@ const describeIndex: WorkerMethods["ds_index_describe"] = async function ({
 }) {
   const normalizedDatasetDir = normalizeDatasetDir(datasetDir);
   const idx = getIndex(workDir, normalizedDatasetDir, indexID);
-
   return {
     status: idx.status,
-    stream: Observable.from(idx.statusSubject),
   };
+}
+
+
+const streamIndexStatus: WorkerMethods["ds_index_streamStatus"] = async function ({
+  workDir,
+  datasetDir,
+  indexID,
+}) {
+  const normalizedDatasetDir = normalizeDatasetDir(datasetDir);
+  const idx = getIndex(workDir, normalizedDatasetDir, indexID);
+  return Observable.from(idx.statusSubject);
 }
 
 
@@ -283,6 +292,7 @@ export default {
   unloadAll,
   getOrCreateFilteredIndex,
   describeIndex,
+  streamIndexStatus,
   getFilteredObject,
   resolveRepositoryChanges,
 };

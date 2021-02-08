@@ -167,7 +167,12 @@ export namespace Datasets {
     /* If indexID is omitted, default index is described. */
     export type Describe = (msg: DatasetOperationParams & {
       indexID?: string
-    }) => { status: IndexStatus, stream: Observable<IndexStatus> }
+    }) => { status: IndexStatus }
+
+    /* If indexID is omitted, default index is described. */
+    export type StreamStatus = (msg: DatasetOperationParams & {
+      indexID?: string
+    }) => Observable<IndexStatus>
 
     /* If indexID is omitted, objects in default index are counted. */
     // Unnecessary. Use describe.
@@ -288,6 +293,7 @@ export default interface WorkerMethods {
 
   ds_index_getOrCreateFiltered: ReturnsPromise<Datasets.Indexes.GetOrCreateFiltered>
   ds_index_describe: ReturnsPromise<Datasets.Indexes.Describe>
+  ds_index_streamStatus: ReturnsPromise<Datasets.Indexes.StreamStatus>
   ds_index_getFilteredObject: Datasets.Indexes.GetFilteredObject
 
 

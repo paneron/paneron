@@ -176,6 +176,7 @@ const methods: WorkerSpec = {
 
   ds_index_getOrCreateFiltered: datasets.getOrCreateFilteredIndex,
   ds_index_describe: datasets.describeIndex,
+  ds_index_streamStatus: datasets.streamIndexStatus,
   ds_index_getFilteredObject: datasets.getFilteredObject,
 
   repo_updateBuffers: lockingRepoOperationWithStatusReporter(updateBuffers),
