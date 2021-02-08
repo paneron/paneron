@@ -1,7 +1,7 @@
 import { ipcMain, IpcRendererEvent, IpcMainInvokeEvent, ipcRenderer } from 'electron';
 import log from 'electron-log';
 import { useEffect, useState } from 'react';
-import { hash } from 'utils';
+import { hash, toJSONPreservingUndefined } from 'utils';
 import { notifyAll, notifyWithTitle } from './main/window';
 
 
@@ -142,7 +142,9 @@ export const makeEndpoint: EndpointMaker = {
 
               result = await handler(payload);
 
-              return { result, errors, payloadHash: hash(JSON.stringify(payload)) };
+              const payloadSnapshot = toJSONPreservingUndefined(payload);
+
+              return { result, errors, payloadHash: hash(payloadSnapshot) };
             }
 
             ipcMain.removeHandler(name);
