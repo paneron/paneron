@@ -111,7 +111,7 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
       return getOrCreateFilteredIndex.renderer!.useValue({
         ...datasetParams,
         ...opts,
-      }, { indexID: '' });
+      }, { indexID: undefined });
     },
 
     useObjectPathFromFilteredIndex: function _useObjectPathFromFilteredIndex (opts) {
