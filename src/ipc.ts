@@ -173,12 +173,8 @@ export const makeEndpoint: EndpointMaker = {
 
             const [reqCounter, updateReqCounter] = useState(0);
 
-            const payloadSnapshot = JSON.stringify(
-              payload || {},
-              (_, v) => (v === undefined) ? '__undefined' : v).replace(/\"__undefined\"/g, 'undefined');
-
+            const payloadSnapshot = toJSONPreservingUndefined(payload);
             const payloadHash = hash(payloadSnapshot);
-
             const payloadSliceToLog = payloadSnapshot.slice(0, LOG_PAYLOAD_SLICE);
 
             useEffect(() => {
