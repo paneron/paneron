@@ -54,7 +54,8 @@ export async function readObject(
   }
 
   if (result === undefined) {
-    throw new Error("Object had not yet been indexed")
+    console.warn("Object had not yet been indexed", datasetDir, objectPath);
+    throw new Error("Object had not yet been indexed");
   }
 
   return result;
