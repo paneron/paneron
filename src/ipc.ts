@@ -194,9 +194,11 @@ export const makeEndpoint: EndpointMaker = {
                     const resp = maybeResp as MainEndpointResponse<O>;
 
                     if (resp.payloadHash !== payloadHash) {
-                      log.warn("IPC: useValue: Original payload doesn’t match, will retry", name, payloadSliceToLog);
-                      updateReqCounter(c => c + 1);
-                      return;
+                      log.warn("IPC: Received payload hash differs from original",
+                        name,
+                        payloadSliceToLog,
+                        payloadHash,
+                        resp.payloadHash);
                     }
 
                     if (resp.result === undefined) {
