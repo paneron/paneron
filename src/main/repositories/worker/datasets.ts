@@ -375,7 +375,12 @@ async function updateDefaultIndex(
       throw new Error("Unexpectedly missing object spec while updating default index");
     }
 
+    console.debug("Worker: Datasets: Filling in default index: Reading", objectPath);
+
     const obj = await readObjectCold(path.join(workDir, datasetDir, objectPath), spec);
+
+    console.debug("Worker: Datasets: Filling in default index: Reading", objectPath, obj);
+
     if (obj !== null) {
       await index.dbHandle.put(objectPath, obj);
     } else {
@@ -504,6 +509,8 @@ async function fillInDefaultIndex(
       yield _key as string;
     }
   }
+
+  console.debug("Worker: Datasets: Filling in default index", workDir, datasetDir);
 
   await updateDefaultIndex(
     workDir,
