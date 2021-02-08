@@ -42,6 +42,15 @@ const load: Datasets.Lifecycle.Load = async function ({
 
   const normalizedDatasetDir = normalizeDatasetDir(datasetDir);
 
+  datasets[workDir] ||= {};
+  datasets[workDir][normalizedDatasetDir] = {
+    specs: objectSpecs,
+    indexDBRoot: cacheRoot,
+    indexes: {},
+  };
+
+  console.info("Loaded dataset", workDir, normalizedDatasetDir);
+
   const defaultIndex: Datasets.Util.DefaultIndex = createIndex(
     workDir,
     normalizedDatasetDir,
@@ -52,14 +61,9 @@ const load: Datasets.Lifecycle.Load = async function ({
     },
   );
 
-  datasets[workDir] ||= {};
-  datasets[workDir][normalizedDatasetDir] = {
-    specs: objectSpecs,
-    indexDBRoot: cacheRoot,
-    indexes: {
-      default: defaultIndex,
-    },
-  };
+  datasets[workDir][normalizedDatasetDir].indexes.default = defaultIndex,
+
+  console.info("Filling in default index", workDir, normalizedDatasetDir);
 
   fillInDefaultIndex(workDir, normalizedDatasetDir, defaultIndex, objectSpecs);
 }
