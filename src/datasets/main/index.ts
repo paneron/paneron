@@ -18,11 +18,14 @@ import {
   loadDataset,
   proposeDatasetPath,
   getObjectDataset,
+  getOrCreateFilteredIndex,
+  describeIndex,
 } from 'datasets';
 import { forceSlug } from 'utils';
 import { checkPathIsOccupied } from 'checkPathIsOccupied';
 import { readPaneronRepoMeta, readRepoConfig } from 'main/repositories';
 import { syncWorker as repoWorker } from 'main/repositories/workerInterface';
+import { INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
 import { requireMainPlugin } from 'main/plugins';
 import { serializeMeta } from 'main/meta-serdes';
 import { DATASET_FILENAME, readDatasetMeta } from './util';
@@ -175,6 +178,28 @@ loadDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
   // await plugin.buildIndexes(workingCopyPath, datasetPath, dbDirName);
 
   return { success: true };
+});
+
+
+getOrCreateFilteredIndex.main!.handle(async ({ workingCopyPath, datasetPath, queryExpression }) => {
+  return (await repoWorker).ds_index_getOrCreateFiltered({
+    workDir: workingCopyPath,
+    datasetDir: datasetPath,
+    queryExpression,
+  });
+});
+
+
+describeIndex.main!.handle(async ({ workingCopyPath, datasetPath, indexID }) => {
+  if ((indexID ?? '') !== '') {
+    return (await repoWorker).ds_index_describe({
+      workDir: workingCopyPath,
+      datasetDir: datasetPath,
+      indexID,
+    });
+  } else {
+    return { status: INITIAL_INDEX_STATUS };
+  }
 });
 
 
