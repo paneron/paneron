@@ -11,6 +11,7 @@ import { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
 import { Changeset, ChangeStatus, PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
 import { SerializableObjectSpec } from '@riboseinc/paneron-extension-kit/types/object-spec';
 import { matchesPath } from '@riboseinc/paneron-extension-kit/object-specs';
+import getSerDesRule from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
 
 import { hash, stripLeadingSlash, stripTrailingSlash } from 'utils';
 import WorkerMethods, { Datasets, Repositories } from './types';
@@ -135,7 +136,7 @@ const getOrCreateFilteredIndex: WorkerMethods["ds_index_getOrCreateFiltered"] = 
 
     let predicate: Datasets.Util.FilteredIndexPredicate;
     try {
-      predicate = new Function('obj', queryExpression) as Datasets.Util.FilteredIndexPredicate;
+      predicate = new Function('objPath', 'obj', queryExpression) as Datasets.Util.FilteredIndexPredicate;
     } catch (e) {
       throw new Error("Unable to parse submitted predicate expression");
     }
@@ -238,7 +239,8 @@ const resolveRepositoryChanges: Repositories.Data.ResolveChanges = async functio
         if (spec) {
           let objectPath: string;
           if (spec.getContainingObjectPath) {
-            objectPath = spec.getContainingObjectPath(bufferPath) || bufferPath;
+            const func = new Function('bufferPath', spec.getContainingObjectPath);
+            objectPath = func(bufferPath) || bufferPath;
           } else {
             objectPath = bufferPath;
           }
@@ -311,9 +313,10 @@ async function updateIndexes(
     if (!spec) {
       throw new Error("Cannot find object spec");
     }
+    const rule = getSerDesRule(spec.serDesRule);
     return [
-      spec.deserialize(await readBuffersAtVersion(workDir, path.join(datasetDir, objectPath), oid1)),
-      spec.deserialize(await readBuffersAtVersion(workDir, path.join(datasetDir, objectPath), oid2)),
+      rule.deserialize(await readBuffersAtVersion(workDir, path.join(datasetDir, objectPath), oid1), {}),
+      rule.deserialize(await readBuffersAtVersion(workDir, path.join(datasetDir, objectPath), oid2), {}),
     ];
   }
 
@@ -469,7 +472,8 @@ async function fillInDefaultIndex(
     const spec = getSpec(objectSpecs, bufferPath);
     if (spec) {
       if (spec.getContainingObjectPath) {
-        return spec.getContainingObjectPath(bufferPath);
+        const func = new Function('bufferPath', spec.getContainingObjectPath);
+        return func(bufferPath);
       } else {
         return bufferPath;
       }

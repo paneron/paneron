@@ -3,6 +3,7 @@ import { readBuffers } from '../buffers/read';
 import { Datasets } from '../types';
 import { getIndex, normalizeDatasetDir } from '../datasets';
 import { SerializableObjectSpec } from '@riboseinc/paneron-extension-kit/types/object-spec';
+import getSerDesRule from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
 
 
 /* Do not read too many objects at once. May be slow. */
@@ -80,6 +81,7 @@ export async function readObjectCold(
   spec: SerializableObjectSpec,
 ): Promise<Record<string, any> | null> {
   const bufferDataset = await readBuffers(rootPath);
-  const obj: Record<string, any> = spec.deserialize(bufferDataset);
+  const rule = getSerDesRule(spec.serDesRule);
+  const obj: Record<string, any> = rule.deserialize(bufferDataset, {});
   return obj;
 }

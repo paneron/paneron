@@ -1,5 +1,6 @@
 import { ObjectChangeset } from '@riboseinc/paneron-extension-kit/types/objects';
 import { BufferChange, BufferChangeset, BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
+import getSerDesRule from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
 import { getSpecs, getSpec } from './datasets';
 
 
@@ -29,8 +30,10 @@ export function toBufferChangeset(
     const spec = getSpec(objectSpecs, objectPath);
 
     if (spec) {
-      const newObjectBuffersRelative = spec.serialize(change.newValue);
-      const oldObjectBuffersRelative = spec.serialize(change.oldValue);
+      const rule = getSerDesRule(spec.serDesRule);
+
+      const newObjectBuffersRelative = rule.serialize(change.newValue, {});
+      const oldObjectBuffersRelative = rule.serialize(change.oldValue, {});
 
       const bufferChanges = mergeBufferDatasetsIntoChangeset(
         newObjectBuffersRelative,
