@@ -36,7 +36,11 @@ export async function readObject(
   workDir: string,
   datasetDir: string,
 ): Promise<Record<string, any> | null> {
-  const idx: Datasets.Util.DefaultIndex = getIndex(workDir, datasetDir);
+  const normalizedDatasetDir = normalizeDatasetDir(datasetDir);
+
+  const idx: Datasets.Util.DefaultIndex = getIndex(
+    workDir,
+    normalizedDatasetDir);
 
   let result: Record<string, any> | undefined;
   try {
