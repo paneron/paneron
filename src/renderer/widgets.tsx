@@ -6,8 +6,9 @@ import styled from '@emotion/styled';
 import { jsx } from '@emotion/core';
 import React, { useState, useEffect, useRef } from 'react';
 import Mark from 'mark.js';
-import { Button as BPButton, Callout, ControlGroup, FormGroup, H4, InputGroup, NonIdealState } from '@blueprintjs/core';
+import { Button as BPButton, ControlGroup, FormGroup, H4, InputGroup } from '@blueprintjs/core';
 import { setAuthorInfo } from 'repositories';
+import ErrorState from '@riboseinc/paneron-extension-kit/widgets/ErrorState';
 
 
 export const Button = styled(BPButton)`
@@ -121,35 +122,6 @@ function ({ workingCopyPath, name, email }) {
     </FormGroup>
   )
 }
-
-
-// TODO: Support suggestions to resolve (move from dataset view)
-export const ErrorState: React.FC<{ technicalDetails?: string | JSX.Element, error?: Error, viewName?: string }> =
-function ({ technicalDetails, error, viewName }) {
-  return (
-    <NonIdealState
-      icon="heart-broken"
-      title="Ouch"
-      description={
-        <>
-          <p>
-            Unable to display {viewName || 'view'}.
-          </p>
-          {technicalDetails || error
-            ? <Callout style={{ textAlign: 'left', transform: 'scale(0.9)' }} title="Technical details">
-                {technicalDetails}
-                {error
-                  ? <pre style={{ overflow: 'auto', paddingBottom: '1em' }}>
-                      {error?.name || 'Unknown error'}: {error?.message || 'no details provided'}
-                    </pre>
-                  : null}
-              </Callout>
-            : null}
-        </>
-      }
-    />
-  );
-};
 
 
 export class ErrorBoundary extends React.Component<{ viewName?: string }, { error?: string }> {

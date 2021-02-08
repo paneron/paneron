@@ -9,9 +9,9 @@ import '!style-loader!css-loader!@blueprintjs/core/lib/css/blueprint.css';
 import '!style-loader!css-loader!./normalize.css';
 import '!style-loader!css-loader!./renderer.css';
 
-import { getComponent } from 'window';
+import ErrorState from '@riboseinc/paneron-extension-kit/widgets/ErrorState';
 
-import { ErrorState } from './widgets';
+import { getComponent } from 'window';
 
 
 require('events').EventEmitter.defaultMaxListeners = 20;
