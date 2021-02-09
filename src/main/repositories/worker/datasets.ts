@@ -508,7 +508,7 @@ async function fillInDefaultIndex(
         phase: 'counting',
         total,
         loaded: 0,
-      }
+      },
     });
     await index.dbHandle.put(objectPath, undefined);
     total += 1;
