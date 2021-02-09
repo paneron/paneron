@@ -46,7 +46,7 @@ type RepoOperation<I extends GitOperationParams, O> =
 
 function lockingRepoOperation<I extends GitOperationParams, O>(
   func: RepoOperation<I, O>,
-  lockOpts?: { failIfBusy?: boolean },
+  lockOpts?: { failIfBusy?: boolean, timeout?: number },
 ): RepoOperation<I, O> {
   return async function (args: I) {
     if (lockOpts?.failIfBusy === true && gitLock.isBusy(args.workDir)) {
@@ -54,7 +54,7 @@ function lockingRepoOperation<I extends GitOperationParams, O>(
     }
     return await gitLock.acquire(args.workDir, async () => {
       return await func(args);
-    });
+    }, { timeout: lockOpts?.timeout });
   }
 }
 
@@ -64,7 +64,7 @@ type RepoOperationWithStatusReporter<I extends GitOperationParams, O> =
 
 function lockingRepoOperationWithStatusReporter<I extends GitOperationParams, O>(
   func: RepoOperationWithStatusReporter<I, O>,
-  lockOpts?: { failIfBusy?: boolean },
+  lockOpts?: { failIfBusy?: boolean, timeout?: number },
 ): RepoOperation<I, O> {
   return async function (opts: I) {
     if (lockOpts?.failIfBusy === true && gitLock.isBusy(opts.workDir)) {
@@ -72,7 +72,7 @@ function lockingRepoOperationWithStatusReporter<I extends GitOperationParams, O>
     }
     return await gitLock.acquire(opts.workDir, async () => {
       return await func(opts, getRepoStatusUpdater(opts.workDir));
-    });
+    }, { timeout: lockOpts?.timeout });
   }
 }
 
@@ -148,7 +148,7 @@ const methods: WorkerSpec = {
   git_init: lockingRepoOperation(workDir.init, { failIfBusy: true }),
   git_delete: lockingRepoOperation(workDir.delete, { failIfBusy: true }),
 
-  git_clone: lockingRepoOperationWithStatusReporter(sync.clone),
+  git_clone: lockingRepoOperationWithStatusReporter(sync.clone, { timeout: 120000 }),
   git_pull: lockingRepoOperationWithStatusReporter(sync.pull),
   git_push: lockingRepoOperationWithStatusReporter(sync.push),
 
