@@ -85,7 +85,8 @@ export async function listDescendantPathsAtVersion(
       }
 
       // Note: filepath is not expected to have leading slash.
-      const filepathWithLeadingSlash = `/${filepath}`;
+      const filepathWithoutLeadingSlash = stripLeadingSlash(filepath);
+      const filepathWithLeadingSlash = `/${filepathWithoutLeadingSlash}`;
 
       if (!filepathWithLeadingSlash.startsWith(rootWithLeadingSlash)) {
         return;
