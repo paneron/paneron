@@ -19,6 +19,7 @@ const { lstat, readdir } = fs.promises;
 */
 export async function* listDescendantPaths(
   root: string,
+  originalRoot?: string,
 ): AsyncGenerator<string> {
   const rootStat = await lstat(root);
   if (rootStat.isDirectory()) {
@@ -26,9 +27,9 @@ export async function* listDescendantPaths(
     for (const dirent of dirents) {
       const resolvedPath = resolve(root, dirent.name);
       if (dirent.isDirectory()) {
-        yield* listDescendantPaths(resolvedPath);
+        yield* listDescendantPaths(resolvedPath, originalRoot ?? root);
       } else {
-        yield `/${relative(root, resolvedPath)}`;
+        yield `/${relative(originalRoot ?? root, resolvedPath)}`;
       }
     }
   } else {
