@@ -43,7 +43,7 @@ export async function readObject(
     workDir,
     normalizedDatasetDir);
 
-  let result: Record<string, any> | undefined;
+  let result: Record<string, any> | false;
   try {
     result = await idx.dbHandle.get(objectPath);
   } catch (e) {
@@ -54,7 +54,7 @@ export async function readObject(
     }
   }
 
-  if (result === undefined) {
+  if (result === false) {
     console.warn("Object had not yet been indexed", datasetDir, objectPath);
     throw new Error("Object had not yet been indexed");
   }

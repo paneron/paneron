@@ -232,7 +232,9 @@ export namespace Datasets {
       predicate?: Function
     }
 
-    export type DefaultIndex = ActiveDatasetIndex<string, Record<string, any> | undefined>;
+    export type DefaultIndex = ActiveDatasetIndex<string, Record<string, any> | false>;
+    // False indicates the object had not yet been indexed.
+
     export type FilteredIndex = ActiveDatasetIndex<number, string> & {
       predicate: Function
     };
