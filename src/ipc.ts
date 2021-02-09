@@ -231,7 +231,7 @@ export const makeEndpoint: EndpointMaker = {
                 }
               };
 
-              log.debug("IPC: Querying", name, payloadSliceToLog);
+              //log.debug("IPC: Querying", name, payloadSliceToLog);
               doQuery();
 
             }, [name, reqCounter, payloadHash]);

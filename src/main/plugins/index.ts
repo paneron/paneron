@@ -269,7 +269,7 @@ export const worker: Promise<Thread & WorkerMethods> = new Promise((resolve, rej
     app.on('quit', terminateWorker);
 
     Thread.events(worker).subscribe(evt => {
-      log.debug("Plugins: Worker event:", evt);
+      //log.debug("Plugins: Worker event:", evt);
       // TODO: Respawn on worker exit?
     });
 
