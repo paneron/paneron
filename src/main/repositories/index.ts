@@ -891,15 +891,17 @@ function syncRepoRepeatedly(
 
         repoSyncLog('debug', "Resolving changes…");
 
-        const changes = await w.repo_resolveChanges({
-          workDir: workingCopyPath,
-          oidBefore: oidBeforePull,
-          oidAfter: oidAfterPull,
-        });
+        if (oidBeforePull !== oidAfterPull) {
+          const changes = await w.repo_resolveChanges({
+            workDir: workingCopyPath,
+            oidBefore: oidBeforePull,
+            oidAfter: oidAfterPull,
+          });
 
-        repoSyncLog('debug', "Reporting changes…");
+          repoSyncLog('debug', "Reporting changes…");
 
-        await reportRepositoryChanges(workingCopyPath, changes);
+          await reportRepositoryChanges(workingCopyPath, changes);
+        }
 
         if (repoCfg.remote.writeAccess) {
           repoSyncLog('debug', "Got write access; pushing…");
