@@ -90,7 +90,7 @@ const unload: Datasets.Lifecycle.Unload = async function ({
 const unloadAll: Datasets.Lifecycle.UnloadAll = async function ({
   workDir,
 }) {
-  for (const datasetDir of Object.keys(datasets[workDir])) {
+  for (const datasetDir of Object.keys(datasets[workDir] || {})) {
     await unload({ workDir, datasetDir });
   }
 }
