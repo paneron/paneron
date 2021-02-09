@@ -510,7 +510,7 @@ async function fillInDefaultIndex(
         loaded: 0,
       },
     });
-    await index.dbHandle.put(objectPath, undefined);
+    await index.dbHandle.put(objectPath, false);
     total += 1;
   }
 
