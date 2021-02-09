@@ -6,6 +6,9 @@ export async function* listObjectPaths(
   belongsToObject: (bufferPath: string) => string | null,
 ): AsyncGenerator<string> {
   for await (const bufferPath of bufferPaths) {
+    if (bufferPath.startsWith('..')) {
+      throw new Error(`Bad buffer path ${bufferPath}`)
+    }
     const objectPath = belongsToObject(bufferPath);
     if (objectPath !== null) {
       yield objectPath;
