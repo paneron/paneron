@@ -14,7 +14,9 @@ import {
   Classes, Colors,
   Navbar,
   NonIdealState,
+  ProgressBar,
   Tag,
+  Text,
   Tooltip,
   UL,
 } from '@blueprintjs/core';
@@ -33,9 +35,11 @@ import {
 } from 'plugins';
 import { getClipboardStatus } from '../../clipboard';
 import { getRepositoryInfo } from 'repositories';
-import { getDatasetInfo, loadDataset } from 'datasets';
+import { describeIndex, getDatasetInfo, indexStatusChanged, loadDataset } from 'datasets';
 
 import { ContextGetterProps, getContext } from './context';
+import { INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
+import { progressToValue } from '@riboseinc/paneron-extension-kit/util';
 
 const NODE_MODULES_PATH = process.env.NODE_ENV === 'production'
   ? `${__static}/../../app.asar.unpacked/node_modules`
@@ -297,6 +301,27 @@ function ({ dataset, datasetSettingsOpen, onToggleDatasetSettings }) {
     id: dataset.type.id || '',
   }, { plugin: null });
 
+  const defaultIndexStatus = describeIndex.renderer!.useValue({
+    workingCopyPath,
+    datasetPath,
+    indexID: 'default',
+  }, { status: INITIAL_INDEX_STATUS });
+
+  indexStatusChanged.renderer!.useEvent(async (evt) => {
+    if (
+      workingCopyPath === evt.workingCopyPath &&
+      datasetPath === evt.datasetPath &&
+      evt.indexID === 'default'
+    ) {
+      defaultIndexStatus.refresh();
+    }
+  }, []);
+
+  const status = defaultIndexStatus.value.status;
+  const progressValue = status.progress
+    ? progressToValue(status.progress)
+    : undefined;
+
   const clipboardStatus = getClipboardStatus.renderer!.useValue({
     workDir: workingCopyPath,
     datasetDir: datasetPath,
@@ -368,6 +393,18 @@ function ({ dataset, datasetSettingsOpen, onToggleDatasetSettings }) {
             </Button>
           </Tooltip>
         </ButtonGroup>
+      </Navbar.Group>
+      <Navbar.Group css={css`height: 35px`} align="right">
+        {status
+          ? <Text>{status.progress?.phase}</Text>
+          : null}
+        <ProgressBar
+          intent="primary"
+          value={progressValue}
+          css={css`margin: 0 1rem; width: 10rem;`} />
+        <Text css={css`white-space: nowrap;`}>
+          {status.objectCount} objects
+        </Text>
       </Navbar.Group>
     </Navbar>
   );
