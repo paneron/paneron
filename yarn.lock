@@ -1109,7 +1109,7 @@
     "@nodelib/fs.scandir" "2.1.3"
     fastq "^1.6.0"
 
-"@riboseinc/paneron-extension-kit@^1.0.1":
+"@riboseinc/paneron-extension-kit@=1.0.1":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@riboseinc/paneron-extension-kit/-/paneron-extension-kit-1.0.1.tgz#b7a63f328b0f716e717d1c530b00390ec4bea486"
   integrity sha512-wE/CfAIsS6kXvRGWP3ov2DHl6gKuiFRbphWDT8w0aX/CJDk53niCMgghjhYjIUnyoCNKAhekzwru2v3eahZUHw==
@@ -1117,10 +1117,10 @@
     "@types/semver" "^7.3.4"
     semver "^7.3.2"
 
-"@riboseinc/paneron-registry-kit@^1.0.0-alpha20":
-  version "1.0.0-alpha20"
-  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-registry-kit/-/paneron-registry-kit-1.0.0-alpha20.tgz#1fa16322dadbe43bd75538b8393430e51a2658b6"
-  integrity sha512-fGgg6vT3/uwvA+hdCM7Kxn8cJE6TtdYAYngkv6jLAR4cob6UOU5j8V1cIZoRyw4CCtdQcV1/IiQ0MxidXyjF8Q==
+"@riboseinc/paneron-registry-kit@^1.0.0-alpha21":
+  version "1.0.0-alpha21"
+  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-registry-kit/-/paneron-registry-kit-1.0.0-alpha21.tgz#78cb10596cd93ccfc09b2c3a1ac152289b4dfc9d"
+  integrity sha512-PYyAOQzW5PnMv/8qy9oxssOsqI4ZM5UZ9Qs6OHUMlC7VtYxjb5SE0IbUwSf/N3b2orl3qeHJv9ZK7FrC5bfHQg==
 
 "@riboseinc/reprose@^1.0.0-alpha9":
   version "1.0.0-alpha9"
