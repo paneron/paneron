@@ -1117,10 +1117,10 @@
     "@types/semver" "^7.3.4"
     semver "^7.3.2"
 
-"@riboseinc/paneron-registry-kit@^1.0.0-alpha18":
-  version "1.0.0-alpha18"
-  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-registry-kit/-/paneron-registry-kit-1.0.0-alpha18.tgz#98168f8bc61ef0ff176f550007eacd139e84142a"
-  integrity sha512-J7raYKY5xJSzdzXR/jTQDvPH0/jnOoZXfyquFb4tc6cgDdcheZE6+Shj9VFpHUOJ8o6M5tNsA65SUrbIX2vnqA==
+"@riboseinc/paneron-registry-kit@^1.0.0-alpha19":
+  version "1.0.0-alpha19"
+  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-registry-kit/-/paneron-registry-kit-1.0.0-alpha19.tgz#bfb9ac567b9663fa4a6f767d249514519dddbea7"
+  integrity sha512-Z/MNtiMAaqgAU2lZSkriNnA4vPH27+Bx9TDsn97N/cnPfBsDqAba07cXO6vImyGyNQdJKHMpDM1A4M3Tl+6GKg==
 
 "@riboseinc/reprose@^1.0.0-alpha9":
   version "1.0.0-alpha9"
