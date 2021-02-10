@@ -16,7 +16,7 @@ import {
 } from 'datasets';
 import { readPaneronRepoMeta, readRepoConfig } from 'main/repositories';
 import repoWorker from 'main/repositories/workerInterface';
-import cache from 'main/repositories/cache';
+//import cache from 'main/repositories/cache';
 import { requireMainPlugin } from 'main/plugins';
 import { checkPathIsOccupied, forceSlug } from 'utils';
 import {
@@ -105,9 +105,9 @@ initializeDataset.main!.handle(async ({ workingCopyPath, meta, datasetPath }) =>
   });
 
   if (newCommitHash) {
-    await cache.invalidatePaths({
-      workingCopyPath,
-    });
+    //await cache.invalidatePaths({
+    //  workingCopyPath,
+    //});
     await repositoriesChanged.main!.trigger({
       changedWorkingPaths: [workingCopyPath],
     });

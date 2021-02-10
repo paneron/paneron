@@ -38,9 +38,9 @@ import { DatasetInfo } from 'datasets/types';
 import { fetchExtensions } from 'main/plugins';
 import { DATASET_FILENAME } from 'datasets';
 import { stripLeadingSlash } from './git-methods';
-import cache from './cache';
+//import cache from './cache';
 import worker from './workerInterface';
-import { FileChangeType, ObjectDataRequest, ObjectDataset } from '@riboseinc/paneron-extension-kit/types';
+import { ObjectDataset } from '@riboseinc/paneron-extension-kit/types';
 
 
 const REPOSITORY_SYNC_INTERVAL_MS = 5000;
@@ -463,9 +463,9 @@ addRepository.main!.handle(async ({ gitRemoteURL, workingCopyPath, username, pas
     auth,
   });
 
-  await cache.invalidatePaths({
-    workingCopyPath,
-  });
+  //await cache.invalidatePaths({
+  //  workingCopyPath,
+  //});
 
   repositoriesChanged.main!.trigger({
     changedWorkingPaths: [workingCopyPath],
@@ -543,9 +543,9 @@ createRepository.main!.handle(async ({ workingCopyPath, author, title }) => {
 deleteRepository.main!.handle(async ({ workingCopyPath }) => {
   removeRepoStatus(workingCopyPath);
 
-  await cache.destroy({
-    workingCopyPath,
-  });
+  //await cache.destroy({
+  //  workingCopyPath,
+  //});
 
   await (await worker).delete({
     workDir: workingCopyPath,
@@ -586,19 +586,20 @@ savePassword.main!.handle(async ({ workingCopyPath, remoteURL, username, passwor
 
 
 listObjectPaths.main!.handle(async ({ workingCopyPath, query }) => {
-  return await cache.listPaths({ workingCopyPath, query });
+  //return await cache.listPaths({ workingCopyPath, query });
+
+  return await (await worker).listObjectPaths({ workDir: workingCopyPath, query });
 });
 
 
 listAllObjectPathsWithSyncStatus.main!.handle(async ({ workingCopyPath }) => {
   // TODO: Rename to just list all paths; implement proper sync status checker for subsets of files.
 
-  const paths = await cache.listPaths({ workingCopyPath });
+  // const paths = await cache.listPaths({ workingCopyPath });
+  // const result: Record<string, FileChangeType> =
+  //   paths.map(p => ({ [`/${p}`]: 'unchanged' as const })).reduce((p, c) => ({ ...p, ...c }), {});
 
-  const result: Record<string, FileChangeType> =
-    paths.map(p => ({ [`/${p}`]: 'unchanged' as const })).reduce((p, c) => ({ ...p, ...c }), {});
-
-  //const result = await w.listAllObjectPathsWithSyncStatus({ workDir: workingCopyPath });
+  const result = await (await worker).listAllObjectPathsWithSyncStatus({ workDir: workingCopyPath });
   log.info("Got sync status", JSON.stringify(result));
 
   return result;
@@ -611,20 +612,23 @@ readContents.main!.handle(async ({ workingCopyPath, objects }) => {
   }
 
   // Try cache
-  let data: ObjectDataset = await cache.getObjectContents({ workingCopyPath, objects });
+  //let data: ObjectDataset = await cache.getObjectContents({ workingCopyPath, objects });
+
+  let data: ObjectDataset = {};
 
   // Below can be avoided if we ensure repo cache is populated before dataset is open.
   // If any data is null (cache key was not found), request from filesystem.
   // TODO: This is suboptimal in case object is known to not exist.
   // We could extend the type and e.g. cache “null” for known-nonexistent objects
   // and “undefined” if LevelDB returned NotFoundError.
-  if (Object.values(data).indexOf(null) >= 0) {
-    const fsRequest: ObjectDataRequest = Object.entries(data).
-      filter(([key, data]) => data === null && objects[key] !== undefined).
-      map(([key, _]) => ({ [key]: objects[key] })).
-      reduce((prev, curr) => ({ ...prev, ...curr }));
 
-    log.silly("Repositories: requesting data: cache miss", Object.keys(fsRequest));
+  //if (Object.values(data).indexOf(null) >= 0) {
+    //const fsRequest: ObjectDataRequest = Object.entries(data).
+    //  filter(([key, data]) => data === null && objects[key] !== undefined).
+    //  map(([key, _]) => ({ [key]: objects[key] })).
+    //  reduce((prev, curr) => ({ ...prev, ...curr }), {});
+
+    //log.silly("Repositories: requesting data: cache miss", Object.keys(fsRequest));
 
     try {
       const w = await worker;
@@ -632,14 +636,15 @@ readContents.main!.handle(async ({ workingCopyPath, objects }) => {
         ...data,
         ...(await w.getObjectContents({
           workDir: workingCopyPath,
-          readObjectContents: fsRequest,
+          readObjectContents: objects,
         })),
       };
     } catch (e) {
       log.error("Repositories: Failed to read object contents from Git repository", e);
       throw e;
     }
-  }
+
+  //}
 
   return data;
 });
@@ -679,7 +684,7 @@ commitChanges.main!.handle(async ({ workingCopyPath, commitMessage, changeset, i
   }
 
   // Update cache
-  await cache.applyChangeset({ workingCopyPath, changeset });
+  //await cache.applyChangeset({ workingCopyPath, changeset });
 
   // Send signals
   if (outcome.newCommitHash) {
@@ -897,9 +902,9 @@ function syncRepoRepeatedly(workingCopyPath: string): void {
             repoURL: repoCfg.remote.url,
             auth,
           });
-          await cache.invalidatePaths({
-            workingCopyPath,
-          });
+          //await cache.invalidatePaths({
+          //  workingCopyPath,
+          //});
           await repositoryContentsChanged.main!.trigger({
             workingCopyPath,
           });
@@ -927,10 +932,10 @@ function syncRepoRepeatedly(workingCopyPath: string): void {
           _presumeCanceledErrorMeansAwaitingAuth: true,
         });
 
-        await cache.invalidatePaths({
-          workingCopyPath,
-          paths: changedObjects ? Object.keys(changedObjects) : undefined,
-        });
+        //await cache.invalidatePaths({
+        //  workingCopyPath,
+        //  paths: changedObjects ? Object.keys(changedObjects) : undefined,
+        //});
 
         if (changedObjects === null) {
           log.error("Repositories: Apparently unable to compare for changes after pull!");
