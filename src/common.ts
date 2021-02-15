@@ -15,3 +15,10 @@ export const makeRandomID = makeEndpoint.main(
   <EmptyPayload>_,
   <{ id: string }>_,
 );
+
+
+export const makeRandomUUID = makeEndpoint.main(
+  'makeRandomUUID',
+  <EmptyPayload>_,
+  <{ uuid: string }>_,
+);

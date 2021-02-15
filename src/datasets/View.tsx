@@ -23,7 +23,7 @@ import {
 } from '@riboseinc/paneron-extension-kit/types';
 
 import { WindowComponentProps } from 'window';
-import { makeRandomID, chooseFileFromFilesystem } from 'common';
+import { makeRandomUUID, chooseFileFromFilesystem } from 'common';
 import {
   commitChanges,
   listAllObjectPathsWithSyncStatus,
@@ -193,7 +193,7 @@ const requestFileFromFilesystem: DatasetContext["requestFileFromFilesystem"] = a
 }
 
 const _makeRandomID: DatasetContext["makeRandomID"] = async () => {
-  const id = (await makeRandomID.renderer!.trigger({})).result?.id;
+  const id = (await makeRandomUUID.renderer!.trigger({})).result?.uuid;
   if (!id) {
     throw new Error("Unable to obtain a random ID")
   }
