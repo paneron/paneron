@@ -493,7 +493,11 @@ const methods: WorkerSpec = {
       if (!firstCommit) {
         try {
           const oldData = await lockFree_getObjectContents(workDir, dataRequest);
-          conflicts = canBeApplied(changeset, oldData, !_dangerouslySkipValidation);
+          if (!_dangerouslySkipValidation) {
+            conflicts = canBeApplied(changeset, oldData, !_dangerouslySkipValidation);
+          } else {
+            conflicts = {};
+          }
         } catch (e) {
           throw e;
         } finally {
