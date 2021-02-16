@@ -1,12 +1,13 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 
-import { jsx } from '@emotion/core';
+import { jsx, css } from '@emotion/core';
+import semver from 'semver';
 
 import React, { useState } from 'react';
 
 import { getPluginInfo, installPlugin, pluginsUpdated, upgradePlugin } from 'plugins';
-import { Button, InputGroup, Toaster } from '@blueprintjs/core';
+import { Button, InputGroup, Intent, Toaster } from '@blueprintjs/core';
 
 
 const toaster = Toaster.create({ position: 'bottom' });
@@ -79,6 +80,33 @@ function ({ id }) {
     }
   }
 
+  let installIntent: Intent | undefined;
+  let installVerb: string | undefined;
+  if (canInstall) {
+    if (installedVersion && versionToInstall) {
+      let upgrading: boolean;
+      try {
+        upgrading = semver.gt(versionToInstall, installedVersion)
+        installIntent = 'warning';
+        if (upgrading) {
+          installVerb = "Upgrade to";
+        } else {
+          installVerb = "Downgrade to";
+        }
+      } catch (e) {
+        upgrading = false;
+        installVerb = undefined;
+        installIntent = undefined;
+      }
+    } else {
+      installVerb = 'Install';
+      installIntent = 'primary';
+    }
+  } else {
+    installVerb = undefined;
+    installIntent = undefined;
+  }
+
   return (
     <>
       <InputGroup
@@ -89,22 +117,21 @@ function ({ id }) {
       {wantToInstall
         ? <Button
               disabled={!canInstall}
-              loading={isBusy || pluginInfo.isUpdating}
-              intent="primary"
+              css={css`white-space: nowrap;`}
+              loading={isBusy ?? pluginInfo.isUpdating}
+              intent={installIntent}
               onClick={handleInstall}
               icon="play">
-            {installedVersion
-              ? `Update to`
-              : `Install`}
+            {installVerb}
           </Button>
         : null}
       <InputGroup
         placeholder={installedVersion === currentNPMVersion
           ? 'Change version…'
           : `${currentNPMVersion} (latest)`}
-        disabled={isBusy || pluginInfo.isUpdating}
-        intent={wantToInstall ? 'primary' : undefined}
-        value={customVersionToInstall || ''}
+        disabled={isBusy ?? pluginInfo.isUpdating}
+        intent={installIntent}
+        value={customVersionToInstall ?? ''}
         onChange={(evt: React.FormEvent<HTMLInputElement>) =>
           setVersionToInstall(evt.currentTarget.value)} />
     </>
