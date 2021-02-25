@@ -6,6 +6,7 @@ import log from 'electron-log';
 import { css, jsx } from '@emotion/core';
 import { remote } from 'electron';
 import React, { useState } from 'react';
+import MathJax from 'react-mathjax2';
 import { PluginManager } from 'live-plugin-manager';
 import {
   Button, ButtonGroup,
@@ -255,12 +256,20 @@ const repoView: Promise<React.FC<WindowComponentProps>> = new Promise((resolve, 
                 flex: 1; z-index: 2; display: flex; flex-flow: column nowrap; overflow: hidden;
                 background: ${Colors.LIGHT_GRAY5};
               `}>
-            <ErrorBoundary viewName="dataset">
-              <MainView
-                css={css`flex: 1; display: flex; flex-flow: column nowrap; overflow: hidden;`}
-                {...datasetContext}
-              />
-            </ErrorBoundary>
+            <MathJax.Context script={"https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=AM_HTMLorMML"} options={{
+                asciimath2jax: {
+                  useMathMLspacing: true,
+                  delimiters: [["`","`"]],
+                  preview: "none",
+                },
+              }}>
+              <ErrorBoundary viewName="dataset">
+                <MainView
+                  css={css`flex: 1; display: flex; flex-flow: column nowrap; overflow: hidden;`}
+                  {...datasetContext}
+                />
+              </ErrorBoundary>
+            </MathJax.Context>
           </div>
 
           <Toolbar
