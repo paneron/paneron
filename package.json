@@ -52,6 +52,7 @@
     "appId": "org.paneron.desktop",
     "asarUnpack": [
       "**/*.node",
+      "node_modules/mathjax/**/*",
       "node_modules/source-map/**/*",
       "node_modules/source-map-support/**/*",
       "node_modules/buffer-from/**/*",
@@ -177,6 +178,7 @@
     "js-yaml": "3.14.0",
     "live-plugin-manager": "=0.15.0",
     "mark.js": "^8.11.1",
+    "mathjax": "^2.7",
     "moment": "^2.24.0",
     "mousetrap": "^1.6.5",
     "react": "^16.11.0",

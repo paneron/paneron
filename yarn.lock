@@ -6251,6 +6251,11 @@ matcher@^3.0.0:
   dependencies:
     escape-string-regexp "^4.0.0"
 
+mathjax@^2.7:
+  version "2.7.9"
+  resolved "https://registry.yarnpkg.com/mathjax/-/mathjax-2.7.9.tgz#d6b67955c173e7d719fcb2fc0288662884eb7d3d"
+  integrity sha512-NOGEDTIM9+MrsqnjPEjVGNx4q0GQxqm61yQwSK+/5S59i26wId5IC5gNu9/bu8+CCVl5p9G2IHcAl/wJa+5+BQ==
+
 mathml-tag-names@^2.1.3:
   version "2.1.3"
   resolved "https://registry.yarnpkg.com/mathml-tag-names/-/mathml-tag-names-2.1.3.tgz#4ddadd67308e780cf16a47685878ee27b736a0a3"
