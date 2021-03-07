@@ -61,6 +61,7 @@ async function initMain() {
   });
 
   makeRandomUUID.main!.handle(async () => {
+    // Generates UUID v4
     const hex = [...Array(256).keys()]
       .map(index => (index).toString(16).padStart(2, '0'));
 
