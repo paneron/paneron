@@ -2,7 +2,7 @@ import log from 'electron-log';
 import AsyncLock from 'async-lock';
 import { readDatasetMeta } from 'datasets/main/util';
 import { DatasetInfo } from 'datasets/types';
-import { readPaneronRepoMeta } from 'main/repositories';
+import { readPaneronRepoMeta } from 'main/repositories/readRepoConfig';
 import { PaneronRepository } from 'repositories';
 import { getClipboardStatus, copyObjects, requestCopiedObjects } from '.';
 import { ClipboardSource, RuntimeClipboard } from './types';

@@ -1,20 +1,16 @@
 import path from 'path';
 import fs from 'fs-extra';
 
-import AsyncLock from 'async-lock';
-import yaml from 'js-yaml';
-import keytar from 'keytar';
-
 import { app, dialog } from 'electron';
 import log from 'electron-log';
 
-import { Subscription } from 'observable-fns';
+import { serializeMeta } from 'main/meta-serdes';
 
 import {
   addRepository, createRepository, deleteRepository,
-  getRepositoryStatus,
+  loadRepository,
   listRepositories,
-  repositoriesChanged, repositoryStatusChanged,
+  repositoriesChanged,
   getDefaultWorkingDirectoryContainer,
   selectWorkingDirectoryContainer, validateNewWorkingDirectoryPath,
   getNewRepoDefaults,
@@ -29,18 +25,28 @@ import {
   unsetWriteAccess,
   getBufferDataset,
   updateBuffers,
-  repositoryBuffersChanged,
 } from '../../repositories';
-import { Repository, NewRepositoryDefaults, RepoStatus, PaneronRepository, GitRemote } from '../../repositories/types';
-import { syncWorker, readerWorker } from './workerInterface';
-import { deserializeMeta, serializeMeta } from 'main/meta-serdes';
-import { PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
-import { objectsChanged } from 'datasets';
+
+import { PaneronRepository, GitRemote } from '../../repositories/types';
+import { getRepoWorkers, spawnWorker } from './workerInterface';
 import { changesetToPathChanges } from './worker/datasets';
 
+import {
+  getLoadedRepository,
+  loadRepository as loadRepo,
+  reportBufferChanges,
+  unloadRepository,
+} from './loadedRepositories';
 
-const REPOSITORY_SYNC_INTERVAL_MS = 5000;
-const REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS = 15000;
+import {
+  updateRepositories,
+  _updateNewRepoDefaults,
+  readRepositories,
+  readPaneronRepoMeta,
+  readRepoConfig,
+} from './readRepoConfig';
+
+import { saveAuth, getAuth } from './repoAuth';
 
 
 getDefaultWorkingDirectoryContainer.main!.handle(async () => {
@@ -102,99 +108,14 @@ selectWorkingDirectoryContainer.main!.handle(async ({ _default }) => {
 });
 
 
-getRepositoryStatus.main!.handle(async ({ workingCopyPath }) => {
-  if (repositoryStatuses[workingCopyPath]) {
-    log.silly("Repositories: Status: Reporting cached", workingCopyPath, repositoryStatuses[workingCopyPath]?.latestStatus);
-    return repositoryStatuses[workingCopyPath]?.latestStatus || { status: 'ready' };
-  }
-
-  log.debug("Repositories: Status: Streaming: Setup", workingCopyPath);
-
-  const w = await syncWorker;
-
-  log.debug("Repositories: Status: Streaming: Setup: Reading config", workingCopyPath);
-
-  let repoCfg: Repository;
-  try {
-    repoCfg = await readRepoConfig(workingCopyPath);
-  } catch (e) {
-    log.warn("Repositories: Configuration for working copy cannot be read.", workingCopyPath);
-    return { status: 'invalid-working-copy' };
-  }
-
-  log.debug("Repositories: Status: Streaming: Setup: Validating working directory path", workingCopyPath);
-
-  let workDirPathExists: boolean;
-  let workDirPathIsWorkable: boolean;
-  try {
-    workDirPathIsWorkable = (await fs.stat(workingCopyPath)).isDirectory() === true;
-    workDirPathExists = true;
-  } catch (e) {
-    if (!repoCfg.remote?.url) {
-      log.error("Repositories: Configuration for working copy exists, but working copy directory is missing and no remote is specified.", workingCopyPath);
-      return { status: 'invalid-working-copy' };
-    } else {
-      log.warn("Repositories: Configuration for working copy exists, but working copy directory is missing. Will attempt to clone again.", workingCopyPath);
-      workDirPathExists = false;
-      workDirPathIsWorkable = true;
-    }
-  }
-
-  if (!workDirPathIsWorkable) {
-    log.error("Repositories: Working copy in filesystem is invalid (not a directory?)", workingCopyPath);
-    return { status: 'invalid-working-copy' };
-  }
-
-  async function reportStatus(status: RepoStatus) {
-    if (repositoryStatuses[workingCopyPath]) {
-      const statusChanged = (
-        JSON.stringify(repositoryStatuses[workingCopyPath].latestStatus) !==
-        JSON.stringify(status));
-      if (statusChanged) {
-        await repositoryStatusChanged.main!.trigger({
-          workingCopyPath,
-          status,
-        });
-      }
-      repositoryStatuses[workingCopyPath].latestStatus = status;
-    } else {
-      streamSubscription.unsubscribe();
-    }
-  }
-
-  log.debug("Repositories: Status: Streaming: Setup: Subscribing", workingCopyPath);
-
-  const streamSubscription = w.
-    streamStatus({ workDir: workingCopyPath }).
-    subscribe(reportStatus);
-
-  repositoryStatuses[workingCopyPath] = {
-    stream: streamSubscription,
-  };
-
-  log.debug("Repositories: Status: Streaming: Setup: Kicking off sync", workingCopyPath);
-
-  syncRepoRepeatedly(workingCopyPath);
-
-  app.on('quit', () => { removeRepoStatus(workingCopyPath); });
-
-  log.debug("Repositories: Status: Streaming: Setup: Validating working directory", workingCopyPath);
-
-  const workDirIsValid = await w.git_workDir_validate({ workDir: workingCopyPath });
-
-  if (workDirPathExists && !workDirIsValid) {
-    log.warn("Repositories: Working copy in filesystem is invalid (not a Git repo?)", workingCopyPath);
-    return { busy: { operation: 'initializing' } };
-  } else {
-    log.debug("Repositories: Status: Streaming: Setup: Finishing", workingCopyPath);
-    return { status: 'ready' };
-  }
-
+loadRepository.main!.handle(async ({ workingCopyPath }) => {
+  const status = await loadRepo(workingCopyPath);
+  return status;
 });
 
 
 setRemote.main!.handle(async ({ workingCopyPath, url, username, password }) => {
-  const w = await syncWorker;
+  const w = getLoadedRepository(workingCopyPath).workers.sync;
 
   const auth = { username, password };
   const { isBlank, canPush } = await w.git_describeRemote({ url, auth });
@@ -219,7 +140,6 @@ setRemote.main!.handle(async ({ workingCopyPath, url, username, password }) => {
     });
 
     await w.git_addOrigin({
-      workDir: workingCopyPath,
       url,
     });
 
@@ -230,7 +150,6 @@ setRemote.main!.handle(async ({ workingCopyPath, url, username, password }) => {
         createdWorkingPaths: [],
       });
       await w.git_push({
-        workDir: workingCopyPath,
         repoURL: url,
         auth,
       });
@@ -242,7 +161,7 @@ setRemote.main!.handle(async ({ workingCopyPath, url, username, password }) => {
 
     if (password) {
       try {
-        await _savePassword(url, username, password);
+        await saveAuth(url, username, password);
       } catch (e) {
         log.error("Repositories: Unable to save password while initiating sharing", workingCopyPath, url, e);
       }
@@ -287,7 +206,7 @@ unsetWriteAccess.main!.handle(async ({ workingCopyPath }) => {
 
 
 unsetRemote.main!.handle(async ({ workingCopyPath }) => {
-  const w = await syncWorker;
+  const w = getLoadedRepository(workingCopyPath).workers.sync;
 
   await updateRepositories((data) => {
     const existingConfig = data.workingCopies?.[workingCopyPath];
@@ -380,7 +299,17 @@ listPaneronRepositories.main!.handle(async ({ workingCopyPaths }) => {
 
 
 getRepositoryInfo.main!.handle(async ({ workingCopyPath }) => {
-  return { info: await readRepoConfig(workingCopyPath) };
+  let isLoaded: boolean;
+  try {
+    getLoadedRepository(workingCopyPath);
+    isLoaded = true;
+  } catch (e) {
+    isLoaded = false;
+  }
+  return {
+    info: await readRepoConfig(workingCopyPath),
+    isLoaded,
+  };
 });
 
 
@@ -405,7 +334,8 @@ setPaneronRepositoryInfo.main!.handle(async ({ workingCopyPath, info }) => {
   if (!author) {
     throw new Error("Repository configuration is missing author information");
   }
-  const w = await syncWorker;
+  const repo = getLoadedRepository(workingCopyPath);
+  const w = repo.workers.sync;
   const { newCommitHash } = await w.repo_updateBuffers({
     workDir: workingCopyPath,
     commitMessage: "Change repository title",
@@ -440,7 +370,8 @@ queryGitRemote.main!.handle(async ({ url, username, password }) => {
   if (!auth.password) {
     auth.password = (await getAuth(url, username)).password;
   }
-  return await (await readerWorker).git_describeRemote({ url, auth });
+  const worker = await spawnWorker();
+  return await worker.git_describeRemote({ url, auth });
 });
 
 
@@ -449,7 +380,8 @@ addRepository.main!.handle(async ({ gitRemoteURL, workingCopyPath, username, pas
   if (!auth.password) {
     auth.password = (await getAuth(gitRemoteURL, username)).password;
   }
-  const { canPush } = await (await readerWorker).git_describeRemote({ url: gitRemoteURL, auth });
+  const worker = await spawnWorker();
+  const { canPush } = await worker.git_describeRemote({ url: gitRemoteURL, auth });
 
   await updateRepositories((data) => {
     if (data.workingCopies[workingCopyPath] !== undefined) {
@@ -473,8 +405,11 @@ addRepository.main!.handle(async ({ gitRemoteURL, workingCopyPath, username, pas
     createdWorkingPaths: [workingCopyPath],
   });
 
-  await (await syncWorker).git_clone({
-    workDir: workingCopyPath,
+  const workers = await getRepoWorkers(workingCopyPath);
+
+  await workers.sync.initialize({ workDirPath: workingCopyPath });
+
+  await workers.sync.git_clone({
     repoURL: gitRemoteURL,
     auth,
   });
@@ -512,7 +447,7 @@ createRepository.main!.handle(async ({ workingCopyPath, author, title }) => {
     author,
   });
 
-  const w = await syncWorker;
+  const w = (await getRepoWorkers(workingCopyPath)).sync;
 
   await w.git_init({
     workDir: workingCopyPath,
@@ -552,11 +487,17 @@ createRepository.main!.handle(async ({ workingCopyPath, author, title }) => {
 
 
 deleteRepository.main!.handle(async ({ workingCopyPath }) => {
-  removeRepoStatus(workingCopyPath);
+  try {
+    const repo = getLoadedRepository(workingCopyPath);
+    const w = repo.workers.sync;
+    await w.ds_unloadAll({ workDir: workingCopyPath });
+    await unloadRepository(workingCopyPath);
 
-  const w = await syncWorker;
+  } catch (e) {
+    log.warn("Repositories: Delete: Not loaded", workingCopyPath);
+  }
 
-  await w.ds_unloadAll({ workDir: workingCopyPath });
+  const w = await spawnWorker();
 
   await w.git_delete({
     workDir: workingCopyPath,
@@ -585,9 +526,9 @@ deleteRepository.main!.handle(async ({ workingCopyPath }) => {
 
 
 savePassword.main!.handle(async ({ workingCopyPath, remoteURL, username, password }) => {
-  await _savePassword(remoteURL, username, password);
-  delete repositoryStatuses[workingCopyPath].latestStatus;
-  syncRepoRepeatedly(workingCopyPath);
+  await unloadRepository(workingCopyPath);
+  await saveAuth(remoteURL, username, password);
+  await loadRepo(workingCopyPath);
   return { success: true };
 });
 
@@ -621,7 +562,10 @@ getBufferDataset.main!.handle(async ({ workingCopyPath, paths }) => {
     return {};
   }
 
-  const w = await readerWorker;
+  const repo = getLoadedRepository(workingCopyPath);
+
+  const w = repo.workers.reader;
+
   return await w.repo_getBufferDataset({
     workDir: workingCopyPath,
     paths,
@@ -641,7 +585,8 @@ updateBuffers.main!.handle(async ({
     throw new Error("Author information is missing in repository config");
   }
 
-  const w = await syncWorker;
+  const repo = getLoadedRepository(workingCopyPath);
+  const w = repo.workers.sync;
 
   const pathChanges = changesetToPathChanges(bufferChangeset);
 
@@ -707,374 +652,3 @@ updateBuffers.main!.handle(async ({
 // 
 //   return outcome;
 // });
-
-
-// Sync helpers
-// TODO: Must move sync to worker
-
-const repositoryStatuses: {
-  [workingCopyPath: string]: {
-    stream: Subscription<RepoStatus>
-    updateTimeout?: ReturnType<typeof setTimeout>
-    latestSync?: Date
-
-    // This status is set by subscription to worker events and is not to be relied on.
-    latestStatus?: RepoStatus
-  }
-} = {};
-
-
-/* Cancels repo status subscription, clears update timeout, and removes status. */
-function removeRepoStatus(workingCopyPath: string) {
-  repositoryStatuses[workingCopyPath]?.stream?.unsubscribe();
-  const timeout = repositoryStatuses[workingCopyPath]?.updateTimeout;
-  timeout ? clearTimeout(timeout) : void 0;
-  delete repositoryStatuses[workingCopyPath];
-}
-
-
-app.on('quit', () => {
-  for (const workingCopyPath of Object.keys(repositoryStatuses)) {
-    removeRepoStatus(workingCopyPath);
-  }
-});
-
-
-async function reportBufferChanges(
-  workingCopyPath: string,
-  changedPaths: PathChanges,
-) {
-  if (Object.keys(changedPaths).length > 0) {
-    await repositoryBuffersChanged.main!.trigger({
-      workingCopyPath,
-      changedPaths,
-    });
-  }
-}
-
-
-async function reportRepositoryChanges(
-  workingCopyPath: string,
-  changes: {
-    changedBuffers: PathChanges
-    changedObjects: {
-      [datasetDir: string]: PathChanges
-    }
-  },
-) {
-  const {
-    changedBuffers: changedPaths,
-    changedObjects: datasetChanges,
-  } = changes;
-
-  await reportBufferChanges(workingCopyPath, changedPaths);
-
-  for (const [datasetPath, changedPaths] of Object.entries(datasetChanges)) {
-    await objectsChanged.main!.trigger({
-      workingCopyPath,
-      datasetPath,
-      objects: changedPaths,
-    });
-  }
-}
-
-
-/* Sync sequence */
-// TODO: Only sync a repository if one of its datasets is opened.
-function syncRepoRepeatedly(
-  workingCopyPath: string,
-  logLevel: 'all' | 'warnings' = 'warnings',
-): void {
-  const repoSyncLog: (
-    meth: 'silly' | 'debug' | 'info' | 'warn' | 'error',
-    ...args: Parameters<typeof log.debug>
-  ) => ReturnType<typeof log.debug> = (meth, ...args) => {
-    const _msg = args.shift();
-    const doLog = (
-      logLevel === 'all' ||
-      logLevel === 'warnings' && (meth === 'warn' || meth === 'error'));
-    if (doLog) {
-      const msg = `Repositories: Syncing ${workingCopyPath}: ${_msg}`;
-      log[meth](msg, ...args);
-    }
-  };
-
-  async function _sync(): Promise<void> {
-    const w = await syncWorker;
-
-    repoSyncLog('info', "Beginning sync attempt");
-
-    // Do our best to avoid multiple concurrent sync runs on one repo and clear sync timeout, if exists.
-    const timeout = repositoryStatuses[workingCopyPath]?.updateTimeout;
-    timeout ? clearTimeout(timeout) : void 0;
-
-    // 1. Check that repository is OK.
-    // If something is broken or operation in latest status snapshot
-    // indicates that we are awaiting user input, clear status and cancel further sync.
-    // If latest operation indicates we are awaiting user input, skip sync during this run.
-
-    // 1.1. Check configuration
-    let repoCfg: Repository | null;
-    if (!repositoryStatuses[workingCopyPath]) {
-      repoSyncLog('warn', "Removing status and aborting sync");
-      return removeRepoStatus(workingCopyPath);
-    } else {
-      repoSyncLog('debug', "Checking configuration");
-      try {
-        repoCfg = await readRepoConfig(workingCopyPath);
-        if (!repoCfg.author) {
-          repoSyncLog('error', "Configuration is missing author info");
-          return removeRepoStatus(workingCopyPath);
-        }
-      } catch (e) {
-        repoSyncLog('error', "Configuration cannot be read");
-        return removeRepoStatus(workingCopyPath);
-      }
-
-      const isBusy = repositoryStatuses[workingCopyPath].latestStatus?.busy;
-      switch (isBusy?.operation) {
-        case 'pulling':
-        case 'pushing':
-        case 'cloning':
-          if (isBusy.awaitingPassword) {
-            repoSyncLog('warn', "An operation is already in progress", JSON.stringify(isBusy.operation));
-            return;
-          }
-      }
-      repoSyncLog('debug', "No operation is in progress, proceeding…");
-    }
-
-    // 1.2. Check that working copy is OK.
-    // If copy is missing, skip sync during this run and try to re-clone instead.
-    try {
-      await fs.stat(workingCopyPath);
-    } catch (e) {
-      repoSyncLog('warn', "Working copy path failed to stat", e);
-      if (repoCfg.remote) {
-        repoSyncLog('info', "Attempting to re-clone");
-        const auth = await getAuth(repoCfg.remote.url, repoCfg.remote.username);
-        try {
-          await w.git_clone({
-            workDir: workingCopyPath,
-            repoURL: repoCfg.remote.url,
-            auth,
-          });
-          await repositoryBuffersChanged.main!.trigger({
-            workingCopyPath,
-          });
-        } catch (e) {
-          repoSyncLog('error', "Re-cloning failed", e);
-        }
-      }
-      if (repositoryStatuses[workingCopyPath]) {
-        repoSyncLog('debug', "Cooldown before next sync", REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
-        repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
-      }
-      return;
-    }
-
-
-    // 2. Perform actual sync.
-    try {
-      if (repoCfg.remote) {
-        const auth = await getAuth(repoCfg.remote.url, repoCfg.remote.username);
-
-        repoSyncLog('info', "Got auth data; pulling…");
-
-        const { oidBeforePull, oidAfterPull } = await w.git_pull({
-          workDir: workingCopyPath,
-          repoURL: repoCfg.remote.url,
-          auth,
-          author: repoCfg.author,
-          _presumeCanceledErrorMeansAwaitingAuth: true,
-        });
-
-        repoSyncLog('debug', "Resolving changes…");
-
-        if (oidBeforePull !== oidAfterPull) {
-          const changes = await w.repo_resolveChanges({
-            workDir: workingCopyPath,
-            oidBefore: oidBeforePull,
-            oidAfter: oidAfterPull,
-          });
-
-          repoSyncLog('debug', "Reporting changes…");
-
-          await reportRepositoryChanges(workingCopyPath, changes);
-        }
-
-        if (repoCfg.remote.writeAccess) {
-          repoSyncLog('debug', "Got write access; pushing…");
-          await w.git_push({
-            workDir: workingCopyPath,
-            repoURL: repoCfg.remote.url,
-            auth,
-            _presumeRejectedPushMeansNothingToPush: true,
-            _presumeCanceledErrorMeansAwaitingAuth: true,
-          });
-        }
-
-        repoSyncLog('info', "Finishing sync attemtp");
-
-        if (repositoryStatuses[workingCopyPath]) {
-          repoSyncLog('debug', "Cooldown before next sync", REPOSITORY_SYNC_INTERVAL_MS);
-          repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_MS);
-        }
-
-      } else {
-        repoSyncLog('warn', "Remote is not specified");
-        repoSyncLog('debug', "Cooldown before next sync", REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
-        if (repositoryStatuses[workingCopyPath]) {
-          repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
-        }
-      }
-
-    } catch (e) {
-      repoSyncLog('error', "Sync failed", e);
-      repoSyncLog('debug', "Cooldown before next sync", REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
-      if (repositoryStatuses[workingCopyPath]) {
-        repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
-      }
-    }
-  }
-
-  repoSyncLog('debug', "Scheduling sync immediately");
-  const timeout = repositoryStatuses[workingCopyPath]?.updateTimeout;
-  timeout ? clearTimeout(timeout) : void 0;
-  if (repositoryStatuses[workingCopyPath]) {
-    repositoryStatuses[workingCopyPath].updateTimeout = setTimeout(_sync, 100);
-  }
-}
-
-
-
-// Auth helpers
-
-/* Fetches password associated with the hostname of given remote URL
-   (or, if that fails, with full remote URL)
-   and with given username.
-
-   Returns { username, password }; password can be undefined. */
-async function getAuth(remote: string, username: string):
-Promise<{ password: string | undefined, username: string }> {
-  let url: URL | null;
-  try {
-    url = new URL(remote);
-  } catch (e) {
-    log.warn("Repositories: getAuth: Likely malformed Git remote URL", remote);
-    url = null;
-  }
-
-  let password: string | undefined;
-  try {
-    password =
-      (url?.hostname ? await keytar.getPassword(url.hostname, username) : undefined) ||
-      await keytar.getPassword(remote, username) ||
-      undefined;
-  } catch (e) {
-    log.error("Repositories: Error retrieving password using keytar", remote, username, e);
-    password = undefined;
-  }
-
-  return { password, username };
-}
-
-async function _savePassword(remote: string, username: string, password: string) {
-  let url: URL | null;
-  try {
-    url = new URL(remote);
-  } catch (e) {
-    log.warn("Repositories: savePassword: Likely malformed Git remote URL", remote);
-    url = null;
-  }
-
-  const service = url?.hostname ? url.hostname : remote;
-  try {
-    await keytar.setPassword(service, username, password);
-  } catch (e) {
-    log.error("Repositories: Error saving password using keytar", remote, username, e);
-    throw e;
-  }
-}
-
-
-
-// Reading repo config
-
-const REPO_LIST_FILENAME = 'repositories.yaml';
-const REPO_LIST_PATH = path.join(app.getPath('userData'), REPO_LIST_FILENAME);
-
-interface RepoListSpec {
-  defaults?: NewRepositoryDefaults
-  workingCopies: {
-    [path: string]: Omit<Repository, 'workingCopyPath'>
-  }
-}
-
-const FileAccessLock = new AsyncLock();
-
-async function _updateNewRepoDefaults(defaults: Partial<NewRepositoryDefaults>) {
-  return await updateRepositories((data) => ({
-    ...data,
-    defaults: {
-      ...data.defaults,
-      ...defaults,
-    },
-  }));
-}
-
-export async function readPaneronRepoMeta(workingCopyPath: string): Promise<PaneronRepository> {
-  const meta = (await (await readerWorker).repo_getBufferDataset({
-    workDir: workingCopyPath,
-    paths: [PANERON_REPOSITORY_META_FILENAME],
-  }))[PANERON_REPOSITORY_META_FILENAME];
-
-  if (meta === null) {
-    throw new Error("Paneron repository metadata file is not found");
-  } else {
-    return deserializeMeta(meta);
-  }
-}
-
-export async function readRepoConfig(workingCopyPath: string): Promise<Repository> {
-  const cfg: Repository | undefined = {
-    workingCopyPath,
-    ...(await readRepositories()).workingCopies[workingCopyPath]
-  };
-  if (cfg !== undefined) {
-    return cfg;
-  } else {
-    log.error("Repositories: Cannot find configuration for working copy", workingCopyPath);
-    throw new Error("Working copy config not found");
-  }
-}
-
-async function readRepositories(): Promise<RepoListSpec> {
-  await fs.ensureFile(REPO_LIST_PATH);
-  const rawData = await fs.readFile(REPO_LIST_PATH, { encoding: 'utf-8' });
-
-  const data = yaml.load(rawData);
-
-  if (data.workingCopies) {
-    return (data as RepoListSpec);
-  } else {
-    return { workingCopies: {} };
-  }
-}
-
-async function updateRepositories(updater: (data: RepoListSpec) => RepoListSpec) {
-  await FileAccessLock.acquire('1', async () => {
-    let data: RepoListSpec;
-    try {
-      const rawData: any = await fs.readFile(REPO_LIST_PATH, { encoding: 'utf-8' });
-      data = yaml.load(rawData) || { workingCopies: {} };
-    } catch (e) {
-      data = { workingCopies: {} };
-    }
-
-    const newData = updater(data);
-    const newRawData = yaml.dump(newData, { noRefs: true });
-
-    await fs.writeFile(REPO_LIST_PATH, newRawData, { encoding: 'utf-8' });
-  });
-}

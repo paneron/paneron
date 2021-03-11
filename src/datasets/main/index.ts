@@ -23,8 +23,8 @@ import {
 } from 'datasets';
 import { forceSlug } from 'utils';
 import { checkPathIsOccupied } from 'checkPathIsOccupied';
-import { readPaneronRepoMeta, readRepoConfig } from 'main/repositories';
-import { syncWorker as repoWorker } from 'main/repositories/workerInterface';
+import { readPaneronRepoMeta, readRepoConfig } from 'main/repositories/readRepoConfig';
+import { getLoadedRepository } from 'main/repositories/loadedRepositories';
 import { INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
 import { requireMainPlugin } from 'main/plugins';
 import { serializeMeta } from 'main/meta-serdes';
@@ -106,7 +106,7 @@ initializeDataset.main!.handle(async ({ workingCopyPath, meta: datasetMeta, data
     newValue: serializeMeta(datasetMeta),
   };
 
-  const repos = await repoWorker;
+  const repos = getLoadedRepository(workingCopyPath).workers.sync;
 
   const datasetMetaPath = path.join(datasetPath, DATASET_FILENAME);
   const migrationChangeset = initialMigrationResult.bufferChangeset;
@@ -161,7 +161,9 @@ loadDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
 
   log.debug("Datasets: Load: Registering object specs…", objectSpecs);
 
-  (await repoWorker).ds_load({
+  const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
+
+  repoWorker.ds_load({
     workDir: workingCopyPath,
     datasetDir: datasetPath,
     objectSpecs,
@@ -182,7 +184,8 @@ loadDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
 
 
 getOrCreateFilteredIndex.main!.handle(async ({ workingCopyPath, datasetPath, queryExpression }) => {
-  return (await repoWorker).ds_index_getOrCreateFiltered({
+  const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
+  return repoWorker.ds_index_getOrCreateFiltered({
     workDir: workingCopyPath,
     datasetDir: datasetPath,
     queryExpression,
@@ -192,7 +195,8 @@ getOrCreateFilteredIndex.main!.handle(async ({ workingCopyPath, datasetPath, que
 
 describeIndex.main!.handle(async ({ workingCopyPath, datasetPath, indexID }) => {
   if ((indexID ?? '') !== '') {
-    return (await repoWorker).ds_index_describe({
+    const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
+    return repoWorker.ds_index_describe({
       workDir: workingCopyPath,
       datasetDir: datasetPath,
       indexID,
@@ -204,7 +208,8 @@ describeIndex.main!.handle(async ({ workingCopyPath, datasetPath, indexID }) => 
 
 
 getObjectDataset.main!.handle(async ({ workingCopyPath, datasetPath, objectPaths }) => {
-  const data = await (await repoWorker).ds_getObjectDataset({
+  const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
+  const data = await repoWorker.ds_getObjectDataset({
     workDir: workingCopyPath,
     datasetDir: datasetPath,
     objectPaths,
@@ -214,7 +219,7 @@ getObjectDataset.main!.handle(async ({ workingCopyPath, datasetPath, objectPaths
 
 
 deleteDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
-  const w = await repoWorker;
+  const w = getLoadedRepository(workingCopyPath).workers.sync;
 
   const { author } = await readRepoConfig(workingCopyPath);
   if (!author) {

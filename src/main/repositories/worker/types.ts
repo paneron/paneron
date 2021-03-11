@@ -19,12 +19,17 @@ import type {
   PushRequestMessage,
   RepoStatus,
   RepoStatusUpdater,
-  StatusRequestMessage,
 } from 'repositories/types';
 
 
+export type ExposedGitRepoOperation<F extends (opts: any) => any> =
+  (opts: Omit<Parameters<F>[0], 'workDir'>) =>
+    ReturnType<F>
+
+
 export type WithStatusUpdater<F extends (opts: any) => any> =
-  (opts: Parameters<F>[0], statusUpdater: RepoStatusUpdater) => ReturnType<F>
+  (opts: Parameters<F>[0], statusUpdater: RepoStatusUpdater) =>
+    ReturnType<F>
 
 
 type ReturnsPromise<F extends (...opts: any[]) => any> =
@@ -246,30 +251,34 @@ export namespace Datasets {
 
 
 export default interface WorkerMethods {
-  destroyWorker: () => Promise<void>
+  destroy: () => Promise<void>
 
-  streamStatus: (msg: StatusRequestMessage) => Observable<RepoStatus>
+  /* Initialize worker: give it Git repo’s working directory path,
+     and get an observable for monitoring repository status in return. */
+  initialize: (msg: { workDirPath: string }) => Observable<RepoStatus>
 
+
+  // Maybe also getLatestStatus() => Promise<RepoStatus>?
 
   // Git operations
 
-  git_init: Git.WorkDir.Init
+  git_init: ExposedGitRepoOperation<Git.WorkDir.Init>
   git_delete: Git.WorkDir.Delete
 
-  git_clone: Git.Sync.Clone
+  git_clone: ExposedGitRepoOperation<Git.Sync.Clone>
 
-  git_pull: Git.Sync.Pull
-  git_push: Git.Sync.Push
+  git_pull: ExposedGitRepoOperation<Git.Sync.Pull>
+  git_push: ExposedGitRepoOperation<Git.Sync.Push>
 
   git_describeRemote: Git.Remotes.Describe
-  git_addOrigin: Git.Remotes.AddOrigin
-  git_deleteOrigin: Git.Remotes.DeleteOrigin
+  git_addOrigin: ExposedGitRepoOperation<Git.Remotes.AddOrigin>
+  git_deleteOrigin: ExposedGitRepoOperation<Git.Remotes.DeleteOrigin>
 
 
   // Housekeeping
 
   git_workDir_validate: Git.WorkDir.Validate
-  git_workDir_discardUncommittedChanges: Git.WorkDir.DiscardUncommittedChanges
+  git_workDir_discardUncommittedChanges: ExposedGitRepoOperation<Git.WorkDir.DiscardUncommittedChanges>
 
 
   // Working with structured datasets

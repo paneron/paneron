@@ -44,18 +44,36 @@ require('events').EventEmitter.defaultMaxListeners = 20;
 type RepoOperation<I extends GitOperationParams, O> =
   (opts: I) => Promise<O>;
 
+type ExposedRepoOperation<I extends GitOperationParams, O> =
+  (opts: Omit<I, 'workDir'>) => Promise<O>;
+
+function repoOperation<I extends GitOperationParams, O>(
+  func: RepoOperation<I, O>
+): ExposedRepoOperation<I, O> {
+  return async function (args: Omit<I, 'workDir'>) {
+    if (repositoryStatus === null) {
+      throw new Error("Repository is not initialized with a working directory");
+    }
+    const params = {
+      ...args,
+      workDir: repositoryStatus.workDirPath,
+    } as I;
+    return await func(params);
+  };
+}
+
 function lockingRepoOperation<I extends GitOperationParams, O>(
   func: RepoOperation<I, O>,
   lockOpts?: { failIfBusy?: boolean, timeout?: number },
-): RepoOperation<I, O> {
-  return async function (args: I) {
-    if (lockOpts?.failIfBusy === true && gitLock.isBusy(args.workDir)) {
+): ExposedRepoOperation<I, O> {
+  return repoOperation(async (args) => {
+    if (lockOpts?.failIfBusy === true && gitLock.isBusy('1')) {
       throw new Error("Lock is busy");
     }
-    return await gitLock.acquire(args.workDir, async () => {
+    return await gitLock.acquire('1', async () => {
       return await func(args);
     }, { timeout: lockOpts?.timeout });
-  }
+  });
 }
 
 
@@ -65,15 +83,15 @@ type RepoOperationWithStatusReporter<I extends GitOperationParams, O> =
 function lockingRepoOperationWithStatusReporter<I extends GitOperationParams, O>(
   func: RepoOperationWithStatusReporter<I, O>,
   lockOpts?: { failIfBusy?: boolean, timeout?: number },
-): RepoOperation<I, O> {
-  return async function (opts: I) {
-    if (lockOpts?.failIfBusy === true && gitLock.isBusy(opts.workDir)) {
-      throw new Error("Lock is busy");
-    }
-    return await gitLock.acquire(opts.workDir, async () => {
-      return await func(opts, getRepoStatusUpdater(opts.workDir));
+): ExposedRepoOperation<I, O> {
+  return lockingRepoOperation(async (args) => {
+    return await gitLock.acquire('1', async () => {
+      if (repositoryStatus === null) {
+        throw new Error("Repository is not initialized");
+      }
+      return await func(args, getRepoStatusUpdater(repositoryStatus.workDirPath));
     }, { timeout: lockOpts?.timeout });
-  }
+  });
 }
 
 
@@ -84,36 +102,32 @@ export type WorkerSpec = ModuleMethods & WorkerMethods;
 
 // Repositories
 
-let repositoryStatus: {
-  [workingCopyPath: string]: {
-    statusSubject: Subject<RepoStatus>
-    latestStatus: RepoStatus
-  }
-} = {};
-
-function initRepoStatus(workDir: string) {
-  const defaultStatus: RepoStatus = {
-    status: 'ready',
-  };
-  repositoryStatus[workDir] = {
-    statusSubject: new Subject<RepoStatus>(),
-    latestStatus: defaultStatus,
-  };
-  repositoryStatus[workDir].statusSubject.next(defaultStatus);
+interface RepositoryStatus {
+  workDirPath: string
+  statusSubject: Subject<RepoStatus>
+  latestStatus: RepoStatus
 }
 
-function getRepoStatusUpdater(workDir: string) {
-  if (!repositoryStatus[workDir]) {
-    initRepoStatus(workDir);
-  }
-  function updater(newStatus: RepoStatus) {
-    repositoryStatus[workDir].statusSubject.next(newStatus);
-  }
-  const updaterDebounced = throttle(100, updater);
-  return (newStatus: RepoStatus) => {
-    repositoryStatus[workDir].latestStatus = newStatus;
+let repositoryStatus: RepositoryStatus | null = null;
 
-    if (newStatus.busy && repositoryStatus[workDir]?.latestStatus?.busy) {
+function getRepoStatusUpdater(workDir: string) {
+  function updater(newStatus: RepoStatus) {
+    if (repositoryStatus === null) {
+      throw new Error("Repository is not initialized");
+    }
+    repositoryStatus.statusSubject.next(newStatus);
+  }
+
+  const updaterDebounced = throttle(100, updater);
+
+  return (newStatus: RepoStatus) => {
+    if (repositoryStatus === null) {
+      throw new Error("Repository is not initialized");
+    }
+
+    repositoryStatus.latestStatus = newStatus;
+
+    if (newStatus.busy && repositoryStatus?.latestStatus?.busy) {
       return updaterDebounced(newStatus);
     } else {
       updaterDebounced.cancel();
@@ -125,15 +139,32 @@ function getRepoStatusUpdater(workDir: string) {
 
 const methods: WorkerSpec = {
 
-  async destroyWorker() {
-    for (const { statusSubject } of Object.values(repositoryStatus)) {
-      statusSubject.complete();
-    }
+  async destroy() {
+    repositoryStatus?.statusSubject.complete();
   },
 
-  streamStatus(msg) {
-    initRepoStatus(msg.workDir);
-    return Observable.from(repositoryStatus[msg.workDir].statusSubject);
+  initialize({ workDirPath }) {
+    if (repositoryStatus !== null && repositoryStatus.workDirPath !== workDirPath) {
+      throw new Error("Repository already initialized");
+    }
+
+    if (repositoryStatus?.workDirPath === workDirPath) {
+      // Already initialized?
+      console.warn("Repository already initialized", workDirPath);
+
+    } else {
+      const defaultStatus: RepoStatus = {
+        status: 'ready', // TODO: Should say “initializing”, probably
+      };
+      repositoryStatus = {
+        workDirPath,
+        statusSubject: new Subject<RepoStatus>(),
+        latestStatus: defaultStatus,
+      };
+      repositoryStatus.statusSubject.next(defaultStatus);
+    }
+
+    return Observable.from(repositoryStatus.statusSubject);
   },
 
 
@@ -142,11 +173,11 @@ const methods: WorkerSpec = {
   git_workDir_validate: workDir.validate,
 
   git_describeRemote: remotes.describe,
-  git_addOrigin: remotes.addOrigin,
-  git_deleteOrigin: remotes.deleteOrigin,
+  git_addOrigin: repoOperation(remotes.addOrigin),
+  git_deleteOrigin: repoOperation(remotes.deleteOrigin),
 
   git_init: lockingRepoOperation(workDir.init, { failIfBusy: true }),
-  git_delete: lockingRepoOperation(workDir.delete, { failIfBusy: true }),
+  git_delete: workDir.delete,
 
   git_clone: lockingRepoOperationWithStatusReporter(sync.clone, { timeout: 120000 }),
   git_pull: lockingRepoOperationWithStatusReporter(sync.pull),

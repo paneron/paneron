@@ -21,8 +21,7 @@ import { listObjectPaths } from './objects/list';
 import { readObjectCold } from './objects/read';
 
 
-// We’ll just keep track of loaded datasets right here in memory
-
+// We’ll just keep track of loaded datasets right here in memory.
 // { datasetID: { objectPath: { field1: value1, ... }}}
 const datasets: {
   [workDir: string]: {

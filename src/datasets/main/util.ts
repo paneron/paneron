@@ -1,5 +1,5 @@
 import path from 'path';
-import { readerWorker as repoWorker } from 'main/repositories/workerInterface';
+import { getLoadedRepository } from 'main/repositories/loadedRepositories';
 import { normalizeDatasetDir } from 'main/repositories/worker/datasets';
 import { deserializeMeta } from 'main/meta-serdes';
 import { DatasetInfo } from '../types';
@@ -13,7 +13,8 @@ export async function readDatasetMeta
 Promise<DatasetInfo> {
   const datasetDirNormalized = normalizeDatasetDir(datasetDir);
   const datasetMetaPath = `/${path.join(datasetDirNormalized, DATASET_FILENAME)}`;
-  const meta = (await (await repoWorker).repo_getBufferDataset({
+  const repoWorker = getLoadedRepository(workDir).workers.reader;
+  const meta = (await repoWorker.repo_getBufferDataset({
     workDir,
     paths: [datasetMetaPath],
   }))[datasetMetaPath];

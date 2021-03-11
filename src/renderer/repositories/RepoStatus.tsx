@@ -6,7 +6,7 @@ import { IButtonProps, Icon, InputGroup, Spinner } from '@blueprintjs/core';
 import { jsx } from '@emotion/core';
 import React, { useState } from 'react';
 import {
-  getRepositoryStatus,
+  loadRepository,
   Repository,
   repositoryStatusChanged,
   savePassword,
@@ -29,7 +29,7 @@ const OP_LABELS = {
 
 
 const RepoStatus: React.FC<{ repo: Repository }> = function ({ repo }) {
-  const repoStatus = getRepositoryStatus.renderer!.useValue(
+  const repoStatus = loadRepository.renderer!.useValue(
     { workingCopyPath: repo.workingCopyPath },
     { busy: { operation: 'initializing' } });
 

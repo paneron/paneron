@@ -6,8 +6,8 @@ import { BufferChange } from '@riboseinc/paneron-extension-kit/types/buffers';
 
 import { GitAuthor } from 'repositories/types';
 import { requireMainPlugin } from 'main/plugins';
-import { readRepoConfig } from 'main/repositories';
-import { syncWorker as repoWorker } from 'main/repositories/workerInterface';
+import { readRepoConfig } from 'main/repositories/readRepoConfig';
+import { getLoadedRepository } from 'main/repositories/loadedRepositories';
 import { serializeMeta } from 'main/meta-serdes';
 
 import { applyOutstandingMigrations, getOutstandingMigration, reportMigrationStatus } from '..';
@@ -37,7 +37,7 @@ applyOutstandingMigrations.main!.handle(async ({ workingCopyPath, datasetPath })
     throw new Error("Repository configuration is missing author information");
   }
 
-  const repos = await repoWorker;
+  const repos = getLoadedRepository(workingCopyPath).workers.sync;
 
   const datasetRootPath = path.join(workingCopyPath, datasetPath);
   const datasetMetaPath = path.join(datasetPath, DATASET_FILENAME);

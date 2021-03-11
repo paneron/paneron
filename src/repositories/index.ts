@@ -75,7 +75,7 @@ export const listPaneronRepositories = makeEndpoint.main(
   <{ objects: { [workingCopyPath: string]: PaneronRepository | null } }>_,
 );
 
-export const getRepositoryStatus = makeEndpoint.main(
+export const loadRepository = makeEndpoint.main(
   'getRepositoryStatus',
   <{ workingCopyPath: string }>_,
   <RepoStatus>_,
@@ -84,7 +84,7 @@ export const getRepositoryStatus = makeEndpoint.main(
 export const getRepositoryInfo = makeEndpoint.main(
   'getRepositoryInfo',
   <{ workingCopyPath: string }>_,
-  <{ info: Repository }>_,
+  <{ info: Repository, isLoaded: boolean }>_,
 );
 
 export const getPaneronRepositoryInfo = makeEndpoint.main(
