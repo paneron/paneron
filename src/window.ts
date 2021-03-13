@@ -76,7 +76,7 @@ export function makeWindowForComponent
     windowComponents[componentName] = importer;
   }
 
-  const endpoint = makeEndpoint.main(
+  const windowEndpoint = makeEndpoint.main(
     `open-window-${componentName}`,
     <AdHocOptions>_,
     <{ opened: boolean }>_,
@@ -94,7 +94,7 @@ export function makeWindowForComponent
   }
 
   if (process.type === 'browser') {
-    endpoint.main!.handle(async (opts) => {
+    windowEndpoint.main!.handle(async (opts) => {
       await open(opts);
       return { opened: true };
     });
@@ -110,7 +110,7 @@ export function makeWindowForComponent
     return {
       renderer: {
         open: async (opts?: AdHocOptions) => {
-          return await endpoint.renderer!.trigger(opts || {});
+          return await windowEndpoint.renderer!.trigger(opts || {});
         },
       },
     };
