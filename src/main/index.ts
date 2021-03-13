@@ -15,8 +15,9 @@ if (process.platform === 'linux' && process.env.SNAP && process.env.SNAP_USER_CO
   app.setAppLogsPath();
 }
 
-import { repositoryDashboard } from '../repositories';
+import { mainWindow } from '../common';
 
+// No-op import to execute initialization code
 import 'main/plugins';
 import 'main/repositories';
 import 'datasets/main';
@@ -27,9 +28,10 @@ import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 
 
 function preventDefault(e: Electron.Event) {
-  log.debug("Not quitting app (windows closed)");
+  log.warn("All windows closed (not quitting)");
   e.preventDefault();
 }
+
 async function initMain() {
 
   log.catchErrors({ showDialog: true });
@@ -93,7 +95,7 @@ async function initMain() {
   // Prevent closing windows from quitting the app during startup
   app.off('window-all-closed', preventDefault);
 
-  repositoryDashboard.main!.open();
+  mainWindow.main!.open();
 
 }
 
