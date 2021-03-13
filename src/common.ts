@@ -29,5 +29,3 @@ export const loadState = makeEndpoint.main(
   <{ key: string }>_,
   <{ state: Record<string, any> }>_,
 );
-
-

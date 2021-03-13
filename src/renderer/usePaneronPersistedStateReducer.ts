@@ -1,4 +1,4 @@
-import { loadWindowState, storeWindowState } from 'common';
+import { loadState, storeState } from 'common';
 import usePersistentStateReducer, {
   BaseAction,
   PersistentStateReducerHook,
@@ -10,20 +10,23 @@ import usePersistentStateReducer, {
 function usePaneronPersistedStateReducer<S, A extends BaseAction>(
   ...args: Parameters<PersistentStateReducerHook<S, A>>
 ) {
-  function storeState(storageKey: string, state: S) {
-    storeWindowState.renderer!.trigger({
+  function _storeState(storageKey: string, state: S) {
+    storeState.renderer!.trigger({
       key: storageKey,
       newState: state,
     });
   }
-  async function loadState(storageKey: string): Promise<S | undefined> {
+  async function _loadState(storageKey: string): Promise<S | undefined> {
     const loadedState =
-      (await loadWindowState.renderer!.trigger({ key: storageKey })).
+      (await loadState.renderer!.trigger({ key: storageKey })).
         result?.state as S | undefined;
     return loadedState;
   }
 
-  return usePersistentStateReducer(storeState, loadState, ...args);
+  return usePersistentStateReducer(
+    _storeState,
+    _loadState,
+    ...args);
 }
 
 export default usePaneronPersistedStateReducer;
