@@ -1,5 +1,6 @@
 import type { OpenDialogProps } from '@riboseinc/paneron-extension-kit/types';
 import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
+import { makeWindowForComponent } from 'window';
 import { EmptyPayload, makeEndpoint, _ } from './ipc';
 
 
@@ -14,4 +15,19 @@ export const makeRandomID = makeEndpoint.main(
   'makeRandomID',
   <EmptyPayload>_,
   <{ id: string }>_,
+);
+
+
+export const mainWindow = makeWindowForComponent(
+  'mainWindow',
+  () => import('renderer/MainWindow'),
+  'MainWindow',
+  {
+    dimensions: {
+      minWidth: 500,
+      minHeight: 600,
+      width: 500,
+      height: 600,
+    },
+  },
 );
