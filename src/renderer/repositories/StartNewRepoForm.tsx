@@ -109,8 +109,8 @@ const StartNewRepoForm: React.FC<{ onCreate: () => void }> = function ({ onCreat
       </FormGroup>
 
       <FormGroup
-          label="Machine-readable identifier:"
-          helperText="This cannot contain spaces or special non-Latin characters.">
+          label="Local name:"
+          helperText="This must be unique across all your repositories, and cannot contain spaces or special non-Latin characters.">
         <InputGroup
           value={name || ''}
           required
@@ -120,15 +120,24 @@ const StartNewRepoForm: React.FC<{ onCreate: () => void }> = function ({ onCreat
       </FormGroup>
 
       <FormGroup
+          labelInfo="(advanced)"
           label="Working directory location:"
-          helperText={<>Your repository’s working directory will be created <em>inside</em> this folder.</>}>
+          helperText={<>
+            Your repository’s working directory will be created <em>inside</em> this folder.
+            It is recommended to not change this and use the default value, so that all your repositories are in the same place.
+          </>}>
         <ControlGroup>
           <InputGroup fill readOnly value={workDir || ''} />
           <Button
             disabled={busy || workDir.trim() === ''}
             onClick={selectWorkingDirectory}
-            title="Select another working directory location"
+            title="Customize working directory location for this repository"
             icon="folder-open" />
+          <Button
+            disabled={busy || workingDirectory === null}
+            onClick={() => setWorkingDirectory(null)}
+            title="Reset to default value"
+            icon="cross" />
         </ControlGroup>
       </FormGroup>
 

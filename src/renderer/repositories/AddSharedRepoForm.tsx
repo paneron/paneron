@@ -18,10 +18,14 @@ import {
   getDefaultWorkingDirectoryContainer,
   validateNewWorkingDirectoryPath, getNewRepoDefaults, addRepository
 } from 'repositories';
+
+import { forceSlug } from 'utils';
+
 import GitCredentialsInput from './GitCredentialsInput';
 
 
 const AddSharedRepoForm: React.FC<{ onCreate: (workingCopyPath: string) => void }> = function ({ onCreate }) {
+  const [customName, setCustomName] = useState<string | null>(null);
   const [customUsername, setUsername] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [remoteURL, setRemoteURL] = useState<string | null>(null);
@@ -39,7 +43,9 @@ const AddSharedRepoForm: React.FC<{ onCreate: (workingCopyPath: string) => void 
 
   const workDir = workingDirectory || defaultWorkingDirectoryContainer.value.path || '';
   const remoteComponents = (remoteURL || '').split('/');
-  const workingCopyPath = path.join(workDir, remoteComponents[remoteComponents.length - 1] || '');
+  const defaultName = remoteComponents[remoteComponents.length - 1];
+  const name = customName ?? defaultName;
+  const workingCopyPath = path.join(workDir, name);
 
   const workDirCheck =
     validateNewWorkingDirectoryPath.renderer!.useValue({ _path: workingCopyPath }, { available: false });
@@ -111,6 +117,24 @@ const AddSharedRepoForm: React.FC<{ onCreate: (workingCopyPath: string) => void 
           } />
       </FormGroup>
 
+      <FormGroup
+          label="Local name:"
+          helperText="This must be unique across all your repositories, and cannot contain spaces or special non-Latin characters. By default, local name is inferred from remote URL.">
+        <ControlGroup fill>
+          <InputGroup
+            value={name || ''}
+            required
+            onChange={(evt: React.FormEvent<HTMLInputElement>) =>
+              setCustomName(forceSlug(evt.currentTarget.value))
+            } />
+          <Button
+            disabled={busy || customName === null}
+            onClick={() => setCustomName(null)}
+            title="Reset to name inferred from remote URL"
+            icon="cross" />
+        </ControlGroup>
+      </FormGroup>
+
       <GitCredentialsInput
         username={username}
         password={password}
@@ -143,14 +167,22 @@ const AddSharedRepoForm: React.FC<{ onCreate: (workingCopyPath: string) => void 
 
       <FormGroup
           label="Working copy location:"
-          helperText={<>Folder of your working copy of this repository will be created <em>inside</em> this folder.</>}>
+          helperText={<>
+            Folder of your working copy of this repository will be created <em>inside</em> this folder.
+            It is recommended to not change this and use the default value, so that all your repositories are in the same place.
+          </>}>
         <ControlGroup>
           <InputGroup fill readOnly value={workDir || ''} />
           <Button
             disabled={busy || workDir.trim() === ''}
             onClick={selectWorkingDirectory}
-            title="Change working copy location"
+            title="Customize working directory location for this repository"
             icon="folder-open" />
+          <Button
+            disabled={busy || workingDirectory === null}
+            onClick={() => setWorkingDirectory(null)}
+            title="Reset to default value"
+            icon="cross" />
         </ControlGroup>
       </FormGroup>
 
