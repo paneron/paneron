@@ -5,7 +5,7 @@ import log from 'electron-log';
 import { jsx, css } from '@emotion/core';
 import React, { useEffect } from 'react';
 import useRepositoryList, { Repository } from 'renderer/repositories/useRepositoryList';
-import usePaneronPersistedStateReducer from 'state/usePaneronPersistedStateReducer';
+import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
 import { BaseAction } from 'renderer/usePersistentStateReducer';
 import { WindowComponentProps } from 'window';
 import useDebounce from 'renderer/useDebounce';
@@ -70,7 +70,7 @@ type Action =
 
 const MainWindow: React.FC<WindowComponentProps> = function () {
 
-  const [state, dispatch, stateLoaded] = usePaneronPersistedStateReducer(
+  const [state, dispatch, stateLoaded] = usePaneronPersistentStateReducer(
     reducer,
     initialState,
     null,

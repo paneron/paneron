@@ -7,7 +7,7 @@ import usePersistentStateReducer, {
 
 /* An implementation of PersistentStateReducer
    that uses Paneron’s state management IPC endpoints. */
-function usePaneronPersistedStateReducer<S, A extends BaseAction>(
+function usePaneronPersistentStateReducer<S, A extends BaseAction>(
   ...args: Parameters<PersistentStateReducerHook<S, A>>
 ) {
   function _storeState(storageKey: string, state: S) {
@@ -29,4 +29,4 @@ function usePaneronPersistedStateReducer<S, A extends BaseAction>(
     ...args);
 }
 
-export default usePaneronPersistedStateReducer;
+export default usePaneronPersistentStateReducer;
