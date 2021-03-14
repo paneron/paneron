@@ -1,8 +1,8 @@
-import { loadState, storeState } from 'common';
+import { loadState, storeState } from './common';
 import usePersistentStateReducer, {
   BaseAction,
   PersistentStateReducerHook,
-} from './usePersistentStateReducer';
+} from 'renderer/usePersistentStateReducer';
 
 
 /* An implementation of PersistentStateReducer
