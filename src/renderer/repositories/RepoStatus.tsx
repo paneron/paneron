@@ -7,7 +7,7 @@ import { jsx } from '@emotion/core';
 import React, { useState } from 'react';
 import {
   loadRepository,
-  Repository,
+  GitRepository,
   repositoryStatusChanged,
   savePassword,
 } from 'repositories';
@@ -28,7 +28,7 @@ const OP_LABELS = {
 };
 
 
-const RepoStatus: React.FC<{ repo: Repository }> = function ({ repo }) {
+const RepoStatus: React.FC<{ repo: GitRepository }> = function ({ repo }) {
   const repoStatus = loadRepository.renderer!.useValue(
     { workingCopyPath: repo.workingCopyPath },
     { busy: { operation: 'initializing' } });

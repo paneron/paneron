@@ -7,7 +7,7 @@ import yaml from 'js-yaml';
 import { app } from 'electron';
 import log from 'electron-log';
 import { PANERON_REPOSITORY_META_FILENAME } from '../../repositories';
-import { Repository, NewRepositoryDefaults, PaneronRepository } from '../../repositories/types';
+import { GitRepository, NewRepositoryDefaults, PaneronRepository } from '../../repositories/types';
 import { deserializeMeta } from 'main/meta-serdes';
 import { getLoadedRepository } from './loadedRepositories';
 
@@ -19,14 +19,14 @@ const REPO_LIST_PATH = path.join(app.getPath('userData'), REPO_LIST_FILENAME);
 interface RepoListSpec {
   defaults?: NewRepositoryDefaults;
   workingCopies: {
-    [path: string]: Omit<Repository, 'workingCopyPath'>;
+    [path: string]: Omit<GitRepository, 'workingCopyPath'>;
   };
 }
 
 const FileAccessLock = new AsyncLock();
 
-export async function readRepoConfig(workingCopyPath: string): Promise<Repository> {
-  const cfg: Repository | undefined = {
+export async function readRepoConfig(workingCopyPath: string): Promise<GitRepository> {
+  const cfg: GitRepository | undefined = {
     workingCopyPath,
     ...(await readRepositories()).workingCopies[workingCopyPath]
   };

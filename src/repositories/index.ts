@@ -4,7 +4,7 @@ import {
   GitAuthor,
   NewRepositoryDefaults,
   PaneronRepository,
-  Repository,
+  GitRepository,
   RepoStatus,
 } from './types';
 import { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
@@ -66,7 +66,7 @@ export const selectWorkingDirectoryContainer = makeEndpoint.main(
 export const listRepositories = makeEndpoint.main(
   'listRepositories',
   <Record<never, never>>_,
-  <{ objects: Repository[] }>_,
+  <{ objects: GitRepository[] }>_,
 );
 
 export const listPaneronRepositories = makeEndpoint.main(
@@ -84,7 +84,7 @@ export const loadRepository = makeEndpoint.main(
 export const getRepositoryInfo = makeEndpoint.main(
   'getRepositoryInfo',
   <{ workingCopyPath: string }>_,
-  <{ info: Repository, isLoaded: boolean }>_,
+  <{ info: GitRepository, isLoaded: boolean }>_,
 );
 
 export const getPaneronRepositoryInfo = makeEndpoint.main(

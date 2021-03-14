@@ -15,7 +15,7 @@ export type PaneronRepository = {
   dataset: true
 })
 
-export interface Repository {
+export interface GitRepository {
   workingCopyPath: string
   remote?: GitRemote
   author?: GitAuthor

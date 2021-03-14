@@ -5,7 +5,7 @@ import {
   PaneronRepository,
   repositoriesChanged,
 } from 'repositories';
-import type { Repository as GitRepository } from 'repositories/types';
+import type { GitRepository } from 'repositories/types';
 
 
 interface RepositoryListHookQuery {

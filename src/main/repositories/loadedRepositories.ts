@@ -2,7 +2,7 @@ import fs from 'fs-extra';
 import { Subscription } from 'observable-fns';
 import { app } from 'electron';
 import log from 'electron-log';
-import { Repository, RepoStatus } from '../../repositories/types';
+import { GitRepository, RepoStatus } from '../../repositories/types';
 import { getRepoWorkers, RepoWorkers, terminateRepoWorkers } from './workerInterface';
 import { readRepoConfig } from './readRepoConfig';
 import { repositoryBuffersChanged, repositoryStatusChanged } from 'repositories';
@@ -52,7 +52,7 @@ export async function loadRepository(workingCopyPath: string): Promise<RepoStatu
 
   log.debug("Repositories: Load: Reading config", workingCopyPath);
 
-  let repoCfg: Repository;
+  let repoCfg: GitRepository;
   try {
     repoCfg = await readRepoConfig(workingCopyPath);
   } catch (e) {
@@ -192,7 +192,7 @@ function syncRepoRepeatedly(
     // If latest operation indicates we are awaiting user input, skip sync during this run.
 
     // 1.1. Check configuration
-    let repoCfg: Repository | null;
+    let repoCfg: GitRepository | null;
     if (!loadedRepositories[workingCopyPath]) {
       repoSyncLog('warn', "Removing status and aborting sync");
       return unloadRepository(workingCopyPath);

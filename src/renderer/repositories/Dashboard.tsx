@@ -30,7 +30,7 @@ import {
   setPaneronRepositoryInfo,
   getBufferDataset,
 } from 'repositories';
-import { PaneronRepository, Repository } from 'repositories/types';
+import { PaneronRepository, GitRepository } from 'repositories/types';
 import RepoStatus from './RepoStatus';
 import StartNewRepoForm from './StartNewRepoForm';
 import ShareRepoForm from './ShareRepoForm';
@@ -108,7 +108,7 @@ const RepoListPanel: React.FC<IPanelProps> = function ({ openPanel }) {
 
   const isBusy = repos.isUpdating || paneronRepos.isUpdating || !initialized;
 
-  const selectedRepo: Repository | null = selectedItem.workingCopyPath
+  const selectedRepo: GitRepository | null = selectedItem.workingCopyPath
     ? repos.value.objects.find(repo => repo.workingCopyPath === selectedItem.workingCopyPath!) || null
     : null;
 
@@ -131,7 +131,7 @@ const RepoListPanel: React.FC<IPanelProps> = function ({ openPanel }) {
       }
     });
   }
-  function handleEditRepository(repo: Repository, paneronRepo: PaneronRepository) {
+  function handleEditRepository(repo: GitRepository, paneronRepo: PaneronRepository) {
     openPanel({
       component: EditRepository,
       title: "Edit repository",
@@ -141,7 +141,7 @@ const RepoListPanel: React.FC<IPanelProps> = function ({ openPanel }) {
       },
     });
   }
-  function handleInitializeDataset(repo: Repository, paneronRepo: PaneronRepository, extension: Extension) {
+  function handleInitializeDataset(repo: GitRepository, paneronRepo: PaneronRepository, extension: Extension) {
     openPanel({
       component: InitializeDataset,
       title: "Initialize new dataset",
@@ -457,7 +457,7 @@ React.FC<DatasetExtensionCardProps & { onSelect?: () => void }>
 
 
 const InitializeDataset: React.FC<IPanelProps & {
-  repo: Repository
+  repo: GitRepository
   paneronRepo: PaneronRepository
   extension: Extension
   onComplete: (datasetPath: string) => void
@@ -574,7 +574,7 @@ const InitializeDataset: React.FC<IPanelProps & {
 }
 
 
-const RepoDetails: React.FC<IPanelProps & { repo: Repository, paneronRepo?: PaneronRepository, onEdit?: () => void }> =
+const RepoDetails: React.FC<IPanelProps & { repo: GitRepository, paneronRepo?: PaneronRepository, onEdit?: () => void }> =
 function ({ onEdit, repo, paneronRepo }) {
   const [deletionError, setDeletionError] = useState<string | undefined>(undefined);
 
@@ -631,7 +631,7 @@ function ({ onEdit, repo, paneronRepo }) {
 
 
 /* Shows a notice about invalid Paneron repository, and checks for possible legacy repo. */
-const InvalidPaneronRepository: React.FC<{ repo: Repository }> = function ({ repo }) {
+const InvalidPaneronRepository: React.FC<{ repo: GitRepository }> = function ({ repo }) {
 
   // TODO: These are unnecessary now.
   const busy = false;
@@ -688,7 +688,7 @@ const InvalidPaneronRepository: React.FC<{ repo: Repository }> = function ({ rep
 };
 
 
-const EditRepository: React.FC<IPanelProps & { repo: Repository, paneronRepo: PaneronRepository }> =
+const EditRepository: React.FC<IPanelProps & { repo: GitRepository, paneronRepo: PaneronRepository }> =
 function ({ closePanel, repo, paneronRepo }) {
   const [editedTitle, editTitle] = useState('');
   const [busy, setBusy] = useState(false);
