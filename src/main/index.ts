@@ -18,6 +18,7 @@ if (process.platform === 'linux' && process.env.SNAP && process.env.SNAP_USER_CO
 import { mainWindow } from '../common';
 
 // No-op import to execute initialization code
+import 'state/main';
 import 'main/plugins';
 import 'main/repositories';
 import 'datasets/main';
