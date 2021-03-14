@@ -5,7 +5,7 @@ import log from 'electron-log';
 import { jsx, css } from '@emotion/core';
 import React, { useEffect } from 'react';
 import useRepositoryList, { Repository } from 'renderer/repositories/useRepositoryList';
-import usePaneronPersistedStateReducer from 'renderer/usePaneronPersistedStateReducer';
+import usePaneronPersistedStateReducer from 'state/usePaneronPersistedStateReducer';
 import { BaseAction } from 'renderer/usePersistentStateReducer';
 import { WindowComponentProps } from 'window';
 import useDebounce from 'renderer/useDebounce';
@@ -186,7 +186,6 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
   return (
     <div css={css`position: absolute; top: 0; right: 0; bottom: 0; left: 0`}>
       <div>
-
       </div>
     </div>
   );
