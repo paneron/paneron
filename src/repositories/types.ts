@@ -21,10 +21,20 @@ export interface GitRepository {
   author?: GitAuthor
 }
 
+export interface Repository {
+  gitMeta: GitRepository
+  paneronMeta?: PaneronRepository
+}
+
 export interface GitRemote {
   username: string
   url: string
   writeAccess?: true
+}
+
+export interface RepositoryListQuery {
+  sortBy?: 'recentlyLoaded'
+  matchesText?: string
 }
 
 

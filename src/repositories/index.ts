@@ -7,6 +7,7 @@ import {
   Repository,
   PaneronRepository,
   GitRepository,
+  RepositoryListQuery,
 } from './types';
 import { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
 import { BufferChangeset, BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
@@ -66,7 +67,7 @@ export const selectWorkingDirectoryContainer = makeEndpoint.main(
 
 export const listRepositories = makeEndpoint.main(
   'listRepositories',
-  <{ query: { sortBy?: 'recentlyLoaded', matchesText?: string }}>_,
+  <{ query: RepositoryListQuery }>_,
   <{ objects: Repository[] }>_,
 );
 

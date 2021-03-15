@@ -34,7 +34,7 @@ import {
   installPlugin,
 } from 'plugins';
 import { getClipboardStatus } from '../../clipboard';
-import { getRepositoryInfo } from 'repositories';
+import { getRepository } from 'repositories';
 import { describeIndex, getDatasetInfo, indexStatusChanged, loadDataset } from 'datasets';
 
 import { ContextGetterProps, getContext } from './context';
@@ -158,15 +158,15 @@ Promise<{
   // Prepare plugin info and manager
   try {
     const [repoInfo, datasetInfo, pluginManagerProps] = await Promise.all([
-      getRepositoryInfo.renderer!.trigger({ workingCopyPath }),
+      getRepository.renderer!.trigger({ workingCopyPath }),
       getDatasetInfo.renderer!.trigger({ workingCopyPath, datasetPath }),
       getPluginManagerProps.renderer!.trigger({}),
     ]);
 
-    const _repoInfo = repoInfo.result?.info;
+    const _gitRepoInfo = repoInfo.result?.info.gitMeta;
     const _datasetInfo = datasetInfo.result?.info;
 
-    if (!_repoInfo) {
+    if (!_gitRepoInfo) {
       throw new Error("This does not seem to be a Paneron repository");
     }
     if (!_datasetInfo) {
@@ -184,7 +184,7 @@ Promise<{
       throw new Error("Error configuring extension manager");
     }
 
-    writeAccess = _repoInfo.remote === undefined || _repoInfo.remote.writeAccess === true;
+    writeAccess = _gitRepoInfo.remote === undefined || _gitRepoInfo.remote.writeAccess === true;
     dataset = _datasetInfo;
 
     pluginManager = new PluginManager({ cwd, pluginsPath });

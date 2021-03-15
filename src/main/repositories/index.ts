@@ -14,20 +14,19 @@ import {
   getDefaultWorkingDirectoryContainer,
   selectWorkingDirectoryContainer, validateNewWorkingDirectoryPath,
   getNewRepoDefaults,
-  getRepositoryInfo, savePassword, setRemote,
-  getPaneronRepositoryInfo,
+  getRepository, savePassword, setRemote,
   PANERON_REPOSITORY_META_FILENAME,
   queryGitRemote,
   unsetRemote,
   setAuthorInfo,
-  listPaneronRepositories,
-  setPaneronRepositoryInfo,
+  updatePaneronRepository,
   unsetWriteAccess,
   getBufferDataset,
   updateBuffers,
+  getGitRepository,
 } from '../../repositories';
 
-import { PaneronRepository, GitRemote } from '../../repositories/types';
+import { PaneronRepository, GitRemote, Repository } from '../../repositories/types';
 import { getRepoWorkers, spawnWorker } from './workerInterface';
 import { changesetToPathChanges } from './worker/datasets';
 
@@ -47,6 +46,7 @@ import {
 } from './readRepoConfig';
 
 import { saveAuth, getAuth } from './repoAuth';
+import { loadState } from 'state/main';
 
 
 getDefaultWorkingDirectoryContainer.main!.handle(async () => {
@@ -262,43 +262,80 @@ setAuthorInfo.main!.handle(async ({ workingCopyPath, author }) => {
 });
 
 
-listRepositories.main!.handle(async () => {
+interface RepositoryLoadTimes {
+  [workDir: string]: Date
+}
+
+
+listRepositories.main!.handle(async ({ query: { matchesText, sortBy } }) => {
   const workingCopies = (await readRepositories()).workingCopies;
-  return {
-    objects: await Promise.all(Object.keys(workingCopies).map(async (path: string) => {
-      return {
-        workingCopyPath: path,
-        ...workingCopies[path],
+
+  const repositories: Repository[] =
+    await Promise.all(Object.keys(workingCopies).map(async (workDir) => {
+      let paneronMeta: PaneronRepository | undefined;
+      try {
+        getLoadedRepository(workDir);
+        paneronMeta = await readPaneronRepoMeta(workDir);
+      } catch (e) {
+        paneronMeta = undefined;
+      }
+      const gitMeta = {
+        workingCopyPath: workDir,
+        ...workingCopies[workDir],
       };
-    })),
-  };
-});
+      return {
+        gitMeta,
+        paneronMeta,
+      };
+    }));
 
+  const repositoryLoadTimes =
+    (await loadState<RepositoryLoadTimes>('repositoryLoadTimes'));
 
-listPaneronRepositories.main!.handle(async ({ workingCopyPaths }) => {
-  const maybeRepoMetaList:
-  [ workingCopyPath: string, meta: PaneronRepository | null ][] =
-  await Promise.all(workingCopyPaths.map(async (workDir) => {
-    try {
-      const meta = await readPaneronRepoMeta(workDir);
-      return [ workDir, meta ] as [ string, PaneronRepository ];
-    } catch (e) {
-      return [ workDir, null ] as [ string, null ];
+  const filteredRepositories: Repository[] = repositories.filter(repo => {
+    if (matchesText) {
+      const normalizedSubstring = matchesText.toLowerCase();
+      const workDirMatches = repo.gitMeta.workingCopyPath.indexOf(normalizedSubstring) >= 0;
+      const normalizedTitle = repo.paneronMeta?.title?.toLowerCase();
+      const titleMatches = normalizedTitle !== undefined && normalizedTitle.indexOf(normalizedSubstring) >= 0;
+      const matches: boolean = workDirMatches || titleMatches;
+      return matches;
+    } else {
+      return true;
     }
-  }));
+  }).sort((repo1, repo2) => {
+    const [title1, title2] = [repo1.paneronMeta?.title?.toLowerCase(), repo2.paneronMeta?.title?.toLowerCase()];
+    if (title1 && title2) {
+      return title1.localeCompare(title2);
+    } else {
+      return 0;
+    }
+  });
 
-  return {
-    objects: maybeRepoMetaList.
-      filter(([_, meta]) => meta !== null).
-      reduce((prev, [ workDir, meta ]) => ({
-        ...prev,
-        [workDir]: meta!,
-      }), {}),
-  };
+  let sortedRepositories: Repository[];
+  if (sortBy === 'recentlyLoaded' && repositoryLoadTimes !== undefined) {
+    sortedRepositories = repositories.sort((repo1, repo2) => {
+      const loadTime1: Date | undefined = repositoryLoadTimes[repo1.gitMeta.workingCopyPath];
+      const loadTime2: Date | undefined = repositoryLoadTimes[repo2.gitMeta.workingCopyPath];
+      if (loadTime1 && loadTime2) {
+        if (loadTime1 > loadTime2) {
+          return -1;
+        } else {
+          return 1;
+        }
+      } else {
+        return 0;
+      }
+    });
+  } else {
+    sortedRepositories = filteredRepositories;
+  }
+
+  return { objects: sortedRepositories };
 });
 
 
-getRepositoryInfo.main!.handle(async ({ workingCopyPath }) => {
+getGitRepository.main!.handle(async ({ workingCopyPath }) => {
   let isLoaded: boolean;
   try {
     getLoadedRepository(workingCopyPath);
@@ -313,19 +350,28 @@ getRepositoryInfo.main!.handle(async ({ workingCopyPath }) => {
 });
 
 
-getPaneronRepositoryInfo.main!.handle(async ({ workingCopyPath }) => {
-  let meta: PaneronRepository;
+getRepository.main!.handle(async ({ workingCopyPath }) => {
+  const gitRepo = await readRepoConfig(workingCopyPath);
+
+  getLoadedRepository(workingCopyPath);
+
+  let paneronRepo: PaneronRepository | undefined;
   try {
-    meta = await readPaneronRepoMeta(workingCopyPath);
+    paneronRepo = await readPaneronRepoMeta(workingCopyPath);
   } catch (e) {
     log.error("Unable to get Paneron repository information");
-    return { info: null }
+    paneronRepo = undefined;
   }
-  return { info: meta };
+  return {
+    info: {
+      gitMeta: gitRepo,
+      paneronMeta: paneronRepo,
+    },
+  };
 });
 
 
-setPaneronRepositoryInfo.main!.handle(async ({ workingCopyPath, info }) => {
+updatePaneronRepository.main!.handle(async ({ workingCopyPath, info }) => {
   if (!info.title) {
     throw new Error("Proposed Paneron repository meta is missing title");
   }

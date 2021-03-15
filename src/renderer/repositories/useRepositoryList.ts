@@ -1,52 +1,24 @@
 import { ValueHook } from '@riboseinc/paneron-extension-kit/types';
+
 import {
-  listPaneronRepositories,
   listRepositories,
-  PaneronRepository,
   repositoriesChanged,
 } from 'repositories';
-import type { GitRepository } from 'repositories/types';
 
+import type { Repository, RepositoryListQuery } from 'repositories/types';
 
-interface RepositoryListHookQuery {
-  matchesString?: string
-}
-
-export interface Repository {
-  gitMeta: GitRepository
-  paneronMeta?: PaneronRepository
-}
 
 interface RepositoryList {
-  repositories: Repository[]
+  objects: Repository[]
 }
 
-export default function useRepositoryList(query: RepositoryListHookQuery):
+export default function useRepositoryList(query: RepositoryListQuery):
 ValueHook<RepositoryList> {
-  const repos = listRepositories.renderer!.useValue({}, { objects: [] });
-  const paneronRepos = listPaneronRepositories.renderer!.useValue(
-    { workingCopyPaths: repos.value.objects.map(v => v.workingCopyPath) },
-    { objects: {} });
+  const hookResult = listRepositories.renderer!.useValue({ query }, { objects: [] });
 
   repositoriesChanged.renderer!.useEvent(async () => {
-    repos.refresh();
-    paneronRepos.refresh();
+    hookResult.refresh();
   }, []);
 
-  const repositories: Repository[] = repos.value.objects.map(gitMeta => {
-    const paneronMeta: PaneronRepository | undefined =
-      paneronRepos.value.objects[gitMeta.workingCopyPath] ?? undefined;
-
-    return {
-      gitMeta,
-      paneronMeta,
-    };
-  });
-
-  return {
-    ...repos,
-    isUpdating: repos.isUpdating || paneronRepos.isUpdating,
-    value: { repositories },
-    errors: [],
-  };
-}
+  return hookResult;
+};
