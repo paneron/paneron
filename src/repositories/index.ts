@@ -3,9 +3,10 @@ import { EmptyPayload, makeEndpoint, _ } from '../ipc';
 import {
   GitAuthor,
   NewRepositoryDefaults,
+  RepoStatus,
+  Repository,
   PaneronRepository,
   GitRepository,
-  RepoStatus,
 } from './types';
 import { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
 import { BufferChangeset, BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
@@ -65,38 +66,36 @@ export const selectWorkingDirectoryContainer = makeEndpoint.main(
 
 export const listRepositories = makeEndpoint.main(
   'listRepositories',
-  <Record<never, never>>_,
-  <{ objects: GitRepository[] }>_,
-);
-
-export const listPaneronRepositories = makeEndpoint.main(
-  'listPaneronRepositories',
-  <{ workingCopyPaths: string[] }>_,
-  <{ objects: { [workingCopyPath: string]: PaneronRepository | null } }>_,
+  <{ query: { sortBy?: 'recentlyLoaded', matchesText?: string }}>_,
+  <{ objects: Repository[] }>_,
 );
 
 export const loadRepository = makeEndpoint.main(
-  'getRepositoryStatus',
+  'loadRepository',
   <{ workingCopyPath: string }>_,
   <RepoStatus>_,
 );
 
-export const getRepositoryInfo = makeEndpoint.main(
-  'getRepositoryInfo',
+/* Only works on loaded repositories. */
+export const getRepository = makeEndpoint.main(
+  'getRepository',
+  <{ workingCopyPath: string }>_,
+  <{ info: Repository }>_,
+);
+
+export const deleteRepository = makeEndpoint.main(
+  'deleteRepository',
+  <{ workingCopyPath: string }>_,
+  <{ deleted: true }>_,
+);
+
+
+// Git repositories
+
+export const getGitRepository = makeEndpoint.main(
+  'getGitRepository',
   <{ workingCopyPath: string }>_,
   <{ info: GitRepository, isLoaded: boolean }>_,
-);
-
-export const getPaneronRepositoryInfo = makeEndpoint.main(
-  'getPaneronRepositoryInfo',
-  <{ workingCopyPath: string }>_,
-  <{ info: PaneronRepository | null }>_,
-);
-
-export const setPaneronRepositoryInfo = makeEndpoint.main(
-  'setPaneronRepositoryInfo',
-  <{ workingCopyPath: string, info: Omit<PaneronRepository, 'datasets' | 'dataset'> }>_,
-  <{ success: true }>_,
 );
 
 export const savePassword = makeEndpoint.main(
@@ -129,10 +128,13 @@ export const setAuthorInfo = makeEndpoint.main(
   <{ success: true }>_,
 );
 
-export const deleteRepository = makeEndpoint.main(
-  'deleteRepository',
-  <{ workingCopyPath: string }>_,
-  <{ deleted: true }>_,
+
+// Paneron repositories
+
+export const updatePaneronRepository = makeEndpoint.main(
+  'setPaneronRepositoryInfo',
+  <{ workingCopyPath: string, info: Omit<PaneronRepository, 'datasets' | 'dataset'> }>_,
+  <{ success: true }>_,
 );
 
 
