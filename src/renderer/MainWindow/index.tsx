@@ -4,22 +4,28 @@
 import log from 'electron-log';
 import { jsx, css } from '@emotion/core';
 import React, { useEffect } from 'react';
-import useRepositoryList, { Repository } from 'renderer/repositories/useRepositoryList';
-import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
-import { BaseAction } from 'renderer/usePersistentStateReducer';
+
 import { WindowComponentProps } from 'window';
+
 import useDebounce from 'renderer/useDebounce';
+import { BaseAction } from 'renderer/usePersistentStateReducer';
+import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
+
+import useRepositoryList from 'renderer/repositories/useRepositoryList';
+import type { Repository, RepositoryListQuery } from 'repositories/types';
+
+import Nav, { NavBreadcrumb } from './Nav';
+import { NonIdealState } from '@blueprintjs/core';
 
 
 interface BaseState {
   view: string
-  repoFilterString: string
+  repoQuery: RepositoryListQuery
   selectedRepoWorkDir: unknown
   selectedDatasetID: unknown
 }
 interface RepoListState extends BaseState {
   view: 'repo-list'
-  repoFilterString: string
   selectedRepoWorkDir: null
   selectedDatasetID: null 
 }
@@ -40,12 +46,16 @@ type State =
 
 const initialState: State = {
   view: 'repo-list',
-  repoFilterString: '',
+  repoQuery: {},
   selectedRepoWorkDir: null,
   selectedDatasetID: null,
 }
 
 
+interface UpdateRepoQueryAction extends BaseAction {
+  type: 'update-query'
+  payload: RepositoryListQuery
+}
 interface AddRepoAction extends BaseAction {
   type: 'add-repo'
 }
@@ -62,6 +72,7 @@ interface CloseAction extends BaseAction {
   type: 'close-dataset' | 'close-repo'
 }
 type Action =
+  | UpdateRepoQueryAction
   | AddRepoAction
   | SelectRepoAction
   | SelectDatasetAction
@@ -77,10 +88,10 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
     'main-window',
   );
 
-  const normalizedRepoFilterString = useDebounce(state.repoFilterString.trim(), 250);
+  const normalizedRepoFilterString = useDebounce(state.repoQuery.matchesText?.trim() ?? '', 250);
 
   const repositories = useRepositoryList({
-    matchesString: normalizedRepoFilterString.trim(),
+    matchesText: normalizedRepoFilterString.trim(),
   });
 
   useEffect(() => {
@@ -101,7 +112,7 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
 
   function getRepo(workDir: string): Repository | undefined {
     if (repositories.isUpdating === false) {
-      return repositories.value.repositories.
+      return repositories.value.objects.
         find(repo => repo.gitMeta.workingCopyPath === workDir && repo.paneronMeta !== undefined);
     }
     return undefined;
@@ -165,28 +176,68 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
     }
   }
 
-  function handleOpenRepo(workDir: string) {
-    dispatch({ type: 'open-repo-settings', workDir });
+  let topPanelBreadcrumbs: NavBreadcrumb[] = [{
+    title: 'Paneron',
+    onClose: undefined,
+    onNavigate: state.view !== 'repo-list'
+      ? () => dispatch({ type: 'close-repo' })
+      : undefined,
+  }];
+  if (state.selectedRepoWorkDir) {
+    const repo = getRepo(state.selectedRepoWorkDir);
+    if (repo) {
+      const title = repo.paneronMeta?.title ?? repo.gitMeta?.workingCopyPath;
+      topPanelBreadcrumbs.push({
+        title,
+        onClose: () => dispatch({ type: 'close-repo' }),
+        onNavigate: state.view === 'dataset'
+          ? () => dispatch({ type: 'close-dataset' })
+          : undefined,
+      });
+    }
   }
-
-  function handleSelectDataset(workDir: string, datasetID: string) {
-    dispatch({ type: 'open-dataset', workDir, datasetID });
-  }
-
-  function handleCloseRepo() {
-    dispatch({ type: 'close-repo' });
-  }
-
-  function handleCloseDataset() {
-    dispatch({ type: 'close-dataset' });
+  if (state.selectedDatasetID) {
+    const dataset = getDataset(state.selectedRepoWorkDir, state.selectedDatasetID);
+    if (dataset) {
+      topPanelBreadcrumbs.push({
+        title: state.selectedDatasetID,
+        onNavigate: undefined,
+      });
+    }
   }
 
   let mainView: JSX.Element;
 
+  if (state.view === 'repo-list') {
+    mainView = <RepoList
+      repositories={repositories}
+      query={state.repoQuery}
+      onQueryChange={(payload: RepositoryListQuery) => dispatch({ type: 'update-query', payload })}
+      onOpenRepo={(workDir: string) => dispatch({ type: 'open-repo-settings', workDir })}
+    />;
+
+  } else if (state.view === 'repo-settings') {
+    mainView = <RepoSettings
+      workDir={state.selectedRepoWorkDir}
+      onOpenDataset={(datasetID: string) => dispatch({ type: 'open-dataset', workDir: state.selectedRepoWorkDir, datasetID })}
+    />;
+
+  } else if (state.view === 'dataset') {
+    mainView = <Dataset
+      workDir={state.selectedRepoWorkDir}
+      datasetID={state.selectedDatasetID}
+    />;
+
+  } else {
+    mainView = <NonIdealState
+      title="Nothing to show"
+      icon="heart-broken" />;
+  }
+
   return (
     <div css={css`position: absolute; top: 0; right: 0; bottom: 0; left: 0`}>
-      <div>
-      </div>
+      <Nav breadcrumbs={topPanelBreadcrumbs} />
+      {mainView}
     </div>
   );
 };
