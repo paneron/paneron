@@ -65,7 +65,6 @@ interface SelectRepoAction extends BaseAction {
 }
 interface SelectDatasetAction extends BaseAction {
   type: 'open-dataset'
-  workDir: string
   datasetID: string
 }
 interface CloseAction extends BaseAction {
@@ -140,11 +139,10 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
         return prevState;
 
       case 'open-dataset':
-        if (getDataset(action.workDir, action.datasetID)) {
+        if (prevState.selectedRepoWorkDir && getDataset(prevState.selectedRepoWorkDir, action.datasetID)) {
           return {
             ...prevState,
             view: 'dataset',
-            selectedRepoWorkDir: action.workDir,
             selectedDatasetID: action.datasetID,
           };
         }
@@ -219,7 +217,7 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
   } else if (state.view === 'repo-settings') {
     mainView = <RepoSettings
       workDir={state.selectedRepoWorkDir}
-      onOpenDataset={(datasetID: string) => dispatch({ type: 'open-dataset', workDir: state.selectedRepoWorkDir, datasetID })}
+      onOpenDataset={(datasetID: string) => dispatch({ type: 'open-dataset', datasetID })}
     />;
 
   } else if (state.view === 'dataset') {
