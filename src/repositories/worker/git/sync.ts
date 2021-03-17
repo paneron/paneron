@@ -12,8 +12,8 @@ import {
   PushRequestMessage,
   RepoStatusUpdater,
 } from 'repositories/types';
-import { checkPathIsOccupied } from 'checkPathIsOccupied';
-import { normalizeURL } from '../../util';
+import { checkPathIsOccupied } from 'main/checkPathIsOccupied';
+import { normalizeURL } from '../../main/util';
 import { Git, WithStatusUpdater } from '../types';
 
 

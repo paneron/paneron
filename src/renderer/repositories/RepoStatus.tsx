@@ -10,7 +10,7 @@ import {
   GitRepository,
   repositoryStatusChanged,
   savePassword,
-} from 'repositories';
+} from 'repositories/ipc';
 import type { RepoStatus as IRepoStatus } from 'repositories/types';
 import { Button } from '../widgets';
 

@@ -20,7 +20,7 @@ import {
   getDefaultWorkingDirectoryContainer,
   validateNewWorkingDirectoryPath,
   getNewRepoDefaults,
-} from 'repositories';
+} from 'repositories/ipc';
 
 import { forceSlug } from 'utils';
 

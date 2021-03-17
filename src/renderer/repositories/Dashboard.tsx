@@ -29,7 +29,7 @@ import {
   listPaneronRepositories,
   setPaneronRepositoryInfo,
   getBufferDataset,
-} from 'repositories';
+} from 'repositories/ipc';
 import { PaneronRepository, GitRepository } from 'repositories/types';
 import RepoStatus from './RepoStatus';
 import StartNewRepoForm from './StartNewRepoForm';
@@ -42,7 +42,7 @@ import {
   pluginsUpdated,
 } from 'plugins';
 import { Extension } from 'plugins/types';
-import DatasetExtension, { DatasetExtensionCardProps } from 'renderer/plugins/DatasetExtensionCard';
+import DatasetExtension, { DatasetExtensionCardProps } from 'plugins/renderer/DatasetExtensionCard';
 
 import {
   datasetDetails,
@@ -50,7 +50,7 @@ import {
   getDatasetInfo,
   initializeDataset,
   proposeDatasetPath,
-} from 'datasets';
+} from 'datasets/ipc';
 
 import { forceSlug } from 'utils';
 import { AuthorDetails, Button } from '../widgets';

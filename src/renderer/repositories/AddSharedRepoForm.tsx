@@ -17,7 +17,7 @@ import {
   selectWorkingDirectoryContainer,
   getDefaultWorkingDirectoryContainer,
   validateNewWorkingDirectoryPath, getNewRepoDefaults, addRepository
-} from 'repositories';
+} from 'repositories/ipc';
 
 import { forceSlug } from 'utils';
 

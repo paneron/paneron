@@ -6,9 +6,9 @@ import AsyncLock from 'async-lock';
 import yaml from 'js-yaml';
 import { app } from 'electron';
 import log from 'electron-log';
-import { PANERON_REPOSITORY_META_FILENAME } from '../../repositories';
-import { GitRepository, NewRepositoryDefaults, PaneronRepository } from '../../repositories/types';
 import { deserializeMeta } from 'main/meta-serdes';
+import { PANERON_REPOSITORY_META_FILENAME } from '../ipc';
+import { GitRepository, NewRepositoryDefaults, PaneronRepository } from '../types';
 import { getLoadedRepository } from './loadedRepositories';
 
 

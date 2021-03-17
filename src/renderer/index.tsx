@@ -62,7 +62,7 @@ async function renderApp() {
   ReactDOM.render(topLevelEl, containerEl);
 }
 
-import 'repositories';
-import 'datasets';
+import 'repositories/ipc';
+import 'datasets/ipc';
 
 renderApp();

@@ -3,7 +3,7 @@ import { ValueHook } from '@riboseinc/paneron-extension-kit/types';
 import {
   listRepositories,
   repositoriesChanged,
-} from 'repositories';
+} from 'repositories/ipc';
 
 import type { Repository, RepositoryListQuery } from 'repositories/types';
 

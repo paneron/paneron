@@ -5,7 +5,7 @@ import log from 'electron-log';
 import { css, jsx } from '@emotion/core';
 import React, { useState } from 'react';
 import { InputGroup, FormGroup, Switch, H4, ButtonGroup } from '@blueprintjs/core';
-import { getNewRepoDefaults, GitRepository, savePassword, setRemote, unsetRemote, unsetWriteAccess } from 'repositories';
+import { getNewRepoDefaults, GitRepository, savePassword, setRemote, unsetRemote, unsetWriteAccess } from 'repositories/ipc';
 import GitCredentialsInput from './GitCredentialsInput';
 import { Button } from '../widgets';
 

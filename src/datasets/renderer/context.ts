@@ -2,7 +2,6 @@ import path from 'path';
 import log from 'electron-log';
 import { DatasetContext, RendererPlugin } from '@riboseinc/paneron-extension-kit/types';
 import { INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
-import { DatasetInfo } from 'datasets/types';
 
 import {
   makeRandomID,
@@ -12,7 +11,9 @@ import {
 import {
   copyObjects,
   requestCopiedObjects,
-} from '../../clipboard';
+} from '../../clipboard/ipc';
+
+import { DatasetInfo } from '../types';
 
 import {
   describeIndex,
@@ -21,7 +22,7 @@ import {
   getOrCreateFilteredIndex,
   indexStatusChanged,
   updateObjects,
-} from 'datasets';
+} from '../ipc';
 
 
 export interface ContextGetterProps {

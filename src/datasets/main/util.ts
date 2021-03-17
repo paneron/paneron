@@ -1,6 +1,6 @@
 import path from 'path';
-import { getLoadedRepository } from 'main/repositories/loadedRepositories';
-import { normalizeDatasetDir } from 'main/repositories/worker/datasets';
+import { getLoadedRepository } from 'repositories/main/loadedRepositories';
+import { normalizeDatasetDir } from 'repositories/worker/datasets';
 import { deserializeMeta } from 'main/meta-serdes';
 import { DatasetInfo } from '../types';
 

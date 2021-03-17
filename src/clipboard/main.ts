@@ -1,10 +1,12 @@
 import log from 'electron-log';
 import AsyncLock from 'async-lock';
+
 import { readDatasetMeta } from 'datasets/main/util';
 import { DatasetInfo } from 'datasets/types';
-import { readPaneronRepoMeta } from 'main/repositories/readRepoConfig';
-import { PaneronRepository } from 'repositories';
-import { getClipboardStatus, copyObjects, requestCopiedObjects } from '.';
+import { readPaneronRepoMeta } from 'repositories/main/readRepoConfig';
+import { PaneronRepository } from 'repositories/ipc';
+
+import { getClipboardStatus, copyObjects, requestCopiedObjects } from './ipc';
 import { ClipboardSource, RuntimeClipboard } from './types';
 
 

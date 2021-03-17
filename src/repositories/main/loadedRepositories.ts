@@ -2,12 +2,16 @@ import fs from 'fs-extra';
 import { Subscription } from 'observable-fns';
 import { app } from 'electron';
 import log from 'electron-log';
-import { GitRepository, RepoStatus } from '../../repositories/types';
-import { getRepoWorkers, RepoWorkers, terminateRepoWorkers } from './workerInterface';
-import { readRepoConfig } from './readRepoConfig';
-import { repositoryBuffersChanged, repositoryStatusChanged } from 'repositories';
+
 import { PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
-import { objectsChanged } from 'datasets';
+
+import { objectsChanged } from 'datasets/ipc';
+
+import { GitRepository, RepoStatus } from '../types';
+import { repositoryBuffersChanged, repositoryStatusChanged } from '../ipc';
+
+import { getRepoWorkers, RepoWorkers, terminateRepoWorkers } from './workerManager';
+import { readRepoConfig } from './readRepoConfig';
 import { getAuth } from './repoAuth';
 
 

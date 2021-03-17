@@ -8,7 +8,7 @@ import {
   storeState as ipcStoreState,
   resetState as ipcResetState,
   resetStateGlobal as ipcResetStateGlobal,
-} from './common';
+} from './ipc';
 
 
 const STATE_STORAGE_PATH = path.join(app.getPath('userData'), 'state');

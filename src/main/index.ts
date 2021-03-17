@@ -19,8 +19,8 @@ import { mainWindow } from '../common';
 
 // No-op import to execute initialization code
 import 'state/main';
-import 'main/plugins';
-import 'main/repositories';
+import 'plugins/main';
+import 'repositories/main';
 import 'datasets/main';
 import 'clipboard/main';
 

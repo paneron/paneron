@@ -15,7 +15,7 @@ import {
   GitOperationParams,
   RepoStatus,
   RepoStatusUpdater,
-} from '../../../repositories/types';
+} from '../types';
 
 import WorkerMethods from './types';
 

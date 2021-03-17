@@ -5,7 +5,7 @@ import { jsx } from '@emotion/core';
 import React, { useState } from 'react';
 import { IButtonProps } from '@blueprintjs/core';
 import { InputGroup, FormGroup, ControlGroup } from '@blueprintjs/core';
-import { queryGitRemote } from 'repositories';
+import { queryGitRemote } from 'repositories/ipc';
 import { Button } from '../widgets';
 
 

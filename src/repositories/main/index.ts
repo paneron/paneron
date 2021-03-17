@@ -5,6 +5,7 @@ import { app, dialog } from 'electron';
 import log from 'electron-log';
 
 import { serializeMeta } from 'main/meta-serdes';
+import { loadState } from 'state/main';
 
 import {
   addRepository, createRepository, deleteRepository,
@@ -24,11 +25,12 @@ import {
   getBufferDataset,
   updateBuffers,
   describeGitRepository,
-} from '../../repositories';
+} from '../ipc';
 
-import { PaneronRepository, GitRemote, Repository } from '../../repositories/types';
-import { getRepoWorkers, spawnWorker } from './workerInterface';
-import { changesetToPathChanges } from './worker/datasets';
+import { changesetToPathChanges } from '../worker/datasets';
+import { PaneronRepository, GitRemote, Repository } from '../types';
+
+import { getRepoWorkers, spawnWorker } from './workerManager';
 
 import {
   getLoadedRepository,
@@ -46,7 +48,6 @@ import {
 } from './readRepoConfig';
 
 import { saveAuth, getAuth } from './repoAuth';
-import { loadState } from 'state/main';
 
 
 getDefaultWorkingDirectoryContainer.main!.handle(async () => {

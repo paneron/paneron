@@ -1,4 +1,4 @@
-import { loadState, storeState } from './common';
+import { loadState, storeState } from './ipc';
 import usePersistentStateReducer, {
   BaseAction,
   PersistentStateReducerHook,

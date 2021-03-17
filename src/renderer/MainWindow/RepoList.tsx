@@ -3,7 +3,7 @@
 
 import { jsx } from '@emotion/core';
 import React from 'react';
-import { Repository, RepositoryListQuery } from 'repositories';
+import { Repository, RepositoryListQuery } from 'repositories/ipc';
 
 
 interface RepoListProps {

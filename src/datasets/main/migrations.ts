@@ -4,13 +4,13 @@ import log from 'electron-log';
 import { throttle } from 'throttle-debounce';
 import { BufferChange } from '@riboseinc/paneron-extension-kit/types/buffers';
 
-import { GitAuthor } from 'repositories/types';
-import { requireMainPlugin } from 'main/plugins';
-import { readRepoConfig } from 'main/repositories/readRepoConfig';
-import { getLoadedRepository } from 'main/repositories/loadedRepositories';
 import { serializeMeta } from 'main/meta-serdes';
+import { requireMainPlugin } from 'plugins/main';
+import { GitAuthor } from 'repositories/types';
+import { readRepoConfig } from 'repositories/main/readRepoConfig';
+import { getLoadedRepository } from 'repositories/main/loadedRepositories';
 
-import { applyOutstandingMigrations, getOutstandingMigration, reportMigrationStatus } from '..';
+import { applyOutstandingMigrations, getOutstandingMigration, reportMigrationStatus } from '../ipc';
 import { MigrationSequenceOutcome } from '../types';
 import { DATASET_FILENAME, readDatasetMeta } from './util';
 

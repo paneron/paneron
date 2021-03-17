@@ -7,8 +7,9 @@ import { jsx } from '@emotion/core';
 import React, { useState, useEffect, useRef } from 'react';
 import Mark from 'mark.js';
 import { Button as BPButton, ControlGroup, FormGroup, H4, InputGroup } from '@blueprintjs/core';
-import { setAuthorInfo } from 'repositories';
 import ErrorState from '@riboseinc/paneron-extension-kit/widgets/ErrorState';
+
+import { setAuthorInfo } from 'repositories/ipc';
 
 
 export const Button = styled(BPButton)`

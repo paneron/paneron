@@ -3,6 +3,13 @@ import path from 'path';
 import { app } from 'electron';
 import log from 'electron-log';
 import { BufferChange } from '@riboseinc/paneron-extension-kit/types/buffers';
+import { INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
+
+import { forceSlug } from 'utils';
+import { checkPathIsOccupied } from 'main/checkPathIsOccupied';
+import { serializeMeta } from 'main/meta-serdes';
+import { requireMainPlugin } from 'plugins/main';
+
 import {
   PaneronRepository,
   PANERON_REPOSITORY_META_FILENAME,
@@ -10,7 +17,10 @@ import {
   // TODO: Define a more specific datasets changed event
   repositoriesChanged,
   repositoryBuffersChanged,
-} from 'repositories';
+} from 'repositories/ipc';
+import { readPaneronRepoMeta, readRepoConfig } from 'repositories/main/readRepoConfig';
+import { getLoadedRepository } from 'repositories/main/loadedRepositories';
+
 import {
   deleteDataset,
   getDatasetInfo,
@@ -20,14 +30,8 @@ import {
   getObjectDataset,
   getOrCreateFilteredIndex,
   describeIndex,
-} from 'datasets';
-import { forceSlug } from 'utils';
-import { checkPathIsOccupied } from 'checkPathIsOccupied';
-import { readPaneronRepoMeta, readRepoConfig } from 'main/repositories/readRepoConfig';
-import { getLoadedRepository } from 'main/repositories/loadedRepositories';
-import { INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
-import { requireMainPlugin } from 'main/plugins';
-import { serializeMeta } from 'main/meta-serdes';
+} from '../ipc';
+
 import { DATASET_FILENAME, readDatasetMeta } from './util';
 
 import './migrations';

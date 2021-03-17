@@ -22,7 +22,8 @@ import {
 } from '@blueprintjs/core';
 
 import { RendererPlugin, DatasetContext } from '@riboseinc/paneron-extension-kit/types';
-import { DatasetInfo } from 'datasets/types';
+import { INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
+import { progressToValue } from '@riboseinc/paneron-extension-kit/util';
 
 import { WindowComponentProps } from 'window';
 import { ErrorBoundary } from 'renderer/widgets';
@@ -33,13 +34,14 @@ import {
   getPluginManagerProps,
   installPlugin,
 } from 'plugins';
-import { getClipboardStatus } from '../../clipboard';
-import { describeRepository } from 'repositories';
-import { describeIndex, getDatasetInfo, indexStatusChanged, loadDataset } from 'datasets';
+import { getClipboardStatus } from 'clipboard/ipc';
+import { describeRepository } from 'repositories/ipc';
+
+import { DatasetInfo } from '../types';
+import { describeIndex, getDatasetInfo, indexStatusChanged, loadDataset } from '../ipc';
 
 import { ContextGetterProps, getContext } from './context';
-import { INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
-import { progressToValue } from '@riboseinc/paneron-extension-kit/util';
+
 
 const NODE_MODULES_PATH = process.env.NODE_ENV === 'production'
   ? `${__static}/../../app.asar.unpacked/node_modules`
