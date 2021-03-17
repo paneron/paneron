@@ -34,7 +34,7 @@ import {
   installPlugin,
 } from 'plugins';
 import { getClipboardStatus } from '../../clipboard';
-import { getRepository } from 'repositories';
+import { describeRepository } from 'repositories';
 import { describeIndex, getDatasetInfo, indexStatusChanged, loadDataset } from 'datasets';
 
 import { ContextGetterProps, getContext } from './context';
@@ -158,7 +158,7 @@ Promise<{
   // Prepare plugin info and manager
   try {
     const [repoInfo, datasetInfo, pluginManagerProps] = await Promise.all([
-      getRepository.renderer!.trigger({ workingCopyPath }),
+      describeRepository.renderer!.trigger({ workingCopyPath }),
       getDatasetInfo.renderer!.trigger({ workingCopyPath, datasetPath }),
       getPluginManagerProps.renderer!.trigger({}),
     ]);

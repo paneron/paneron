@@ -78,7 +78,7 @@ export const loadRepository = makeEndpoint.main(
 );
 
 /* Only works on loaded repositories. */
-export const getRepository = makeEndpoint.main(
+export const describeRepository = makeEndpoint.main(
   'getRepository',
   <{ workingCopyPath: string }>_,
   <{ info: Repository }>_,
@@ -93,7 +93,7 @@ export const deleteRepository = makeEndpoint.main(
 
 // Git repositories
 
-export const getGitRepository = makeEndpoint.main(
+export const describeGitRepository = makeEndpoint.main(
   'getGitRepository',
   <{ workingCopyPath: string }>_,
   <{ info: GitRepository, isLoaded: boolean }>_,

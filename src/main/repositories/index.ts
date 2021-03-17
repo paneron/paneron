@@ -14,7 +14,7 @@ import {
   getDefaultWorkingDirectoryContainer,
   selectWorkingDirectoryContainer, validateNewWorkingDirectoryPath,
   getNewRepoDefaults,
-  getRepository, savePassword, setRemote,
+  describeRepository, savePassword, setRemote,
   PANERON_REPOSITORY_META_FILENAME,
   queryGitRemote,
   unsetRemote,
@@ -23,7 +23,7 @@ import {
   unsetWriteAccess,
   getBufferDataset,
   updateBuffers,
-  getGitRepository,
+  describeGitRepository,
 } from '../../repositories';
 
 import { PaneronRepository, GitRemote, Repository } from '../../repositories/types';
@@ -335,7 +335,7 @@ listRepositories.main!.handle(async ({ query: { matchesText, sortBy } }) => {
 });
 
 
-getGitRepository.main!.handle(async ({ workingCopyPath }) => {
+describeGitRepository.main!.handle(async ({ workingCopyPath }) => {
   let isLoaded: boolean;
   try {
     getLoadedRepository(workingCopyPath);
@@ -350,7 +350,7 @@ getGitRepository.main!.handle(async ({ workingCopyPath }) => {
 });
 
 
-getRepository.main!.handle(async ({ workingCopyPath }) => {
+describeRepository.main!.handle(async ({ workingCopyPath }) => {
   const gitRepo = await readRepoConfig(workingCopyPath);
 
   getLoadedRepository(workingCopyPath);
