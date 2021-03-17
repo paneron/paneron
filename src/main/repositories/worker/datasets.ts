@@ -604,5 +604,5 @@ export function getSpec(
 ): SerializableObjectSpec | null {
   const spec = Object.values(objectSpecs).
     find(c => matchesPath(objectOrBufferPath, c.matches));
-  return spec || null;
+  return spec ?? null;
 }
