@@ -16,6 +16,8 @@ import type { Repository, RepositoryListQuery } from 'repositories/types';
 
 import Nav, { NavBreadcrumb } from './Nav';
 import { NonIdealState } from '@blueprintjs/core';
+import RepoList from './RepoList';
+import RepoSettings from './RepoSettings';
 
 
 interface BaseState {
@@ -208,7 +210,7 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
 
   if (state.view === 'repo-list') {
     mainView = <RepoList
-      repositories={repositories}
+      repositories={repositories.value.objects}
       query={state.repoQuery}
       onQueryChange={(payload: RepositoryListQuery) => dispatch({ type: 'update-query', payload })}
       onOpenRepo={(workDir: string) => dispatch({ type: 'open-repo-settings', workDir })}
