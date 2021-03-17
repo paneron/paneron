@@ -139,6 +139,30 @@ export const updatePaneronRepository = makeEndpoint.main(
   <{ success: true }>_,
 );
 
+// export const updateRepositoryTitle = makeEndpoint.main(
+//   'updateRepoTitle',
+//   <{ workingCopyPath: string, newTitle: string }>_,
+//   <{ success: true }>_,
+// );
+// 
+// export const initializeDataset = makeEndpoint.main(
+//   'initalizeDataset',
+//   <EmptyPayload>_,
+//   <{ success: true }>_,
+// );
+// 
+// export const describeDataset = makeEndpoint.main(
+//   'getDataset',
+//   <EmptyPayload>_,
+//   <{ success: true }>_,
+// );
+// 
+// export const deleteDataset = makeEndpoint.main(
+//   'deleteDataset',
+//   <EmptyPayload>_,
+//   <{ success: true }>_,
+// );
+
 
 // Working with buffers
 
