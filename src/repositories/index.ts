@@ -17,13 +17,6 @@ export * from './types';
 export const PANERON_REPOSITORY_META_FILENAME = 'paneron.yaml';
 
 
-export const queryGitRemote = makeEndpoint.main(
-  'queryRemote',
-  <{ url: string, username: string, password?: string }>_,
-  <{ isBlank: boolean, canPush: boolean }>_,
-);
-
-
 // Creating repos
 
 export const addRepository = makeEndpoint.main(
@@ -92,6 +85,12 @@ export const deleteRepository = makeEndpoint.main(
 
 
 // Git repositories
+
+export const queryGitRemote = makeEndpoint.main(
+  'queryRemote',
+  <{ url: string, username: string, password?: string }>_,
+  <{ isBlank: boolean, canPush: boolean }>_,
+);
 
 export const describeGitRepository = makeEndpoint.main(
   'getGitRepository',
