@@ -237,13 +237,53 @@ const resolveRepositoryChanges: Repositories.Data.ResolveChanges = async functio
     }
   }
 
+  /* Constructs a function that takes a buffer path and returns a path to an object
+     that is considered as containing that buffer path.
+     The returned path is relative to dataset directory
+     (given as an argument to function constructor).
+
+     An object is considered to be a set of buffers starting with top-level
+     buffer path that matches some ser-des rule.
+
+     TODO:
+
+     Containing object path is inferred from buffer path by finding the topmost
+     path component that matches any complex (nested) ser-des rule.
+
+     If there’s none, but buffer path itself matches some ser-des rule,
+     then buffer path itself is considered to be object path.
+
+     If buffer path doesn’t satisfy any ser-des rule either,
+     then it is considered to not belong to any object. */
   function bufferPathBelongsToObjectInDataset(
     datasetDir: string,
-    specs: SerializableObjectSpec[],
+    specs: SerializableObjectSpec[], // TODO: get rid of
   ): (bufferPath: string) => string | null {
     return (bufferPath: string): string | null => {
       if (bufferPath.startsWith(`/${datasetDir}`)) {
-        const spec = getSpec(specs, path.relative(`/${datasetDir}`, bufferPath));
+        const relativeBufferPath = stripLeadingSlash(path.relative(`/${datasetDir}`, bufferPath));
+
+        //const pathParts = relativeBufferPath.split(path.posix.sep);
+
+        //let idx: number | undefined = undefined;
+        //for (const [_idx, part] of pathParts.entries()) {
+        //  if (getSerDesRuleForExtension(path.posix.extname(part)) !== undefined) {
+        //    idx = _idx;
+        //    break;
+        //  }
+        //}
+
+        //if (idx) {
+        //  const relativeObjectPath = `/${pathParts.slice(0, idx).join(path.posix.sep)}`;
+        //  return relativeObjectPath;
+        //} else {
+        //  if (getSerDesRuleForExtension(path.posix.extname(relativeBufferPath)) !== undefined) {
+        //    return relativeBufferPath;
+        //  }
+        //  return null;
+        //}
+
+        const spec = getSpec(specs, relativeBufferPath);
         if (spec) {
           let objectPath: string;
           if (spec.getContainingObjectPath) {
@@ -263,7 +303,7 @@ const resolveRepositoryChanges: Repositories.Data.ResolveChanges = async functio
 
   for (const [changedDatasetDir, changes] of Object.entries(changedBuffersPerDataset)) {
     const specs = getSpecs(workDir, changedDatasetDir);
-    const findObjectPath = bufferPathBelongsToObjectInDataset(changedDatasetDir, specs);
+    const findObjectPath = bufferPathBelongsToObjectInDataset(changedDatasetDir);
     const pathChanges = changedPathsToPathChanges(changes);
     const objectPaths = listObjectPaths(getChangedPaths(changes), findObjectPath);
 
