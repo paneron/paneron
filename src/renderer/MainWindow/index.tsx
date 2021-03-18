@@ -130,18 +130,15 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
   function reducer(prevState: State, action: Action): State {
     switch (action.type) {
       case 'open-repo-settings':
-        if (getRepo(action.workDir)) {
-          return {
-            ...prevState,
-            view: 'repo-settings',
-            selectedRepoWorkDir: action.workDir,
-            selectedDatasetID: null,
-          };
-        }
-        return prevState;
+        return {
+          ...prevState,
+          view: 'repo-settings',
+          selectedRepoWorkDir: action.workDir,
+          selectedDatasetID: null,
+        };
 
       case 'open-dataset':
-        if (prevState.selectedRepoWorkDir && getDataset(prevState.selectedRepoWorkDir, action.datasetID)) {
+        if (prevState.selectedRepoWorkDir) {
           return {
             ...prevState,
             view: 'dataset',
