@@ -45,7 +45,6 @@ export default function reducer(prevState: State, action: Action): State {
         ...prevState,
         view: 'repo-settings',
         selectedRepoWorkDir: action.workDir,
-        selectedDatasetID: null,
       };
 
     case 'select-dataset':
