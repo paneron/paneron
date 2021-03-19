@@ -87,27 +87,32 @@ const REPO_CELL_SIDE_PX = 40;
 interface RepoGridData {
   items: string[][] // repository working directory paths, chunked into rows
   selectedWorkDir: string | null
-  selectWorkDir: (workDir: string) => void
+  selectWorkDir: (workDir: string | null) => void
 }
 
 
-const RepoCell: ComponentType<GridChildComponentProps> = ({ columnIndex, rowIndex, data, style }) => {
+const RepoCell: ComponentType<GridChildComponentProps> =
+function ({ columnIndex, rowIndex, data, style }) {
   const _data: RepoGridData = data;
+  const workDir = _data.items[rowIndex][columnIndex];
   return (
     <div style={style}>
-      <Repo workDir={_data.items[rowIndex][columnIndex]} />
+      <Repo isSelected={_data.selectedWorkDir === workDir} workDir={workDir} />
     </div>
   );
 };
 
 
-const Repo: React.FC<{ workDir: string }> = function ({ workDir }) {
+const Repo: React.FC<{ workDir: string, isSelected: boolean }> =
+function ({ workDir, isSelected }) {
   const description = describeRepository.renderer!.useValue(
     { workingCopyPath: workDir },
     { info: { gitMeta: { workingCopyPath: workDir }, paneronMeta: undefined } });
 
   return (
-    <div>Repository {workDir}: {description.value.info.paneronMeta?.title}</div>
+    <div css={css`${isSelected ? 'font-weight: bold' : ''}`}>
+      Repository {workDir}: {description.value.info.paneronMeta?.title}
+    </div>
   );
 };
 
