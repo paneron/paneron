@@ -161,7 +161,7 @@ export async function unloadRepository(workingCopyPath: string) {
 const REPOSITORY_SYNC_INTERVAL_MS = 5000;
 const REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS = 15000;
 
-// TODO: Only sync a repository if one of its datasets is opened.
+// TODO: Only sync a repository if one of its datasets is opened?
 function syncRepoRepeatedly(
   workingCopyPath: string,
   logLevel: 'all' | 'warnings' = 'warnings',
