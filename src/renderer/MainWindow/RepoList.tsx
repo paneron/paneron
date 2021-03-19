@@ -38,12 +38,12 @@ function () {
 
   useEffect(() => {
     if (stateLoaded && !repositories.isUpdating) {
-      if (state.view === 'dataset' &&
+      if (state.selectedDatasetID &&
           repositories.selectDataset(state.selectedRepoWorkDir, state.selectedDatasetID) === undefined) {
         log.warn("Main window: Can’t show dataset: Missing dataset or repository",
           state.selectedRepoWorkDir, state.selectedDatasetID, repositories.value);
         dispatch({ type: 'close-dataset' });
-      } else if (state.view === 'repo-settings' &&
+      } else if (state.selectedRepoWorkDir &&
           repositories.selectRepo(state.selectedRepoWorkDir) === undefined) {
         log.warn("Main window: Can’t show repo-settings: Missing repository",
           state.selectedRepoWorkDir, repositories.value);
