@@ -40,6 +40,14 @@ export const initialState: State = {
 
 export default function reducer(prevState: State, action: Action): State {
   switch (action.type) {
+    case 'select-repo':
+      return {
+        ...prevState,
+        view: 'repo-list',
+        selectedRepoWorkDir: action.workDir,
+        selectedDatasetID: null,
+      };
+
     case 'open-repo-settings':
       return {
         ...prevState,
