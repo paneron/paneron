@@ -11,7 +11,7 @@ interface AddRepoAction extends BaseAction {
 }
 interface SelectRepoAction extends BaseAction {
   type: 'select-repo'
-  workDir: string
+  workDir: string | null
 }
 interface OpenRepoAction extends BaseAction {
   type: 'open-repo-settings'
@@ -19,7 +19,7 @@ interface OpenRepoAction extends BaseAction {
 }
 interface SelectDatasetAction extends BaseAction {
   type: 'select-dataset'
-  datasetID: string
+  datasetID: string | null
 }
 interface OpenDatasetAction extends BaseAction {
   type: 'open-dataset'
