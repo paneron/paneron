@@ -29,7 +29,7 @@ function () {
   function getGridData(viewportWidth: number): RepoGridData {
     return {
       items: splitEvery(
-        Math.floor(viewportWidth / REPO_CELL_SIDE_PX),
+        Math.floor(viewportWidth / GRID_CELL_SIDE_PX),
         repositories.value.objects.map(repo => repo.gitMeta.workingCopyPath)),
       selectedWorkDir: state.selectedRepoWorkDir,
       selectWorkDir: (workDir) => dispatch({ type: 'select-repo', workDir }),
@@ -65,9 +65,9 @@ function () {
                   width={width}
                   height={height}
                   columnCount={columnCount}
-                  columnWidth={REPO_CELL_SIDE_PX}
+                  columnWidth={GRID_CELL_SIDE_PX}
                   rowCount={rowCount}
-                  rowHeight={REPO_CELL_SIDE_PX}
+                  rowHeight={GRID_CELL_SIDE_PX}
                   itemData={itemData}>
                 {RepoCell}
               </Grid>
@@ -81,7 +81,7 @@ function () {
 };
 
 
-const REPO_CELL_SIDE_PX = 40;
+const GRID_CELL_SIDE_PX = 40;
 
 
 interface RepoGridData {
