@@ -188,6 +188,7 @@
     "react-dom": "^16.11.0",
     "react-mathjax2": "^0.0.2",
     "react-transition-group": "^4.3.0",
+    "react-virtualized-auto-sizer": "^1.0.5",
     "react-visual-diff": "^0.4.3",
     "react-window": "^1.8.5",
     "rough-notation": "^0.4.0",
