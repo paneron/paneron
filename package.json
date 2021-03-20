@@ -194,6 +194,7 @@
     "rough-notation": "^0.4.0",
     "semver": "^7.3.2",
     "source-map-support": "^0.5.19",
+    "subleveldown": "^5.0.1",
     "throttle-debounce": "^2.3.0"
   },
   "devDependencies": {
@@ -213,7 +214,9 @@
     "@types/react": "^16.9.11",
     "@types/react-dom": "^16.9.4",
     "@types/react-transition-group": "^4.2.3",
+    "@types/react-virtualized-auto-sizer": "^1.0.0",
     "@types/react-window": "^1.8.2",
+    "@types/subleveldown": "^4.1.0",
     "@types/throttle-debounce": "^2.1.0",
     "@typescript-eslint/eslint-plugin": "^4.8.0",
     "@typescript-eslint/parser": "^4.8.0",
