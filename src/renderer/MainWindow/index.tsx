@@ -10,7 +10,7 @@ import { WindowComponentProps } from 'window';
 import Nav from './Nav';
 import RepoList from './RepoList';
 import RepoSettings from './RepoSettings';
-import { Context } from './context';
+import ContextProvider, { Context } from './context';
 
 
 const MainWindow: React.FC<WindowComponentProps> = function () {
@@ -26,7 +26,9 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
                 position: absolute; top: 0; right: 0; left: 0; bottom: 0;
               }
             `}>
-          <MainView />
+          <ContextProvider>
+            <MainView />
+          </ContextProvider>
         </div>
       </div>
     </React.StrictMode>
