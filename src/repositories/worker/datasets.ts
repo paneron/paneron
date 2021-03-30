@@ -559,7 +559,7 @@ async function fillInDefaultIndex(
     }
   }
 
-  async function* changedObjectPaths(): AsyncGenerator<string> {
+  async function* objectPathsToBeIndexed(): AsyncGenerator<string> {
     for await (const _key of index.dbHandle.createKeyStream()) {
       yield _key as string;
     }
@@ -571,8 +571,7 @@ async function fillInDefaultIndex(
     workDir,
     datasetDir,
     index,
-    changedObjectPaths(),
-    objectSpecs);
+    objectPathsToBeIndexed());
 }
 
 async function fillInFilteredIndex(
