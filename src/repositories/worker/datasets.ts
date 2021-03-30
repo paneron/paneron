@@ -549,8 +549,14 @@ async function fillInDefaultIndex(
         loaded: 0,
       },
     });
-    await index.dbHandle.put(objectPath, false);
-    total += 1;
+    try {
+      await index.dbHandle.get(objectPath);
+    } catch (e) {
+      if (e.type === 'NotFoundError') {
+        await index.dbHandle.put(objectPath, false);
+        total += 1;
+      }
+    }
   }
 
   async function* changedObjectPaths(): AsyncGenerator<string> {
