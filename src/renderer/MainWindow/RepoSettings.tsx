@@ -43,8 +43,9 @@ function () {
           {({ width, height }) => {
             const itemData = getGridData(width);
             if (itemData) {
-              const columnCount = itemData.items[0].length;
               const rowCount = itemData.items.length;
+              // The first row (chunk) will have the maximum number of columns:
+              const columnCount = itemData.items[0].length;
               return (
                 <Grid
                     width={width}

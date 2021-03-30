@@ -34,7 +34,7 @@ import { PaneronRepository, GitRepository } from 'repositories/types';
 import RepoStatus from './RepoStatus';
 import StartNewRepoForm from './StartNewRepoForm';
 import ShareRepoForm from './ShareRepoForm';
-import AddSharedRepoForm from './AddSharedRepoForm';
+import AddSharedRepoForm from '../MainWindow/AddSharedRepoForm';
 
 import {
   getPluginInfo,

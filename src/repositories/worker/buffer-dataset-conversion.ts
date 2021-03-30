@@ -1,7 +1,6 @@
 import { ObjectChangeset } from '@riboseinc/paneron-extension-kit/types/objects';
 import { BufferChange, BufferChangeset, BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
-import getSerDesRule from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
-import { getSpecs, getSpec } from './datasets';
+import { findSerDesRuleForExt } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
 
 
 /* Converts object changeset
@@ -18,32 +17,21 @@ import { getSpecs, getSpec } from './datasets';
    returned buffer paths are relative to working directory.
 */
 export function toBufferChangeset(
-  workDir: string,
-  datasetDirNormalized: string,
   objectChangeset: ObjectChangeset,
 ): BufferChangeset {
-  const objectSpecs = getSpecs(workDir, datasetDirNormalized);
-
   const buffers: BufferChangeset = {};
 
   for (const [objectPath, change] of Object.entries(objectChangeset)) {
-    const spec = getSpec(objectSpecs, objectPath);
+    const rule = findSerDesRuleForExt(objectPath);
 
-    if (spec) {
-      const rule = getSerDesRule(spec.serDesRule);
+    const newObjectBuffersRelative = rule.serialize(change.newValue, {});
+    const oldObjectBuffersRelative = rule.serialize(change.oldValue, {});
 
-      const newObjectBuffersRelative = rule.serialize(change.newValue, {});
-      const oldObjectBuffersRelative = rule.serialize(change.oldValue, {});
+    const bufferChanges = mergeBufferDatasetsIntoChangeset(
+      newObjectBuffersRelative,
+      oldObjectBuffersRelative);
 
-      const bufferChanges = mergeBufferDatasetsIntoChangeset(
-        newObjectBuffersRelative,
-        oldObjectBuffersRelative);
-
-      Object.assign(buffers, bufferChanges);
-
-    } else {
-      throw new Error("Unable to find object spec for path");
-    }
+    Object.assign(buffers, bufferChanges);
   }
   return buffers;
 }

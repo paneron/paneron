@@ -1,15 +1,35 @@
+import path from 'path';
+
+
+// TODO: Define composite object extension & ser/des logic via ser/des rules in extension kit.
+const COMPOSITE_OBJECT_DIRNAME_EXTENSION = '.pan';
+
+
+/* Composite objects are directories. */
+function getCompositeObjectPathForBufferPath(bufferPath: string): string | null {
+  const parts = bufferPath.split(path.posix.sep);
+  const firstCompositePartIndex =
+    parts.findIndex(part => path.extname(part.toLowerCase()) === COMPOSITE_OBJECT_DIRNAME_EXTENSION);
+  if (firstCompositePartIndex >= 0) {
+    const objectPathParts = parts.slice(0, firstCompositePartIndex + 1);
+    return objectPathParts.join(path.posix.sep);
+  } else {
+    return null;
+  }
+}
+
+
 /* Given a generator of buffer paths, yields strings representing object paths.
    It may return the same object path more than once, since multiple buffers
-   can represent a single object. */
+   can be part of a single object. */
 export async function* listObjectPaths(
   bufferPaths: AsyncGenerator<string>,
-  belongsToObject: (bufferPath: string) => string | null,
 ): AsyncGenerator<string> {
   for await (const bufferPath of bufferPaths) {
     if (bufferPath.startsWith('..')) {
       throw new Error(`Bad buffer path ${bufferPath}`)
     }
-    const objectPath = belongsToObject(bufferPath);
+    const objectPath = getCompositeObjectPathForBufferPath(bufferPath);
     if (objectPath !== null) {
       yield objectPath;
     }

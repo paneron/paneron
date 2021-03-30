@@ -6,14 +6,14 @@ import { css, jsx } from '@emotion/core';
 import React, { useState } from 'react';
 import { InputGroup, FormGroup, Switch, H4, ButtonGroup } from '@blueprintjs/core';
 import { getNewRepoDefaults, GitRepository, savePassword, setRemote, unsetRemote, unsetWriteAccess } from 'repositories/ipc';
-import GitCredentialsInput from './GitCredentialsInput';
+import GitCredentialsInput from '../MainWindow/GitCredentialsInput';
 import { Button } from '../widgets';
 
 
 export const ShareRepoForm: React.FC<{ repo: GitRepository }> =
 function ({ repo }) {
   const [busy, setBusy] = useState(false);
-  const defaults = getNewRepoDefaults.renderer!.useValue({}, {});
+  const defaults = getNewRepoDefaults.renderer!.useValue({}, { author: { name: '', email: '' }});
 
   const [_url, setURL] = useState('');
   const [customUsername, setUsername] = useState('');

@@ -17,30 +17,16 @@ export * from './types';
 export const PANERON_REPOSITORY_META_FILENAME = 'paneron.yaml';
 
 
-// Creating repos
-
-export const addRepository = makeEndpoint.main(
-  'addRepository',
-  <{ gitRemoteURL: string, workingCopyPath: string, username: string, password?: string, author: GitAuthor }>_,
-  <{ success: true }>_,
-);
-
-export const createRepository = makeEndpoint.main(
-  'createRepository',
-  <{ workingCopyPath: string, author: GitAuthor, title: string }>_,
-  <{ success: true }>_,
-);
-
 export const getNewRepoDefaults = makeEndpoint.main(
-  'getNewRepoDefaults',
+  'getRepositoryDefaults',
   <EmptyPayload>_,
   <NewRepositoryDefaults>_,
 );
 
-export const validateNewWorkingDirectoryPath = makeEndpoint.main(
-  'validateNewWorkingDirectoryPath',
-  <{ _path: string }>_,
-  <{ available: boolean }>_,
+export const setNewRepoDefaults = makeEndpoint.main(
+  'setRepositoryDefaults',
+  <NewRepositoryDefaults>_,
+  <{ success: true }>_,
 );
 
 export const getDefaultWorkingDirectoryContainer = makeEndpoint.main(
@@ -49,10 +35,19 @@ export const getDefaultWorkingDirectoryContainer = makeEndpoint.main(
   <{ path: string }>_,
 );
 
-export const selectWorkingDirectoryContainer = makeEndpoint.main(
-  'selectWorkingDirectoryContainer',
-  <{ _default: string }>_,
-  <{ path: string }>_,
+
+// Creating repos
+
+export const addRepository = makeEndpoint.main(
+  'addRepository',
+  <{ gitRemoteURL: string, username: string, password?: string }>_,
+  <{ success: true }>_,
+);
+
+export const createRepository = makeEndpoint.main(
+  'createRepository',
+  <EmptyPayload>_,
+  <{ success: true }>_,
 );
 
 

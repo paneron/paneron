@@ -156,21 +156,21 @@ loadDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
     throw new Error("Dataset migration is required");
   }
 
-  const objectSpecs = plugin.getObjectSpecs();
   const cacheRoot = path.join(app.getPath('userData'), 'index-dbs');
 
   log.debug("Datasets: Load: Ensuring cache root dir…", cacheRoot);
 
   await ensureDir(cacheRoot);
 
-  log.debug("Datasets: Load: Registering object specs…", objectSpecs);
+  log.debug("Datasets: Load: Getting loaded repository worker");
 
   const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
+
+  log.debug("Datasets: Load: Loading dataset");
 
   repoWorker.ds_load({
     workDir: workingCopyPath,
     datasetDir: datasetPath,
-    objectSpecs,
     cacheRoot,
   });
 

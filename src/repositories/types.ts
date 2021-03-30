@@ -41,9 +41,9 @@ export interface RepositoryListQuery {
 // Creating repos
 
 export interface NewRepositoryDefaults {
-  workingDirectoryContainer?: string
+  //workingDirectoryContainer?: string
   remote?: Omit<GitRemote, 'url'>
-  author?: GitAuthor
+  author: GitAuthor
 }
 
 

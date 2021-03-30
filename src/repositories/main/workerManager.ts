@@ -31,7 +31,7 @@ export interface RepoWorkers {
 }
 
 
-async function terminateWorker(worker: Thread & WorkerMethods) {
+export async function terminateWorker(worker: Thread & WorkerMethods) {
   log.debug("Repositories: Terminating worker");
   try {
     await worker.destroy();
@@ -72,6 +72,9 @@ async function terminateAllWorkers() {
 
 export function getRepoWorkers(workDir: string): Promise<RepoWorkers> {
   if (!WORKERS[workDir]) {
+    // Kill workers for other repositories to save resources.
+    terminateAllWorkers();
+
     log.debug("Repositories: Workers not spawned yet, spawning now…")
     WORKERS[workDir] = new Promise((resolve, reject) => {
       terminateAllWorkers().

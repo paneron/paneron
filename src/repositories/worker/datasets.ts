@@ -9,9 +9,7 @@ import { Observable, Subject } from 'threads/observable';
 
 import { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
 import { Changeset, ChangeStatus, PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
-import { SerializableObjectSpec } from '@riboseinc/paneron-extension-kit/types/object-spec';
-import { matchesPath } from '@riboseinc/paneron-extension-kit/object-specs';
-import getSerDesRule from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
+import { findSerDesRuleForExt } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
 
 import { hash, stripLeadingSlash, stripTrailingSlash } from 'utils';
 import WorkerMethods, { Datasets, Repositories } from './types';
@@ -35,7 +33,6 @@ const datasets: {
 const load: Datasets.Lifecycle.Load = async function ({
   workDir,
   datasetDir,
-  objectSpecs,
   cacheRoot,
 }) {
   await unload({ workDir, datasetDir });
@@ -44,7 +41,6 @@ const load: Datasets.Lifecycle.Load = async function ({
 
   datasets[workDir] ||= {};
   datasets[workDir][normalizedDatasetDir] = {
-    specs: objectSpecs,
     indexDBRoot: cacheRoot,
     indexes: {},
   };
@@ -65,7 +61,7 @@ const load: Datasets.Lifecycle.Load = async function ({
 
   console.info("Filling in default index", workDir, normalizedDatasetDir);
 
-  fillInDefaultIndex(workDir, normalizedDatasetDir, defaultIndex, objectSpecs);
+  fillInDefaultIndex(workDir, normalizedDatasetDir, defaultIndex);
 }
 
 
@@ -237,75 +233,11 @@ const resolveRepositoryChanges: Repositories.Data.ResolveChanges = async functio
     }
   }
 
-  /* Constructs a function that takes a buffer path and returns a path to an object
-     that is considered as containing that buffer path.
-     The returned path is relative to dataset directory
-     (given as an argument to function constructor).
-
-     An object is considered to be a set of buffers starting with top-level
-     buffer path that matches some ser-des rule.
-
-     TODO:
-
-     Containing object path is inferred from buffer path by finding the topmost
-     path component that matches any complex (nested) ser-des rule.
-
-     If there’s none, but buffer path itself matches some ser-des rule,
-     then buffer path itself is considered to be object path.
-
-     If buffer path doesn’t satisfy any ser-des rule either,
-     then it is considered to not belong to any object. */
-  function bufferPathBelongsToObjectInDataset(
-    datasetDir: string,
-    specs: SerializableObjectSpec[], // TODO: get rid of
-  ): (bufferPath: string) => string | null {
-    return (bufferPath: string): string | null => {
-      if (bufferPath.startsWith(`/${datasetDir}`)) {
-        const relativeBufferPath = stripLeadingSlash(path.relative(`/${datasetDir}`, bufferPath));
-
-        //const pathParts = relativeBufferPath.split(path.posix.sep);
-
-        //let idx: number | undefined = undefined;
-        //for (const [_idx, part] of pathParts.entries()) {
-        //  if (getSerDesRuleForExtension(path.posix.extname(part)) !== undefined) {
-        //    idx = _idx;
-        //    break;
-        //  }
-        //}
-
-        //if (idx) {
-        //  const relativeObjectPath = `/${pathParts.slice(0, idx).join(path.posix.sep)}`;
-        //  return relativeObjectPath;
-        //} else {
-        //  if (getSerDesRuleForExtension(path.posix.extname(relativeBufferPath)) !== undefined) {
-        //    return relativeBufferPath;
-        //  }
-        //  return null;
-        //}
-
-        const spec = getSpec(specs, relativeBufferPath);
-        if (spec) {
-          let objectPath: string;
-          if (spec.getContainingObjectPath) {
-            const func = new Function('bufferPath', spec.getContainingObjectPath);
-            objectPath = func(bufferPath) || bufferPath;
-          } else {
-            objectPath = bufferPath;
-          }
-          return objectPath;
-        }
-      }
-      return null;
-    };
-  }
-
   const objectPathChanges: { [datasetDir: string]: PathChanges } = {};
 
   for (const [changedDatasetDir, changes] of Object.entries(changedBuffersPerDataset)) {
-    const specs = getSpecs(workDir, changedDatasetDir);
-    const findObjectPath = bufferPathBelongsToObjectInDataset(changedDatasetDir);
     const pathChanges = changedPathsToPathChanges(changes);
-    const objectPaths = listObjectPaths(getChangedPaths(changes), findObjectPath);
+    const objectPaths = listObjectPaths(getChangedPaths(changes));
 
     objectPathChanges[changedDatasetDir] = pathChanges;
 
@@ -313,7 +245,6 @@ const resolveRepositoryChanges: Repositories.Data.ResolveChanges = async functio
       workDir,
       changedDatasetDir,
       objectPaths,
-      specs,
       oidBefore,
       oidAfter);
   }
@@ -343,7 +274,6 @@ async function updateIndexes(
   workDir: string,
   datasetDir: string,
   changedObjectPaths: AsyncGenerator<string>,
-  objectSpecs: SerializableObjectSpec[],
   oid1: string,
   oid2: string,
 ) {
@@ -358,11 +288,7 @@ async function updateIndexes(
 
   async function readObjectVersions(objectPath: string):
   Promise<[ Record<string, any> | null, Record<string, any> | null ]> {
-    const spec = getSpec(objectSpecs, objectPath);
-    if (!spec) {
-      throw new Error("Cannot find object spec");
-    }
-    const rule = getSerDesRule(spec.serDesRule);
+    const rule = findSerDesRuleForExt(objectPath);
     return [
       rule.deserialize(await readBuffersAtVersion(workDir, path.join(datasetDir, objectPath), oid1), {}),
       rule.deserialize(await readBuffersAtVersion(workDir, path.join(datasetDir, objectPath), oid2), {}),
@@ -416,17 +342,11 @@ async function updateDefaultIndex(
   datasetDir: string,
   index: Datasets.Util.DefaultIndex,
   objectPaths: AsyncGenerator<string>,
-  objectSpecs: SerializableObjectSpec[],
 ) {
   for await (const objectPath of objectPaths) {
-    const spec = getSpec(objectSpecs, objectPath);
-    if (!spec) {
-      throw new Error("Unexpectedly missing object spec while updating default index");
-    }
-
     console.debug("Worker: Datasets: Filling in default index: Reading", objectPath);
 
-    const obj = await readObjectCold(path.join(workDir, datasetDir, objectPath), spec);
+    const obj = await readObjectCold(path.join(workDir, datasetDir, objectPath));
 
     console.debug("Worker: Datasets: Filling in default index: Reading", objectPath, obj);
 
@@ -518,28 +438,12 @@ async function fillInDefaultIndex(
   workDir: string,
   datasetDir: string,
   index: Datasets.Util.DefaultIndex,
-  objectSpecs: SerializableObjectSpec[],
 ) {
   let total: number = 0;
 
-  function belongsToObject(bufferPath: string): string | null {
-    const spec = getSpec(objectSpecs, bufferPath);
-    if (spec) {
-      if (spec.getContainingObjectPath) {
-        const func = new Function('bufferPath', spec.getContainingObjectPath);
-        return func(bufferPath);
-      } else {
-        return bufferPath;
-      }
-    } else {
-      return null;
-    }
-  }
-
   // Collect object paths
-  const objectPaths = listObjectPaths(
-    listDescendantPaths(path.join(workDir, datasetDir)),
-    belongsToObject);
+  const objectPaths =
+    listObjectPaths(listDescendantPaths(path.join(workDir, datasetDir)));
   for await (const objectPath of objectPaths) {
     index.statusSubject.next({
       objectCount: 0,
@@ -627,27 +531,4 @@ function createIndex<K, V>(
 
   datasets[workDir][datasetDir].indexes[indexID] = idx;
   return idx;
-}
-
-
-// Specs
-
-export function getSpecs(
-  workDir: string,
-  datasetDir: string,
-): SerializableObjectSpec[] {
-  const ds = getLoadedDataset(workDir, datasetDir);
-  if (!ds.specs) {
-    throw new Error("Loaded dataset does not have specs registered");
-  }
-  return ds.specs;
-}
-
-export function getSpec(
-  objectSpecs: SerializableObjectSpec[],
-  objectOrBufferPath: string,
-): SerializableObjectSpec | null {
-  const spec = Object.values(objectSpecs).
-    find(c => matchesPath(objectOrBufferPath, c.matches));
-  return spec ?? null;
 }

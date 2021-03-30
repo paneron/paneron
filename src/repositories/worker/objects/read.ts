@@ -2,8 +2,7 @@ import { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
 import { readBuffers } from '../buffers/read';
 import { Datasets } from '../types';
 import { getIndex, normalizeDatasetDir } from '../datasets';
-import { SerializableObjectSpec } from '@riboseinc/paneron-extension-kit/types/object-spec';
-import getSerDesRule from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
+import { findSerDesRuleForExt } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
 
 
 /* Do not read too many objects at once. May be slow. */
@@ -76,12 +75,14 @@ export async function* readObjectsCold(
 }
 
 
+/* Given a root path to an object, reads data from filesystem
+   and deserializes it into memory structure
+   according to the rule corresponding to given extension. */
 export async function readObjectCold(
   rootPath: string,
-  spec: SerializableObjectSpec,
 ): Promise<Record<string, any> | null> {
   const bufferDataset = await readBuffers(rootPath);
-  const rule = getSerDesRule(spec.serDesRule);
+  const rule = findSerDesRuleForExt(rootPath);
   const obj: Record<string, any> = rule.deserialize(bufferDataset, {});
   return obj;
 }

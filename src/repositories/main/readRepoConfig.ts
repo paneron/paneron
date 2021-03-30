@@ -83,12 +83,28 @@ export async function updateRepositories(updater: (data: RepoListSpec) => RepoLi
   });
 }
 
-export async function _updateNewRepoDefaults(defaults: Partial<NewRepositoryDefaults>) {
-  return await updateRepositories((data) => ({
-    ...data,
-    defaults: {
-      ...data.defaults,
-      ...defaults,
-    },
-  }));
+export async function setNewRepoDefaults(defaults: NewRepositoryDefaults) {
+  if (defaultsAreComplete(defaults)) {
+    return await updateRepositories((data) => ({
+      ...data,
+      defaults,
+    }));
+  } else {
+    log.error("setNewRepoDefaults: defaults given are incomplete", defaults);
+    throw new Error("New repo defaults are incomplete");
+  }
+}
+
+export async function getNewRepoDefaults(): Promise<NewRepositoryDefaults> {
+  const defaults = (await readRepositories()).defaults;
+
+  if (defaults && defaultsAreComplete(defaults)) {
+    return defaults;
+  } else {
+    throw new Error("Defaults are missing");
+  }
+}
+
+function defaultsAreComplete(defaults: Partial<NewRepositoryDefaults>): defaults is NewRepositoryDefaults {
+  return defaults.author?.email && defaults.author?.name ? true : false;
 }

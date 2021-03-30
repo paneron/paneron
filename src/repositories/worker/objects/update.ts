@@ -31,11 +31,7 @@ export const updateObjects: WithStatusUpdater<Datasets.Data.UpdateObjects> = asy
     }
   }
 
-  const bufferChangeset = toBufferChangeset(
-    workDir,
-    datasetDirNormalized,
-    objectChangeset,
-  );
+  const bufferChangeset = toBufferChangeset(objectChangeset);
 
   return await updateBuffers({
     workDir,

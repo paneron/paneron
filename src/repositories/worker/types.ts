@@ -5,7 +5,6 @@ import type { CommitOutcome, PathChanges } from '@riboseinc/paneron-extension-ki
 import type { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
 import type { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
 import type { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
-import type { SerializableObjectSpec } from '@riboseinc/paneron-extension-kit/types/object-spec';
 import type {
   AuthoringGitOperationParams,
   BufferCommitRequestMessage,
@@ -143,7 +142,6 @@ export namespace Datasets {
     /* Registers object specs and starts creating the default index
        that contains all objects in the dataset. */
     export type Load = (msg: DatasetOperationParams & {
-      objectSpecs: SerializableObjectSpec[]
       cacheRoot: string
     }) => Promise<void>
 
@@ -218,8 +216,6 @@ export namespace Datasets {
   export namespace Util {
 
     export interface LoadedDataset {
-      specs: SerializableObjectSpec[]
-
       // Absolute path to directory that will contain index caches
       indexDBRoot: string
 
@@ -238,11 +234,14 @@ export namespace Datasets {
     }
 
     export type DefaultIndex = ActiveDatasetIndex<string, Record<string, any> | false>;
-    // False indicates the object had not yet been indexed.
+    // A map of object path to deserialized object data or boolean false.
+    // False indicates the object exists but had not yet been indexed.
 
     export type FilteredIndex = ActiveDatasetIndex<number, string> & {
       predicate: Function
     };
+    // A map of object’s position in the index and its path.
+    // Requested can use that path to query default index for object data.
 
     export type FilteredIndexPredicate = (item: Record<string, any>) => boolean;
 

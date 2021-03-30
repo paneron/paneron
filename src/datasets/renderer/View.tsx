@@ -136,7 +136,7 @@ const repoView: Promise<React.FC<WindowComponentProps>> = new Promise((resolve, 
 });
 
 
-async function getDataset(workingCopyPath: string, datasetPath?: string):
+export async function getDataset(workingCopyPath: string, datasetPath?: string):
 Promise<{
   writeAccess: boolean
   dataset: DatasetInfo

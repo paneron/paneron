@@ -1,22 +1,23 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 
+import { splitEvery } from 'ramda';
 import log from 'electron-log';
 import { jsx, css } from '@emotion/core';
-import React, { ComponentType, useContext, useEffect } from 'react';
-import { splitEvery } from 'ramda';
+import React, { ComponentType, useContext, useEffect, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeGrid as Grid, GridChildComponentProps } from 'react-window';
+import { Button, ButtonGroup, Classes, ControlGroup, Dialog, InputGroup } from '@blueprintjs/core';
 import useRepositoryList from 'renderer/repositories/useRepositoryList';
 import useDebounce from 'renderer/useDebounce';
-import { describeRepository } from 'repositories/ipc';
+import { createRepository, describeRepository } from 'repositories/ipc';
 import { Context } from './context';
-import { Button, ControlGroup, InputGroup } from '@blueprintjs/core';
+import AddSharedRepoForm from './AddSharedRepoForm';
 
 
 const RepoList: React.FC<Record<never, never>> =
 function () {
-  const { state, dispatch, stateLoaded } = useContext(Context);
+  const { state, dispatch, stateLoaded, showMessage } = useContext(Context);
 
   const normalizedRepoFilterString = useDebounce(
     state.repoQuery.matchesText?.trim() ?? '',
@@ -25,6 +26,22 @@ function () {
   const repositories = useRepositoryList({
     matchesText: normalizedRepoFilterString.trim(),
   });
+
+  const [busy, setBusy] = useState(false);
+  const [importDialogShown, setImportDialogShown] = useState(false);
+
+  async function create() {
+    setBusy(true);
+    try {
+      await createRepository.renderer!.trigger({});
+      showMessage({ icon: 'tick-circle', intent: 'success', message: "New repository was created" });
+    } catch (e) {
+      log.error("Error creating repository", e);
+      showMessage({ icon: 'heart-broken', intent: 'danger', message: "Error creating repository" });
+    } finally {
+      setBusy(false);
+    }
+  }
 
   function getGridData(viewportWidth: number): RepoGridData {
     return {
@@ -54,6 +71,19 @@ function () {
 
   return (
     <div css={css`display: flex; flex-flow: column nowrap;`}>
+
+      <ControlGroup>
+        <ButtonGroup>
+          <Button icon="add" title="Create new repository" disabled={busy} onClick={create} />
+          <Button icon="import" title="Import shared repository" disabled={busy || importDialogShown} onClick={() => setImportDialogShown(true)} />
+        </ButtonGroup>
+        <Query />
+      </ControlGroup>
+
+      <Dialog title="Import shared repository" onClose={() => setImportDialogShown(false)} icon="import">
+        <AddSharedRepoForm onCreate={() => setImportDialogShown(false)} />
+      </Dialog>
+
       <div css={css`flex: 1;`}>
         <AutoSizer>
           {({ width, height }) => {
@@ -75,7 +105,6 @@ function () {
           }}
         </AutoSizer>
       </div>
-      <Query />
     </div>
   );
 };
@@ -94,7 +123,9 @@ interface RepoGridData {
 const RepoCell: ComponentType<GridChildComponentProps> =
 function ({ columnIndex, rowIndex, data, style }) {
   const _data: RepoGridData = data;
+
   const workDir = _data.items[rowIndex][columnIndex];
+
   return (
     <div style={style}>
       <Repo isSelected={_data.selectedWorkDir === workDir} workDir={workDir} />
@@ -110,37 +141,41 @@ function ({ workDir, isSelected }) {
     { info: { gitMeta: { workingCopyPath: workDir }, paneronMeta: undefined } });
 
   return (
-    <div css={css`${isSelected ? 'font-weight: bold' : ''}`}>
-      Repository {workDir}: {description.value.info.paneronMeta?.title}
+    <div
+        css={css`${isSelected ? 'font-weight: bold' : ''}`}
+        className={description.isUpdating ? Classes.SKELETON : undefined}>
+      {description.value.info.paneronMeta?.title ?? '(unknown title)'}
     </div>
   );
 };
 
 
-const Query: React.FC<Record<never, never>> = function () {
+const Query: React.FC<{ className?: string }> = function ({ className }) {
   const { state: { repoQuery }, dispatch, stateLoaded } = useContext(Context);
 
   return (
-    <ControlGroup>
-      <InputGroup
-        disabled={!stateLoaded}
-        onChange={(evt: React.FormEvent<HTMLInputElement>) =>
-          dispatch({
-            type: 'update-query',
-            payload: {
-              ...repoQuery,
-              matchesText: evt.currentTarget.value,
-            },
-          }) } />
-      <Button
-        disabled={!stateLoaded}
-        active={repoQuery.sortBy === 'recentlyLoaded'}
-        icon="history"
-        onClick={() => repoQuery.sortBy === 'recentlyLoaded'
-          ? dispatch({ type: 'update-query', payload: { ...repoQuery, sortBy: undefined }})
-          : dispatch({ type: 'update-query', payload: { ...repoQuery, sortBy: 'recentlyLoaded' }})}
-      />
-    </ControlGroup>
+    <InputGroup
+      disabled={!stateLoaded}
+      className={className}
+      rightElement={
+        <Button
+          disabled={!stateLoaded}
+          active={repoQuery.sortBy === 'recentlyLoaded'}
+          icon="history"
+          title="Sort by most recently loaded"
+          onClick={() => repoQuery.sortBy === 'recentlyLoaded'
+            ? dispatch({ type: 'update-query', payload: { ...repoQuery, sortBy: undefined }})
+            : dispatch({ type: 'update-query', payload: { ...repoQuery, sortBy: 'recentlyLoaded' }})}
+        />
+      }
+      onChange={(evt: React.FormEvent<HTMLInputElement>) =>
+        dispatch({
+          type: 'update-query',
+          payload: {
+            ...repoQuery,
+            matchesText: evt.currentTarget.value,
+          },
+        }) } />
   );
 }
 

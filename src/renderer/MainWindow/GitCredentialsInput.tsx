@@ -44,7 +44,7 @@ function ({
     testResult !== undefined &&
     testResult.error === undefined &&
     (!requireBlankRepo || testResult.isBlank) &&
-    (!requirePush || testResult.canPush));
+    (!requirePush ?? testResult.canPush));
 
   const testButtonProps: IButtonProps = {
     disabled: isBusy,
@@ -99,10 +99,10 @@ function ({
           setTestResult(undefined);
         }, 5000);
       } else {
-        setTestResult({ error: remote.errors[0]?.message || 'unknown error' });
+        setTestResult({ error: remote.errors[0]?.message ?? 'unknown error' });
       }
     } catch (e) {
-      setTestResult({ error: e.message || 'unknown error' });
+      setTestResult({ error: e.message ?? 'unknown error' });
     } finally {
       setBusy(false);
     }

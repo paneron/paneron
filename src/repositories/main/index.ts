@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs-extra';
 
-import { app, dialog } from 'electron';
+import { app } from 'electron';
 import log from 'electron-log';
 
 import { serializeMeta } from 'main/meta-serdes';
@@ -13,8 +13,7 @@ import {
   listRepositories,
   repositoriesChanged,
   getDefaultWorkingDirectoryContainer,
-  selectWorkingDirectoryContainer, validateNewWorkingDirectoryPath,
-  getNewRepoDefaults,
+  getNewRepoDefaults, setNewRepoDefaults,
   describeRepository, savePassword, setRemote,
   PANERON_REPOSITORY_META_FILENAME,
   queryGitRemote,
@@ -30,7 +29,7 @@ import {
 import { changesetToPathChanges } from '../worker/datasets';
 import { PaneronRepository, GitRemote, Repository } from '../types';
 
-import { getRepoWorkers, spawnWorker } from './workerManager';
+import { getRepoWorkers, spawnWorker, terminateWorker } from './workerManager';
 
 import {
   getLoadedRepository,
@@ -41,72 +40,62 @@ import {
 
 import {
   updateRepositories,
-  _updateNewRepoDefaults,
   readRepositories,
   readPaneronRepoMeta,
   readRepoConfig,
+  getNewRepoDefaults as getDefaults,
+  setNewRepoDefaults as setDefaults,
 } from './readRepoConfig';
 
 import { saveAuth, getAuth } from './repoAuth';
+import { makeUUIDv4 } from 'utils';
+
+
+const DEFAULT_WORKING_DIRECTORY_CONTAINER = path.join(app.getPath('userData'), 'working_copies');
+fs.ensureDirSync(DEFAULT_WORKING_DIRECTORY_CONTAINER);
+
+
+getNewRepoDefaults.main!.handle(async () => {
+  return await getDefaults();
+});
+
+
+setNewRepoDefaults.main!.handle(async (defaults) => {
+  await setDefaults(defaults);
+  return { success: true };
+});
 
 
 getDefaultWorkingDirectoryContainer.main!.handle(async () => {
-  const _path = path.join(app.getPath('userData'), 'working_copies');
-  await fs.ensureDir(_path);
-  return { path: _path };
+  return { path: DEFAULT_WORKING_DIRECTORY_CONTAINER };
 });
 
 
-validateNewWorkingDirectoryPath.main!.handle(async ({ _path }) => {
-  log.debug("Repositories: Validating working directory path", _path);
-
-  // Container is a directory?
-  let containerAvailable: boolean;
-  try {
-    containerAvailable = (await fs.stat(path.dirname(_path))).isDirectory();
-  } catch (e) {
-    containerAvailable = false;
-  }
-  if (!containerAvailable) {
-    return { available: false };
-  }
-
-  // Path does not exist?
-  try {
-    await fs.stat(_path);
-  } catch (e) {
-    return { available: true };
-  }
-
-  return { available: false };
-});
-
-
-selectWorkingDirectoryContainer.main!.handle(async ({ _default }) => {
-  let directory: string;
-  let result: Electron.OpenDialogReturnValue;
-
-  try {
-    result = await dialog.showOpenDialog({
-      title: "Choose where to store your new register",
-      buttonLabel: "Select directory",
-      message: "Choose where to store your new register",
-      defaultPath: _default,
-      properties: [ 'openDirectory', 'createDirectory' ],
-    })
-  } catch (e) {
-    log.error("Repositories: Dialog to obtain working copy container directory from user errored");
-    return { path: _default };
-  }
-
-  if ((result.filePaths || []).length > 0) {
-    directory = result.filePaths[0];
-  } else {
-    directory = _default;
-  }
-
-  return { path: directory };
-});
+//selectWorkingDirectoryContainer.main!.handle(async ({ _default }) => {
+//  let directory: string;
+//  let result: Electron.OpenDialogReturnValue;
+//
+//  try {
+//    result = await dialog.showOpenDialog({
+//      title: "Choose where to store your new register",
+//      buttonLabel: "Select directory",
+//      message: "Choose where to store your new register",
+//      defaultPath: _default,
+//      properties: [ 'openDirectory', 'createDirectory' ],
+//    })
+//  } catch (e) {
+//    log.error("Repositories: Dialog to obtain working copy container directory from user errored");
+//    return { path: _default };
+//  }
+//
+//  if ((result.filePaths || []).length > 0) {
+//    directory = result.filePaths[0];
+//  } else {
+//    directory = _default;
+//  }
+//
+//  return { path: directory };
+//});
 
 
 loadRepository.main!.handle(async ({ workingCopyPath }) => {
@@ -154,10 +143,6 @@ setRemote.main!.handle(async ({ workingCopyPath, url, username, password }) => {
         repoURL: url,
         auth,
       });
-    });
-
-    await _updateNewRepoDefaults({
-      remote: { username },
     });
 
     if (password) {
@@ -407,11 +392,6 @@ updatePaneronRepository.main!.handle(async ({ workingCopyPath, info }) => {
 });
 
 
-getNewRepoDefaults.main!.handle(async () => {
-  return (await readRepositories()).defaults || {};
-});
-
-
 queryGitRemote.main!.handle(async ({ url, username, password }) => {
   const auth = { username, password };
   if (!auth.password) {
@@ -422,16 +402,25 @@ queryGitRemote.main!.handle(async ({ url, username, password }) => {
 });
 
 
-addRepository.main!.handle(async ({ gitRemoteURL, workingCopyPath, username, password, author }) => {
+addRepository.main!.handle(async ({ gitRemoteURL, username, password }) => {
+  const workDirPath = path.join(DEFAULT_WORKING_DIRECTORY_CONTAINER, makeUUIDv4());
+
+  if (fs.existsSync(workDirPath)) {
+    throw new Error("A repository with this name already exists. Please choose another name!");
+  }
+
+  const { author } = await getDefaults();
+
   const auth = { username, password };
   if (!auth.password) {
     auth.password = (await getAuth(gitRemoteURL, username)).password;
   }
   const worker = await spawnWorker();
   const { canPush } = await worker.git_describeRemote({ url: gitRemoteURL, auth });
+  await terminateWorker(worker);
 
   await updateRepositories((data) => {
-    if (data.workingCopies[workingCopyPath] !== undefined) {
+    if (data.workingCopies[workDirPath] !== undefined) {
       throw new Error("Working copy already exists");
     }
     const newData = { ...data };
@@ -442,19 +431,19 @@ addRepository.main!.handle(async ({ gitRemoteURL, workingCopyPath, username, pas
     if (canPush) {
       remote.writeAccess = true;
     }
-    newData.workingCopies[workingCopyPath] = { remote, author };
+    newData.workingCopies[workDirPath] = { remote, author };
     return newData;
   });
 
   repositoriesChanged.main!.trigger({
     changedWorkingPaths: [],
     deletedWorkingPaths: [],
-    createdWorkingPaths: [workingCopyPath],
+    createdWorkingPaths: [workDirPath],
   });
 
-  const workers = await getRepoWorkers(workingCopyPath);
+  const workers = await getRepoWorkers(workDirPath);
 
-  await workers.sync.initialize({ workDirPath: workingCopyPath });
+  await workers.sync.initialize({ workDirPath: workDirPath });
 
   await workers.sync.git_clone({
     repoURL: gitRemoteURL,
@@ -462,51 +451,48 @@ addRepository.main!.handle(async ({ gitRemoteURL, workingCopyPath, username, pas
   });
 
   repositoriesChanged.main!.trigger({
-    changedWorkingPaths: [workingCopyPath],
+    changedWorkingPaths: [workDirPath],
     deletedWorkingPaths: [],
     createdWorkingPaths: [],
-  });
-
-  await _updateNewRepoDefaults({
-    workingDirectoryContainer: path.dirname(workingCopyPath),
-    author,
-    remote: { username },
   });
 
   return { success: true };
 });
 
 
-createRepository.main!.handle(async ({ workingCopyPath, author, title }) => {
+createRepository.main!.handle(async () => {
+  const workDirPath = path.join(DEFAULT_WORKING_DIRECTORY_CONTAINER, makeUUIDv4());
+
+  if (fs.existsSync(workDirPath)) {
+    throw new Error("A repository with this name already exists. Please choose another name!");
+  }
+
+  const { author } = await getDefaults();
+
   await updateRepositories((data) => {
-    if (data.workingCopies?.[workingCopyPath] !== undefined) {
+    if (data.workingCopies?.[workDirPath] !== undefined) {
       throw new Error("Repository already exists");
     }
     const newData = { ...data };
-    newData.workingCopies[workingCopyPath] = {
+    newData.workingCopies[workDirPath] = {
       author,
     };
     return newData;
   });
 
-  await _updateNewRepoDefaults({
-    workingDirectoryContainer: path.dirname(workingCopyPath),
-    author,
-  });
-
-  const w = (await getRepoWorkers(workingCopyPath)).sync;
+  const w = (await getRepoWorkers(workDirPath)).sync;
 
   await w.git_init({
-    workDir: workingCopyPath,
+    workDir: workDirPath,
   });
 
   const paneronMeta: PaneronRepository = {
-    title,
+    title: "Unnamed repository",
     datasets: {},
   };
 
   const { newCommitHash, conflicts } = await w.repo_updateBuffers({
-    workDir: workingCopyPath,
+    workDir: workDirPath,
     commitMessage: "Initial commit",
     author,
     // _dangerouslySkipValidation: true, // Have to, since we cannot validate data
@@ -526,7 +512,7 @@ createRepository.main!.handle(async ({ workingCopyPath, author, title }) => {
   repositoriesChanged.main!.trigger({
     changedWorkingPaths: [],
     deletedWorkingPaths: [],
-    createdWorkingPaths: [workingCopyPath],
+    createdWorkingPaths: [workDirPath],
   });
 
   return { success: true };

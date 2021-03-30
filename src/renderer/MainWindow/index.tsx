@@ -11,6 +11,7 @@ import Nav from './Nav';
 import RepoList from './RepoList';
 import RepoSettings from './RepoSettings';
 import ContextProvider, { Context } from './context';
+import Dataset from './Dataset';
 
 
 const MainWindow: React.FC<WindowComponentProps> = function () {
