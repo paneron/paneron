@@ -97,7 +97,6 @@ export default function reducer(prevState: State, action: Action): State {
         return {
           ...prevState,
           view: 'repo-list',
-          selectedRepoWorkDir: null,
           selectedDatasetID: null,
         };
       }
@@ -106,7 +105,6 @@ export default function reducer(prevState: State, action: Action): State {
       return {
         ...prevState,
         view: 'repo-list',
-        selectedRepoWorkDir: null,
         selectedDatasetID: null,
       };
 
