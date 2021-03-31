@@ -24,9 +24,9 @@ export const mainWindow = makeWindowForComponent(
   'MainWindow',
   {
     dimensions: {
-      minWidth: 500,
+      minWidth: 800,
       minHeight: 600,
-      width: 500,
+      width: 800,
       height: 600,
     },
   },
