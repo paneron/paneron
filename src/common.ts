@@ -20,7 +20,7 @@ export const makeRandomID = makeEndpoint.main(
 
 export const mainWindow = makeWindowForComponent(
   'mainWindow',
-  () => import('renderer/MainWindow'),
+  () => import('./renderer/MainWindow/index'),
   'MainWindow',
   {
     dimensions: {
