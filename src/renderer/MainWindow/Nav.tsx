@@ -78,7 +78,7 @@ const Nav: React.FC<NavProps> = function ({ className }) {
 const Breadcrumb: React.FC<NavBreadcrumb & { isCurrent: boolean }> =
 function ({ icon, title, onClose, onNavigate, isCurrent }) {
   return (
-    <div css={css`${isCurrent ? 'font-weight: bold' : ''}`}>
+    <div css={css`${isCurrent ? 'font-weight: bold' : ''}`} onClick={onNavigate}>
       {title}
     </div>
   );
