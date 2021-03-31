@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack');
 const ThreadsPlugin = require('threads-plugin');
 
 module.exports = function (config) {
@@ -22,7 +23,10 @@ module.exports = function (config) {
   });
 
   config.plugins.unshift(
-    new ThreadsPlugin({ target: 'electron-node-worker' })
+    new ThreadsPlugin({ target: 'electron-node-worker', plugins: [new webpack.ExternalsPlugin("commonjs", ["leveldown"])] })
+  );
+  config.plugins.unshift(
+    new webpack.ExternalsPlugin("commonjs", ["leveldown"])
   );
 
   return config;
