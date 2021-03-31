@@ -1,8 +1,8 @@
 import { spawn, Worker, Thread } from 'threads';
 import { app } from 'electron';
 import log from 'electron-log';
-import WorkerMethods from '../worker/types';
-import { WorkerSpec } from '../worker';
+import type WorkerMethods from '../worker/types';
+import type { WorkerSpec } from '../worker/index';
 
 
 // TODO: This layer may not be that necessary, considering loadedRepositories
