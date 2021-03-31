@@ -41,7 +41,7 @@ const Nav: React.FC<NavProps> = function ({ className }) {
       : undefined,
   }];
 
-  if (openedRepo) {
+  if (openedRepo && state.view !== 'repo-list') {
     const title = openedRepo.paneronMeta?.title ?? openedRepo.gitMeta?.workingCopyPath;
     breadcrumbs.push({
       title,
@@ -52,7 +52,7 @@ const Nav: React.FC<NavProps> = function ({ className }) {
     });
   }
 
-  if (state.selectedDatasetID && openedDataset) {
+  if (state.selectedDatasetID && openedDataset && state.view === 'dataset') {
     breadcrumbs.push({
       title: state.selectedDatasetID,
       onNavigate: undefined,
