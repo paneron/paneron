@@ -36,7 +36,7 @@ const ContextProvider: React.FC<Record<never, never>> = function ({ children }) 
     'main-window',
   );
   return (
-    <Context.Provider value={{ state, dispatch, stateLoaded, showMessage: toaster.show }}>
+    <Context.Provider value={{ state, dispatch, stateLoaded, showMessage: (opts) => toaster.show(opts) }}>
       {children}
     </Context.Provider>
   );
