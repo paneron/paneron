@@ -40,6 +40,12 @@ export const initialState: State = {
 
 export default function reducer(prevState: State, action: Action): State {
   switch (action.type) {
+    case 'update-query':
+      return {
+        ...prevState,
+        repoQuery: action.payload,
+      };
+
     case 'select-repo':
       return {
         ...prevState,
