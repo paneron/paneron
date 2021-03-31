@@ -102,7 +102,7 @@ export async function spawnWorker(): Promise<Thread & WorkerMethods> {
   return new Promise((resolve, reject) => {
     log.debug("Repositories: Spawning worker");
 
-    spawn<WorkerSpec>(new Worker('./worker')).
+    spawn<WorkerSpec>(new Worker('../worker/index')).
     then((worker) => {
       Thread.events(worker).subscribe(evt => {
         // log.debug("Repositories: Worker event:", evt);
