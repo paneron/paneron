@@ -53,6 +53,8 @@
     "asarUnpack": [
       "**/*.node",
       "node_modules/source-map/**/*",
+      "node_modules/leveldown/**/*",
+      "node_modules/levelup/**/*",
       "node_modules/source-map-support/**/*",
       "node_modules/buffer-from/**/*",
       "dist/main/*.worker.js*"
