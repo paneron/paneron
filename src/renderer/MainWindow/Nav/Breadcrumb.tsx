@@ -32,7 +32,7 @@ function ({ icon, title, onClose, onNavigate, status, progress, onRefresh, class
   } else if (icon?.type === 'blueprint') {
     statusIcon = <Icon {...ICON_PROPS} icon={icon.iconName} />;
   } else if (icon?.type === 'file') {
-    statusIcon = <img src={icon.fileName} />;
+    statusIcon = <img src={icon.fileName} css={css`width: ${iconSizePx}px; height: ${iconSizePx}px`} />;
   } else {
     statusIcon = <Icon {...ICON_PROPS} icon="symbol-circle" />;
   }
