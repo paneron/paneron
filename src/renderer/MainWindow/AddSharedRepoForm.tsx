@@ -10,7 +10,6 @@ import React, { useContext, useState } from 'react';
 import {
   InputGroup,
   FormGroup,
-  ControlGroup,
   Button,
 } from '@blueprintjs/core';
 
@@ -28,7 +27,8 @@ import { Context } from './context';
 const AddSharedRepoForm: React.FC<{
   onCreate: () => void,
   onConfirm?: (opts: { remoteURL: string, username: string, password: string | undefined }) => void,
-}> = function ({ onCreate, onConfirm }) {
+  className?: string,
+}> = function ({ onCreate, onConfirm, className }) {
   const { showMessage } = useContext(Context);
   const [customName, setCustomName] = useState<string | null>(null);
   const [customUsername, setUsername] = useState<string | null>(null);
@@ -72,7 +72,7 @@ const AddSharedRepoForm: React.FC<{
   }
 
   return (
-    <>
+    <div className={className}>
       <FormGroup
           label="Repository URL:"
           helperText="HTTP(S) URL of remote repository.">
@@ -89,19 +89,21 @@ const AddSharedRepoForm: React.FC<{
       <FormGroup
           label="Local name:"
           helperText="This must be unique across all your repositories, and cannot contain spaces or special non-Latin characters. By default, local name is inferred from remote URL.">
-        <ControlGroup fill>
-          <InputGroup
-            value={name ?? ''}
-            required
-            onChange={(evt: React.FormEvent<HTMLInputElement>) =>
-              setCustomName(forceSlug(evt.currentTarget.value))
-            } />
-          <Button
-            disabled={busy || customName === null}
-            onClick={() => setCustomName(null)}
-            title="Reset to name inferred from remote URL"
-            icon="cross" />
-        </ControlGroup>
+        <InputGroup
+          fill
+          rightElement={
+            <Button
+              minimal
+              disabled={busy || customName === null}
+              onClick={() => setCustomName(null)}
+              title="Reset to name inferred from remote URL"
+              icon="cross" />
+          }
+          value={name ?? ''}
+          required
+          onChange={(evt: React.FormEvent<HTMLInputElement>) =>
+            setCustomName(forceSlug(evt.currentTarget.value))
+          } />
       </FormGroup>
 
       <GitCredentialsInput
@@ -117,7 +119,7 @@ const AddSharedRepoForm: React.FC<{
         disabled={!canImport || busy}
         intent={canImport ? 'success' : undefined}
         onClick={importRepo}>Import</Button>
-    </>
+    </div>
   );
 };
 
