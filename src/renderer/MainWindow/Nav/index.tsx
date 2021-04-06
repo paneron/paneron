@@ -56,6 +56,7 @@ const Nav: React.FC<NavProps> = function ({ className }) {
   breadcrumbs.push(<Breadcrumb
     key="paneron"
     title={'Paneron'}
+    icon={{ type: 'file', fileName: `file://${__static}/icon.png` }}
     onNavigate={state.view !== 'repo-list'
       ? () => dispatch({ type: 'close-repo' })
       : undefined}
