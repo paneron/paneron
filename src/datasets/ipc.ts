@@ -45,6 +45,12 @@ export const loadDataset = makeEndpoint.main(
   <{ success: true }>_,
 );
 
+export const unloadDataset = makeEndpoint.main(
+  'unloadDataset',
+  <{ workingCopyPath: string, datasetPath: string }>_,
+  <{ success: true }>_,
+);
+
 export const deleteDataset = makeEndpoint.main(
   'deleteDataset',
   <{ workingCopyPath: string, datasetPath: string }>_,
