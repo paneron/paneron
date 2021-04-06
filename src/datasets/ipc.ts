@@ -1,7 +1,6 @@
 import { ObjectChangeset, ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
 import { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
 import { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
-import { makeWindowForComponent } from 'window';
 import { EmptyPayload, makeEndpoint, _ } from '../ipc';
 import { DatasetInfo, DatasetType, MigrationSequenceOutcome } from './types';
 
@@ -133,23 +132,6 @@ export const reportMigrationStatus = makeEndpoint.renderer(
   'reportMigrationStatus',
   <{ datasetVersion: string, currentMigrationVersionSpec?: string, operation: string, progress?: number }>_,
 )
-
-
-// Windows
-
-export const datasetDetails = makeWindowForComponent(
-  'datasetDetails',
-  () => import('datasets/renderer/View'),
-  'Dataset',
-  {
-    dimensions: {
-      minWidth: 980,
-      minHeight: 600,
-      width: 1100,
-      height: 750,
-    },
-  },
-);
 
 
 // Operations on object changesets, object datasets and object paths
