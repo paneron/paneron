@@ -7,12 +7,14 @@ import { Icon, IconName, PopoverInteractionKind, Spinner } from '@blueprintjs/co
 import { Tooltip2 as Tooltip } from '@blueprintjs/popover2';
 
 
+const iconSizePx = 12;
+
 const ICON_PROPS = {
-  iconSize: 10,
+  iconSize: iconSizePx,
 };
 
 const SPINNER_PROPS = {
-  size: 10,
+  size: iconSizePx,
 };
 
 export const Breadcrumb: React.FC<BreadcrumbProps> =
