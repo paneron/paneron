@@ -190,20 +190,3 @@ export const repositoryBuffersChanged = makeEndpoint.renderer(
   'repositoryBuffersChanged',
   <{ workingCopyPath: string, changedPaths?: Record<string, ChangeStatus | true> }>_,
 );
-
-
-// Windows
-
-export const repositoryDashboard = makeWindowForComponent(
-  'repositoryDashboard',
-  () => import('renderer/repositories/Dashboard'),
-  'Dashboard',
-  {
-    dimensions: {
-      minWidth: 500,
-      minHeight: 600,
-      width: 500,
-      height: 600,
-    },
-  },
-);
