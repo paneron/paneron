@@ -56,7 +56,11 @@ fs.ensureDirSync(DEFAULT_WORKING_DIRECTORY_CONTAINER);
 
 
 getNewRepoDefaults.main!.handle(async () => {
-  return await getDefaults();
+  try {
+    return { defaults: await getDefaults() };
+  } catch (e) {
+    return { defaults: null };
+  }
 });
 
 

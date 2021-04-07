@@ -20,7 +20,7 @@ export const PANERON_REPOSITORY_META_FILENAME = 'paneron.yaml';
 export const getNewRepoDefaults = makeEndpoint.main(
   'getRepositoryDefaults',
   <EmptyPayload>_,
-  <NewRepositoryDefaults>_,
+  <{ defaults: NewRepositoryDefaults | null }>_,
 );
 
 export const setNewRepoDefaults = makeEndpoint.main(

@@ -37,13 +37,13 @@ const AddSharedRepoForm: React.FC<{
 
   const [busy, setBusy] = useState(false);
 
-  const defaults = getNewRepoDefaults.renderer!.useValue({}, { author: { name: '', email: '' }});
+  const defaults = getNewRepoDefaults.renderer!.useValue({}, { defaults: { author: { name: '', email: '' } }});
 
   const remoteComponents = (remoteURL ?? '').split('/');
   const defaultName = remoteComponents[remoteComponents.length - 1];
   const name = customName ?? defaultName;
 
-  const username = customUsername || defaults.value.remote?.username || '';
+  const username = customUsername ?? defaults.value.defaults?.remote?.username ?? '';
 
   const canImport =
     (name ?? '').trim() !== '' &&

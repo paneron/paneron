@@ -13,7 +13,7 @@ import { Button } from '../widgets';
 export const ShareRepoForm: React.FC<{ repo: GitRepository }> =
 function ({ repo }) {
   const [busy, setBusy] = useState(false);
-  const defaults = getNewRepoDefaults.renderer!.useValue({}, { author: { name: '', email: '' }});
+  const defaults = getNewRepoDefaults.renderer!.useValue({}, { defaults: { author: { name: '', email: '' } } });
 
   const [_url, setURL] = useState('');
   const [customUsername, setUsername] = useState('');
@@ -22,8 +22,8 @@ function ({ repo }) {
 
   const [editingPassword, setEditingPassword] = useState(false);
 
-  const username = (customUsername || repo.remote?.username || defaults.value.remote?.username || '').trim();
-  const url = _url.trim() || repo.remote?.url?.trim() || '';
+  const username = (customUsername ?? repo.remote?.username ?? defaults.value.defaults?.remote?.username ?? '').trim();
+  const url = _url.trim() ?? repo.remote?.url?.trim() ?? '';
   const error = _error.trim();
 
   const hasRemote = repo.remote !== undefined;
