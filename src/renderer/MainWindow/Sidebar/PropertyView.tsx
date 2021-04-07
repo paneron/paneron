@@ -18,7 +18,7 @@ const PropertyView: React.FC<PropertyViewProps> = function ({ label, title, tool
     <div
         className={className}
         title={title}
-        css={css`display: flex; flex-flow: row nowrap; align-items: flex-start; font-size: 11px;`}>
+        css={css`display: flex; flex-flow: row nowrap; align-items: flex-start; font-size: 11px; margin-bottom: 5px;`}>
       <div css={css`
             width: 40%;
             padding-right: 10px;
