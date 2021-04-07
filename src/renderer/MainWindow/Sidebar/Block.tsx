@@ -10,6 +10,7 @@ export interface SidebarBlockConfig {
   key: string
   title: string | JSX.Element
   content: JSX.Element
+  collapsedByDefault?: boolean
 }
 
 

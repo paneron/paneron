@@ -13,7 +13,7 @@ interface State {
 }
 
 type Action =
-  | { type: 'expand-all' | 'collapse-all' }
+  | { type: 'expand-all' | 'collapse-all' | 'reset-state' }
   | { type: 'collapse-one' | 'expand-one', payload: { blockKey: string } };
 
 interface SidebarProps {
@@ -36,6 +36,10 @@ function ({ title, stateKey, blocks, representsSelection, className }) {
           return { blockState: blocks.map(b => ({ [b.key]: true })).reduce((prev, curr) => ({ ...prev, ...curr })) };
         case 'collapse-all':
           return { blockState: blocks.map(b => ({ [b.key]: false })).reduce((prev, curr) => ({ ...prev, ...curr })) };
+        case 'reset-state':
+          return { blockState: blocks.
+            map(b => ({ [b.key]: b.collapsedByDefault === true ? false : true })).
+            reduce((prev, curr) => ({ ...prev, ...curr })) };
         case 'expand-one':
           return { blockState: { ...prevState.blockState, [action.payload.blockKey]: true } };
         case 'collapse-one':
@@ -43,10 +47,12 @@ function ({ title, stateKey, blocks, representsSelection, className }) {
         default:
           throw new Error("Unexpected sidebar state");
       }
-    },
-    { blockState: blocks.map(b => ({ [b.key]: true })).reduce((prev, curr) => ({ ...prev, ...curr })) },
-    null,
-    stateKey);
+    }, {
+      blockState:
+        blocks.
+          map(b => ({ [b.key]: b.collapsedByDefault === true ? false : true })).
+          reduce((prev, curr) => ({ ...prev, ...curr })),
+    }, null, stateKey);
 
   return (
     <div css={css`display: flex; flex-flow: column nowrap;`} className={className}>
@@ -64,6 +70,7 @@ function ({ title, stateKey, blocks, representsSelection, className }) {
         </div>
 
         <ButtonGroup css={css`background: rgba(255, 255, 255, 0.6)`}>
+          <Button minimal title="Restore default collapsed state" icon="reset" onClick={() => dispatch({ type: 'reset-state' })} />
           <Button minimal title="Expand all" icon="expand-all" onClick={() => dispatch({ type: 'expand-all' }) } />
           <Button minimal title="Collapse all" icon="collapse-all" onClick={() => dispatch({ type: 'collapse-all' })} />
         </ButtonGroup>
