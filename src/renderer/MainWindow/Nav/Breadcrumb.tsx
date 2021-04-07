@@ -62,8 +62,7 @@ function ({ icon, title, onClose, onNavigate, status, progress, onRefresh, class
           align-items: center;
           transform: skew(45deg);
         `}
-      className={className}
-      onClick={onNavigate}>
+      className={className}>
 
       <div css={css`margin-right: .5rem;`}>
         {statusIcon}
