@@ -26,6 +26,8 @@ import {
   describeGitRepository,
 } from '../ipc';
 
+import { makeUUIDv4 } from 'utils';
+
 import { changesetToPathChanges } from '../worker/datasets';
 import { PaneronRepository, GitRemote, Repository } from '../types';
 
@@ -48,7 +50,6 @@ import {
 } from './readRepoConfig';
 
 import { saveAuth, getAuth } from './repoAuth';
-import { makeUUIDv4 } from 'utils';
 
 
 const DEFAULT_WORKING_DIRECTORY_CONTAINER = path.join(app.getPath('userData'), 'working_copies');
@@ -103,8 +104,12 @@ getDefaultWorkingDirectoryContainer.main!.handle(async () => {
 
 
 loadRepository.main!.handle(async ({ workingCopyPath }) => {
-  const status = await loadRepo(workingCopyPath);
-  return status;
+  if (workingCopyPath) {
+    const status = await loadRepo(workingCopyPath);
+    return status;
+  } else {
+    throw new Error("Missing repo working directory path");
+  }
 });
 
 
@@ -264,7 +269,6 @@ listRepositories.main!.handle(async ({ query: { matchesText, sortBy } }) => {
     await Promise.all(Object.keys(workingCopies).map(async (workDir) => {
       let paneronMeta: PaneronRepository | undefined;
       try {
-        getLoadedRepository(workDir);
         paneronMeta = await readPaneronRepoMeta(workDir);
       } catch (e) {
         paneronMeta = undefined;
@@ -343,13 +347,11 @@ describeGitRepository.main!.handle(async ({ workingCopyPath }) => {
 describeRepository.main!.handle(async ({ workingCopyPath }) => {
   const gitRepo = await readRepoConfig(workingCopyPath);
 
-  getLoadedRepository(workingCopyPath);
-
   let paneronRepo: PaneronRepository | undefined;
   try {
     paneronRepo = await readPaneronRepoMeta(workingCopyPath);
   } catch (e) {
-    log.error("Unable to get Paneron repository information");
+    log.error("Unable to get Paneron repository information for working directory", workingCopyPath);
     paneronRepo = undefined;
   }
   return {
@@ -445,22 +447,22 @@ addRepository.main!.handle(async ({ gitRemoteURL, username, password }) => {
     createdWorkingPaths: [workDirPath],
   });
 
-  const workers = await getRepoWorkers(workDirPath);
+  //const workers = await getRepoWorkers(workDirPath);
 
-  await workers.sync.initialize({ workDirPath: workDirPath });
+  //await workers.sync.initialize({ workDirPath: workDirPath });
 
-  await workers.sync.git_clone({
-    repoURL: gitRemoteURL,
-    auth,
-  });
+  //await workers.sync.git_clone({
+  //  repoURL: gitRemoteURL,
+  //  auth,
+  //});
 
-  repositoriesChanged.main!.trigger({
-    changedWorkingPaths: [workDirPath],
-    deletedWorkingPaths: [],
-    createdWorkingPaths: [],
-  });
+  //repositoriesChanged.main!.trigger({
+  //  changedWorkingPaths: [workDirPath],
+  //  deletedWorkingPaths: [],
+  //  createdWorkingPaths: [],
+  //});
 
-  return { success: true };
+  return { success: true, workDir: workDirPath };
 });
 
 
@@ -486,6 +488,8 @@ createRepository.main!.handle(async () => {
 
   const w = (await getRepoWorkers(workDirPath)).sync;
 
+  log.debug("Repositories: Initializing new working directory", workDirPath);
+
   await w.git_init({
     workDir: workDirPath,
   });
@@ -494,6 +498,8 @@ createRepository.main!.handle(async () => {
     title: "Unnamed repository",
     datasets: {},
   };
+
+  log.debug("Repositories: Writing Paneron meta", workDirPath);
 
   const { newCommitHash, conflicts } = await w.repo_updateBuffers({
     workDir: workDirPath,
@@ -513,11 +519,15 @@ createRepository.main!.handle(async () => {
     throw new Error("Could not create a repository");
   }
 
+  log.debug("Repositories: Notifying about newly created repository");
+
   repositoriesChanged.main!.trigger({
     changedWorkingPaths: [],
     deletedWorkingPaths: [],
     createdWorkingPaths: [workDirPath],
   });
+
+  log.debug("Repositories: Created repository");
 
   return { success: true };
 });

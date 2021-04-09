@@ -21,7 +21,7 @@ export const RepoBreadcrumb: React.FC<{
     (async () => {
       try {
         const result = await loadRepository.renderer!.trigger({ workingCopyPath: workDir });
-        const status = result.result
+        const status = result.result;
         if (status) {
           setStatus(status);
         } else {
@@ -37,13 +37,13 @@ export const RepoBreadcrumb: React.FC<{
 
   const [status, setStatus] = useState<RepoStatus>(initialStatus);
 
-  const throttledSetStatus = throttle(50, setStatus, false);
+  const throttledSetStatus = throttle(10, setStatus, false);
 
   repositoryStatusChanged.renderer!.useEvent(async ({ workingCopyPath, status }) => {
     if (workingCopyPath === workDir) {
       throttledSetStatus(status);
     }
-  }, []);
+  }, [workDir]);
 
   let progress: BreadcrumbProps["progress"];
   let error: true | string | undefined;
@@ -52,12 +52,14 @@ export const RepoBreadcrumb: React.FC<{
 
       // Only these operations can provide specific progress info
       case 'pushing':
-      case 'pulling': // @ts-ignore: fallthrough case in switch
+      case 'pulling':
       case 'cloning':
+        console.debug("Rendering status with progrss", status.busy.progress);
         progress = status.busy.progress
           ? { ...status.busy.progress, phase: `${status.busy.operation}: ${status.busy.progress.phase}…` }
           : { phase: status.busy.operation };
         error = status.busy.networkError;
+        break;
 
       // For the rest, show indeterminate progress
       default:
@@ -69,9 +71,15 @@ export const RepoBreadcrumb: React.FC<{
     error = undefined;
   }
 
+  console.debug("Rendering status with progrss?", progress);
+
   return (
     <Breadcrumb
-      title={repoInfo.paneronMeta?.title ?? repoInfo.gitMeta.workingCopyPath}
+      title={
+        repoInfo.paneronMeta?.title ??
+        repoInfo.gitMeta.workingCopyPath.slice(
+          repoInfo.gitMeta.workingCopyPath.length - 20,
+          repoInfo.gitMeta.workingCopyPath.length)}
       icon={{ type: 'blueprint', iconName: "git-repo" }}
       onClose={onClose}
       onNavigate={onNavigate}

@@ -1,5 +1,5 @@
-import { DiffStatus } from '@riboseinc/paneron-extension-kit/types/changes';
-import { stripTrailingSlash } from 'utils';
+import type { DiffStatus } from '@riboseinc/paneron-extension-kit/types/changes';
+import { stripTrailingSlash } from '../../utils';
 
 
 export function normalizeURL(repoURL: string): string {

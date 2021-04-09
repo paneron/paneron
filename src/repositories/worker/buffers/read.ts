@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import git from 'isomorphic-git';
 import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
-import { stripLeadingSlash } from 'utils';
+import { stripLeadingSlash } from '../../../utils';
 import { listDescendantPaths, listDescendantPathsAtVersion } from './list';
 import { Repositories } from '../types';
 
@@ -29,7 +29,7 @@ export async function readBuffers(
 ): Promise<Record<string, Uint8Array>> {
   const buffers: Record<string, Uint8Array> = {};
   for await (const relativeBufferPath of listDescendantPaths(rootPath)) {
-    const bufferData = readBuffer(path.join(rootPath, relativeBufferPath));
+    const bufferData = readBuffer(path.join(rootPath, stripLeadingSlash(relativeBufferPath)));
     if (bufferData) {
       buffers[relativeBufferPath] = bufferData;
     }

@@ -9,14 +9,15 @@ import { Observable, Subject } from 'threads/observable';
 
 import { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
 import { Changeset, ChangeStatus, PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
-import { findSerDesRuleForExt } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
+import { findSerDesRuleForPath } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
 
-import { hash, stripLeadingSlash, stripTrailingSlash } from 'utils';
+import { hash, stripLeadingSlash, stripTrailingSlash } from '../../utils';
 import WorkerMethods, { Datasets, Repositories } from './types';
 import { listDescendantPaths, listDescendantPathsAtVersion } from './buffers/list';
 import { readBuffersAtVersion } from './buffers/read';
 import { listObjectPaths } from './objects/list';
 import { readObjectCold } from './objects/read';
+import { throttle } from 'throttle-debounce';
 
 
 // We’ll just keep track of loaded datasets right here in memory.
@@ -35,33 +36,39 @@ const load: Datasets.Lifecycle.Load = async function ({
   datasetDir,
   cacheRoot,
 }) {
-  await unload({ workDir, datasetDir });
-
   const normalizedDatasetDir = normalizeDatasetDir(datasetDir);
 
-  datasets[workDir] ||= {};
-  datasets[workDir][normalizedDatasetDir] = {
-    indexDBRoot: cacheRoot,
-    indexes: {},
-  };
+  try {
+    getLoadedDataset(workDir, normalizedDatasetDir);
+    console.info("Worker: Datasets: Load: Already loaded!", workDir, normalizedDatasetDir);
 
-  console.info("Loaded dataset", workDir, normalizedDatasetDir);
+  } catch (e) {
+    console.info("Worker: Datasets: Load: Unloading first to clean up", workDir, normalizedDatasetDir);
 
-  const defaultIndex: Datasets.Util.DefaultIndex = createIndex(
-    workDir,
-    normalizedDatasetDir,
-    'default',
-    {
-      keyEncoding: 'string',
-      valueEncoding: 'json',
-    },
-  );
+    await unload({ workDir, datasetDir });
 
-  datasets[workDir][normalizedDatasetDir].indexes.default = defaultIndex,
+    datasets[workDir] ||= {};
+    datasets[workDir][normalizedDatasetDir] = {
+      indexDBRoot: cacheRoot,
+      indexes: {},
+    };
 
-  console.info("Filling in default index", workDir, normalizedDatasetDir);
+    const defaultIndex: Datasets.Util.DefaultIndex = createIndex(
+      workDir,
+      normalizedDatasetDir,
+      'default',
+      {
+        keyEncoding: 'string',
+        valueEncoding: 'json',
+      },
+    );
 
-  fillInDefaultIndex(workDir, normalizedDatasetDir, defaultIndex);
+    datasets[workDir][normalizedDatasetDir].indexes.default = defaultIndex,
+
+    console.info("Worker: Datasets: Load: Initialized dataset in-memory structure and default index", workDir, normalizedDatasetDir);
+
+    fillInDefaultIndex(workDir, normalizedDatasetDir, defaultIndex);
+  }
 }
 
 
@@ -79,13 +86,15 @@ const unload: Datasets.Lifecycle.Unload = async function ({
   } catch (e) {
     // TODO: Implement logging in worker
   }
+  delete datasets[workDir]?.[datasetDir];
+  console.info("Worker: Datasets: Unloaded", workDir, datasetDir)
 }
 
 
 const unloadAll: Datasets.Lifecycle.UnloadAll = async function ({
   workDir,
 }) {
-  for (const datasetDir of Object.keys(datasets[workDir] || {})) {
+  for (const datasetDir of Object.keys(datasets[workDir] ?? {})) {
     await unload({ workDir, datasetDir });
   }
 }
@@ -101,7 +110,25 @@ const getOrCreateFilteredIndex: WorkerMethods["ds_index_getOrCreateFiltered"] = 
   const defaultIndex: Datasets.Util.DefaultIndex =
     getIndex(workDir, normalizedDatasetDir);
 
+  if (defaultIndex.status.progress) {
+    console.debug("Worker: Datasets: getOrCreateFilteredIndex: Awaiting default index progress to finish...");
+    await new Promise<void>((resolve, reject) => {
+      defaultIndex.statusSubject.subscribe(
+        (val) => { if (val.progress === undefined) { resolve() } },
+        (err) => reject(err),
+        () => reject("Default index status stream completed without progress having finished"));
+    });
+    console.debug("Worker: Datasets: getOrCreateFilteredIndex: Awaiting default index progress to finish: Done");
+  } else {
+    console.debug("Worker: Datasets: getOrCreateFilteredIndex: Default index is ready beforehand");
+  }
+
   const filteredIndexID = hash(queryExpression); // XXX
+
+  console.debug(
+    `Worker: Datasets: getOrCreateFilteredIndex: Creating ${datasetDir} index from ${defaultIndex.status.objectCount} items based on query`,
+    queryExpression,
+    filteredIndexID);
 
   let filteredIndex: Datasets.Util.FilteredIndex;
   try {
@@ -112,7 +139,11 @@ const getOrCreateFilteredIndex: WorkerMethods["ds_index_getOrCreateFiltered"] = 
       filteredIndexID,
     ) as Datasets.Util.FilteredIndex;
 
+    console.debug("Worker: Datasets: getOrCreateFilteredIndex: Already exists");
+
   } catch (e) {
+
+    console.debug("Worker: Datasets: getOrCreateFilteredIndex: Creating");
 
     filteredIndex = createIndex(
       workDir,
@@ -159,7 +190,7 @@ const describeIndex: WorkerMethods["ds_index_describe"] = async function ({
 }
 
 
-const streamIndexStatus: WorkerMethods["ds_index_streamStatus"] = async function ({
+const streamIndexStatus: WorkerMethods["ds_index_streamStatus"] = function ({
   workDir,
   datasetDir,
   indexID,
@@ -177,7 +208,7 @@ const getFilteredObject: Datasets.Indexes.GetFilteredObject = async function ({
   position,
 }) {
   if (indexID === 'default') {
-    throw new Error("Default index is not supported by getIndexedObject");
+    throw new Error("Default index is not supported by getFilteredObject");
   }
 
   const normalizedDatasetDir = normalizeDatasetDir(datasetDir);
@@ -288,7 +319,7 @@ async function updateIndexes(
 
   async function readObjectVersions(objectPath: string):
   Promise<[ Record<string, any> | null, Record<string, any> | null ]> {
-    const rule = findSerDesRuleForExt(objectPath);
+    const rule = findSerDesRuleForPath(objectPath);
     return [
       rule.deserialize(await readBuffersAtVersion(workDir, path.join(datasetDir, objectPath), oid1), {}),
       rule.deserialize(await readBuffersAtVersion(workDir, path.join(datasetDir, objectPath), oid2), {}),
@@ -322,7 +353,7 @@ async function updateIndexes(
       const idx = ds.indexes[idxID] as Datasets.Util.FilteredIndex;
       // If either object version matches given filtered index’s predicate,
       // mark that index as affected and exclude from further checks
-      if (idx.predicate(objv1) || idx.predicate(objv2)) {
+      if ((objv1 && idx.predicate(objectPath, objv1)) || (objv2 && idx.predicate(objectPath, objv2))) {
         affectedFilteredIndexes.push(idx);
         filteredIndexIDsToCheck.splice(filteredIndexIDsToCheck.indexOf(idxID, 1));
       }
@@ -341,26 +372,34 @@ async function updateDefaultIndex(
   workDir: string,
   datasetDir: string,
   index: Datasets.Util.DefaultIndex,
-  objectPaths: AsyncGenerator<string>,
+  changedObjectPathGenerator: AsyncGenerator<string>,
+  statusReporter: (indexedItemCount: number) => void,
 ) {
-  for await (const objectPath of objectPaths) {
-    console.debug("Worker: Datasets: Filling in default index: Reading", objectPath);
+  let loaded: number = 0;
+
+  for await (const objectPath of changedObjectPathGenerator) {
+    //console.debug("Worker: Datasets: updateDefaultIndex: Reading...", objectPath);
+    await new Promise((resolve) => setTimeout(resolve, 5));
 
     const obj = await readObjectCold(path.join(workDir, datasetDir, objectPath));
 
-    console.debug("Worker: Datasets: Filling in default index: Reading", objectPath, obj);
-
     if (obj !== null) {
       await index.dbHandle.put(objectPath, obj);
+      //console.debug("Worker: Datasets: updateDefaultIndex: Indexed", objectPath, obj ? Object.keys(obj) : null);
     } else {
       try {
         await index.dbHandle.del(objectPath);
+        //console.debug("Worker: Datasets: updateDefaultIndex: Deleted", objectPath);
       } catch (e) {
         if (e.type !== 'NotFoundError') {
           throw e;
         }
       }
     }
+
+    loaded += 1;
+
+    statusReporter(loaded);
   }
 }
 
@@ -439,17 +478,29 @@ async function fillInDefaultIndex(
   datasetDir: string,
   index: Datasets.Util.DefaultIndex,
 ) {
-  let total: number = 0;
+  let changedCount: number = 0;
+  let totalCount: number = 0;
+
+  console.debug("Worker: Datasets: fillInDefaultIndex: Starting", workDir, datasetDir);
+
+  index.statusSubject.next({
+    objectCount: 0,
+    progress: {
+      phase: 'counting',
+      total: 0,
+      loaded: 0,
+    },
+  });
 
   // Collect object paths
   const objectPaths =
     listObjectPaths(listDescendantPaths(path.join(workDir, datasetDir)));
   for await (const objectPath of objectPaths) {
     index.statusSubject.next({
-      objectCount: 0,
+      objectCount: totalCount,
       progress: {
         phase: 'counting',
-        total,
+        total: changedCount,
         loaded: 0,
       },
     });
@@ -458,24 +509,65 @@ async function fillInDefaultIndex(
     } catch (e) {
       if (e.type === 'NotFoundError') {
         await index.dbHandle.put(objectPath, false);
-        total += 1;
+        changedCount += 1;
+      }
+    }
+    totalCount += 1;
+  }
+
+  index.statusSubject.next({
+    objectCount: totalCount,
+    progress: {
+      phase: 'counting',
+      total: changedCount,
+      loaded: 0,
+    },
+  });
+
+  console.debug("Worker: Datasets: fillInDefaultIndex: Read objects total", changedCount);
+
+  async function* objectPathsToBeIndexed(): AsyncGenerator<string> {
+    for await (const data of index.dbHandle.createReadStream()) {
+      const { key, value } = data as unknown as { key: string, value: Record<string, any> | false };
+      if (value === false) {
+        yield key;
       }
     }
   }
 
-  async function* objectPathsToBeIndexed(): AsyncGenerator<string> {
-    for await (const _key of index.dbHandle.createKeyStream()) {
-      yield _key as string;
-    }
-  }
+  console.debug("Worker: Datasets: fillInDefaultIndex: Updating default index", workDir, datasetDir);
 
-  console.debug("Worker: Datasets: Filling in default index", workDir, datasetDir);
+  index.statusSubject.next({
+    objectCount: totalCount,
+    progress: {
+      phase: 'indexing',
+      total: changedCount,
+      loaded: 0,
+    },
+  });
+
+  function updater(count: number) {
+    index.statusSubject.next({
+      objectCount: totalCount,
+      progress: {
+        phase: 'indexing',
+        total: changedCount,
+        loaded: count,
+      },
+    });
+  }
+  const updaterDebounced = throttle(100, true, updater);
 
   await updateDefaultIndex(
     workDir,
     datasetDir,
     index,
-    objectPathsToBeIndexed());
+    objectPathsToBeIndexed(),
+    updaterDebounced);
+
+  index.statusSubject.next({
+    objectCount: totalCount,
+  });
 }
 
 async function fillInFilteredIndex(
@@ -488,6 +580,29 @@ async function fillInFilteredIndex(
 
   const total = defaultIndex.status.objectCount;
 
+  console.debug("Worker: Datasets: fillInFilteredIndex: Operating on objects from default index", total);
+
+  filteredIndex.statusSubject.next({
+    objectCount: 0,
+    progress: {
+      phase: 'indexing',
+      total,
+      loaded: 0,
+    },
+  });
+
+  function updater(indexed: number, loaded: number) {
+    filteredIndex.statusSubject.next({
+      objectCount: indexed,
+      progress: {
+        phase: 'indexing',
+        total,
+        loaded,
+      },
+    });
+  }
+  const updaterDebounced = throttle(100, true, updater);
+
   let indexed: number = 0;
   let loaded: number = 0;
   for await (const data of defaultIndexDB.createReadStream()) {
@@ -496,21 +611,24 @@ async function fillInFilteredIndex(
     const objectPath: string = key;
     const objectData: Record<string, any> = value;
 
-    if (predicate(objectData) === true) {
+    //console.debug("Worker: Datasets: fillInFilteredIndex: Checking object", loaded, objectPath);
+    await new Promise((resolve) => setTimeout(resolve, 5));
+
+    if (predicate(objectPath, objectData) === true) {
+      //console.debug("Worker: Datasets: fillInFilteredIndex: Checking object: Matches!");
       filteredIndexDB.put(indexed, objectPath);
       indexed += 1;
     }
     loaded += 1;
 
-    filteredIndex.statusSubject.next({
-      objectCount: indexed,
-      progress: {
-        phase: 'indexing',
-        total,
-        loaded,
-      },
-    })
+    updaterDebounced(indexed, loaded);
   }
+
+  filteredIndex.statusSubject.next({
+    objectCount: indexed,
+  });
+
+  console.debug("Worker: Datasets: fillInFilteredIndex: Checking object: Indexed vs. checked", indexed, loaded);
 }
 
 function createIndex<K, V>(
@@ -528,6 +646,10 @@ function createIndex<K, V>(
     statusSubject: new Subject<IndexStatus>(), 
     dbHandle: levelup(encode(leveldown(dbPath), codecOptions)),
   };
+
+  idx.statusSubject.subscribe(status => {
+    idx.status = status;
+  });
 
   datasets[workDir][datasetDir].indexes[indexID] = idx;
   return idx;

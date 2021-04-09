@@ -1,6 +1,6 @@
 import type { OpenDialogProps } from '@riboseinc/paneron-extension-kit/types';
 import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
-import { makeWindowForComponent } from 'window';
+import { makeWindowForComponent } from './window';
 import { EmptyPayload, makeEndpoint, _ } from './ipc';
 
 

@@ -3,7 +3,7 @@ import { format as formatUrl } from 'url';
 import { BrowserWindow, Menu } from 'electron';
 import log from 'electron-log';
 
-import { WindowOpenerParams, isComponentWindowSource, isExternalWindowSource } from '../window';
+import { WindowOpenerParams, isComponentWindowSource, isExternalWindowSource } from './types';
 
 
 const isDevelopment = process.env.NODE_ENV !== 'production';

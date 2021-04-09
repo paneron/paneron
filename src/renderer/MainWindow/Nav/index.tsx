@@ -4,7 +4,7 @@
 import { jsx, css } from '@emotion/core';
 import React, { useContext } from 'react';
 import { Classes, Colors, Icon } from '@blueprintjs/core';
-import { describeRepository } from 'repositories/ipc';
+import { describeRepository, repositoryBuffersChanged } from 'repositories/ipc';
 import { getDatasetInfo } from 'datasets/ipc';
 import { Context } from '../context';
 import Breadcrumb from './Breadcrumb';
@@ -20,9 +20,17 @@ export interface NavProps {
 const Nav: React.FC<NavProps> = function ({ className }) {
   const { state, dispatch, showMessage } = useContext(Context);
 
-  const openedRepo = describeRepository.renderer!.useValue(
+  const openedRepoResp = describeRepository.renderer!.useValue(
     { workingCopyPath: state.selectedRepoWorkDir ?? '' },
-    { info: { gitMeta: { workingCopyPath: state.selectedRepoWorkDir ?? '' } } }).value.info;
+    { info: { gitMeta: { workingCopyPath: state.selectedRepoWorkDir ?? '' } } });
+
+  const openedRepo = openedRepoResp.value.info;
+
+  repositoryBuffersChanged.renderer!.useEvent(async ({ workingCopyPath }) => {
+    if (workingCopyPath === state.selectedRepoWorkDir) {
+      openedRepoResp.refresh();
+    }
+  }, [state.selectedRepoWorkDir]);
 
   const openedDataset = getDatasetInfo.renderer!.useValue(
     { workingCopyPath: state.selectedRepoWorkDir ?? '', datasetPath: state.selectedDatasetID ?? '' },

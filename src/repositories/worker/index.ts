@@ -85,13 +85,12 @@ function lockingRepoOperationWithStatusReporter<I extends GitOperationParams, O>
   lockOpts?: { failIfBusy?: boolean, timeout?: number },
 ): ExposedRepoOperation<I, O> {
   return lockingRepoOperation(async (args) => {
-    return await gitLock.acquire('1', async () => {
-      if (repositoryStatus === null) {
-        throw new Error("Repository is not initialized");
-      }
-      return await func(args, getRepoStatusUpdater(repositoryStatus.workDirPath));
-    }, { timeout: lockOpts?.timeout });
-  });
+    if (repositoryStatus === null) {
+      throw new Error("Repository is not initialized");
+    }
+    console.debug("Got repository lock");
+    return await func(args, getRepoStatusUpdater(repositoryStatus.workDirPath));
+  }, lockOpts);
 }
 
 
@@ -115,10 +114,11 @@ function getRepoStatusUpdater(workDir: string) {
     if (repositoryStatus === null) {
       throw new Error("Repository is not initialized");
     }
+    console.debug("repo status updater: reporting status", workDir, newStatus)
     repositoryStatus.statusSubject.next(newStatus);
   }
 
-  const updaterDebounced = throttle(100, updater);
+  const updaterDebounced = throttle(100, false, updater);
 
   return (newStatus: RepoStatus) => {
     if (repositoryStatus === null) {
@@ -145,7 +145,7 @@ const methods: WorkerSpec = {
 
   initialize({ workDirPath }) {
     if (repositoryStatus !== null && repositoryStatus.workDirPath !== workDirPath) {
-      throw new Error("Repository already initialized");
+      throw new Error("Repository already initialized with a different working directory path");
     }
 
     if (repositoryStatus?.workDirPath === workDirPath) {

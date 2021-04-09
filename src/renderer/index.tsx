@@ -39,6 +39,8 @@ async function renderApp() {
   // Prepare getter for requested top-level window UI React component
   const componentID = searchParams.get('c');
 
+  log.debug("Opening window", componentID);
+
   if (componentID !== null) {
     const importer = getComponent(componentID);
     if (importer) {
@@ -63,6 +65,7 @@ async function renderApp() {
   ReactDOM.render(topLevelEl, containerEl);
 }
 
+import 'common';
 import 'repositories/ipc';
 import 'datasets/ipc';
 

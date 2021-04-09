@@ -1,8 +1,8 @@
 import { resolve, relative } from 'path';
 import fs from 'fs';
 import git, { WalkerEntry } from 'isomorphic-git';
-import { stripLeadingSlash } from 'utils';
 import { DiffStatus } from '@riboseinc/paneron-extension-kit/types/changes';
+import { stripLeadingSlash } from '../../../utils';
 
 
 const { lstat, readdir } = fs.promises;

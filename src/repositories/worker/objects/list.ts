@@ -5,14 +5,14 @@ import path from 'path';
 const COMPOSITE_OBJECT_DIRNAME_EXTENSION = '.pan';
 
 
-/* Composite objects are directories. */
+/* Composite objects are directories with a special extension. Returns slash-prepended path. */
 function getCompositeObjectPathForBufferPath(bufferPath: string): string | null {
   const parts = bufferPath.split(path.posix.sep);
   const firstCompositePartIndex =
     parts.findIndex(part => path.extname(part.toLowerCase()) === COMPOSITE_OBJECT_DIRNAME_EXTENSION);
   if (firstCompositePartIndex >= 0) {
     const objectPathParts = parts.slice(0, firstCompositePartIndex + 1);
-    return objectPathParts.join(path.posix.sep);
+    return `/${objectPathParts.join(path.posix.sep)}`;
   } else {
     return null;
   }
@@ -32,6 +32,8 @@ export async function* listObjectPaths(
     const objectPath = getCompositeObjectPathForBufferPath(bufferPath);
     if (objectPath !== null) {
       yield objectPath;
+    } else {
+      yield bufferPath;
     }
   }
 }

@@ -12,14 +12,14 @@ import parseJSON from 'date-fns/parseJSON';
 import { PluginManager } from 'live-plugin-manager';
 
 import { spawn, Worker, Thread } from 'threads';
+import { MainPlugin } from '@riboseinc/paneron-extension-kit/types';
 import {
   getPluginInfo, getPluginManagerProps,
   installPlugin, listAvailablePlugins,
   pluginsUpdated, upgradePlugin,
-} from 'plugins';
+} from '../../plugins';
+import { Extension } from '../../plugins/types';
 import { Methods as WorkerMethods, WorkerSpec } from './worker';
-import { Extension } from 'plugins/types';
-import { MainPlugin } from '@riboseinc/paneron-extension-kit/types';
 
 
 const devFolder = app.isPackaged === false ? process.env.PANERON_PLUGIN_DIR : undefined;

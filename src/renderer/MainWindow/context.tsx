@@ -18,7 +18,7 @@ interface ContextSpec {
   stateLoaded: boolean
   showMessage: (opts: IToastProps) => void
   isBusy: boolean
-  performOperation: (gerund: string, func: () => Promise<void>) => void
+  performOperation: <R>(gerund: string, func: () => Promise<R>) => () => Promise<R>
 }
 
 
@@ -28,33 +28,48 @@ export const Context = React.createContext<ContextSpec>({
   stateLoaded: false,
   showMessage: (opts) => toaster.show(opts),
   isBusy: true,
-  performOperation: () => void 0,
+  performOperation: (_, f) => f,
 });
 
 
 const ContextProvider: React.FC<Record<never, never>> = function ({ children }) {
   const [_operationKey, setOperationKey] = useState<string | undefined>(undefined);
 
-  async function performOperation(gerund: string, func: () => Promise<void>) {
-    const opKey = toaster.show({ message: `${gerund}…`, intent: 'primary', icon: <Spinner size={Icon.SIZE_STANDARD} /> });
-    setOperationKey(opKey);
-    try {
-      await func();
-      toaster.dismiss(opKey);
-      toaster.show({ message: `Done ${gerund}`, intent: 'success', icon: 'tick-circle' });
-      setOperationKey(undefined);
-    } catch (e) {
-      toaster.dismiss(opKey);
-      toaster.show({
-        message: `Problem ${gerund}. The error said: “${e.message}”`,
-        intent: 'danger',
-        icon: 'error',
+  function performOperation<R>(gerund: string, func: () => Promise<R>) {
+    return async () => {
+      const opKey = toaster.show({
+        message: `${gerund}…`,
+        intent: 'primary',
+        icon: <Spinner size={Icon.SIZE_STANDARD} />,
         timeout: 0,
-        action: { text: 'Acknowledge', icon: 'heart-broken' },
-        onDismiss: () => {
-          setOperationKey(undefined);
-        },
       });
+      setOperationKey(opKey);
+      try {
+        const result: R = await func();
+        toaster.dismiss(opKey);
+        toaster.show({ message: `Done ${gerund}`, intent: 'success', icon: 'tick-circle' });
+        setOperationKey(undefined);
+        return result;
+      } catch (e) {
+        let errMsg: string;
+        if (e.message.indexOf('Error:')) {
+          const msgParts = e.message.split('Error:');
+          errMsg = msgParts[msgParts.length - 1].trim();
+        } else {
+          errMsg = e.message;
+        }
+        toaster.dismiss(opKey);
+        toaster.show({
+          message: `Problem ${gerund}. The error said: “${errMsg}”`,
+          intent: 'danger',
+          icon: 'error',
+          timeout: 0,
+          onDismiss: () => {
+            setOperationKey(undefined);
+          },
+        });
+        throw e;
+      }
     }
   }
 

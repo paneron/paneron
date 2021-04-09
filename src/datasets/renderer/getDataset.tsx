@@ -8,8 +8,8 @@ import {
   getPluginInfo,
   getPluginManagerProps,
   installPlugin
-} from '../../plugins';
-import { describeRepository } from '../../repositories/ipc';
+} from 'plugins';
+import { describeRepository, loadRepository } from 'repositories/ipc';
 import { DatasetInfo } from '../types';
 import { getDatasetInfo, loadDataset } from '../ipc';
 
@@ -39,6 +39,7 @@ export default async function getDataset(workingCopyPath: string, datasetPath?: 
 
   // Prepare plugin info and manager
   try {
+    await loadRepository.renderer!.trigger({ workingCopyPath });
     const [repoInfo, datasetInfo, pluginManagerProps] = await Promise.all([
       describeRepository.renderer!.trigger({ workingCopyPath }),
       getDatasetInfo.renderer!.trigger({ workingCopyPath, datasetPath }),

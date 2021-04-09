@@ -1,11 +1,10 @@
 /** @jsx jsx */
-/** @jsxFrag React.Fragment */
 
 import { jsx, css } from '@emotion/core';
 import React, { useContext } from 'react';
-import { NonIdealState } from '@blueprintjs/core';
+import { Classes, NonIdealState } from '@blueprintjs/core';
 
-import { WindowComponentProps } from 'window';
+import { WindowComponentProps } from 'window/types';
 
 import Nav from './Nav';
 import RepoList from './RepoList';
@@ -17,37 +16,37 @@ import Dataset from './Dataset';
 const MainWindow: React.FC<WindowComponentProps> = function () {
   return (
     <React.StrictMode>
-      <div css={css`position: absolute; top: 0; right: 0; bottom: 0; left: 0; box-sizing: border-box;`}>
-        <Nav
-          css={css`position: absolute; top: 0; right: 0; left: 0; height: ${NAV_HEIGHT_PX}px`} />
-        <div
-            css={css`
-              position: absolute; top: ${NAV_HEIGHT_PX}; right: 0; left: 0; bottom: 0;
-              & > :first-child {
+      <ContextProvider>
+        <div css={css`position: absolute; top: 0; right: 0; bottom: 0; left: 0; box-sizing: border-box; overflow: hidden;`}>
+          <Nav
+            css={css`position: absolute; bottom: 0; right: 0; height: ${NAV_HEIGHT_PX}px; z-index: 2;`} />
+          <div
+              css={css`
                 position: absolute; top: 0; right: 0; left: 0; bottom: 0;
-              }
-            `}>
-          <ContextProvider>
-            <MainView />
-          </ContextProvider>
+                display: flex;
+                flex-flow: column nowrap;
+                z-index: 1;
+              `}>
+            <MainView css={css`flex: 1; background: white;`} className={Classes.ELEVATION_3} />
+          </div>
         </div>
-      </div>
+      </ContextProvider>
     </React.StrictMode>
   );
 };
 
 
-const MainView: React.FC<Record<never, never>> = function () {
+const MainView: React.FC<{ className?: string }> = function ({ className }) {
   const { state: { view } } = useContext(Context);
 
   if (view === 'repo-list') {
-    return <RepoList />;
+    return <RepoList className={className} />;
 
   } else if (view === 'repo-settings') {
-    return <RepoSettings />;
+    return <RepoSettings className={className} />;
 
   } else if (view === 'dataset') {
-    return <Dataset />;
+    return <Dataset className={className} />;
 
   } else {
     return <NonIdealState
@@ -57,7 +56,7 @@ const MainView: React.FC<Record<never, never>> = function () {
 }
 
 
-const NAV_HEIGHT_PX = '80';
+const NAV_HEIGHT_PX = '24';
 
 
 export default MainWindow;

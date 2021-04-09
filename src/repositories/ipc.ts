@@ -1,4 +1,3 @@
-import { makeWindowForComponent } from '../window';
 import { EmptyPayload, makeEndpoint, _ } from '../ipc';
 import {
   GitAuthor,
@@ -41,7 +40,7 @@ export const getDefaultWorkingDirectoryContainer = makeEndpoint.main(
 export const addRepository = makeEndpoint.main(
   'addRepository',
   <{ gitRemoteURL: string, username: string, password?: string }>_,
-  <{ success: true }>_,
+  <{ workDir: string, success: true }>_,
 );
 
 export const createRepository = makeEndpoint.main(

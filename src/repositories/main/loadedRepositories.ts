@@ -5,7 +5,7 @@ import log from 'electron-log';
 
 import { PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
 
-import { objectsChanged } from 'datasets/ipc';
+import { objectsChanged } from '../../datasets/ipc';
 
 import { GitRepository, RepoStatus } from '../types';
 import { repositoryBuffersChanged, repositoryStatusChanged } from '../ipc';
@@ -248,8 +248,9 @@ function syncRepoRepeatedly(
         }
       }
       if (loadedRepositories[workingCopyPath]) {
-        repoSyncLog('debug', "Cooldown before next sync", REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
-        loadedRepositories[workingCopyPath].nextSyncTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
+        repoSyncLog('error', "Working copy path doesn’t stat and remote is not specified, cancelling sync");
+        // repoSyncLog('debug', "Cooldown before next sync", REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
+        // loadedRepositories[workingCopyPath].nextSyncTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
       }
       return;
     }
@@ -301,11 +302,11 @@ function syncRepoRepeatedly(
         }
 
       } else {
-        repoSyncLog('warn', "Remote is not specified");
-        repoSyncLog('debug', "Cooldown before next sync", REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
-        if (loadedRepositories[workingCopyPath]) {
-          loadedRepositories[workingCopyPath].nextSyncTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
-        }
+        repoSyncLog('error', "Remote is not specified, cancelling sync");
+        // repoSyncLog('debug', "Cooldown before next sync", REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
+        // if (loadedRepositories[workingCopyPath]) {
+        //   loadedRepositories[workingCopyPath].nextSyncTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
+        // }
       }
 
     } catch (e) {

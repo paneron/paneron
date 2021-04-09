@@ -3,6 +3,7 @@ import path from 'path';
 import crypto from 'crypto';
 import { app, BrowserWindow, dialog, protocol } from 'electron';
 import log from 'electron-log';
+import type { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 
 
 require('events').EventEmitter.defaultMaxListeners = 20;
@@ -15,17 +16,15 @@ if (process.platform === 'linux' && process.env.SNAP && process.env.SNAP_USER_CO
   app.setAppLogsPath();
 }
 
-import { mainWindow } from '../common';
-
 // No-op import to execute initialization code
-import 'state/main';
-import 'plugins/main';
-import 'repositories/main';
-import 'datasets/main';
-import 'clipboard/main';
+import '../state/main';
+import '../plugins/main';
+import '../repositories/main';
+import '../datasets/main';
+import '../clipboard/main';
 
-import { chooseFileFromFilesystem, makeRandomID } from 'common';
-import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
+import { mainWindow } from '../common';
+import { chooseFileFromFilesystem, makeRandomID } from '../common';
 
 
 function preventDefault(e: Electron.Event) {

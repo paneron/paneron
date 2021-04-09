@@ -1,7 +1,7 @@
 import path from 'path';
 import log from 'electron-log';
 import { DatasetContext, RendererPlugin } from '@riboseinc/paneron-extension-kit/types';
-import { INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
+import { IndexStatus, INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
 
 import {
   makeRandomID,
@@ -23,6 +23,7 @@ import {
   indexStatusChanged,
   updateObjects,
 } from '../ipc';
+import { useEffect, useState } from 'react';
 
 
 export interface ContextGetterProps {
@@ -90,10 +91,17 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
 
     useIndexDescription: function _useIndexDescription (opts) {
       const { indexID } = opts;
+
+      const [status, setStatus] = useState<IndexStatus>(INITIAL_INDEX_STATUS);
+
       const result = describeIndex.renderer!.useValue({
         ...datasetParams,
         ...opts,
       }, { status: INITIAL_INDEX_STATUS });
+
+      useEffect(() => {
+        setStatus(result.value.status);
+      }, [result.value.status]);
 
       indexStatusChanged.renderer!.useEvent(async (evt) => {
         if (
@@ -101,11 +109,18 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
           datasetPath === evt.datasetPath &&
           indexID === evt.indexID
         ) {
-          result.refresh();
+          setStatus(evt.status);
+          //result.refresh();
         }
-      }, []);
+      }, [workingCopyPath, datasetPath, indexID]);
 
-      return result;
+      return {
+        ...result,
+        value: {
+          ...result.value,
+          status,
+        },
+      };
     },
 
     useFilteredIndex: function _useFilteredIndex (opts) {

@@ -20,7 +20,7 @@ import {
 
 import { forceSlug } from 'utils';
 
-import GitCredentialsInput from './GitCredentialsInput';
+import GitCredentialsInput from './repositories/GitCredentialsInput';
 import { Context } from './context';
 
 

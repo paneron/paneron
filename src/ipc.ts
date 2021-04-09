@@ -1,8 +1,8 @@
 import { ipcMain, IpcRendererEvent, IpcMainInvokeEvent, ipcRenderer } from 'electron';
 import log from 'electron-log';
 import { useEffect, useState } from 'react';
-import { hash, toJSONPreservingUndefined } from 'utils';
-import { notifyAll, notifyWithTitle } from './main/window';
+import { hash, toJSONPreservingUndefined } from './utils';
+import { notifyAll, notifyWithTitle } from './window/main';
 
 
 // TODO: No need to segregate them by process type here?
@@ -214,6 +214,7 @@ export const makeEndpoint: EndpointMaker = {
                     } else {
                       updateErrors([]);
                       updateValue(resp.result);
+                      log.debug("IPC: Got result", name, resp.result);
                     }
                   } else {
                     // TODO: updateErrors()?

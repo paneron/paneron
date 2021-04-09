@@ -2,7 +2,7 @@ import git from 'isomorphic-git';
 import fs from 'fs';
 import { remove, ensureDir } from 'fs-extra';
 
-import { checkPathIsOccupied } from 'main/checkPathIsOccupied';
+import { checkPathIsOccupied } from '../../../main/checkPathIsOccupied';
 import { Git } from '../types';
 
 

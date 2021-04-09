@@ -1,52 +1,12 @@
 import log from 'electron-log';
-import { MenuItemConstructorOptions } from 'electron';
-import { makeEndpoint, _ } from './ipc';
-import * as window from './main/window';
-
-
-export interface WindowOptions {
-  title: string
-
-  dimensions?: {
-    minHeight?: number
-    minWidth?: number
-    height?: number
-    width?: number
-    maxHeight?: number
-    maxWidth?: number
-  }
-  frameless?: boolean
-  winParams?: any
-  menuTemplate?: MenuItemConstructorOptions[]
-  ignoreCache?: boolean
-  showWhileLoading?: boolean
-  forceDebug?: boolean
-}
-export interface ComponentWindowSource {
-  component: string
-  componentParams?: string
-}
-export interface ExternalWindowSource {
-  url: string
-}
-export type WindowSource = ComponentWindowSource | ExternalWindowSource
-export type WindowOpenerParams = WindowSource & WindowOptions
-
-export function isComponentWindowSource(source: WindowSource): source is ComponentWindowSource {
-  return source.hasOwnProperty('component');
-}
-export function isExternalWindowSource(source: WindowSource): source is ExternalWindowSource {
-  return source.hasOwnProperty('url');
-}
+import { makeEndpoint, _ } from '../ipc';
+import { open as openWindow } from './main';
+import { WindowComponentProps, WindowOptions, WindowOpenerParams } from './types';
 
 
 //export const openWindow = makeEndpoint('open-window', 'main', <WindowOpenerParams>_, <{}>_);
 
 type DefaultImporter<T> = () => Promise<{ default: T | Promise<T> }>;
-
-export interface WindowComponentProps {
-  query: URLSearchParams
-}
 
 type WindowComponentImporter = DefaultImporter<React.FC<WindowComponentProps>>;
 
@@ -90,7 +50,7 @@ export function makeWindowForComponent
       title: `${title} ${extraOpts.title || ''}`,
     };
 
-    await window.open(effectiveParams);
+    await openWindow(effectiveParams);
   }
 
   if (process.type === 'browser') {

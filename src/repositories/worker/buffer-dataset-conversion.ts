@@ -1,6 +1,6 @@
 import { ObjectChangeset } from '@riboseinc/paneron-extension-kit/types/objects';
 import { BufferChange, BufferChangeset, BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
-import { findSerDesRuleForExt } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
+import { findSerDesRuleForPath } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
 
 
 /* Converts object changeset
@@ -22,7 +22,7 @@ export function toBufferChangeset(
   const buffers: BufferChangeset = {};
 
   for (const [objectPath, change] of Object.entries(objectChangeset)) {
-    const rule = findSerDesRuleForExt(objectPath);
+    const rule = findSerDesRuleForPath(objectPath);
 
     const newObjectBuffersRelative = rule.serialize(change.newValue, {});
     const oldObjectBuffersRelative = rule.serialize(change.oldValue, {});

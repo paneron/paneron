@@ -1,12 +1,11 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 
-import { jsx } from '@emotion/core';
+import { jsx, css } from '@emotion/core';
 import React, { useState } from 'react';
-import { IButtonProps } from '@blueprintjs/core';
-import { InputGroup, FormGroup, ControlGroup } from '@blueprintjs/core';
+import { Button, IButtonProps } from '@blueprintjs/core';
 import { queryGitRemote } from 'repositories/ipc';
-import { Button } from '../widgets';
+import PropertyView, { TextInput } from '../Sidebar/PropertyView';
 
 
 interface GitCredentialsInputProps {
@@ -44,7 +43,7 @@ function ({
     testResult !== undefined &&
     testResult.error === undefined &&
     (!requireBlankRepo || testResult.isBlank) &&
-    (!requirePush ?? testResult.canPush));
+    (!requirePush || testResult.canPush));
 
   const testButtonProps: IButtonProps = {
     disabled: isBusy,
@@ -65,7 +64,7 @@ function ({
 
   // Error cases
   } else if (testResult.error) {
-    testButtonProps.text = `Failed to connect—please check URL, credentials and connection. ${testResult.error}`;
+    testButtonProps.text = `Failed to connect—please check URL, credentials and connection and click again. ${testResult.error}`;
   } else if (!testResult.isBlank && requireBlankRepo) {
     testButtonProps.text = "Repository is not empty";
   } else if (!testResult.canPush && requirePush) {
@@ -110,35 +109,24 @@ function ({
 
   return (
     <>
-      <FormGroup
-          label="Access credentials:"
-          helperText={<>
-            {onEditUsername && onEditPassword
-              ? <p>Credentials that grant you write access this repository. E.g., in case of GitHub, use your GitHub username and either your GitHub password or Personal Access Token.</p>
-              : null}
-            <p>Paneron stores your password or PAT using your system’s secret management mechanism, and communicates it only to this remote and only during synchronization.</p>
-            <Button fill {...testButtonProps} />
-          </>}>
-        <ControlGroup fill>
-          <InputGroup
-            value={username}
-            required
-            disabled={!onEditUsername}
-            onChange={(evt: React.FormEvent<HTMLInputElement>) =>
-              onEditUsername!(evt.currentTarget.value.replace(/ /g,'-').replace(/[^\w-]+/g,''))
-            } />
-          <InputGroup
-            value={onEditPassword ? password : '••••••••••••'}
-            type="password"
-            placeholder="Password or access token"
-            required
-            disabled={!onEditPassword}
-            onChange={(evt: React.FormEvent<HTMLInputElement>) =>
-              onEditPassword!(evt.currentTarget.value)
-            } />
-        </ControlGroup>
-      </FormGroup>
+      <PropertyView label="Username" title="In case of GitHub, use your GitHub username">
+        <TextInput
+          value={username}
+          inputGroupProps={{ required: true }}
+          onChange={onEditUsername ? (val) => onEditUsername!(val.replace(/ /g,'-').replace(/[^\w-]+/g,'')) : undefined} />
+      </PropertyView>
+      <PropertyView
+          label="Password"
+          title="In case of GitHub, your GitHub password (might not work) or Personal Access Token (recommended). \
+            Paneron stores your password or PAT using your system’s secret management mechanism, and communicates it only to this remote and only during synchronization.">
+        <TextInput
+          value={onEditPassword ? password : '•••••••••'}
+          inputGroupProps={{ type: 'password', placeholder: 'Password or PAT' }}
+          onChange={onEditPassword ? (val) => onEditPassword!(val) : undefined} />
+      </PropertyView>
+      <Button small fill outlined {...testButtonProps} css={css`.bp3-button-text { overflow: hidden; }`} />
     </>
+
   );
 }
 

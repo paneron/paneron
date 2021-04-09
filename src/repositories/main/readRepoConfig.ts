@@ -6,15 +6,21 @@ import AsyncLock from 'async-lock';
 import yaml from 'js-yaml';
 import { app } from 'electron';
 import log from 'electron-log';
-import { deserializeMeta } from 'main/meta-serdes';
+import { normalizeDatasetDir } from '../../repositories/worker/datasets';
+import { DatasetInfo } from '../../datasets/types';
+import { deserializeMeta } from '../../main/meta-serdes';
 import { PANERON_REPOSITORY_META_FILENAME } from '../ipc';
 import { GitRepository, NewRepositoryDefaults, PaneronRepository } from '../types';
-import { getLoadedRepository } from './loadedRepositories';
+import { spawnWorker, terminateWorker } from './workerManager';
 
 
 const REPO_LIST_FILENAME = 'repositories.yaml';
 
 const REPO_LIST_PATH = path.join(app.getPath('userData'), REPO_LIST_FILENAME);
+
+const readerWorker = spawnWorker();
+app.on('quit', async () => await terminateWorker(await readerWorker));
+
 
 interface RepoListSpec {
   defaults?: NewRepositoryDefaults;
@@ -35,21 +41,6 @@ export async function readRepoConfig(workingCopyPath: string): Promise<GitReposi
   } else {
     log.error("Repositories: Cannot find configuration for working copy", workingCopyPath);
     throw new Error("Working copy config not found");
-  }
-}
-
-export async function readPaneronRepoMeta(workingCopyPath: string): Promise<PaneronRepository> {
-  const readerWorker = getLoadedRepository(workingCopyPath).workers.reader;
-
-  const meta = (await readerWorker.repo_getBufferDataset({
-    workDir: workingCopyPath,
-    paths: [PANERON_REPOSITORY_META_FILENAME],
-  }))[PANERON_REPOSITORY_META_FILENAME];
-
-  if (meta === null) {
-    throw new Error("Paneron repository metadata file is not found");
-  } else {
-    return deserializeMeta(meta);
   }
 }
 
@@ -83,6 +74,9 @@ export async function updateRepositories(updater: (data: RepoListSpec) => RepoLi
   });
 }
 
+
+// Defaults
+
 export async function setNewRepoDefaults(defaults: NewRepositoryDefaults) {
   if (defaultsAreComplete(defaults)) {
     return await updateRepositories((data) => ({
@@ -99,7 +93,7 @@ export async function getNewRepoDefaults(): Promise<NewRepositoryDefaults> {
   const defaults = (await readRepositories()).defaults;
 
   if (defaults && defaultsAreComplete(defaults)) {
-    return defaults;
+    return { remote: defaults.remote, author: defaults.author };
   } else {
     throw new Error("Defaults are missing");
   }
@@ -107,4 +101,43 @@ export async function getNewRepoDefaults(): Promise<NewRepositoryDefaults> {
 
 function defaultsAreComplete(defaults: Partial<NewRepositoryDefaults>): defaults is NewRepositoryDefaults {
   return defaults.author?.email && defaults.author?.name ? true : false;
+}
+
+
+// Paneron meta
+
+export async function readPaneronRepoMeta(workingCopyPath: string): Promise<PaneronRepository> {
+  const meta = (await (await readerWorker).repo_getBufferDataset({
+    workDir: workingCopyPath,
+    paths: [PANERON_REPOSITORY_META_FILENAME],
+  }))[PANERON_REPOSITORY_META_FILENAME];
+
+  if (meta === null) {
+    throw new Error("Paneron repository metadata file is not found");
+  } else {
+    return deserializeMeta(meta);
+  }
+}
+
+
+// Dataset meta
+
+export const DATASET_FILENAME = 'panerondataset.yaml';
+
+
+export async function readDatasetMeta
+(workDir: string, datasetDir: string):
+Promise<DatasetInfo> {
+  const datasetDirNormalized = normalizeDatasetDir(datasetDir);
+  const datasetMetaPath = `/${path.join(datasetDirNormalized, DATASET_FILENAME)}`;
+  const meta = (await (await readerWorker).repo_getBufferDataset({
+    workDir,
+    paths: [datasetMetaPath],
+  }))[datasetMetaPath];
+
+  if (meta === null) {
+    throw new Error("Missing dataset metadata file");
+  } else {
+    return deserializeMeta(meta);
+  }
 }

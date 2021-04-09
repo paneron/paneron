@@ -1,4 +1,4 @@
-import { EmptyPayload, makeEndpoint, _ } from 'ipc';
+import { EmptyPayload, makeEndpoint, _ } from '../ipc';
 
 
 export const resetStateGlobal = makeEndpoint.main(

@@ -18,7 +18,7 @@ import {
   repositoriesChanged,
   repositoryBuffersChanged,
 } from 'repositories/ipc';
-import { readPaneronRepoMeta, readRepoConfig } from 'repositories/main/readRepoConfig';
+import { readPaneronRepoMeta, readRepoConfig, DATASET_FILENAME, readDatasetMeta } from 'repositories/main/readRepoConfig';
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
 
 import {
@@ -30,20 +30,23 @@ import {
   getObjectDataset,
   getOrCreateFilteredIndex,
   describeIndex,
+  indexStatusChanged,
+  unloadDataset,
+  getFilteredObject,
 } from '../ipc';
-
-import { DATASET_FILENAME, readDatasetMeta } from './util';
 
 import './migrations';
 
 
 getDatasetInfo.main!.handle(async ({ workingCopyPath, datasetPath }) => {
+  log.debug("Reading dataset info", workingCopyPath, datasetPath);
   if (!datasetPath) {
-    throw new Error("Dataset path is required.");
+    return { info: null }
   }
   try {
     return { info: await readDatasetMeta(workingCopyPath, datasetPath) };
   } catch (e) {
+    log.error("Error reading dataset meta", e);
     return { info: null };
   }
 });
@@ -166,15 +169,22 @@ loadDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
 
   const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
 
-  log.debug("Datasets: Load: Loading dataset");
+  log.debug("Datasets: Load: Loading dataset…");
 
-  repoWorker.ds_load({
+  await repoWorker.ds_load({
     workDir: workingCopyPath,
     datasetDir: datasetPath,
     cacheRoot,
   });
 
-  log.debug("Datasets: Load: Registering object specs… Done");
+  repoWorker.ds_index_streamStatus({
+    workDir: workingCopyPath,
+    datasetDir: datasetPath,
+  }).subscribe(status => {
+    indexStatusChanged.main!.trigger({ workingCopyPath, datasetPath, status });
+  });
+
+  log.debug("Datasets: Load: Done");
 
   // TODO: Build custom indexes, if any, here
   // const dbDirName = crypto.createHash('sha1').
@@ -187,20 +197,39 @@ loadDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
 });
 
 
+unloadDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
+  const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
+  log.debug("Unloading dataset", workingCopyPath, datasetPath);
+  await repoWorker.ds_unload({ workDir: workingCopyPath, datasetDir: datasetPath });
+  return { success: true };
+});
+
+
 getOrCreateFilteredIndex.main!.handle(async ({ workingCopyPath, datasetPath, queryExpression }) => {
   const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
-  return repoWorker.ds_index_getOrCreateFiltered({
+
+  const { indexID } = await repoWorker.ds_index_getOrCreateFiltered({
     workDir: workingCopyPath,
     datasetDir: datasetPath,
     queryExpression,
   });
+
+  repoWorker.ds_index_streamStatus({
+    workDir: workingCopyPath,
+    datasetDir: datasetPath,
+    indexID,
+  }).subscribe(status => {
+    indexStatusChanged.main!.trigger({ workingCopyPath, datasetPath, status, indexID });
+  });
+
+  return { indexID };
 });
 
 
 describeIndex.main!.handle(async ({ workingCopyPath, datasetPath, indexID }) => {
-  if ((indexID ?? '') !== '') {
+  if (indexID !== '') {
     const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
-    return repoWorker.ds_index_describe({
+    return await repoWorker.ds_index_describe({
       workDir: workingCopyPath,
       datasetDir: datasetPath,
       indexID,
@@ -219,6 +248,22 @@ getObjectDataset.main!.handle(async ({ workingCopyPath, datasetPath, objectPaths
     objectPaths,
   });
   return { data };
+});
+
+
+getFilteredObject.main!.handle(async ({ workingCopyPath, datasetPath, indexID, position }) => {
+  if (!indexID) {
+    return { objectPath: '' };
+  } else {
+    const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
+    const { objectPath } = await repoWorker.ds_index_getFilteredObject({
+      workDir: workingCopyPath,
+      datasetDir: datasetPath,
+      indexID,
+      position,
+    });
+    return { objectPath };
+  }
 });
 
 

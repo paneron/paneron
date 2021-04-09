@@ -230,7 +230,7 @@ export namespace Datasets {
       status: IndexStatus
       statusSubject: Subject<IndexStatus>
 
-      predicate?: Function
+      predicate?: FilteredIndexPredicate
     }
 
     export type DefaultIndex = ActiveDatasetIndex<string, Record<string, any> | false>;
@@ -238,12 +238,12 @@ export namespace Datasets {
     // False indicates the object exists but had not yet been indexed.
 
     export type FilteredIndex = ActiveDatasetIndex<number, string> & {
-      predicate: Function
+      predicate: FilteredIndexPredicate
     };
     // A map of object’s position in the index and its path.
     // Requested can use that path to query default index for object data.
 
-    export type FilteredIndexPredicate = (item: Record<string, any>) => boolean;
+    export type FilteredIndexPredicate = (itemPath: string, item: Record<string, any>) => boolean;
 
   }
 }
@@ -303,7 +303,7 @@ export default interface WorkerMethods {
 
   ds_index_getOrCreateFiltered: ReturnsPromise<Datasets.Indexes.GetOrCreateFiltered>
   ds_index_describe: ReturnsPromise<Datasets.Indexes.Describe>
-  ds_index_streamStatus: ReturnsPromise<Datasets.Indexes.StreamStatus>
+  ds_index_streamStatus: Datasets.Indexes.StreamStatus
   ds_index_getFilteredObject: Datasets.Indexes.GetFilteredObject
 
 

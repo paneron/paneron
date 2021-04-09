@@ -2,7 +2,7 @@ import { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
 import { readBuffers } from '../buffers/read';
 import { Datasets } from '../types';
 import { getIndex, normalizeDatasetDir } from '../datasets';
-import { findSerDesRuleForExt } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
+import { findSerDesRuleForPath } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
 
 
 /* Do not read too many objects at once. May be slow. */
@@ -12,6 +12,8 @@ export const getObjectDataset: Datasets.Data.GetObjectDataset = async function (
   objectPaths,
 }) {
   const datasetDirNormalized = normalizeDatasetDir(datasetDir);
+
+  console.debug("Worker: Repositories: getObjectDataset: Reading…", objectPaths)
 
   const objectDataset: ObjectDataset = (await Promise.all(
     objectPaths.map(async (objectPath) => {
@@ -23,6 +25,8 @@ export const getObjectDataset: Datasets.Data.GetObjectDataset = async function (
       };
     })
   )).reduce((prev, curr) => ({ ...prev, ...curr }), {});
+
+  console.debug("Worker: Repositories: getObjectDataset: Got data", objectDataset);
 
   return objectDataset;
 }
@@ -82,7 +86,7 @@ export async function readObjectCold(
   rootPath: string,
 ): Promise<Record<string, any> | null> {
   const bufferDataset = await readBuffers(rootPath);
-  const rule = findSerDesRuleForExt(rootPath);
+  const rule = findSerDesRuleForPath(rootPath);
   const obj: Record<string, any> = rule.deserialize(bufferDataset, {});
   return obj;
 }

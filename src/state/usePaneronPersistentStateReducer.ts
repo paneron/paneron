@@ -1,8 +1,8 @@
-import { loadState, storeState } from './ipc';
 import usePersistentStateReducer, {
   BaseAction,
   PersistentStateReducerHook,
 } from 'renderer/usePersistentStateReducer';
+import { loadState, storeState } from './ipc';
 
 
 /* An implementation of PersistentStateReducer
