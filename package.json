@@ -39,7 +39,8 @@
     "staticSourceDirectory": "src/static",
     "whiteListedModules": [
       "threads",
-      "leveldown"
+      "leveldown",
+      "abstract-leveldown"
     ],
     "main": {
       "webpackConfig": "main.webpack.js"
