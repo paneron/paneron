@@ -38,7 +38,8 @@
   "electronWebpack": {
     "staticSourceDirectory": "src/static",
     "whiteListedModules": [
-      "threads"
+      "threads",
+      "leveldown"
     ],
     "main": {
       "webpackConfig": "main.webpack.js"
