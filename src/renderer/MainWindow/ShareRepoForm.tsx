@@ -15,7 +15,7 @@ function ({ repo }) {
   const { performOperation, isBusy } = useContext(Context);
   const defaults = getNewRepoDefaults.renderer!.useValue({}, { defaults: { author: { name: '', email: '' } } });
 
-  const [_url, setURL] = useState('');
+  const [_url] = useState('');
   const [customUsername, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
