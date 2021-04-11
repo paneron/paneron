@@ -1,4 +1,6 @@
-import { css } from '@emotion/core';
+/** @jsx jsx */
+
+import { jsx, css } from '@emotion/core';
 import React from 'react';
 import { Colors } from '@blueprintjs/core';
 
