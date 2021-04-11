@@ -8,7 +8,7 @@ import { deleteRepository, describeRepository, repositoriesChanged, Repository }
 import { Context } from '../context';
 import Sidebar from '../Sidebar';
 import PropertyView from '../Sidebar/PropertyView';
-import ShareRepoForm from 'renderer/MainWindow/ShareRepoForm';
+import ShareRepoForm from 'renderer/MainWindow/repositories/ShareRepoForm';
 import PanelSeparator from "../Sidebar/PanelSeparator";
 
 

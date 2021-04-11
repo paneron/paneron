@@ -5,9 +5,9 @@ import { css, jsx } from '@emotion/core';
 import React, { useContext, useState } from 'react';
 import { ButtonGroup } from '@blueprintjs/core';
 import { getNewRepoDefaults, GitRepository, savePassword, setRemote, unsetRemote, unsetWriteAccess } from 'repositories/ipc';
-import GitCredentialsInput from './repositories/GitCredentialsInput';
-import { Button } from '../widgets';
-import { Context } from './context';
+import GitCredentialsInput from './GitCredentialsInput';
+import { Button } from '../../widgets';
+import { Context } from '../context';
 
 
 export const ShareRepoForm: React.FC<{ repo: GitRepository }> =
