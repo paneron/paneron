@@ -495,6 +495,7 @@ async function fillInDefaultIndex(
 ) {
 
   function defaultIndexStatusReporter(status: IndexStatus) {
+    index.status = status;
     indexStatusChanged.main!.trigger({
       workingCopyPath: workDir,
       datasetPath: datasetDir,
