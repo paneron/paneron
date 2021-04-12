@@ -11,13 +11,13 @@ import { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
 import { Changeset, ChangeStatus, PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
 import { findSerDesRuleForPath } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
 
-import { hash, stripLeadingSlash, stripTrailingSlash } from '../../utils';
+import { getLoadedRepository } from 'repositories/main/loadedRepositories';
+import { listDescendantPaths } from 'repositories/worker/buffers/list';
+import { hash, stripLeadingSlash, stripTrailingSlash } from 'utils';
 import { API as Datasets, ReturnsPromise } from '../types';
-import { listDescendantPaths } from '../../repositories/worker/buffers/list';
 import { listObjectPaths } from './objects/list';
 import { readObjectCold } from './objects/read';
-import { getLoadedRepository } from 'repositories/main/loadedRepositories';
-import { indexStatusChanged } from 'datasets/ipc';
+import { indexStatusChanged } from '../ipc';
 
 
 // We’ll just keep track of loaded datasets right here in memory.
