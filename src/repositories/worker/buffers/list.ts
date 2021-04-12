@@ -1,11 +1,22 @@
 import { resolve, relative } from 'path';
 import fs from 'fs';
 import git, { WalkerEntry } from 'isomorphic-git';
-import { DiffStatus } from '@riboseinc/paneron-extension-kit/types/changes';
+import { ChangeStatus, DiffStatus } from '@riboseinc/paneron-extension-kit/types/changes';
 import { stripLeadingSlash } from '../../../utils';
+import { Repositories } from '../types';
 
 
 const { lstat, readdir } = fs.promises;
+
+
+export const resolveChanges: Repositories.Data.ResolveChanges = async ({ workDir, rootPath, oidBefore, oidAfter }) => {
+  return {
+    changedBuffers: await listDescendantPathsAtVersion(rootPath, workDir, oidBefore, {
+      refToCompare: oidAfter,
+      onlyChanged: true,
+    }) as [path: string, changeStatus: ChangeStatus][], // Type casting reflects the effect of onlyChanged
+  };
+}
 
 
 /* Streams paths that are descendants of given root path

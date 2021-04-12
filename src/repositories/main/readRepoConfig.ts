@@ -6,7 +6,7 @@ import AsyncLock from 'async-lock';
 import yaml from 'js-yaml';
 import { app } from 'electron';
 import log from 'electron-log';
-import { normalizeDatasetDir } from '../../repositories/worker/datasets';
+import { normalizeDatasetDir } from '../../datasets/main/loadedDatasets';
 import { DatasetInfo } from '../../datasets/types';
 import { deserializeMeta } from '../../main/meta-serdes';
 import { PANERON_REPOSITORY_META_FILENAME } from '../ipc';

@@ -38,9 +38,7 @@
   "electronWebpack": {
     "staticSourceDirectory": "src/static",
     "whiteListedModules": [
-      "threads",
-      "leveldown",
-      "abstract-leveldown"
+      "threads"
     ],
     "main": {
       "webpackConfig": "main.webpack.js"
@@ -169,7 +167,6 @@
     "@riboseinc/paneron-registry-kit": "2.0.0-dev3",
     "@riboseinc/reprose": "^1.0.0-alpha9",
     "@types/mark.js": "^8.11.5",
-    "abstract-leveldown": "6.3.0",
     "async-lock": "^1.2.2",
     "axios": "^0.21.1",
     "cytoscape": "3.16.1",
@@ -203,8 +200,7 @@
     "semver": "^7.3.2",
     "source-map-support": "^0.5.19",
     "subleveldown": "^5.0.1",
-    "throttle-debounce": "^3.0.1",
-    "xtend": "4.0.2"
+    "throttle-debounce": "^3.0.1"
   },
   "devDependencies": {
     "@emotion/eslint-plugin": "^11.0.0",

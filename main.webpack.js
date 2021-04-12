@@ -23,7 +23,7 @@ module.exports = function (config) {
   });
 
   config.plugins.unshift(
-    new ThreadsPlugin({ target: 'electron-node-worker', plugins: [new webpack.ExternalsPlugin("commonjs", ["leveldown"])] })
+    new ThreadsPlugin({ target: 'electron-node-worker' })
   );
   config.plugins.unshift(
     new webpack.ExternalsPlugin("commonjs", ["leveldown"])

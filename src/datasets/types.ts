@@ -1,5 +1,14 @@
 import { BufferChangeset } from '@riboseinc/paneron-extension-kit/types/buffers';
-import { PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
+import { CommitOutcome, PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
+import { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
+import { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
+import { AbstractIterator, AbstractLevelDOWN } from 'abstract-leveldown';
+import { LevelUp } from 'levelup';
+import { CommitRequestMessage, DatasetOperationParams, GitOperationParams } from 'repositories/types';
+
+
+export type ReturnsPromise<F extends (...opts: any[]) => any> =
+  (...opts: Parameters<F>) => Promise<ReturnType<F>>
 
 
 export interface DatasetType {
@@ -25,4 +34,119 @@ export interface MigrationSequenceOutcome {
   success: boolean
   error?: MigrationError
   changesApplied: { commitHash: string, bufferChangeset: BufferChangeset }[]
+}
+
+
+
+export namespace API {
+
+
+  export namespace Lifecycle {
+    /* Registers object specs and starts creating the default index
+       that contains all objects in the dataset. */
+    export type Load = (msg: DatasetOperationParams & {
+      cacheRoot: string
+    }) => Promise<void>
+
+    /* Stops all indexing, deregisters object specs. */
+    export type Unload =
+      (msg: DatasetOperationParams) => Promise<void>
+
+    export type UnloadAll =
+      (msg: GitOperationParams) => Promise<void>
+  }
+
+
+  export namespace Indexes {
+    /* Creates a custom index that filters items in default index
+       using given query expression that evaluates in context of each object.
+
+       Custom indexes contain object paths only, object data
+       is retrieved from default index.
+
+       Returns index ID that can be used to query items.
+    */
+    export type GetOrCreateFiltered = (msg: DatasetOperationParams & {
+      queryExpression: string
+    }) => { indexID: string }
+
+    /* If indexID is omitted, default index is described. */
+    export type Describe = (msg: DatasetOperationParams & {
+      indexID?: string
+    }) => { status: IndexStatus }
+
+    /* If indexID is omitted, default index is described. */
+    // export type StreamStatus = (msg: DatasetOperationParams & {
+    //   indexID?: string
+    // }) => Observable<IndexStatus>
+
+    /* If indexID is omitted, objects in default index are counted. */
+    // Unnecessary. Use describe.
+    // export type CountObjects = (msg: DatasetOperationParams & {
+    //   indexID?: string
+    // }) => Promise<{ objectCount: number }>
+
+    /* Retrieves dataset-relative path of an object
+       in the index at specified position. */
+    export type GetFilteredObject = (msg: DatasetOperationParams & {
+      indexID: string
+      position: number
+    }) => Promise<{ objectPath: string }>
+  }
+
+
+  export namespace Data {
+
+    /* Counts all objects in the dataset using default index. */
+    export type CountObjects =
+      (msg: DatasetOperationParams) => Promise<{ objectCount: number }>
+
+    /* Returns structured data of objects matching given paths.
+       Uses object specs to build objects from buffers. */
+    export type GetObjectDataset = (msg: DatasetOperationParams & {
+      objectPaths: string[]
+    }) => Promise<ObjectDataset>
+
+    /* Converts given objects to buffers using previously registered object specs,
+      checks for conflicts,
+      makes changes to buffers in working area,
+      stages and commits.
+      Returns commit hash and/or conflicts, if any. */
+    export type UpdateObjects =
+      (msg: CommitRequestMessage) => Promise<CommitOutcome>
+  }
+
+  export namespace Util {
+
+    export interface LoadedDataset {
+      // Absolute path to directory that will contain index caches
+      indexDBRoot: string
+
+      indexes: {
+        // Includes `default` index and any custom indexes.
+        [id: string]: ActiveDatasetIndex<any, any>
+      }
+    }
+
+    export interface ActiveDatasetIndex<K, V> {
+      dbHandle: LevelUp<AbstractLevelDOWN<K, V>, AbstractIterator<K, V>>
+      status: IndexStatus
+      completionPromise: Promise<true> // Resolves when counting/indexing/etc. is finished and the index is ready to go.
+      //statusSubject: Subject<IndexStatus>
+      predicate?: FilteredIndexPredicate
+    }
+
+    export type DefaultIndex = ActiveDatasetIndex<string, Record<string, any> | false>;
+    // A map of object path to deserialized object data or boolean false.
+    // False indicates the object exists but had not yet been indexed.
+
+    export type FilteredIndex = ActiveDatasetIndex<number, string> & {
+      predicate: FilteredIndexPredicate
+    };
+    // A map of object’s position in the index and its path.
+    // Requested can use that path to query default index for object data.
+
+    export type FilteredIndexPredicate = (itemPath: string, item: Record<string, any>) => boolean;
+
+  }
 }

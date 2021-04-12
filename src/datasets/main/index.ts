@@ -21,6 +21,9 @@ import {
 import { readPaneronRepoMeta, readRepoConfig, DATASET_FILENAME, readDatasetMeta } from 'repositories/main/readRepoConfig';
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
 
+import loadedDatasets from './loadedDatasets';
+import { getObjectDataset as getDataset } from './objects/read';
+
 import {
   deleteDataset,
   getDatasetInfo,
@@ -30,7 +33,6 @@ import {
   getObjectDataset,
   getOrCreateFilteredIndex,
   describeIndex,
-  indexStatusChanged,
   unloadDataset,
   getFilteredObject,
 } from '../ipc';
@@ -165,24 +167,12 @@ loadDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
 
   await ensureDir(cacheRoot);
 
-  log.debug("Datasets: Load: Getting loaded repository worker");
-
-  const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
+  //log.debug("Datasets: Load: Getting loaded repository worker");
+  //const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
 
   log.debug("Datasets: Load: Loading dataset…");
 
-  await repoWorker.ds_load({
-    workDir: workingCopyPath,
-    datasetDir: datasetPath,
-    cacheRoot,
-  });
-
-  repoWorker.ds_index_streamStatus({
-    workDir: workingCopyPath,
-    datasetDir: datasetPath,
-  }).subscribe(status => {
-    indexStatusChanged.main!.trigger({ workingCopyPath, datasetPath, status });
-  });
+  await loadedDatasets.load({ workDir: workingCopyPath, datasetDir: datasetPath, cacheRoot });
 
   log.debug("Datasets: Load: Done");
 
@@ -198,29 +188,29 @@ loadDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
 
 
 unloadDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
-  const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
+  //const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
   log.debug("Unloading dataset", workingCopyPath, datasetPath);
-  await repoWorker.ds_unload({ workDir: workingCopyPath, datasetDir: datasetPath });
+  await loadedDatasets.unload({ workDir: workingCopyPath, datasetDir: datasetPath });
   return { success: true };
 });
 
 
 getOrCreateFilteredIndex.main!.handle(async ({ workingCopyPath, datasetPath, queryExpression }) => {
-  const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
+  //const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
 
-  const { indexID } = await repoWorker.ds_index_getOrCreateFiltered({
+  const { indexID } = await loadedDatasets.getOrCreateFilteredIndex({
     workDir: workingCopyPath,
     datasetDir: datasetPath,
     queryExpression,
   });
 
-  repoWorker.ds_index_streamStatus({
-    workDir: workingCopyPath,
-    datasetDir: datasetPath,
-    indexID,
-  }).subscribe(status => {
-    indexStatusChanged.main!.trigger({ workingCopyPath, datasetPath, status, indexID });
-  });
+  //repoWorker.ds_index_streamStatus({
+  //  workDir: workingCopyPath,
+  //  datasetDir: datasetPath,
+  //  indexID,
+  //}).subscribe(status => {
+  //  indexStatusChanged.main!.trigger({ workingCopyPath, datasetPath, status, indexID });
+  //});
 
   return { indexID };
 });
@@ -228,8 +218,8 @@ getOrCreateFilteredIndex.main!.handle(async ({ workingCopyPath, datasetPath, que
 
 describeIndex.main!.handle(async ({ workingCopyPath, datasetPath, indexID }) => {
   if (indexID !== '') {
-    const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
-    return await repoWorker.ds_index_describe({
+    //const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
+    return await loadedDatasets.describeIndex({
       workDir: workingCopyPath,
       datasetDir: datasetPath,
       indexID,
@@ -241,8 +231,8 @@ describeIndex.main!.handle(async ({ workingCopyPath, datasetPath, indexID }) => 
 
 
 getObjectDataset.main!.handle(async ({ workingCopyPath, datasetPath, objectPaths }) => {
-  const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
-  const data = await repoWorker.ds_getObjectDataset({
+  //const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
+  const data = await getDataset({
     workDir: workingCopyPath,
     datasetDir: datasetPath,
     objectPaths,
@@ -255,8 +245,8 @@ getFilteredObject.main!.handle(async ({ workingCopyPath, datasetPath, indexID, p
   if (!indexID) {
     return { objectPath: '' };
   } else {
-    const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
-    const { objectPath } = await repoWorker.ds_index_getFilteredObject({
+    //const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
+    const { objectPath } = await loadedDatasets.getFilteredObject({
       workDir: workingCopyPath,
       datasetDir: datasetPath,
       indexID,

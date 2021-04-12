@@ -28,7 +28,7 @@ import {
 
 import { makeUUIDv4 } from 'utils';
 
-import { changesetToPathChanges } from '../worker/datasets';
+import loadedDatasets, { changesetToPathChanges } from '../../datasets/main/loadedDatasets';
 import { PaneronRepository, GitRemote, Repository } from '../types';
 
 import { getRepoWorkers, spawnWorker, terminateWorker } from './workerManager';
@@ -535,9 +535,7 @@ createRepository.main!.handle(async () => {
 
 deleteRepository.main!.handle(async ({ workingCopyPath }) => {
   try {
-    const repo = getLoadedRepository(workingCopyPath);
-    const w = repo.workers.sync;
-    await w.ds_unloadAll({ workDir: workingCopyPath });
+    await loadedDatasets.unloadAll({ workDir: workingCopyPath });
     await unloadRepository(workingCopyPath);
 
   } catch (e) {

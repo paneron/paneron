@@ -13,6 +13,7 @@ import { repositoryBuffersChanged, repositoryStatusChanged } from '../ipc';
 import { getRepoWorkers, RepoWorkers, terminateRepoWorkers } from './workerManager';
 import { readRepoConfig } from './readRepoConfig';
 import { getAuth } from './repoAuth';
+import loadedDatasets from 'datasets/main/loadedDatasets';
 
 
 const loadedRepositories: {
@@ -273,7 +274,7 @@ function syncRepoRepeatedly(
         repoSyncLog('debug', "Resolving changes…");
 
         if (oidBeforePull !== oidAfterPull) {
-          const changes = await w.repo_resolveChanges({
+          const changes = await loadedDatasets.resolveDatasetChanges({
             workDir: workingCopyPath,
             oidBefore: oidBeforePull,
             oidAfter: oidAfterPull,

@@ -4,6 +4,7 @@
 
 // TODO: Make electron-log work somehow
 
+import path from 'path';
 import { expose } from 'threads/worker';
 import { Observable, Subject } from 'threads/observable';
 import { ModuleMethods } from 'threads/dist/types/master';
@@ -19,11 +20,9 @@ import {
 
 import WorkerMethods from './types';
 
-import datasets from './datasets';
-import { getObjectDataset } from './objects/read';
-import { updateObjects } from './objects/update';
-import { getBufferDataset } from './buffers/read';
+import { getBufferDataset, readBuffers, readBuffersAtVersion } from './buffers/read';
 import { deleteTree, updateBuffers } from './buffers/update';
+import { resolveChanges } from './buffers/list';
 import remotes from './git/remotes';
 import sync from './git/sync';
 import workDir from './git/work-dir';
@@ -198,22 +197,14 @@ const methods: WorkerSpec = {
 
   // Working with structured data
 
-  ds_load: datasets.load,
-  ds_unload: datasets.unload,
-  ds_unloadAll: datasets.unloadAll,
-
-  ds_updateObjects: lockingRepoOperationWithStatusReporter(updateObjects),
-  ds_getObjectDataset: getObjectDataset,
-
-  ds_index_getOrCreateFiltered: datasets.getOrCreateFilteredIndex,
-  ds_index_describe: datasets.describeIndex,
-  ds_index_streamStatus: datasets.streamIndexStatus,
-  ds_index_getFilteredObject: datasets.getFilteredObject,
-
   repo_updateBuffers: lockingRepoOperationWithStatusReporter(updateBuffers),
+  repo_readBuffers: ({ workDir, rootPath }) =>
+    readBuffers(path.join(workDir, rootPath)),
+  repo_readBuffersAtVersion: ({ workDir, rootPath, commitHash }) =>
+    readBuffersAtVersion(workDir, path.join(workDir, rootPath), commitHash),
   repo_getBufferDataset: getBufferDataset,
   repo_deleteTree: lockingRepoOperation(deleteTree),
-  repo_resolveChanges: datasets.resolveRepositoryChanges,
+  repo_resolveChanges: lockingRepoOperation(resolveChanges),
 
   git_workDir_discardUncommittedChanges: lockingRepoOperation(workDir.discardUncommitted),
 

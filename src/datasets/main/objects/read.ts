@@ -1,8 +1,8 @@
 import { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
-import { readBuffers } from '../buffers/read';
-import { Datasets } from '../types';
-import { getIndex, normalizeDatasetDir } from '../datasets';
+import { API as Datasets } from '../../types';
+import { getIndex, normalizeDatasetDir } from '../loadedDatasets';
 import { findSerDesRuleForPath } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
+import { getLoadedRepository } from 'repositories/main/loadedRepositories';
 
 
 /* Do not read too many objects at once. May be slow. */
@@ -68,24 +68,26 @@ export async function readObject(
 
 /* Given a generator of object paths, yields objects.
    Each object is created using the provided makeObject. */
-export async function* readObjectsCold(
-  objectPaths: AsyncGenerator<string>,
-  makeObject: (fromBuffers: Record<string, Uint8Array>) => Record<string, any>,
-): AsyncGenerator<Record<string, any>> {
-  for await (const objectPath of objectPaths) {
-    const buffers = await readBuffers(objectPath);
-    yield makeObject(buffers);
-  }
-}
+// export async function* readObjectsCold(
+//   objectPaths: AsyncGenerator<string>,
+//   makeObject: (fromBuffers: Record<string, Uint8Array>) => Record<string, any>,
+// ): AsyncGenerator<Record<string, any>> {
+//   for await (const objectPath of objectPaths) {
+//     const buffers = await readBuffers(objectPath);
+//     yield makeObject(buffers);
+//   }
+// }
 
 
 /* Given a root path to an object, reads data from filesystem
    and deserializes it into memory structure
    according to the rule corresponding to given extension. */
 export async function readObjectCold(
+  workDir: string,
   rootPath: string,
 ): Promise<Record<string, any> | null> {
-  const bufferDataset = await readBuffers(rootPath);
+  const { workers: { reader } } = getLoadedRepository(workDir)
+  const bufferDataset = await reader.repo_readBuffers({ workDir, rootPath });
   const rule = findSerDesRuleForPath(rootPath);
   const obj: Record<string, any> = rule.deserialize(bufferDataset, {});
   return obj;

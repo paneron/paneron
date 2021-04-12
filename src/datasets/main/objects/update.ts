@@ -1,23 +1,25 @@
 import { ChangeStatus } from '@riboseinc/paneron-extension-kit/types/changes';
 import { ObjectChangeset, ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
 import * as R from 'ramda';
-import { normalizeDatasetDir } from '../datasets';
-import { toBufferChangeset } from "../buffer-dataset-conversion";
-import { updateBuffers } from '../buffers/update';
-import { Datasets, WithStatusUpdater } from '../types';
+import { getLoadedRepository } from 'repositories/main/loadedRepositories';
+import { normalizeDatasetDir } from '../loadedDatasets';
+import { toBufferChangeset } from '../buffer-dataset-conversion';
+import { API as Datasets } from '../../types';
 import { diffObjectDatasets } from './equality';
 import { readObject } from './read';
 
 
-export const updateObjects: WithStatusUpdater<Datasets.Data.UpdateObjects> = async function ({
+export const updateObjects: Datasets.Data.UpdateObjects =
+async function ({
   workDir,
   datasetDir,
   objectChangeset,
   author,
   commitMessage,
   _dangerouslySkipValidation,
-}, repoStatusUpdater) {
+}) {
   const datasetDirNormalized = normalizeDatasetDir(datasetDir);
+  const { workers: { sync } } = getLoadedRepository(workDir);
 
   if (_dangerouslySkipValidation !== true) {
     const conflict = await findFirstConflictingObjectPath(
@@ -33,12 +35,12 @@ export const updateObjects: WithStatusUpdater<Datasets.Data.UpdateObjects> = asy
 
   const bufferChangeset = toBufferChangeset(objectChangeset);
 
-  return await updateBuffers({
+  return await sync.repo_updateBuffers({
     workDir,
     author,
     commitMessage,
     bufferChangeset,
-  }, repoStatusUpdater);
+  });
 }
 
 
