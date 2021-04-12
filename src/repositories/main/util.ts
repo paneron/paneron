@@ -13,6 +13,8 @@ export function normalizeURL(repoURL: string): string {
 
 
 
+/* General tool that diffs streams of items, could be buffers or objects,
+   and returns tuples of [objectPath: string, DiffStatus]. */
 export async function* diffDatasets<O extends Object | Buffer>(
   paths: AsyncGenerator<string>,
   readItems: (path: string) => Promise<[ item1: O | null, item2: O | null ]>,
