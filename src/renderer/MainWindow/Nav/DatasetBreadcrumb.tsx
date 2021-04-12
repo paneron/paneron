@@ -23,8 +23,6 @@ export const DatasetBreadcrumb: React.FC<{
   }, { status: initialDefaultDatasetIndexStatus });
 
   indexStatusChanged.renderer!.useEvent(async ({ workingCopyPath, datasetPath, indexID, status }) => {
-    console.debug("DatasetBreadcrumb: got dataset index update", workingCopyPath, datasetPath, indexID, status);
-    console.debug("DatasetBreadcrumb: using dataset", workDir, datasetID);
     if (workingCopyPath === workDir && datasetPath === datasetID && indexID === undefined) {
       setDefaultIndexStatus(status);
     }

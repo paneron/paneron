@@ -54,7 +54,6 @@ export const RepoBreadcrumb: React.FC<{
       case 'pushing':
       case 'pulling':
       case 'cloning':
-        console.debug("Rendering status with progrss", status.busy.progress);
         progress = status.busy.progress
           ? { ...status.busy.progress, phase: `${status.busy.operation}: ${status.busy.progress.phase}…` }
           : { phase: status.busy.operation };
@@ -70,8 +69,6 @@ export const RepoBreadcrumb: React.FC<{
     progress = undefined;
     error = undefined;
   }
-
-  console.debug("Rendering status with progrss?", progress);
 
   return (
     <Breadcrumb
