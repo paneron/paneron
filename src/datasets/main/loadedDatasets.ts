@@ -672,7 +672,7 @@ function createIndex<K, V>(
   const ds = getLoadedDataset(workDir, datasetDir); 
   const cacheRoot = ds.indexDBRoot;
 
-  const dbPath = path.join(cacheRoot, indexID);
+  const dbPath = path.join(cacheRoot, hash(`${workDir}/${datasetDir}/${indexID}`));
   const idx: Datasets.Util.ActiveDatasetIndex<K, V> = {
     status: { objectCount: 0 },
     completionPromise: (async () => true as const)(),
