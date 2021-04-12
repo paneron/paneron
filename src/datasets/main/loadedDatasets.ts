@@ -690,8 +690,8 @@ function createIndex<K, V>(
 
 
 function getFilteredIndexStatusReporter(workingCopyPath: string, datasetPath: string, indexID: string) {
+  const { indexes } = getLoadedDataset(workingCopyPath, datasetPath);
   return function reportFilteredIndexStatus(status: IndexStatus) {
-    const { indexes } = getLoadedDataset(workingCopyPath, datasetPath);
     indexes[indexID].status = status;
     indexStatusChanged.main!.trigger({
       workingCopyPath,
