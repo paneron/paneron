@@ -121,7 +121,7 @@ export const makeEndpoint: EndpointMaker = {
       throw new Error("Unsupported process type");
     } else if (endpointsRegistered[process.type].indexOf(name) >= 0) {
       log.error("Attempt to register duplicate endpoint with name", name, process.type);
-      throw new Error("Attempt to register duplicate endoint");
+      throw new Error("Attempt to register duplicate endpoint");
     } else {
       endpointsRegistered[process.type].push(name);
     }
@@ -260,7 +260,7 @@ export const makeEndpoint: EndpointMaker = {
       throw new Error("Unsupported process type");
     } else if (endpointsRegistered[process.type].indexOf(name) >= 0) {
       log.error("Attempt to register duplicate endpoint with name", name, process.type);
-      throw new Error("Attempt to register duplicate endoint");
+      throw new Error("Attempt to register duplicate endpoint");
     } else {
       endpointsRegistered[process.type].push(name);
     }
