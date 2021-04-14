@@ -690,7 +690,7 @@ async function fillInFilteredIndex(
     objectCount: indexed,
   });
 
-  console.debug("Worker: Datasets: fillInFilteredIndex: Checking object: Indexed vs. checked", indexed, loaded);
+  console.debug("Worker: Datasets: fillInFilteredIndex: Indexed vs. checked", indexed, loaded);
 }
 
 function createIndex<K, V>(
