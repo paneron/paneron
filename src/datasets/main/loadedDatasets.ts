@@ -15,9 +15,9 @@ import { getLoadedRepository } from 'repositories/main/loadedRepositories';
 import { listDescendantPaths } from 'repositories/worker/buffers/list';
 import { hash, stripLeadingSlash, stripTrailingSlash } from 'utils';
 import { API as Datasets, ReturnsPromise } from '../types';
+import { indexStatusChanged } from '../ipc';
 import { listObjectPaths } from './objects/list';
 import { readObjectCold } from './objects/read';
-import { indexStatusChanged } from '../ipc';
 
 
 // We’ll just keep track of loaded datasets right here in memory.
