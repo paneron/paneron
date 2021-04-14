@@ -77,6 +77,12 @@ export const getFilteredObject = makeEndpoint.main(
   <{ objectPath: string }>_,
 );
 
+export const locateFilteredIndexPosition = makeEndpoint.main(
+  'datasets_locateFilteredIndexPosition',
+  <{ workingCopyPath: string, datasetPath: string, indexID: string, objectPath: string }>_,
+  <{ position: number | null }>_,
+);
+
 export const getObjectDataset = makeEndpoint.main(
   'datasets_getObjectDataset',
   <{ workingCopyPath: string, datasetPath: string, objectPaths: string[] }>_,

@@ -226,6 +226,34 @@ const getFilteredObject: Datasets.Indexes.GetFilteredObject = async function ({
 }
 
 
+const locatePositionInFilteredIndex: Datasets.Indexes.LocatePositionInFilteredIndex = async function ({
+  workDir,
+  datasetDir,
+  indexID,
+  objectPath,
+}) {
+  if (indexID === 'default') {
+    throw new Error("Default index is not supported by locatePositionInFilteredIndex");
+  }
+
+  const normalizedDatasetDir = normalizeDatasetDir(datasetDir);
+  const idx = getIndex(
+    workDir,
+    normalizedDatasetDir,
+    indexID) as Datasets.Util.FilteredIndex;
+  const db = idx.dbHandle;
+
+  for await (const data of db.createReadStream()) {
+    const { key, value } = data as unknown as { key: number, value: string };
+    if (value === objectPath) {
+      return { position: key };
+    }
+  }
+
+  throw new Error("Index position not found (probably given path doesn’t exist in the index)");
+}
+
+
 const resolveDatasetChanges: (opts: {
   workDir: string
   oidBefore: string
@@ -305,6 +333,7 @@ export default {
   describeIndex,
   //streamIndexStatus,
   getFilteredObject,
+  locatePositionInFilteredIndex,
   resolveDatasetChanges,
 };
 

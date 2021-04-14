@@ -21,6 +21,7 @@ import {
   getObjectDataset,
   getOrCreateFilteredIndex,
   indexStatusChanged,
+  locateFilteredIndexPosition,
   updateObjects,
 } from '../ipc';
 import { useEffect, useState } from 'react';
@@ -135,6 +136,13 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
         ...datasetParams,
         ...opts,
       }, { objectPath: '' });
+    },
+
+    useFilteredIndexPosition: function _useFilteredIndexPosition (opts) {
+      return locateFilteredIndexPosition.renderer!.useValue({
+        ...datasetParams,
+        ...opts,
+      }, { position: null });
     },
 
     getObjectView,

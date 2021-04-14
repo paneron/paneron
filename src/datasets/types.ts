@@ -92,6 +92,11 @@ export namespace API {
       indexID: string
       position: number
     }) => Promise<{ objectPath: string }>
+
+    export type LocatePositionInFilteredIndex = (msg: DatasetOperationParams & {
+      indexID: string
+      objectPath: string
+    }) => Promise<{ position: number }>
   }
 
 
