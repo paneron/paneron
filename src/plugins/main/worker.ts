@@ -209,7 +209,7 @@ const methods: WorkerSpec = {
       });
 
       if (!version) {
-        throw new Error("Failed to install");
+        throw new Error("Failed to install in dev mode");
       }
       return version;
     });
