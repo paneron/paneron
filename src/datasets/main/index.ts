@@ -35,6 +35,7 @@ import {
   describeIndex,
   unloadDataset,
   getFilteredObject,
+  locateFilteredIndexPosition,
 } from '../ipc';
 
 import './migrations';
@@ -253,6 +254,25 @@ getFilteredObject.main!.handle(async ({ workingCopyPath, datasetPath, indexID, p
       position,
     });
     return { objectPath };
+  }
+});
+
+
+locateFilteredIndexPosition.main!.handle(async ({ workingCopyPath, datasetPath, indexID, objectPath }) => {
+  if (!indexID || !objectPath) {
+    return { position: null };
+  } else {
+    try {
+      return await loadedDatasets.locatePositionInFilteredIndex({
+        workDir: workingCopyPath,
+        datasetDir: datasetPath,
+        indexID,
+        objectPath,
+      });
+    } catch (e) {
+      log.error("Failed to retrieve index position for object path", objectPath, indexID, e);
+      return { position: null };
+    }
   }
 });
 
