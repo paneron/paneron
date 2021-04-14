@@ -84,12 +84,12 @@ const Nav: React.FC<NavProps> = function ({ className }) {
         `}
         className={`${className ?? ''} ${Classes.ELEVATION_2}`}>
       {breadcrumbs.map((bc, idx) =>
-        <>
+        <React.Fragment key={idx}>
           {idx !== 0
             ? <Icon icon="chevron-left" iconSize={10} key={idx} css={css`transform: skew(45deg)`} />
             : null}
           {bc}
-        </>
+        </React.Fragment>
       )}
     </div>
   );
