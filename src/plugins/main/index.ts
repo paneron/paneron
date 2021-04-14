@@ -24,6 +24,8 @@ import { Methods as WorkerMethods, WorkerSpec } from './worker';
 
 const devFolder = app.isPackaged === false ? process.env.PANERON_PLUGIN_DIR : undefined;
 
+const resetPlugins = app.isPackaged === false ? process.env.PANERON_RESET_PLUGINS : undefined;
+
 const devPluginName = app.isPackaged === false ? process.env.PANERON_DEV_PLUGIN : undefined;
 
 const devPlugin = devPluginName
@@ -74,7 +76,6 @@ installPlugin.main!.handle(async ({ id, version: versionToInstall }) => {
   const name = id;
 
   let version: string;
-
   try {
     version = await _installPlugin(name, versionToInstall);
   } finally {
@@ -82,8 +83,6 @@ installPlugin.main!.handle(async ({ id, version: versionToInstall }) => {
       changedIDs: [id],
     });
   }
-
-  (await pluginManager).install(name, version);
 
   return { installed: true, installedVersion: version };
 });
@@ -98,18 +97,13 @@ upgradePlugin.main!.handle(async ({ id, version: versionToUpgradeTo }) => {
     log.error("Plugins: Upgrade: Error when uninstalling", id)
   }
 
-  (await pluginManager).uninstall(name);
-
-  let version: string;
   try {
-    version = await _installPlugin(name, versionToUpgradeTo);
+    await _installPlugin(name, versionToUpgradeTo);
   } finally {
     await pluginsUpdated.main!.trigger({
       changedIDs: [id],
     });
   }
-
-  (await pluginManager).install(name, version);
 
   return { installed: true };
 });
@@ -151,8 +145,10 @@ async function _installPlugin(name: string, versionToInstall?: string): Promise<
   let version: string;
   if (devFolder === undefined) {
     version = (await (await worker).install({ name, version: versionToInstall })).installedVersion;
+    (await pluginManager).install(name, version);
   } else {
     version = (await (await worker)._installDev({ name, fromPath: devFolder })).installedVersion;
+    (await pluginManager).installFromPath(path.join(devFolder, name));
   }
 
   return version;
@@ -161,6 +157,8 @@ async function _installPlugin(name: string, versionToInstall?: string): Promise<
 
 async function _removePlugin(name: string): Promise<true> {
   (await (await worker).remove({ name }));
+
+  (await pluginManager).uninstall(name);
 
   delete _runtimePluginInstanceCache[name];
 
@@ -250,11 +248,13 @@ export async function fetchExtensions(): Promise<{ [packageID: string]: Extensio
 export const worker: Promise<Thread & WorkerMethods> = new Promise((resolve, reject) => {
   log.debug("Plugins: Spawning worker");
 
-  if (devFolder !== undefined) {
+  if (resetPlugins !== undefined) {
+    log.debug("Plugins: Resetting plugins…");
+
     fs.removeSync(PLUGIN_CONFIG_PATH);
     fs.removeSync(PLUGINS_PATH);
 
-    log.debug("Plugins: Cleared paths");
+    log.debug("Plugins: Resetting plugins: Cleared paths");
   }
 
   spawn<WorkerSpec>(new Worker('./worker')).

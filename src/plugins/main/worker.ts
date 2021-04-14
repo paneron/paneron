@@ -195,7 +195,11 @@ const methods: WorkerSpec = {
     const installedVersion: string | undefined = await pluginLock.acquire('1', async () => {
       assertInitialized();
 
+      console.debug("Plugins: Worker: Installing in dev mode…", path.join(fromPath, name));
+
       const { version } = await manager!.installFromPath(path.join(fromPath, name));
+
+      console.debug("Plugins: Worker: Installed in dev mode", path.join(fromPath, name), version);
 
       await updateConfig((data) => {
         const newData = { ...data };
