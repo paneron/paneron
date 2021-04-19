@@ -314,6 +314,8 @@ async function updateIndexes(
 
   const defaultIdxDB = defaultIndex.dbHandle;
 
+  const defaultIndexStatusReporter = getDefaultIndexStatusReporter(workDir, datasetDir);
+
   async function readObjectVersions(objectPath: string):
   Promise<[ Record<string, any> | null, Record<string, any> | null ]> {
     const rule = findSerDesRuleForPath(objectPath);
@@ -324,9 +326,12 @@ async function updateIndexes(
   }
 
   const changes: Record<string, true | ChangeStatus> = {};
+  let idx: number = 0;
 
   // Update default index and infer which filtered indexes are affected
   for await (const objectPath of changedObjectPaths) {
+    idx += 1;
+
     // Read “before” and “after” object versions
     const [objv1, objv2] = await readObjectVersions(objectPath);
 
@@ -336,14 +341,38 @@ async function updateIndexes(
       defaultIdxDB.put(objectPath, objv2);
       if (objv1 === null) {
         changes[objectPath] = 'added';
+        defaultIndexStatusReporter({
+          objectCount: defaultIndex.status.objectCount + 1,
+          progress: {
+            phase: 'indexing',
+            total: defaultIndex.status.objectCount,
+            loaded: idx,
+          },
+        });
       } else {
         changes[objectPath] = 'modified';
+        defaultIndexStatusReporter({
+          objectCount: defaultIndex.status.objectCount,
+          progress: {
+            phase: 'indexing',
+            total: defaultIndex.status.objectCount,
+            loaded: idx,
+          },
+        });
       }
     } else {
       // Object was deleted
       try {
         defaultIdxDB.del(objectPath);
         changes[objectPath] = 'removed';
+        defaultIndexStatusReporter({
+          objectCount: defaultIndex.status.objectCount - 1,
+          progress: {
+            phase: 'indexing',
+            total: defaultIndex.status.objectCount,
+            loaded: idx,
+          },
+        });
       } catch (e) {
         if (e.type === 'NotFoundError') {
           // (or even never existed)
@@ -369,6 +398,10 @@ async function updateIndexes(
       }
     }
   }
+
+  defaultIndexStatusReporter({
+    objectCount: defaultIndex.status.objectCount,
+  });
 
   await objectsChanged.main!.trigger({
     workingCopyPath: workDir,
@@ -479,14 +512,7 @@ async function fillInDefaultIndex(
   index: Datasets.Util.DefaultIndex,
 ) {
 
-  function defaultIndexStatusReporter(status: IndexStatus) {
-    index.status = status;
-    indexStatusChanged.main!.trigger({
-      workingCopyPath: workDir,
-      datasetPath: datasetDir,
-      status,
-    });
-  }
+  const defaultIndexStatusReporter = getDefaultIndexStatusReporter(workDir, datasetDir);
 
   console.debug("Datasets: fillInDefaultIndex: Starting", workDir, datasetDir);
 
@@ -752,6 +778,8 @@ export async function getDefaultIndex(
 }
 
 
+// Index status reporters
+
 function getFilteredIndexStatusReporter(workingCopyPath: string, datasetPath: string, indexID: string) {
   const { indexes } = getLoadedDataset(workingCopyPath, datasetPath);
   return function reportFilteredIndexStatus(status: IndexStatus) {
@@ -760,6 +788,18 @@ function getFilteredIndexStatusReporter(workingCopyPath: string, datasetPath: st
       workingCopyPath,
       datasetPath,
       indexID,
+      status,
+    });
+  }
+}
+
+function getDefaultIndexStatusReporter(workingCopyPath: string, datasetPath: string) {
+  const { indexes } = getLoadedDataset(workingCopyPath, datasetPath);
+  return function reportFilteredIndexStatus(status: IndexStatus) {
+    indexes['default'].status = status;
+    indexStatusChanged.main!.trigger({
+      workingCopyPath,
+      datasetPath,
       status,
     });
   }
