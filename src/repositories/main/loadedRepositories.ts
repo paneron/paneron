@@ -5,15 +5,12 @@ import log from 'electron-log';
 
 import { PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
 
-import { objectsChanged } from '../../datasets/ipc';
-
 import { GitRepository, RepoStatus } from '../types';
 import { repositoryBuffersChanged, repositoryStatusChanged } from '../ipc';
 
 import { getRepoWorkers, RepoWorkers, terminateRepoWorkers } from './workerManager';
 import { readRepoConfig } from './readRepoConfig';
 import { getAuth } from './repoAuth';
-import loadedDatasets from 'datasets/main/loadedDatasets';
 
 
 const loadedRepositories: {
@@ -271,19 +268,7 @@ function syncRepoRepeatedly(
           _presumeCanceledErrorMeansAwaitingAuth: true,
         });
 
-        repoSyncLog('debug', "Resolving changes…");
-
-        if (oidBeforePull !== oidAfterPull) {
-          const changes = await loadedDatasets.resolveDatasetChanges({
-            workDir: workingCopyPath,
-            oidBefore: oidBeforePull,
-            oidAfter: oidAfterPull,
-          });
-
-          repoSyncLog('debug', "Reporting changes…");
-
-          await reportRepositoryChanges(workingCopyPath, changes);
-        }
+        repoSyncLog('info', `Pull completed: from ${oidBeforePull} to ${oidAfterPull}`);
 
         if (repoCfg.remote.writeAccess) {
           repoSyncLog('debug', "Got write access; pushing…");
@@ -324,32 +309,6 @@ function syncRepoRepeatedly(
   timeout ? clearTimeout(timeout) : void 0;
   if (loadedRepositories[workingCopyPath]) {
     loadedRepositories[workingCopyPath].nextSyncTimeout = setTimeout(_sync, 100);
-  }
-}
-
-
-async function reportRepositoryChanges(
-  workingCopyPath: string,
-  changes: {
-    changedBuffers: PathChanges
-    changedObjects: {
-      [datasetDir: string]: PathChanges
-    }
-  },
-) {
-  const {
-    changedBuffers: changedPaths,
-    changedObjects: datasetChanges,
-  } = changes;
-
-  await reportBufferChanges(workingCopyPath, changedPaths);
-
-  for (const [datasetPath, changedPaths] of Object.entries(datasetChanges)) {
-    await objectsChanged.main!.trigger({
-      workingCopyPath,
-      datasetPath,
-      objects: changedPaths,
-    });
   }
 }
 

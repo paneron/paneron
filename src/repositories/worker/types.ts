@@ -89,11 +89,11 @@ export namespace Repositories {
 
     /* Takes commit hash before and after a change.
 
-      Infers which buffer paths changed,
-      infers which object paths in which datasets are affected,
-      reindexes objects as appropriate,
-      and sends IPC events to let Paneron & extension windows
-      refresh shown data.
+       Infers which buffer paths changed,
+       infers which object paths in which datasets are affected,
+       reindexes objects as appropriate,
+       and sends IPC events to let Paneron & extension windows
+       refresh shown data.
     */
     export type ResolveChanges = (msg: GitOperationParams & {
       rootPath: string
@@ -102,6 +102,16 @@ export namespace Repositories {
     }) => Promise<{
       changedBuffers: [path: string, changeStatus: ChangeStatus][]
     }>
+
+    /* Given a list of commit hashes,
+       walks back history and returns one that was created most recently. */
+    export type ChooseMostRecentCommit = (msg: GitOperationParams & {
+      candidates: string[]
+    }) => Promise<{ commitHash: string }>
+
+    /* Returns the hash of the latest commit in the repository. */
+    export type GetCurrentCommit = (msg: GitOperationParams) =>
+      Promise<{ commitHash: string }>
 
     /* Given a list of buffer paths,
        returns a map of buffer paths to buffers or null. */
@@ -171,6 +181,8 @@ export default interface WorkerMethods {
 
   // Working with raw unstructured data (internal)
 
+  repo_getCurrentCommit: Repositories.Data.GetCurrentCommit
+  repo_chooseMostRecentCommit: Repositories.Data.ChooseMostRecentCommit
   repo_getBufferDataset: Repositories.Data.GetBufferDataset
   repo_readBuffers: Repositories.Data.ReadBuffers
   repo_readBuffersAtVersion: Repositories.Data.ReadBuffersAtVersion

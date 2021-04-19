@@ -113,10 +113,10 @@ export namespace API {
     }) => Promise<ObjectDataset>
 
     /* Converts given objects to buffers using previously registered object specs,
-      checks for conflicts,
-      makes changes to buffers in working area,
-      stages and commits.
-      Returns commit hash and/or conflicts, if any. */
+       checks for conflicts,
+       makes changes to buffers in working area,
+       stages and commits.
+       Returns commit hash and/or conflicts, if any. */
     export type UpdateObjects =
       (msg: CommitRequestMessage) => Promise<CommitOutcome>
   }
@@ -128,8 +128,10 @@ export namespace API {
       indexDBRoot: string
 
       indexes: {
-        // Includes `default` index and any custom indexes.
-        [id: string]: ActiveDatasetIndex<any, any>
+        // Includes “default” index and any custom/filtered indexes.
+        // Default index ID is 'default'.
+        // Filtered index ID is the hash of filter predicate function (query expression) string.
+        [id: string]:  ActiveDatasetIndex<any, any>
       }
     }
 
@@ -137,15 +139,26 @@ export namespace API {
       dbHandle: LevelUp<AbstractLevelDOWN<K, V>, AbstractIterator<K, V>>
       status: IndexStatus
       completionPromise: Promise<true> // Resolves when counting/indexing/etc. is finished and the index is ready to go.
+
       //statusSubject: Subject<IndexStatus>
+
+      //commitHash: string
+
+      // These are specific to default or filtered indexes
+      accessed?: Date
+      commitHash?: string
       predicate?: FilteredIndexPredicate
     }
 
-    export type DefaultIndex = ActiveDatasetIndex<string, Record<string, any> | false>;
+    export type DefaultIndex = ActiveDatasetIndex<string, Record<string, any> | false> & {
+      commitHash: string
+    };
     // A map of object path to deserialized object data or boolean false.
-    // False indicates the object exists but had not yet been indexed.
+    // False values are stored at pre-indexing stage and indicate
+    // that the objects exist but had not yet been indexed.
 
     export type FilteredIndex = ActiveDatasetIndex<number, string> & {
+      accessed: Date
       predicate: FilteredIndexPredicate
     };
     // A map of object’s position in the index and its path.

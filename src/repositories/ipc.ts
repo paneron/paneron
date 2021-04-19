@@ -80,7 +80,7 @@ export const deleteRepository = makeEndpoint.main(
 );
 
 
-// Git repositories
+// Git repositories: meta/config/remote
 
 export const queryGitRemote = makeEndpoint.main(
   'queryRemote',
@@ -188,4 +188,9 @@ export const repositoryStatusChanged = makeEndpoint.renderer(
 export const repositoryBuffersChanged = makeEndpoint.renderer(
   'repositoryBuffersChanged',
   <{ workingCopyPath: string, changedPaths?: Record<string, ChangeStatus | true> }>_,
+);
+
+export const newCommit = makeEndpoint.renderer(
+  'newCommit',
+  <{ workingCopyPath: string, commitHash: string }>_,
 );

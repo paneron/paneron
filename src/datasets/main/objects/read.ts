@@ -1,6 +1,6 @@
 import { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
 import { API as Datasets } from '../../types';
-import { getIndex, normalizeDatasetDir } from '../loadedDatasets';
+import { getDefaultIndex, normalizeDatasetDir } from '../loadedDatasets';
 import { findSerDesRuleForPath } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
 
@@ -42,7 +42,7 @@ export async function readObject(
 ): Promise<Record<string, any> | null> {
   const normalizedDatasetDir = normalizeDatasetDir(datasetDir);
 
-  const idx: Datasets.Util.DefaultIndex = getIndex(
+  const idx: Datasets.Util.DefaultIndex = await getDefaultIndex(
     workDir,
     normalizedDatasetDir);
 

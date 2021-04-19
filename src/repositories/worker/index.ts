@@ -23,6 +23,7 @@ import WorkerMethods from './types';
 import { getBufferDataset, readBuffers, readBuffersAtVersion } from './buffers/read';
 import { deleteTree, updateBuffers } from './buffers/update';
 import { resolveChanges } from './buffers/list';
+import commits from './git/commits';
 import remotes from './git/remotes';
 import sync from './git/sync';
 import workDir from './git/work-dir';
@@ -197,6 +198,8 @@ const methods: WorkerSpec = {
 
   // Working with structured data
 
+  repo_getCurrentCommit: commits.getCurrentCommit,
+  repo_chooseMostRecentCommit: commits.chooseMostRecentCommit,
   repo_updateBuffers: lockingRepoOperationWithStatusReporter(updateBuffers),
   repo_readBuffers: ({ workDir, rootPath }) =>
     readBuffers(path.join(workDir, rootPath)),
