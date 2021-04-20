@@ -47,6 +47,7 @@ function ({ className }) {
         } catch (e) {
           log.error("Error loading dataset", e);
           setDatasetContext(null);
+          setDatasetView(<NonIdealState icon="heart-broken" title="Failed to load dataset" />);
           showMessage({ intent: 'danger', icon: 'error', message: "Failed to load dataset" });
         }
       } else {
