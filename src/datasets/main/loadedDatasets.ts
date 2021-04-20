@@ -54,14 +54,9 @@ const load: Datasets.Lifecycle.Load = async function ({
       indexes: {},
     };
 
-    const defaultIndex = createIndex(
+    const defaultIndex = await createDefaultIndex(
       workDir,
       normalizedDatasetDir,
-      'default',
-      {
-        keyEncoding: 'string',
-        valueEncoding: 'json',
-      },
     ) as Datasets.Util.DefaultIndex;
 
     datasets[workDir][normalizedDatasetDir].indexes.default = defaultIndex,
@@ -133,21 +128,6 @@ const getOrCreateFilteredIndex: ReturnsPromise<Datasets.Indexes.GetOrCreateFilte
 
     console.debug("Datasets: getOrCreateFilteredIndex: Creating");
 
-    filteredIndex = createIndex(
-      workDir,
-      normalizedDatasetDir,
-      filteredIndexID,
-      {
-        keyEncoding: {
-          type: 'lexicographic-integer',
-          encode: (n) => lexint.pack(n, 'hex'),
-          decode: lexint.unpack,
-          buffer: false,
-        },
-        valueEncoding: 'string',
-      },
-    ) as Datasets.Util.FilteredIndex;
-
     let predicate: Datasets.Util.FilteredIndexPredicate;
     try {
       predicate = new Function('objPath', 'obj', queryExpression) as Datasets.Util.FilteredIndexPredicate;
@@ -155,7 +135,12 @@ const getOrCreateFilteredIndex: ReturnsPromise<Datasets.Indexes.GetOrCreateFilte
       throw new Error("Unable to parse submitted predicate expression");
     }
 
-    filteredIndex.predicate = predicate;
+    filteredIndex = createFilteredIndex(
+      workDir,
+      normalizedDatasetDir,
+      filteredIndexID,
+      predicate,
+    ) as Datasets.Util.FilteredIndex;
 
     const statusReporter = getFilteredIndexStatusReporter(workDir, normalizedDatasetDir, filteredIndexID);
 
@@ -689,28 +674,26 @@ async function fillInFilteredIndex(
   console.debug("Datasets: fillInFilteredIndex: Indexed vs. checked", indexed, loaded);
 }
 
-function createIndex<K, V>(
+function createFilteredIndex(
   workDir: string,
   datasetDir: string, // Should be normalized.
   indexID: string,
-  codecOptions: CodecOptions,
-): Datasets.Util.ActiveDatasetIndex<K, V> {
-  const ds = getLoadedDataset(workDir, datasetDir); 
-  const cacheRoot = ds.indexDBRoot;
-
-  const dbPath = path.join(cacheRoot, hash(`${workDir}/${datasetDir}/${indexID}`));
-  const idx: Datasets.Util.ActiveDatasetIndex<K, V> = {
-    status: { objectCount: 0 },
-    completionPromise: (async () => true as const)(),
-    //statusSubject: new Subject<IndexStatus>(), 
-    dbHandle: levelup(encode(leveldown(dbPath), codecOptions)),
-    accessed: new Date(),
+  predicate: Datasets.Util.FilteredIndexPredicate,
+): Datasets.Util.FilteredIndex {
+  const codecOptions: CodecOptions = {
+    keyEncoding: {
+      type: 'lexicographic-integer',
+      encode: (n) => lexint.pack(n, 'hex'),
+      decode: lexint.unpack,
+      buffer: false,
+    },
+    valueEncoding: 'string',
   };
-
-  //idx.statusSubject.subscribe(status => {
-  //  idx.status = status;
-  //});
-
+  const idx: Datasets.Util.FilteredIndex = {
+    ...makeIdxStub(workDir, datasetDir, indexID, codecOptions),
+    accessed: new Date(),
+    predicate,
+  };
   datasets[workDir][datasetDir].indexes[indexID] = idx;
   return idx;
 }
@@ -726,6 +709,29 @@ export function getFilteredIndex(
     log.error("Unable to get filtered index", datasetDir, indexID)
     throw new Error("Unable to get filtered index");
   }
+  return idx;
+}
+
+async function createDefaultIndex(
+  workDir: string,
+  datasetDir: string, // Should be normalized.
+): Promise<Datasets.Util.DefaultIndex> {
+  const { workers: { reader } } = getLoadedRepository(workDir);
+  const { commitHash } = await reader.repo_getCurrentCommit({ workDir });
+  const codecOptions = {
+    keyEncoding: 'string',
+    valueEncoding: 'json',
+  };
+  const idx: Datasets.Util.DefaultIndex = {
+    ...makeIdxStub(workDir, datasetDir, 'default', codecOptions),
+    commitHash,
+  };
+
+  //idx.statusSubject.subscribe(status => {
+  //  idx.status = status;
+  //});
+
+  datasets[workDir][datasetDir].indexes['default'] = idx;
   return idx;
 }
 
@@ -748,19 +754,10 @@ export async function getDefaultIndex(
     // If default index was created against an older commit hash,
     // let’s try to rebuild it on the fly.
 
-    const hashCandidates = Object.entries(ds.indexes).
-      filter(([_, idx]) => idx.predicate === undefined /* Pick only default indexes. */).
-      map(([id]) => id);
-
-    const { commitHash: oidBefore } = await reader.repo_chooseMostRecentCommit({
-      workDir,
-      candidates: hashCandidates,
-    });
-
     const { changedObjectPaths } = await resolveDatasetChanges({
       workDir,
       datasetDir,
-      oidBefore,
+      oidBefore: idx.commitHash,
       oidAfter: oidCurrent,
     });
 
@@ -769,10 +766,27 @@ export async function getDefaultIndex(
       datasetDir,
       idx,
       changedObjectPaths,
-      oidBefore,
+      idx.commitHash,
       oidCurrent,
     );
   }
+
+  return idx;
+}
+
+function makeIdxStub(workDir: string, datasetDir: string, indexID: string, codecOptions: CodecOptions):
+Datasets.Util.ActiveDatasetIndex<any, any> {
+  const ds = getLoadedDataset(workDir, datasetDir); 
+  const cacheRoot = ds.indexDBRoot;
+
+  const dbPath = path.join(cacheRoot, hash(`${workDir}/${datasetDir}/${indexID}`));
+  const idx: Datasets.Util.ActiveDatasetIndex<any, any> = {
+    status: { objectCount: 0 },
+    completionPromise: (async () => true as const)(),
+    //statusSubject: new Subject<IndexStatus>(), 
+    dbHandle: levelup(encode(leveldown(dbPath), codecOptions)),
+    accessed: new Date(),
+  };
 
   return idx;
 }
