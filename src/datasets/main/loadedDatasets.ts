@@ -607,10 +607,6 @@ async function fillInFilteredIndex(
   const filteredIndexDB = filteredIndex.dbHandle;
   const predicate = filteredIndex.predicate;
 
-  const total = defaultIndex.status.objectCount;
-
-  console.debug("Datasets: fillInFilteredIndex: Operating on objects from default index", total);
-
   if (defaultIndex.status.progress) {
     console.debug("Datasets: fillInFilteredIndex: Awaiting default index progress to finish...");
     await defaultIndex.completionPromise;
@@ -624,6 +620,10 @@ async function fillInFilteredIndex(
   } else {
     console.debug("Datasets: fillInFilteredIndex: Default index is ready beforehand");
   }
+
+  const total = defaultIndex.status.objectCount;
+
+  console.debug("Datasets: fillInFilteredIndex: Operating on objects from default index", total);
 
   statusReporter({
     objectCount: 0,
@@ -760,6 +760,8 @@ export async function getDefaultIndex(
       oidBefore: idx.commitHash,
       oidAfter: oidCurrent,
     });
+
+    log.debug("Updating default dataset", idx.commitHash, oidCurrent);
 
     await updateIndexes(
       workDir,
