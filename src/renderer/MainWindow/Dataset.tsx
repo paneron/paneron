@@ -4,11 +4,13 @@
 import log from 'electron-log';
 import { jsx, css } from '@emotion/core';
 import React, { useContext, useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet';
 import { NonIdealState } from '@blueprintjs/core';
 import getDataset from '../../datasets/renderer/getDataset';
 import { ContextGetterProps, getContext } from '../../datasets/renderer/context';
 import { Context } from './context';
 import { unloadDataset } from 'datasets/ipc';
+import { DatasetContext } from '@riboseinc/paneron-extension-kit/types';
 
 
 const NODE_MODULES_PATH = process.env.NODE_ENV === 'production'
@@ -21,6 +23,7 @@ function ({ className }) {
   const { state: { selectedRepoWorkDir, selectedDatasetID }, showMessage } = useContext(Context);
 
   const [datasetView, setDatasetView] = useState<JSX.Element | null>(null);
+  const [datasetContext, setDatasetContext] = useState<DatasetContext | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -39,12 +42,15 @@ function ({ className }) {
 
           const datasetContext = getContext(datasetGetterProps);
 
+          setDatasetContext(datasetContext);
           setDatasetView(<MainView {...datasetContext} />);
         } catch (e) {
           log.error("Error loading dataset", e);
+          setDatasetContext(null);
           showMessage({ intent: 'danger', icon: 'error', message: "Failed to load dataset" });
         }
       } else {
+        setDatasetContext(null);
         setDatasetView(<NonIdealState icon="heart-broken" title="Nothing to show here" />);
       }
     })();
@@ -60,6 +66,9 @@ function ({ className }) {
 
   return (
     <div css={css`display: flex; flex-flow: row nowrap;`} className={className}>
+      <Helmet>
+        <title>Dataset {datasetContext?.title ?? selectedDatasetID}</title>
+      </Helmet>
       {datasetView}
     </div>
   );
