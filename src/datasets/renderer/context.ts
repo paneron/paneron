@@ -25,6 +25,8 @@ import {
   updateObjects,
 } from '../ipc';
 import { useEffect, useState } from 'react';
+import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
+import { BaseAction, PersistentStateReducerHook } from '@riboseinc/paneron-extension-kit/usePersistentStateReducer';
 
 
 export interface ContextGetterProps {
@@ -143,6 +145,21 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
         ...datasetParams,
         ...opts,
       }, { position: null });
+    },
+
+    usePersistentDatasetStateReducer: function _usePersistentDatasetStateReducer<S, A extends BaseAction>
+    (...opts: Parameters<PersistentStateReducerHook<S, A>>) {
+      const effectiveOpts: Parameters<PersistentStateReducerHook<S, A>> = [
+        opts[0], opts[1], opts[2],
+
+        // opts[3] is the storage key in the list of positional parameters.
+        // Extension can specify locally scoped key,
+        // and this takes care of additionally scoping it by repository and dataset.
+        `${workingCopyPath}/${datasetPath}/${opts[3]}`,
+
+        opts[4],
+      ];
+      return usePaneronPersistentStateReducer(...effectiveOpts);
     },
 
     getObjectView,
