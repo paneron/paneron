@@ -1,7 +1,7 @@
 import usePersistentStateReducer, {
   BaseAction,
   PersistentStateReducerHook,
-} from 'renderer/usePersistentStateReducer';
+} from '@riboseinc/paneron-extension-kit/usePersistentStateReducer';
 import { loadState, storeState } from './ipc';
 
 

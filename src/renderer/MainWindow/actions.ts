@@ -1,4 +1,4 @@
-import { BaseAction } from 'renderer/usePersistentStateReducer';
+import { BaseAction } from '@riboseinc/paneron-extension-kit/usePersistentStateReducer';
 import { RepositoryListQuery } from 'repositories/types';
 
 
