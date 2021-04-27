@@ -4,11 +4,15 @@ import { jsx } from '@emotion/core';
 
 import React, { useContext, useState } from 'react';
 import { Button } from '@blueprintjs/core';
+import makeSidebar from '@riboseinc/paneron-extension-kit/widgets/Sidebar';
+import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import { addRepository, getNewRepoDefaults } from 'repositories/ipc';
 import { Context } from '../context';
-import Sidebar from '../Sidebar';
 import GitCredentialsInput from './GitCredentialsInput';
-import PropertyView, { TextInput } from '../Sidebar/PropertyView';
+import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
+
+
+const Sidebar = makeSidebar(usePaneronPersistentStateReducer);
 
 
 export const ImportRepositorySidebar: React.FC<{ className?: string; onCreate: (workDir: string) => void }> =

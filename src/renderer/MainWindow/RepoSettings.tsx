@@ -1,16 +1,16 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 
-import { jsx, css } from '@emotion/core';
+import { jsx } from '@emotion/core';
 import { Helmet } from 'react-helmet';
 import React, { useContext } from 'react';
 import { splitEvery } from 'ramda';
-import { Classes, Colors } from '@blueprintjs/core';
+import { Classes } from '@blueprintjs/core';
 import makeGrid, { CellProps, GridData, LabelledGridIcon } from '@riboseinc/paneron-extension-kit/widgets/Grid';
 import { describeRepository, repositoryBuffersChanged } from 'repositories/ipc';
 import { getDatasetInfo } from 'datasets/ipc';
 import { Context } from './context';
-import ItemCount from '@riboseinc/paneron-extension-kit/widgets/ItemCount';
+import Workspace from '@riboseinc/paneron-extension-kit/widgets/Workspace';
 
 
 const CELL_WIDTH_PX = 150;
@@ -53,25 +53,21 @@ function ({ className }) {
   }
 
   return (
-    <div css={css`display: flex; flex-flow: column nowrap;`} className={className}>
+    <Workspace
+        className={className}
+        statusBarProps={{
+          descriptiveName: { singular: 'dataset', plural: 'datasets' },
+          totalCount: datasetIDs.length,
+          onRefresh: () => openedRepoResp.refresh(),
+          progress: openedRepoResp.isUpdating
+            ? { phase: 'reading' }
+            : undefined,
+        }}>
       <Helmet>
         <title>{`Repository ${openedRepo.paneronMeta?.title ?? openedRepo.gitMeta.workingCopyPath}: ${datasetIDs.length} dataset(s)`}</title>
       </Helmet>
-      <div css={css`flex: 1;`}>
-        <Grid getGridData={getGridData} />
-      </div>
-
-      <ItemCount
-        css={css`font-size: 80%; height: 24px; padding: 0 10px; background: ${Colors.LIGHT_GRAY5}; z-index: 2;`}
-        className={Classes.ELEVATION_1}
-        descriptiveName={{ singular: 'dataset', plural: 'datasets' }}
-        totalCount={datasetIDs.length}
-        onRefresh={() => openedRepoResp.refresh()}
-        progress={openedRepoResp.isUpdating
-          ? { phase: 'reading' }
-          : undefined} />
-
-    </div>
+      <Grid getGridData={getGridData} />
+    </Workspace>
   );
 }
 

@@ -10,7 +10,7 @@ import { Helmet } from 'react-helmet';
 import { AnchorButton, Button, Classes, Colors, ControlGroup, InputGroup } from '@blueprintjs/core';
 import { Tooltip2 } from '@blueprintjs/popover2';
 import makeGrid, { GridData } from '@riboseinc/paneron-extension-kit/widgets/Grid';
-import ItemCount from '@riboseinc/paneron-extension-kit/widgets/ItemCount';
+import Workspace from '@riboseinc/paneron-extension-kit/widgets/Workspace'
 import useDebounce from 'renderer/useDebounce';
 import { createRepository, Repository } from 'repositories/ipc';
 import { Context } from './context';
@@ -96,63 +96,47 @@ function ({ className }) {
     />;
   }
 
+  const toolbar = (
+    <ControlGroup fill>
+      <SearchBox />
+      <Tooltip2 content="Create new repository">
+        <Button icon="add" title="Create new repository"
+          disabled={isBusy}
+          onClick={performOperation('creating repository', async () => {
+            await createRepository.renderer!.trigger({});
+          })} />
+      </Tooltip2>
+      <Tooltip2 content="Import shared repository">
+        <AnchorButton icon="import" title="Import shared repository"
+          disabled={isBusy}
+          active={state.selectedRepoWorkDir === null && specialSidebar === 'import'}
+          onClick={() => { dispatch({ type: 'select-repo', workDir: null }); setSpecialSidebar('import') } } />
+      </Tooltip2>
+      <Button icon="settings" title="Show Paneron settings"
+        disabled={isBusy}
+        active={state.selectedRepoWorkDir === null && specialSidebar === 'settings'}
+        onClick={() => { dispatch({ type: 'select-repo', workDir: null }); setSpecialSidebar('settings') }} />
+    </ControlGroup>
+  );
+
   return (
-    <div css={css`display: flex; flex-flow: column nowrap; overflow: hidden;`} className={className}>
+    <Workspace
+        className={className}
+        toolbar={toolbar}
+        sidebar={sidebar}
+        statusBarProps={{
+          descriptiveName: { singular: 'repository', plural: 'repositories' },
+          totalCount: repositories.value.objects.length,
+          onRefresh: () => repositories.refresh(),
+          progress: repositories.isUpdating
+            ? { phase: 'reading' }
+            : undefined,
+        }}>
       <Helmet>
         <title>Your Paneron repositories</title>
       </Helmet>
-
-      <div css={css`flex: 1; display: flex; flex-flow: row nowrap; overflow: hidden;`}>
-        <div css={css`flex: 1; display: flex; flex-flow: column nowrap; overflow: hidden;`}>
-          <div
-              css={css`
-                display: flex; flex-flow: row nowrap; align-items: center;
-                background: linear-gradient(to bottom, ${Colors.LIGHT_GRAY5}, ${Colors.LIGHT_GRAY4});
-                height: 24px;
-                overflow: hidden;
-                z-index: 1;
-              `}
-              className={Classes.ELEVATION_1}>
-            <ControlGroup fill>
-              <Query />
-              <Tooltip2 content="Create new repository">
-                <Button icon="add" title="Create new repository"
-                  disabled={isBusy}
-                  onClick={performOperation('creating repository', async () => {
-                    await createRepository.renderer!.trigger({});
-                  })} />
-              </Tooltip2>
-              <Tooltip2 content="Import shared repository">
-                <AnchorButton icon="import" title="Import shared repository"
-                  disabled={isBusy}
-                  active={state.selectedRepoWorkDir === null && specialSidebar === 'import'}
-                  onClick={() => { dispatch({ type: 'select-repo', workDir: null }); setSpecialSidebar('import')} } />
-              </Tooltip2>
-              <Button icon="settings" title="Show Paneron settings"
-                disabled={isBusy}
-                active={state.selectedRepoWorkDir === null && specialSidebar === 'settings'}
-                onClick={() => { dispatch({ type: 'select-repo', workDir: null }); setSpecialSidebar('settings') }} />
-            </ControlGroup>
-          </div>
-
-          <div css={css`flex: 1;`}>
-            <RepoGrid getGridData={getGridData} />
-          </div>
-        </div>
-
-        {sidebar}
-      </div>
-
-      <ItemCount
-        css={css`font-size: 80%; height: 24px; padding: 0 10px; background: ${Colors.LIGHT_GRAY5}; z-index: 2;`}
-        className={Classes.ELEVATION_2}
-        descriptiveName={{ singular: 'repository', plural: 'repositories' }}
-        totalCount={repositories.value.objects.length}
-        onRefresh={() => repositories.refresh()}
-        progress={repositories.isUpdating
-          ? { phase: 'reading' }
-          : undefined} />
-    </div>
+      <RepoGrid getGridData={getGridData} />
+    </Workspace>
   );
 };
 
@@ -165,7 +149,7 @@ const GRID_PADDING_PX = 10;
 const RepoGrid = makeGrid(RepoGridCell);
 
 
-const Query: React.FC<{ className?: string }> = function ({ className }) {
+const SearchBox: React.FC<{ className?: string }> = function ({ className }) {
   const { state: { repoQuery }, dispatch, stateLoaded } = useContext(Context);
 
   return (

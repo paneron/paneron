@@ -185,7 +185,7 @@ export const makeEndpoint: EndpointMaker = {
                 setUpdating(true);
 
                 try {
-                  log.debug("IPC: Invoking", name, payloadSliceToLog);
+                  //log.debug("IPC: Invoking", name, payloadSliceToLog);
                   const maybeResp: any = await ipcRenderer.invoke(name, payload);
 
                   if (maybeResp.errors  !== undefined) {
@@ -214,7 +214,7 @@ export const makeEndpoint: EndpointMaker = {
                     } else {
                       updateErrors([]);
                       updateValue(resp.result);
-                      log.debug("IPC: Got result", name, resp.result);
+                      //log.debug("IPC: Got result", name, resp.result);
                     }
                   } else {
                     // TODO: updateErrors()?

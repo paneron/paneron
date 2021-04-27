@@ -4,12 +4,16 @@ import { jsx } from '@emotion/core';
 
 import React, { useContext } from 'react';
 import { Button } from '@blueprintjs/core';
+import makeSidebar from '@riboseinc/paneron-extension-kit/widgets/Sidebar';
+import PropertyView from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
+import PanelSeparator from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PanelSeparator';
+import ShareRepoForm from 'renderer/MainWindow/repositories/ShareRepoForm';
+import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
 import { deleteRepository, describeRepository, repositoriesChanged, Repository } from 'repositories/ipc';
 import { Context } from '../context';
-import Sidebar from '../Sidebar';
-import PropertyView from '../Sidebar/PropertyView';
-import ShareRepoForm from 'renderer/MainWindow/repositories/ShareRepoForm';
-import PanelSeparator from "../Sidebar/PanelSeparator";
+
+
+const Sidebar = makeSidebar(usePaneronPersistentStateReducer);
 
 
 export const SelectedRepositorySidebar: React.FC<{ workDir: string; repoInfo?: Repository; className?: string; }> = function ({ workDir, repoInfo, className }) {

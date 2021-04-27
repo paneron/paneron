@@ -4,8 +4,8 @@
 import { jsx, css } from '@emotion/core';
 import React, { useState } from 'react';
 import { Button, IButtonProps } from '@blueprintjs/core';
+import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import { queryGitRemote } from 'repositories/ipc';
-import PropertyView, { TextInput } from '../Sidebar/PropertyView';
 
 
 interface GitCredentialsInputProps {

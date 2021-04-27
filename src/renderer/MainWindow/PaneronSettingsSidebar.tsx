@@ -4,10 +4,14 @@ import { jsx } from '@emotion/core';
 
 import React, { useContext, useState } from 'react';
 import { Button } from '@blueprintjs/core';
+import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
+import makeSidebar from '@riboseinc/paneron-extension-kit/widgets/Sidebar';
 import { getNewRepoDefaults, NewRepositoryDefaults, setNewRepoDefaults } from 'repositories/ipc';
+import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
 import { Context } from './context';
-import Sidebar from './Sidebar';
-import PropertyView, { TextInput } from './Sidebar/PropertyView';
+
+
+const Sidebar = makeSidebar(usePaneronPersistentStateReducer);
 
 
 export const PaneronSettingsSidebar: React.FC<{ className?: string; }> = function ({ className }) {
