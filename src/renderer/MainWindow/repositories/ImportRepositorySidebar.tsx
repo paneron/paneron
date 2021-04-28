@@ -62,7 +62,7 @@ function ({ className, onCreate }) {
             password={password}
             remoteURL={remoteURL ?? ''}
             onEditPassword={!isBusy ? setPassword : undefined}
-            onEditUsername={!isBusy ? setPassword : setUsername}
+            onEditUsername={!isBusy ? setUsername : undefined}
           />,
       }, {
         key: 'import',
