@@ -164,7 +164,7 @@
     "@emotion/core": "^10.0.35",
     "@emotion/styled": "^10.0.27",
     "@riboseinc/paneron-extension-kit": "2.0.0-dev15",
-    "@riboseinc/paneron-registry-kit": "2.0.0-dev7",
+    "@riboseinc/paneron-registry-kit": "2.0.0-dev8",
     "@riboseinc/reprose": "^1.0.0-alpha9",
     "@types/mark.js": "^8.11.5",
     "async-lock": "^1.2.2",
