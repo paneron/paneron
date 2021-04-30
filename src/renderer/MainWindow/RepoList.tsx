@@ -11,7 +11,7 @@ import { AnchorButton, Button, Classes, Colors, ControlGroup, InputGroup } from 
 import { Tooltip2 } from '@blueprintjs/popover2';
 import makeGrid, { GridData } from '@riboseinc/paneron-extension-kit/widgets/Grid';
 import Workspace from '@riboseinc/paneron-extension-kit/widgets/Workspace'
-import useDebounce from 'renderer/useDebounce';
+import useDebounce from '@riboseinc/paneron-extension-kit/useDebounce';
 import { createRepository, Repository } from 'repositories/ipc';
 import { Context } from './context';
 import useRepositoryList from './useRepositoryList';
