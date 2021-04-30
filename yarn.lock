@@ -930,16 +930,17 @@
     classnames "^2.2"
     tslib "~1.13.0"
 
-"@blueprintjs/popover2@^0.6.0":
-  version "0.6.0"
-  resolved "https://registry.yarnpkg.com/@blueprintjs/popover2/-/popover2-0.6.0.tgz#6fec4b2c20181a52638e3e7807ef939c4b878176"
-  integrity sha512-2UZxesbLICnFoa6plvbaH71P7qIDDus+9rUqKGLQkzGVJP5PJM9g4t5+MwEuzgF+JaI1b0UwcbqGvPckkUFODw==
+"@blueprintjs/popover2@^0.7.0":
+  version "0.7.0"
+  resolved "https://registry.yarnpkg.com/@blueprintjs/popover2/-/popover2-0.7.0.tgz#f1a9b694fd3ee54e5ef6fb70267d73658dc55b77"
+  integrity sha512-mUPLRBqIp+K/IgOlII69wtoBupmVn74TIFK5PCbaQ8dBxtHDBeyd2Ms/xLx7GaK2BGfrmrM6H0PCol+m1LxMQQ==
   dependencies:
     "@blueprintjs/core" "^3.44.0"
     "@popperjs/core" "^2.5.4"
     classnames "^2.2"
     dom4 "^2.1.5"
     react-popper "^2.2.4"
+    resize-observer-polyfill "^1.5.1"
     tslib "~1.13.0"
 
 "@blueprintjs/select@^3.15.9":
