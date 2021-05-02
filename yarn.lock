@@ -894,10 +894,10 @@
     resize-observer-polyfill "^1.5.1"
     tslib "~1.13.0"
 
-"@blueprintjs/core@^3.44.0":
-  version "3.44.0"
-  resolved "https://registry.yarnpkg.com/@blueprintjs/core/-/core-3.44.0.tgz#3d03adb6a11d6c9fa8031414a7dba1a3003e70ee"
-  integrity sha512-QjRa4LvygTJn5v75O1bvKQtxcs9u2sl2CXoQ3Hd2KLQwzAz8kongWyc2xOw/wiFE4gRyRZQK44c43bEPkoeKhA==
+"@blueprintjs/core@^3.44.1":
+  version "3.44.1"
+  resolved "https://registry.yarnpkg.com/@blueprintjs/core/-/core-3.44.1.tgz#614f67142d9d12a0366d40c0a93d29164f0c0699"
+  integrity sha512-q3qPXQn9oUukgwie4Tm5t6a+ZSrbgPrav5P/NULAc5VlEHW43t4gdKnSMciniUlFk0lWnnD0bNcqaMPviyAbLw==
   dependencies:
     "@blueprintjs/icons" "^3.26.0"
     "@types/dom4" "^2.0.1"
@@ -930,12 +930,12 @@
     classnames "^2.2"
     tslib "~1.13.0"
 
-"@blueprintjs/popover2@^0.7.0":
-  version "0.7.0"
-  resolved "https://registry.yarnpkg.com/@blueprintjs/popover2/-/popover2-0.7.0.tgz#f1a9b694fd3ee54e5ef6fb70267d73658dc55b77"
-  integrity sha512-mUPLRBqIp+K/IgOlII69wtoBupmVn74TIFK5PCbaQ8dBxtHDBeyd2Ms/xLx7GaK2BGfrmrM6H0PCol+m1LxMQQ==
+"@blueprintjs/popover2@^0.7.1":
+  version "0.7.1"
+  resolved "https://registry.yarnpkg.com/@blueprintjs/popover2/-/popover2-0.7.1.tgz#a794609acd3b214b09e6b5aae840547d47149f2e"
+  integrity sha512-zoRIRdq1USuYFIrP+JYrih7ZeadT9CMyUKSjfn6Wcp5T4KWxsBYyf2DSXbSqLF8RVU5GoNsB9+O2hgXddWgdgQ==
   dependencies:
-    "@blueprintjs/core" "^3.44.0"
+    "@blueprintjs/core" "^3.44.1"
     "@popperjs/core" "^2.5.4"
     classnames "^2.2"
     dom4 "^2.1.5"
@@ -1184,15 +1184,15 @@
   resolved "https://registry.yarnpkg.com/@popperjs/core/-/core-2.9.2.tgz#adea7b6953cbb34651766b0548468e743c6a2353"
   integrity sha512-VZMYa7+fXHdwIq1TDhSXoVmSPEGM/aa+6Aiq3nVVJ9bXr24zScr+NlKFKC3iPljA7ho/GAZr+d2jOf5GIRC30Q==
 
-"@riboseinc/paneron-extension-kit@2.0.0-dev17":
-  version "2.0.0-dev17"
-  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-extension-kit/-/paneron-extension-kit-2.0.0-dev17.tgz#5f482e205961abd0cc1752aed775fd265f4b5944"
-  integrity sha512-RZfQkkH0O/Y9zM0AI0cnd158PUN4w/Upxha4s0kDqujYD7vyrjRrHuqK29qVjqyLTxRzAc2aWqcRPIWILXktpA==
+"@riboseinc/paneron-extension-kit@2.0.0-dev18":
+  version "2.0.0-dev18"
+  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-extension-kit/-/paneron-extension-kit-2.0.0-dev18.tgz#d6f360799d73ccb60ae6cce20e683d6d7ac5ee7f"
+  integrity sha512-8DA9KMWSn27nBxFChawXuib9uZtt+jN5Dx0o1JGEQXqsQPmVwijwCpurc1rJuh/e+cYfFVAdJceZEiZWsd5WdQ==
 
-"@riboseinc/paneron-registry-kit@2.0.0-dev11":
-  version "2.0.0-dev11"
-  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-registry-kit/-/paneron-registry-kit-2.0.0-dev11.tgz#fe0cd6103f457961daa935d5f22e7891abe8fceb"
-  integrity sha512-fx4qpTADztxJElARYBjpxwgTW/vIjlOUBGasBvE83T/dn5MOIRWy2KqwFpJG8A7iPrlNaO1rxKNET/fseyUj4Q==
+"@riboseinc/paneron-registry-kit@2.0.0-dev12":
+  version "2.0.0-dev12"
+  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-registry-kit/-/paneron-registry-kit-2.0.0-dev12.tgz#9e71ea03c83279aa3e7b2c6902cbb6bf275b146b"
+  integrity sha512-sfMG2ugmiUBabWAPMGAp7IRtFYo8ShFSoh4cRfyDmGrWeumjk2rDWxcIDWK9TlGhI16Gq5OTn3NQ7JDTQVLKXA==
 
 "@riboseinc/reprose@^1.0.0-alpha9":
   version "1.0.0-alpha9"
