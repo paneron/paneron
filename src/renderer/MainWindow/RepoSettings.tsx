@@ -76,7 +76,7 @@ interface DatasetGridData {
   workDir: string
 }
 const Dataset: React.FC<CellProps<DatasetGridData>> =
-function ({ isSelected, onSelect, onOpen, extraData, itemRef, width, height, padding }) {
+function ({ isSelected, onSelect, onOpen, extraData, itemRef, padding }) {
   const description = getDatasetInfo.renderer!.useValue(
     { workingCopyPath: extraData.workDir, datasetPath: itemRef },
     { info: null });
@@ -86,8 +86,6 @@ function ({ isSelected, onSelect, onOpen, extraData, itemRef, width, height, pad
         isSelected={isSelected}
         onSelect={onSelect}
         onOpen={onOpen}
-        width={width}
-        height={height}
         padding={padding}
         entityType={{ iconProps: { icon: 'database' }, name: 'dataset' }}
         contentClassName={description.isUpdating ? Classes.SKELETON : undefined}>
