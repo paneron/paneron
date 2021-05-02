@@ -8,7 +8,7 @@ import { CellProps, LabelledGridIcon } from '@riboseinc/paneron-extension-kit/wi
 import { describeRepository } from 'repositories/ipc';
 
 
-export const RepoGridCell: React.FC<CellProps> = function ({ itemRef, isSelected, onSelect, onOpen, height, width, padding }) {
+export const RepoGridCell: React.FC<CellProps> = function ({ itemRef, isSelected, onSelect, onOpen, padding }) {
   const workDir = itemRef;
 
   const description = describeRepository.renderer!.useValue(
@@ -17,8 +17,6 @@ export const RepoGridCell: React.FC<CellProps> = function ({ itemRef, isSelected
 
   return (
     <LabelledGridIcon
-      height={height}
-      width={width}
       padding={padding}
       entityType={{
         iconProps: { icon: 'git-repo' },
