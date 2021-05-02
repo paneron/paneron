@@ -28,6 +28,9 @@ html.platform--win32::before {
   background-color: silver;
 }
 
+.filter-popover .bp3-popover2-content {
+  border-radius: 0;
+}
 .bp3-tree-node-caret {
   cursor: default !important;
 }
