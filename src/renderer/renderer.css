@@ -30,6 +30,8 @@ html.platform--win32::before {
 
 .filter-popover .bp3-popover2-content {
   border-radius: 0;
+  top: -2.5px;
+  position: relative;
 }
 .bp3-tree-node-caret {
   cursor: default !important;
