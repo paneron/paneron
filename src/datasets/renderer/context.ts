@@ -140,11 +140,35 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
       }, { objectPath: '' });
     },
 
+    getObjectPathFromFilteredIndex: async (opts) => {
+      const result = (await getFilteredObject.renderer!.trigger({
+        ...datasetParams,
+        ...opts,
+      })).result;
+      if (result) {
+        return result;
+      } else {
+        throw new Error("Unable to retrieve object path from filtered index");
+      }
+    },
+
     useFilteredIndexPosition: function _useFilteredIndexPosition (opts) {
       return locateFilteredIndexPosition.renderer!.useValue({
         ...datasetParams,
         ...opts,
       }, { position: null });
+    },
+
+    getFilteredIndexPosition: async (opts) => {
+      const result = (await locateFilteredIndexPosition.renderer!.trigger({
+        ...datasetParams,
+        ...opts,
+      })).result;
+      if (result) {
+        return result;
+      } else {
+        throw new Error("Unable to retrieve index position from given object path");
+      }
     },
 
     usePersistentDatasetStateReducer: function _usePersistentDatasetStateReducer<S, A extends BaseAction>
