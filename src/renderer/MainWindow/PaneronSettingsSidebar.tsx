@@ -67,10 +67,10 @@ export const PaneronSettingsSidebar: React.FC<{ className?: string; }> = functio
           disabled={busy || !defaultsValid || !defaultsChanged} small fill outlined
           onClick={editedDefaults
             ? performOperation('updating repository defaults', async () => {
-              await setNewRepoDefaults.renderer!.trigger(editedDefaults);
-              setEditedDefaults(null);
-              defaultsResp.refresh();
-            })
+                await setNewRepoDefaults.renderer!.trigger(editedDefaults);
+                setEditedDefaults(null);
+                defaultsResp.refresh();
+              })
             : undefined}>
           Update defaults
         </Button>
