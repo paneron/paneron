@@ -1,6 +1,6 @@
+import * as R from 'ramda';
 import { ChangeStatus } from '@riboseinc/paneron-extension-kit/types/changes';
 import { ObjectChangeset, ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
-import * as R from 'ramda';
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
 import { normalizeDatasetDir } from '../loadedDatasets';
 import { toBufferChangeset } from '../buffer-dataset-conversion';
