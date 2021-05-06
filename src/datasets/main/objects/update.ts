@@ -33,7 +33,7 @@ async function ({
     }
   }
 
-  const bufferChangeset = toBufferChangeset(objectChangeset);
+  const bufferChangeset = toBufferChangeset(objectChangeset, datasetDir);
 
   return await sync.repo_updateBuffers({
     workDir,

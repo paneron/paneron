@@ -1,6 +1,8 @@
+import path from 'path';
 import { ObjectChangeset } from '@riboseinc/paneron-extension-kit/types/objects';
 import { BufferChange, BufferChangeset, BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 import { findSerDesRuleForPath } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
+import { stripTrailingSlash } from 'utils';
 
 
 /* Converts object changeset
@@ -18,18 +20,21 @@ import { findSerDesRuleForPath } from '@riboseinc/paneron-extension-kit/object-s
 */
 export function toBufferChangeset(
   objectChangeset: ObjectChangeset,
+  datasetDir: string,
 ): BufferChangeset {
   const buffers: BufferChangeset = {};
 
   for (const [objectPath, change] of Object.entries(objectChangeset)) {
     const rule = findSerDesRuleForPath(objectPath);
 
-    const newObjectBuffersRelative = rule.serialize(change.newValue, {});
     const oldObjectBuffersRelative = rule.serialize(change.oldValue, {});
+    const newObjectBuffersRelative = rule.serialize(change.newValue, {});
 
     const bufferChanges = mergeBufferDatasetsIntoChangeset(
+      oldObjectBuffersRelative,
       newObjectBuffersRelative,
-      oldObjectBuffersRelative);
+      datasetDir,
+      objectPath);
 
     Object.assign(buffers, bufferChanges);
   }
@@ -40,6 +45,8 @@ export function toBufferChangeset(
 function mergeBufferDatasetsIntoChangeset(
   oldDataset: BufferDataset,
   newDataset: BufferDataset,
+  datasetPath: string,
+  objectPath: string,
 ): BufferChangeset {
   const paths = Array.from(new Set([
     ...Object.keys(oldDataset),
@@ -50,10 +57,10 @@ function mergeBufferDatasetsIntoChangeset(
 
   for (const p of paths) {
     const change: BufferChange = {
-      newValue: newDataset[p] || null,
-      oldValue: oldDataset[p] || null,
+      oldValue: oldDataset[p] ?? null,
+      newValue: newDataset[p] ?? null,
     };
-    changeset[p] = change;
+    changeset[stripTrailingSlash(path.join(datasetPath, objectPath, p))] = change;
   }
 
   return changeset;
