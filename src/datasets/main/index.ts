@@ -23,6 +23,7 @@ import { getLoadedRepository } from 'repositories/main/loadedRepositories';
 
 import loadedDatasets from './loadedDatasets';
 import { getObjectDataset as getDataset } from './objects/read';
+import { updateObjects as updateObj } from './objects/update';
 
 import {
   deleteDataset,
@@ -36,6 +37,7 @@ import {
   unloadDataset,
   getFilteredObject,
   locateFilteredIndexPosition,
+  updateObjects,
 } from '../ipc';
 
 import './migrations';
@@ -274,6 +276,22 @@ locateFilteredIndexPosition.main!.handle(async ({ workingCopyPath, datasetPath, 
       return { position: null };
     }
   }
+});
+
+
+updateObjects.main!.handle(async ({ workingCopyPath, datasetPath, objectChangeset, commitMessage, _dangerouslySkipValidation }) => {
+  const { author } = await readRepoConfig(workingCopyPath);
+  if (!author) {
+    throw new Error("Repository configuration is missing author information");
+  }
+  return await updateObj({
+    workDir: workingCopyPath,
+    datasetDir: datasetPath,
+    objectChangeset,
+    commitMessage,
+    _dangerouslySkipValidation,
+    author,
+  })
 });
 
 
