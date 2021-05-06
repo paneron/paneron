@@ -476,7 +476,7 @@ export function normalizeDatasetDir(datasetDir: string) {
   return stripTrailingSlash(stripLeadingSlash(datasetDir));
 }
 
-function getLoadedDataset(
+export function getLoadedDataset(
   workDir: string,
   datasetDir: string,
 ): Datasets.Util.LoadedDataset {
@@ -491,10 +491,11 @@ function getLoadedDataset(
 
 // Indexes
 
-async function fillInDefaultIndex(
+export async function fillInDefaultIndex(
   workDir: string,
   datasetDir: string,
   index: Datasets.Util.DefaultIndex,
+  force = false,
 ) {
 
   const defaultIndexStatusReporter = getDefaultIndexStatusReporter(workDir, datasetDir);
@@ -526,13 +527,17 @@ async function fillInDefaultIndex(
           loaded: 0,
         },
       });
-      try {
-        await index.dbHandle.get(objectPath);
-      } catch (e) {
-        if (e.type === 'NotFoundError') {
-          await index.dbHandle.put(objectPath, false);
-          changedCount += 1;
+      if (!force) {
+        try {
+          await index.dbHandle.get(objectPath);
+        } catch (e) {
+          if (e.type === 'NotFoundError') {
+            await index.dbHandle.put(objectPath, false);
+            changedCount += 1;
+          }
         }
+      } else {
+        await index.dbHandle.put(objectPath, false);
       }
       totalCount += 1;
     }

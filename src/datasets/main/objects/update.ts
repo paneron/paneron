@@ -2,7 +2,7 @@ import * as R from 'ramda';
 import { ChangeStatus } from '@riboseinc/paneron-extension-kit/types/changes';
 import { ObjectChangeset, ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
-import { normalizeDatasetDir } from '../loadedDatasets';
+import { normalizeDatasetDir, getLoadedDataset, fillInDefaultIndex } from '../loadedDatasets';
 import { toBufferChangeset } from '../buffer-dataset-conversion';
 import { API as Datasets } from '../../types';
 import { diffObjectDatasets } from './equality';
@@ -35,12 +35,19 @@ async function ({
 
   const bufferChangeset = toBufferChangeset(objectChangeset, datasetDir);
 
-  return await sync.repo_updateBuffers({
+  //console.debug("updateObjects: got changeset", JSON.stringify(objectChangeset), bufferChangeset);
+
+  const result = await sync.repo_updateBuffers({
     workDir,
     author,
     commitMessage,
     bufferChangeset,
   });
+
+  const idx = getLoadedDataset(workDir, datasetDir).indexes.default as Datasets.Util.DefaultIndex;
+  fillInDefaultIndex(workDir, datasetDir, idx, true);
+
+  return result;
 }
 
 
