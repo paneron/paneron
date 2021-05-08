@@ -291,7 +291,7 @@ updateObjects.main!.handle(async ({ workingCopyPath, datasetPath, objectChangese
     commitMessage,
     _dangerouslySkipValidation,
     author,
-  })
+  });
 });
 
 
