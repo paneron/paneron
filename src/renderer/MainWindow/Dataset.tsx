@@ -29,10 +29,10 @@ function ({ className }) {
     (async () => {
       if (selectedRepoWorkDir && selectedDatasetID) {
         try {
-          const { MainView, dataset } = await getDataset(selectedRepoWorkDir, selectedDatasetID);
+          const { MainView, dataset, writeAccess } = await getDataset(selectedRepoWorkDir, selectedDatasetID);
 
           const datasetGetterProps: ContextGetterProps = {
-            writeAccess: false,
+            writeAccess,
             workingCopyPath: selectedRepoWorkDir,
             datasetPath: selectedDatasetID,
             nodeModulesPath: NODE_MODULES_PATH,
