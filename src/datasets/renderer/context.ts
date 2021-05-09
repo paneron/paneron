@@ -1,17 +1,13 @@
 import path from 'path';
 import log from 'electron-log';
+import { useEffect, useState } from 'react';
 import { DatasetContext, RendererPlugin } from '@riboseinc/paneron-extension-kit/types';
 import { IndexStatus, INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
+import { BaseAction, PersistentStateReducerHook } from '@riboseinc/paneron-extension-kit/usePersistentStateReducer';
 
-import {
-  makeRandomID,
-  chooseFileFromFilesystem,
-} from 'common';
-
-import {
-  copyObjects,
-  requestCopiedObjects,
-} from '../../clipboard/ipc';
+import { makeRandomID, chooseFileFromFilesystem } from 'common';
+import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
+import { copyObjects, requestCopiedObjects } from 'clipboard/ipc';
 
 import { DatasetInfo } from '../types';
 
@@ -24,9 +20,6 @@ import {
   locateFilteredIndexPosition,
   updateObjects,
 } from '../ipc';
-import { useEffect, useState } from 'react';
-import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
-import { BaseAction, PersistentStateReducerHook } from '@riboseinc/paneron-extension-kit/usePersistentStateReducer';
 
 
 export interface ContextGetterProps {

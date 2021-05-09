@@ -6,11 +6,11 @@ import { jsx, css } from '@emotion/core';
 import React, { useContext, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { NonIdealState } from '@blueprintjs/core';
-import getDataset from '../../datasets/renderer/getDataset';
-import { ContextGetterProps, getContext } from '../../datasets/renderer/context';
-import { Context } from './context';
-import { unloadDataset } from 'datasets/ipc';
 import { DatasetContext } from '@riboseinc/paneron-extension-kit/types';
+import { unloadDataset } from 'datasets/ipc';
+import getDataset from 'datasets/renderer/getDataset';
+import { ContextGetterProps, getContext } from 'datasets/renderer/context';
+import { Context } from './context';
 
 
 const NODE_MODULES_PATH = process.env.NODE_ENV === 'production'
