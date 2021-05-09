@@ -284,6 +284,7 @@ updateObjects.main!.handle(async ({ workingCopyPath, datasetPath, objectChangese
   if (!author) {
     throw new Error("Repository configuration is missing author information");
   }
+  // TODO: Save a version
   return await updateObj({
     workDir: workingCopyPath,
     datasetDir: datasetPath,
