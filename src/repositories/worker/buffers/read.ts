@@ -122,7 +122,7 @@ export async function readBufferAtVersion(
       fs,
       dir: workDir,
       oid: commitHash,
-      filepath: path,
+      filepath: stripLeadingSlash(path),
     })).blob;
   } catch (e) {
     if (e.code === 'NotFoundError') {
