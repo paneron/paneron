@@ -37,7 +37,7 @@ export interface Methods {
 
   /* Initialize plugin manager and config file.
      Must be called before anything else on freshly started worker. */
-  initialize: (msg: { cwd: string, pluginsPath: string, pluginConfigPath: string }) => Promise<void>
+  initialize: (msg: { cwd: string, pluginsPath: string, pluginConfigPath: string, devFolder?: string }) => Promise<void>
 
   /* Install latest version if not installed;
      if already installed, do nothing;
@@ -95,7 +95,7 @@ async function updateConfig(updater: (data: PluginConfigData) => PluginConfigDat
 
 const methods: WorkerSpec = {
 
-  async initialize({ cwd, pluginsPath, pluginConfigPath }) {
+  async initialize({ cwd, pluginsPath, pluginConfigPath, devFolder }) {
     await fs.ensureDir(pluginsPath);
     await fs.ensureFile(pluginConfigPath);
 
@@ -116,8 +116,14 @@ const methods: WorkerSpec = {
       plugins = {};
     }
 
-    for (const [name, info] of Object.entries(plugins)) {
-      await manager.installFromNpm(name, info.installedVersion || undefined);
+    if (!devFolder) {
+      for (const [name, info] of Object.entries(plugins)) {
+        await manager.installFromNpm(name, info.installedVersion || undefined);
+      }
+    } else {
+      for (const [name, ] of Object.entries(plugins)) {
+        await manager.installFromPath(path.join(devFolder, name));
+      }
     }
   },
 

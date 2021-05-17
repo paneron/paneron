@@ -279,6 +279,7 @@ export const worker: Promise<Thread & WorkerMethods> = new Promise((resolve, rej
       cwd: CWD,
       pluginsPath: PLUGINS_PATH,
       pluginConfigPath: PLUGIN_CONFIG_PATH,
+      devFolder,
     }).
     then(() => {
       log.debug("Plugins: Installing plugins");
