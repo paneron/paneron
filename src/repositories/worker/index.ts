@@ -204,7 +204,7 @@ const methods: WorkerSpec = {
   repo_readBuffers: ({ workDir, rootPath }) =>
     readBuffers(path.join(workDir, rootPath)),
   repo_readBuffersAtVersion: ({ workDir, rootPath, commitHash }) =>
-    readBuffersAtVersion(workDir, path.join(workDir, rootPath), commitHash),
+    readBuffersAtVersion(workDir, rootPath, commitHash),
   repo_getBufferDataset: getBufferDataset,
   repo_deleteTree: lockingRepoOperation(deleteTree),
   repo_resolveChanges: lockingRepoOperation(resolveChanges),
