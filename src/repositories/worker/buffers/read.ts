@@ -52,7 +52,7 @@ export async function readBuffersAtVersion(
     atCommitHash);
   for (const [relativeBufferPath, _] of bufferPathsRelativeToRoot) {
     const bufferPath = path.join(rootPath, relativeBufferPath);
-    const bufferData = await readBufferAtVersion(
+    const bufferData: Uint8Array | null = await readBufferAtVersion(
       bufferPath,
       workDir,
       atCommitHash);
