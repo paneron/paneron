@@ -304,9 +304,21 @@ async function updateIndexes(
   async function readObjectVersions(objectPath: string):
   Promise<[ Record<string, any> | null, Record<string, any> | null ]> {
     const rule = findSerDesRuleForPath(objectPath);
+
+    const bufDs1 = await sync.repo_readBuffersAtVersion({ workDir, rootPath: path.join(datasetDir, objectPath), commitHash: oid1 });
+    const bufDs2 = await sync.repo_readBuffersAtVersion({ workDir, rootPath: path.join(datasetDir, objectPath), commitHash: oid2 });
+
+    const objDs1: Record<string, any> | null = Object.keys(bufDs1).length > 0 ? rule.deserialize(bufDs1, {}) : null;
+    const objDs2: Record<string, any> | null = Object.keys(bufDs2).length > 0 ? rule.deserialize(bufDs2, {}) : null;
+
+    if (objDs1 === null && objDs2 === null) {
+      log.error("Datasets: updateIndexes: Unable to read either object version", path.join(datasetDir, objectPath), oid1, oid2);
+      throw new Error("Unable to read either object version");
+    }
+
     return [
-      rule.deserialize(await sync.repo_readBuffersAtVersion({ workDir, rootPath: path.join(datasetDir, objectPath), commitHash: oid1 }), {}),
-      rule.deserialize(await sync.repo_readBuffersAtVersion({ workDir, rootPath: path.join(datasetDir, objectPath), commitHash: oid2 }), {}),
+      objDs1,
+      objDs2,
     ];
   }
 
