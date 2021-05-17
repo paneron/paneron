@@ -110,7 +110,7 @@ export async function listDescendantPathsAtVersion(
         return;
       }
 
-      const relativeFilepath = relative(rootWithLeadingSlash, filepathWithLeadingSlash);
+      const relativeFilepath = relative(rootWithLeadingSlash, filepathWithLeadingSlash) || '/';
 
       if (doCompare) {
         const Aoid = await A?.oid();
