@@ -1184,15 +1184,15 @@
   resolved "https://registry.yarnpkg.com/@popperjs/core/-/core-2.9.2.tgz#adea7b6953cbb34651766b0548468e743c6a2353"
   integrity sha512-VZMYa7+fXHdwIq1TDhSXoVmSPEGM/aa+6Aiq3nVVJ9bXr24zScr+NlKFKC3iPljA7ho/GAZr+d2jOf5GIRC30Q==
 
-"@riboseinc/paneron-extension-kit@2.0.0-dev20":
-  version "2.0.0-dev20"
-  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-extension-kit/-/paneron-extension-kit-2.0.0-dev20.tgz#06becd528b4cc2cec3998a53fd6bef67a06b3879"
-  integrity sha512-GwNRFTWF8cvQst9J2Cpkqm79xdGcUiL173KUMgvJoAdlyrOqiUbCCm6JZM97LgbCkVcyu3PqsEUZLMNULX4Bdg==
+"@riboseinc/paneron-extension-kit@2.0.0-dev21":
+  version "2.0.0-dev21"
+  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-extension-kit/-/paneron-extension-kit-2.0.0-dev21.tgz#c786055abdd3889da2890b4f45acfaaffd889518"
+  integrity sha512-C+yQA1Ml2nKKmgqK2HbQ0WoOyi3v6kBEdmtq7pmj57xHhUGpa6unUH9TaL6QXUrxllfW+npoMHT/tScEBIwO1w==
 
-"@riboseinc/paneron-registry-kit@2.0.0-dev14":
-  version "2.0.0-dev14"
-  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-registry-kit/-/paneron-registry-kit-2.0.0-dev14.tgz#a08f5e55fb6c8c3fd95e9a93ce2353e8505ea8a7"
-  integrity sha512-qrL4Wj+9eIcDUZVq4XZCNgq9AnrrE947WDLqoLK1KI313nrcJbUo7rRWvF2uyGN0oX30DOysmDYX0Dm/rSKDPw==
+"@riboseinc/paneron-registry-kit@2.0.0-dev15":
+  version "2.0.0-dev15"
+  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-registry-kit/-/paneron-registry-kit-2.0.0-dev15.tgz#c804badd09d5f293dd0f09e6941639ad86568ceb"
+  integrity sha512-uYNikq4s2iUHcaaj16xbvYPA8r2tXne/ts38QZAJhP2msGH/L4VJCrJTc6NXGFYdqrnPzyIDr5e2Ztxw2VfQFQ==
 
 "@riboseinc/reprose@^1.0.0-alpha9":
   version "1.0.0-alpha9"
@@ -4014,6 +4014,11 @@ detect-node@^2.0.4:
   resolved "https://registry.yarnpkg.com/detect-node/-/detect-node-2.0.4.tgz#014ee8f8f669c5c58023da64b8179c083a28c46c"
   integrity sha512-ZIzRpLJrOj7jjP2miAtgqIfmzbxa4ZOr5jJc601zklsfEx9oTzmmj2nVpIPRpNlRTIh8lc1kyViIY7BWSGNmKw==
 
+diff-match-patch@^1.0.0:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/diff-match-patch/-/diff-match-patch-1.0.5.tgz#abb584d5f10cd1196dfc55aa03701592ae3f7b37"
+  integrity sha512-IayShXAgj/QMXgB0IWmKx+rOPuGMhqm5w6jvFxmVenXKIzRqTAAsbBPT3kWQeGANj3jGgvcvv4yK6SxqYmikgw==
+
 diff3@0.0.3:
   version "0.0.3"
   resolved "https://registry.yarnpkg.com/diff3/-/diff3-0.0.3.tgz#d4e5c3a4cdf4e5fe1211ab42e693fcb4321580fc"
@@ -6559,6 +6564,14 @@ json5@^2.1.0, json5@^2.1.2:
   dependencies:
     minimist "^1.2.5"
 
+jsondiffpatch@^0.4.1:
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/jsondiffpatch/-/jsondiffpatch-0.4.1.tgz#9fb085036767f03534ebd46dcd841df6070c5773"
+  integrity sha512-t0etAxTUk1w5MYdNOkZBZ8rvYYN5iL+2dHCCx/DpkFm/bW28M6y5nUS83D4XdZiHy35Fpaw6LBb+F88fHZnVCw==
+  dependencies:
+    chalk "^2.3.0"
+    diff-match-patch "^1.0.0"
+
 jsonfile@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/jsonfile/-/jsonfile-4.0.0.tgz#8771aae0799b64076b76640fca058f9c10e33ecb"
@@ -6973,6 +6986,11 @@ matcher@^3.0.0:
   integrity sha512-OkeDaAZ/bQCxeFAozM55PKcKU0yJMPGifLwV4Qgjitu+5MoAfSQN4lsLJeXZ1b8w0x+/Emda6MZgXS1jvsapng==
   dependencies:
     escape-string-regexp "^4.0.0"
+
+mathjax@^2.7:
+  version "2.7.9"
+  resolved "https://registry.yarnpkg.com/mathjax/-/mathjax-2.7.9.tgz#d6b67955c173e7d719fcb2fc0288662884eb7d3d"
+  integrity sha512-NOGEDTIM9+MrsqnjPEjVGNx4q0GQxqm61yQwSK+/5S59i26wId5IC5gNu9/bu8+CCVl5p9G2IHcAl/wJa+5+BQ==
 
 mathml-tag-names@^2.1.3:
   version "2.1.3"
