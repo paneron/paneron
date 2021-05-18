@@ -61,7 +61,7 @@ export const deleteDataset = makeEndpoint.main(
 
 export const getOrCreateFilteredIndex = makeEndpoint.main(
   'datasets_getOrCreateFilteredIndex',
-  <{ workingCopyPath: string, datasetPath: string, queryExpression: string }>_,
+  <{ workingCopyPath: string, datasetPath: string, queryExpression: string, keyExpression?: string }>_,
   <{ indexID: string | undefined }>_,
 );
 

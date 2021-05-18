@@ -198,13 +198,14 @@ unloadDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
 });
 
 
-getOrCreateFilteredIndex.main!.handle(async ({ workingCopyPath, datasetPath, queryExpression }) => {
+getOrCreateFilteredIndex.main!.handle(async ({ workingCopyPath, datasetPath, queryExpression, keyExpression }) => {
   //const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
 
   const { indexID } = await loadedDatasets.getOrCreateFilteredIndex({
     workDir: workingCopyPath,
     datasetDir: datasetPath,
     queryExpression,
+    keyExpression,
   });
 
   //repoWorker.ds_index_streamStatus({

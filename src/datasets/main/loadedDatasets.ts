@@ -1,4 +1,5 @@
 import log from 'electron-log';
+import fs from 'fs-extra';
 import path from 'path';
 //import * as R from 'ramda';
 import levelup from 'levelup';
@@ -14,7 +15,7 @@ import { findSerDesRuleForPath } from '@riboseinc/paneron-extension-kit/object-s
 
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
 import { listDescendantPaths } from 'repositories/worker/buffers/list';
-import { hash, stripLeadingSlash, stripTrailingSlash } from 'utils';
+import { hash, makeUUIDv4, stripLeadingSlash, stripTrailingSlash } from 'utils';
 import { API as Datasets, ReturnsPromise } from '../types';
 import { indexStatusChanged, objectsChanged } from '../ipc';
 import { listObjectPaths } from './objects/list';
@@ -100,8 +101,11 @@ const getOrCreateFilteredIndex: ReturnsPromise<Datasets.Indexes.GetOrCreateFilte
   workDir,
   datasetDir,
   queryExpression,
+  keyExpression,
 }) {
   const normalizedDatasetDir = normalizeDatasetDir(datasetDir);
+
+  const ds = getLoadedDataset(workDir, datasetDir);
 
   const defaultIndex: Datasets.Util.DefaultIndex =
     await getDefaultIndex(workDir, normalizedDatasetDir);
@@ -136,17 +140,30 @@ const getOrCreateFilteredIndex: ReturnsPromise<Datasets.Indexes.GetOrCreateFilte
       throw new Error("Unable to parse submitted predicate expression");
     }
 
+    let keyer: Datasets.Util.FilteredIndexKeyer | undefined;
+    if (keyExpression) {
+      try {
+        keyer = new Function('obj', keyExpression) as Datasets.Util.FilteredIndexKeyer;
+      } catch (e) {
+        log.error("Unable to parse sorter expression", keyExpression, e);
+        throw new Error("Unable to parse sorter expression");
+      }
+    } else {
+      keyer = undefined;
+    }
+
     filteredIndex = createFilteredIndex(
       workDir,
       normalizedDatasetDir,
       filteredIndexID,
       predicate,
+      keyer,
     ) as Datasets.Util.FilteredIndex;
 
     const statusReporter = getFilteredIndexStatusReporter(workDir, normalizedDatasetDir, filteredIndexID);
 
     // This will proceed in background.
-    fillInFilteredIndex(defaultIndex, filteredIndex, statusReporter);
+    fillInFilteredIndex(defaultIndex, filteredIndex, statusReporter, ds.indexDBRoot);
   }
 
   return { indexID: filteredIndexID };
@@ -412,7 +429,7 @@ async function updateIndexes(
     const statusReporter = getFilteredIndexStatusReporter(workDir, datasetDir, filteredIndexID);
 
     await filteredIndex.dbHandle.clear();
-    await fillInFilteredIndex(defaultIndex, filteredIndex, statusReporter);
+    await fillInFilteredIndex(defaultIndex, filteredIndex, statusReporter, ds.indexDBRoot);
   }
 }
 
@@ -619,11 +636,13 @@ export async function fillInDefaultIndex(
 async function fillInFilteredIndex(
   defaultIndex: Datasets.Util.DefaultIndex,
   filteredIndex: Datasets.Util.FilteredIndex,
-  statusReporter: (index: IndexStatus) => void
+  statusReporter: (index: IndexStatus) => void,
+  cacheRoot: string,
 ) {
   const defaultIndexDB = defaultIndex.dbHandle;
   const filteredIndexDB = filteredIndex.dbHandle;
   const predicate = filteredIndex.predicate;
+  const keyer = filteredIndex.keyer;
 
   if (defaultIndex.status.progress) {
     log.debug("Datasets: fillInFilteredIndex: Awaiting default index progress to finish...");
@@ -666,6 +685,13 @@ async function fillInFilteredIndex(
 
   let indexed: number = 0;
   let loaded: number = 0;
+
+  // First pass: write items into a temp. DB that orders on read
+  const tmpDBPath = path.join(cacheRoot, makeUUIDv4());
+  const tmpDB = new levelup(encode(leveldown(tmpDBPath), {
+    keyEncoding: 'string',
+    valueEncoding: 'string',
+  }));
   for await (const data of defaultIndexDB.createReadStream()) {
     // TODO: [upstream] NodeJS.ReadableStream is poorly typed.
     const { key, value } = data as unknown as { key: string, value: Record<string, any> };
@@ -676,14 +702,30 @@ async function fillInFilteredIndex(
     await new Promise((resolve) => setTimeout(resolve, 5));
 
     if (predicate(objectPath, objectData) === true) {
-      //console.debug("Datasets: fillInFilteredIndex: Checking object: Matches!");
-      filteredIndexDB.put(indexed, objectPath);
-      indexed += 1;
+      //log.debug("Datasets: fillInFilteredIndex: Checking object using keyer", keyer);
+      const customKey = keyer
+        ? keyer(objectData)
+        : null;
+      tmpDB.put(customKey ?? key, objectPath);
     }
-    loaded += 1;
-
+    loaded += 0.5;
     updaterDebounced(indexed, loaded);
   }
+
+  // Second pass: read ordered data from temp. DB into filtered index DB
+  let key: number = 0;
+  for await (const data of tmpDB.createReadStream()) {
+    const { value } = data as unknown as { value: string };
+    //log.debug("Indexing sorted key", value);
+    filteredIndexDB.put(key, value);
+
+    key += 1;
+    loaded += 0.5;
+    indexed += 1;
+    updaterDebounced(indexed, loaded);
+  }
+  await tmpDB.clear();
+  await fs.remove(tmpDBPath);
 
   statusReporter({
     objectCount: indexed,
@@ -697,6 +739,7 @@ function createFilteredIndex(
   datasetDir: string, // Should be normalized.
   indexID: string,
   predicate: Datasets.Util.FilteredIndexPredicate,
+  keyer?: Datasets.Util.FilteredIndexKeyer,
 ): Datasets.Util.FilteredIndex {
   const codecOptions: CodecOptions = {
     keyEncoding: {
@@ -711,6 +754,7 @@ function createFilteredIndex(
     ...makeIdxStub(workDir, datasetDir, indexID, codecOptions),
     accessed: new Date(),
     predicate,
+    keyer,
   };
   datasets[workDir][datasetDir].indexes[indexID] = idx;
   return idx;

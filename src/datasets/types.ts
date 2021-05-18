@@ -68,6 +68,7 @@ export namespace API {
     */
     export type GetOrCreateFiltered = (msg: DatasetOperationParams & {
       queryExpression: string
+      keyExpression?: string
     }) => { indexID: string }
 
     /* If indexID is omitted, default index is described. */
@@ -153,6 +154,7 @@ export namespace API {
 
       // Filtered index only:
       predicate?: FilteredIndexPredicate
+      keyer?: FilteredIndexKeyer
     }
 
     export type DefaultIndex = ActiveDatasetIndex<string, Record<string, any> | false> & {
@@ -165,11 +167,14 @@ export namespace API {
     export type FilteredIndex = ActiveDatasetIndex<number, string> & {
       accessed: Date
       predicate: FilteredIndexPredicate
+      keyer?: FilteredIndexKeyer
     };
     // A map of object’s position in the index and its path.
     // Requested can use that path to query default index for object data.
 
     export type FilteredIndexPredicate = (itemPath: string, item: Record<string, any>) => boolean;
+
+    export type FilteredIndexKeyer = (item: Record<string, any>) => string | null
 
   }
 }
