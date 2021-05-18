@@ -5,6 +5,8 @@ import ReactDOM from 'react-dom';
 
 import { Spinner } from '@blueprintjs/core';
 import '!style-loader!css-loader!@blueprintjs/datetime/lib/css/blueprint-datetime.css';
+import '!style-loader!css-loader!jsondiffpatch/dist/formatters-styles/annotated.css';
+import '!style-loader!css-loader!jsondiffpatch/dist/formatters-styles/html.css';
 import '!style-loader!css-loader!@blueprintjs/core/lib/css/blueprint.css';
 import '!style-loader!css-loader!@blueprintjs/popover2/lib/css/blueprint-popover2.css';
 import '!style-loader!css-loader!./normalize.css';

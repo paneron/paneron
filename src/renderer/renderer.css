@@ -31,6 +31,9 @@ html.platform--win32::before {
 .filter-popover .bp3-popover2-content {
   border-radius: 0;
 }
+.bp3-overlay-backdrop.bp3-popover2-backdrop {
+  background: rgba(0, 0, 0, .5);
+}
 .bp3-tree-node-caret {
   cursor: default !important;
 }
