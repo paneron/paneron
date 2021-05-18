@@ -11,7 +11,7 @@ export const getBufferDataset: Repositories.Data.GetBufferDataset = async functi
   workDir,
   paths,
 }) {
-  console.debug("Reading buffers at paths", workDir, paths);
+  //console.debug("Reading buffers at paths", workDir, paths);
   const bufferDataset: BufferDataset = paths.map((bufferPath) => {
     return {
       [bufferPath]: readBuffer(path.join(workDir, bufferPath)),

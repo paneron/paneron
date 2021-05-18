@@ -13,7 +13,7 @@ export const getObjectDataset: Datasets.Data.GetObjectDataset = async function (
 }) {
   const datasetDirNormalized = normalizeDatasetDir(datasetDir);
 
-  console.debug("Worker: Repositories: getObjectDataset: Reading…", objectPaths)
+  //console.debug("Worker: Repositories: getObjectDataset: Reading…", objectPaths)
 
   const objectDataset: ObjectDataset = (await Promise.all(
     objectPaths.map(async (objectPath) => {
@@ -26,7 +26,7 @@ export const getObjectDataset: Datasets.Data.GetObjectDataset = async function (
     })
   )).reduce((prev, curr) => ({ ...prev, ...curr }), {});
 
-  console.debug("Worker: Repositories: getObjectDataset: Got data", objectDataset);
+  //console.debug("Worker: Repositories: getObjectDataset: Got data", objectDataset);
 
   return objectDataset;
 }
