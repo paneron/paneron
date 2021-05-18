@@ -16,14 +16,14 @@ export const getObjectDataset: Datasets.Data.GetObjectDataset = async function (
   //console.debug("Worker: Repositories: getObjectDataset: Reading…", objectPaths)
 
   const objectDataset: ObjectDataset = (await Promise.all(
-    objectPaths.map(async (objectPath) => {
+    objectPaths?.map(async (objectPath) => {
       return {
         [objectPath]: await readObject(
           objectPath,
           workDir,
           datasetDirNormalized),
       };
-    })
+    }) ?? []
   )).reduce((prev, curr) => ({ ...prev, ...curr }), {});
 
   //console.debug("Worker: Repositories: getObjectDataset: Got data", objectDataset);
