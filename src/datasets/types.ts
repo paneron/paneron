@@ -144,9 +144,14 @@ export namespace API {
 
       //commitHash: string
 
-      // These are specific to default or filtered indexes
       accessed?: Date
+
+      // These are specific to default or filtered indexes
+
+      // Default index only:
       commitHash?: string
+
+      // Filtered index only:
       predicate?: FilteredIndexPredicate
     }
 
