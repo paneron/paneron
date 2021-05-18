@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import git from 'isomorphic-git';
 import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
-import { stripLeadingSlash } from '../../../utils';
+import { stripLeadingSlash, stripTrailingSlash } from '../../../utils';
 import { listDescendantPaths, listDescendantPathsAtVersion } from './list';
 import { Repositories } from '../types';
 
@@ -117,12 +117,13 @@ export async function readBufferAtVersion(
   workDir: string,
 ): Promise<Uint8Array | null> {
   let blob: Uint8Array;
+  const filepath = stripTrailingSlash(stripLeadingSlash(path));
   try {
     blob = (await git.readBlob({
       fs,
       dir: workDir,
       oid: commitHash,
-      filepath: stripLeadingSlash(path),
+      filepath,
     })).blob;
   } catch (e) {
     if (e.code === 'NotFoundError') {
