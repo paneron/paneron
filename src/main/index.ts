@@ -27,6 +27,9 @@ import { mainWindow } from '../common';
 import { chooseFileFromFilesystem, makeRandomID } from '../common';
 
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
+
 function preventDefault(e: Electron.Event) {
   log.warn("All windows closed (not quitting)");
   e.preventDefault();
@@ -48,9 +51,17 @@ async function initMain() {
 
   await app.whenReady();
 
-  protocol.registerFileProtocol('file', (request, callback) => {
-    const pathname = decodeURI(request.url.replace('file:///', ''));
-    callback(pathname);
+  //protocol.registerFileProtocol('file', (request, callback) => {
+  //  const pathname = decodeURI(request.url.replace('file:///', ''));
+  //  callback(pathname);
+  //});
+  protocol.registerFileProtocol('file', (request, cb) => {
+    const components = request.url.replace('file:///', '').split('?', 2);
+    if (isDevelopment) {
+      cb(components.map(decodeURI)[0]);
+    } else {
+      cb(components.map(decodeURI).join('?'));
+    }
   });
 
 

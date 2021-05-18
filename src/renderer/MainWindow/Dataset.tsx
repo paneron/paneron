@@ -5,6 +5,7 @@ import log from 'electron-log';
 import { jsx, css } from '@emotion/core';
 import React, { useContext, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
+import MathJax from 'react-mathjax2';
 import { NonIdealState } from '@blueprintjs/core';
 import { DatasetContext } from '@riboseinc/paneron-extension-kit/types';
 import { unloadDataset } from 'datasets/ipc';
@@ -16,6 +17,8 @@ import { Context } from './context';
 const NODE_MODULES_PATH = process.env.NODE_ENV === 'production'
   ? `${__static}/../../app.asar.unpacked/node_modules`
   : `${__static}/../../node_modules`;
+
+const MATHJAX_PATH = `${NODE_MODULES_PATH}/mathjax/MathJax.js?config=AM_HTMLorMML`;
 
 
 const Dataset: React.FC<{ className?: string }> =
@@ -66,12 +69,22 @@ function ({ className }) {
   }, [selectedRepoWorkDir, selectedDatasetID]);
 
   return (
-    <div css={css`display: flex; flex-flow: row nowrap;`} className={className}>
-      <Helmet>
-        <title>Dataset {datasetContext?.title ?? selectedDatasetID}</title>
-      </Helmet>
-      {datasetView}
-    </div>
+    <MathJax.Context
+        script={`file://${MATHJAX_PATH}`}
+        options={{
+          asciimath2jax: {
+            useMathMLspacing: true,
+            delimiters: [["`","`"]],
+            preview: "none",
+          },
+        }}>
+      <div css={css`display: flex; flex-flow: row nowrap;`} className={className}>
+        <Helmet>
+          <title>Dataset {datasetContext?.title ?? selectedDatasetID}</title>
+        </Helmet>
+        {datasetView}
+      </div>
+    </MathJax.Context>
   );
 }
 
