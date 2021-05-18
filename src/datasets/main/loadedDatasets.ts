@@ -41,10 +41,10 @@ const load: Datasets.Lifecycle.Load = async function ({
 
   try {
     getLoadedDataset(workDir, normalizedDatasetDir);
-    console.info("Datasets: Load: Already loaded!", workDir, normalizedDatasetDir);
+    log.info("Datasets: Load: Already loaded!", workDir, normalizedDatasetDir);
 
   } catch (e) {
-    console.info("Datasets: Load: Unloading first to clean up", workDir, normalizedDatasetDir);
+    log.info("Datasets: Load: Unloading first to clean up", workDir, normalizedDatasetDir);
 
     await unload({ workDir, datasetDir });
 
@@ -61,7 +61,7 @@ const load: Datasets.Lifecycle.Load = async function ({
 
     datasets[workDir][normalizedDatasetDir].indexes.default = defaultIndex,
 
-    console.info("Datasets: Load: Initialized dataset in-memory structure and default index", workDir, normalizedDatasetDir);
+    log.info("Datasets: Load: Initialized dataset in-memory structure and default index", workDir, normalizedDatasetDir);
 
     fillInDefaultIndex(workDir, normalizedDatasetDir, defaultIndex);
   }
@@ -80,10 +80,10 @@ const unload: Datasets.Lifecycle.Unload = async function ({
       //statusSubject.complete();
     }
   } catch (e) {
-    // TODO: Implement logging in worker
+    log.error("Failed to unload dataset", e, workDir, datasetDir);
   }
   delete datasets[workDir]?.[datasetDir];
-  console.info("Datasets: Unloaded", workDir, datasetDir)
+  log.info("Datasets: Unloaded", workDir, datasetDir)
 }
 
 
@@ -108,7 +108,7 @@ const getOrCreateFilteredIndex: ReturnsPromise<Datasets.Indexes.GetOrCreateFilte
 
   const filteredIndexID = hash(queryExpression); // XXX
 
-  console.debug(
+  log.debug(
     `Datasets: getOrCreateFilteredIndex: Creating ${datasetDir} index from ${defaultIndex.status.objectCount} items based on query`,
     queryExpression,
     filteredIndexID);
@@ -122,16 +122,17 @@ const getOrCreateFilteredIndex: ReturnsPromise<Datasets.Indexes.GetOrCreateFilte
       filteredIndexID,
     ) as Datasets.Util.FilteredIndex;
 
-    console.debug("Datasets: getOrCreateFilteredIndex: Already exists");
+    log.debug("Datasets: getOrCreateFilteredIndex: Already exists");
 
   } catch (e) {
 
-    console.debug("Datasets: getOrCreateFilteredIndex: Creating");
+    log.debug("Datasets: getOrCreateFilteredIndex: Creating");
 
     let predicate: Datasets.Util.FilteredIndexPredicate;
     try {
       predicate = new Function('objPath', 'obj', queryExpression) as Datasets.Util.FilteredIndexPredicate;
     } catch (e) {
+      log.error("Unable to parse submitted predicate expression", queryExpression, e);
       throw new Error("Unable to parse submitted predicate expression");
     }
 
@@ -426,18 +427,18 @@ async function updateDefaultIndex(
   let loaded: number = 0;
 
   for await (const objectPath of changedObjectPathGenerator) {
-    //console.debug("Datasets: updateDefaultIndex: Reading...", objectPath);
+    //log.debug("Datasets: updateDefaultIndex: Reading...", objectPath);
     await new Promise((resolve) => setTimeout(resolve, 5));
 
     const obj = await readObjectCold(workDir, path.join(datasetDir, objectPath));
 
     if (obj !== null) {
       await index.dbHandle.put(objectPath, obj);
-      //console.debug("Datasets: updateDefaultIndex: Indexed", objectPath, obj ? Object.keys(obj) : null);
+      //log.debug("Datasets: updateDefaultIndex: Indexed", objectPath, obj ? Object.keys(obj) : null);
     } else {
       try {
         await index.dbHandle.del(objectPath);
-        //console.debug("Datasets: updateDefaultIndex: Deleted", objectPath);
+        //log.debug("Datasets: updateDefaultIndex: Deleted", objectPath);
       } catch (e) {
         if (e.type !== 'NotFoundError') {
           throw e;
@@ -494,7 +495,7 @@ export function getLoadedDataset(
 ): Datasets.Util.LoadedDataset {
   const ds = datasets[workDir]?.[datasetDir];
   if (!ds) {
-    console.error("Dataset does not exist or is not loaded", datasetDir);
+    log.error("Dataset does not exist or is not loaded", datasetDir);
     throw new Error("Dataset does not exist or is not loaded");
   }
   return ds;
@@ -512,7 +513,7 @@ export async function fillInDefaultIndex(
 
   const defaultIndexStatusReporter = getDefaultIndexStatusReporter(workDir, datasetDir);
 
-  console.debug("Datasets: fillInDefaultIndex: Starting", workDir, datasetDir);
+  log.debug("Datasets: fillInDefaultIndex: Starting", workDir, datasetDir);
 
   defaultIndexStatusReporter({
     objectCount: 0,
@@ -563,7 +564,7 @@ export async function fillInDefaultIndex(
       },
     });
 
-    console.debug("Datasets: fillInDefaultIndex: Read objects total", changedCount);
+    log.debug("Datasets: fillInDefaultIndex: Read objects total", changedCount);
 
     async function* objectPathsToBeIndexed(): AsyncGenerator<string> {
       for await (const data of index.dbHandle.createReadStream()) {
@@ -574,7 +575,7 @@ export async function fillInDefaultIndex(
       }
     }
 
-    console.debug("Datasets: fillInDefaultIndex: Updating default index", workDir, datasetDir);
+    log.debug("Datasets: fillInDefaultIndex: Updating default index", workDir, datasetDir);
 
     defaultIndexStatusReporter({
       objectCount: totalCount,
@@ -625,7 +626,7 @@ async function fillInFilteredIndex(
   const predicate = filteredIndex.predicate;
 
   if (defaultIndex.status.progress) {
-    console.debug("Datasets: fillInFilteredIndex: Awaiting default index progress to finish...");
+    log.debug("Datasets: fillInFilteredIndex: Awaiting default index progress to finish...");
     await defaultIndex.completionPromise;
     //await new Promise<void>((resolve, reject) => {
     //  defaultIndex.statusSubject.subscribe(
@@ -633,14 +634,14 @@ async function fillInFilteredIndex(
     //    (err) => reject(err),
     //    () => reject("Default index status stream completed without progress having finished"));
     //});
-    console.debug("Datasets: fillInFilteredIndex: Awaiting default index progress to finish: Done");
+    log.debug("Datasets: fillInFilteredIndex: Awaiting default index progress to finish: Done");
   } else {
-    console.debug("Datasets: fillInFilteredIndex: Default index is ready beforehand");
+    log.debug("Datasets: fillInFilteredIndex: Default index is ready beforehand");
   }
 
   const total = defaultIndex.status.objectCount;
 
-  console.debug("Datasets: fillInFilteredIndex: Operating on objects from default index", total);
+  log.debug("Datasets: fillInFilteredIndex: Operating on objects from default index", total);
 
   statusReporter({
     objectCount: 0,
@@ -671,7 +672,7 @@ async function fillInFilteredIndex(
     const objectPath: string = key;
     const objectData: Record<string, any> = value;
 
-    //console.debug("Datasets: fillInFilteredIndex: Checking object", loaded, objectPath);
+    //log.debug("Datasets: fillInFilteredIndex: Checking object", loaded, objectPath);
     await new Promise((resolve) => setTimeout(resolve, 5));
 
     if (predicate(objectPath, objectData) === true) {
@@ -688,7 +689,7 @@ async function fillInFilteredIndex(
     objectCount: indexed,
   });
 
-  console.debug("Datasets: fillInFilteredIndex: Indexed vs. checked", indexed, loaded);
+  log.debug("Datasets: fillInFilteredIndex: Indexed vs. checked", indexed, loaded);
 }
 
 function createFilteredIndex(
