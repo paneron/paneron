@@ -568,6 +568,7 @@ export async function fillInDefaultIndex(
         }
       } else {
         await index.dbHandle.put(objectPath, false);
+        changedCount += 1;
       }
       totalCount += 1;
     }
