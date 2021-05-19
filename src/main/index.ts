@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import crypto from 'crypto';
 import { app, BrowserWindow, dialog, protocol } from 'electron';
 import log from 'electron-log';
 import type { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
@@ -15,6 +14,8 @@ if (process.platform === 'linux' && process.env.SNAP && process.env.SNAP_USER_CO
     path.join(process.env.SNAP_USER_COMMON, '.config', app.getName()));
   app.setAppLogsPath();
 }
+
+import { makeUUIDv4 } from 'utils';
 
 // No-op import to execute initialization code
 import '../state/main';
@@ -68,7 +69,7 @@ async function initMain() {
   // Shared IPC
 
   makeRandomID.main!.handle(async () => {
-    return { id: crypto.randomBytes(16).toString("hex") };
+    return { id: makeUUIDv4() };
   });
 
   chooseFileFromFilesystem.main!.handle(async (opts) => {
