@@ -107,8 +107,7 @@ const getOrCreateFilteredIndex: ReturnsPromise<Datasets.Indexes.GetOrCreateFilte
 
   const ds = getLoadedDataset(workDir, normalizedDatasetDir);
 
-  const defaultIndex: Datasets.Util.DefaultIndex =
-    await getDefaultIndex(workDir, normalizedDatasetDir);
+  const defaultIndex = await getDefaultIndex(workDir, normalizedDatasetDir);
 
   const filteredIndexID = hash(queryExpression); // XXX
 
