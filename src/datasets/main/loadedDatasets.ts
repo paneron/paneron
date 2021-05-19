@@ -817,21 +817,25 @@ export async function getDefaultIndex(
     // If default index was created against an older commit hash,
     // let’s try to rebuild it on the fly.
 
+    const oldHash = idx.commitHash;
+
+    idx.commitHash = oidCurrent;
+
     const { changedObjectPaths } = await resolveDatasetChanges({
       workDir,
       datasetDir,
-      oidBefore: idx.commitHash,
+      oidBefore: oldHash,
       oidAfter: oidCurrent,
     });
 
-    log.debug("Updating default dataset", idx.commitHash, oidCurrent);
+    log.debug("Updating default dataset", oldHash, oidCurrent, changedObjectPaths);
 
     await updateIndexes(
       workDir,
       datasetDir,
       idx,
       changedObjectPaths,
-      idx.commitHash,
+      oldHash,
       oidCurrent,
     );
   }
