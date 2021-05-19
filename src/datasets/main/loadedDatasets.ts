@@ -42,7 +42,7 @@ const load: Datasets.Lifecycle.Load = async function ({
 
   try {
     getLoadedDataset(workDir, normalizedDatasetDir);
-    log.info("Datasets: Load: Already loaded!", workDir, normalizedDatasetDir);
+    log.info("Datasets: Load: Already loaded", workDir, normalizedDatasetDir);
 
   } catch (e) {
     log.info("Datasets: Load: Unloading first to clean up", workDir, normalizedDatasetDir);
