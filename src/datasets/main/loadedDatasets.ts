@@ -429,7 +429,7 @@ async function updateIndexes(
     const statusReporter = getFilteredIndexStatusReporter(workDir, datasetDir, filteredIndexID);
 
     await filteredIndex.dbHandle.clear();
-    await fillInFilteredIndex(defaultIndex, filteredIndex, statusReporter, ds.indexDBRoot);
+    fillInFilteredIndex(defaultIndex, filteredIndex, statusReporter, ds.indexDBRoot);
   }
 }
 
