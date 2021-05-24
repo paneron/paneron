@@ -18,6 +18,7 @@ import {
   getOrCreateFilteredIndex,
   indexStatusChanged,
   locateFilteredIndexPosition,
+  objectsChanged,
   updateObjects,
 } from '../ipc';
 
@@ -82,6 +83,14 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
         ...datasetParams,
         ...opts,
       }, { data: {} });
+
+      objectsChanged.renderer!.handle(async ({ workingCopyPath, datasetPath, objects }) => {
+        log.debug("Objects changed", Object.keys(objects ?? {}), opts.objectPaths);
+        if (workingCopyPath === datasetParams.workingCopyPath && datasetPath === datasetParams.datasetPath && (objects === undefined || R.intersection(Object.keys(objects), opts.objectPaths).length > 0)) {
+          result.refresh();
+        }
+      });
+
       return result;
     },
 
