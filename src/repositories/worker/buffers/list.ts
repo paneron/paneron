@@ -110,7 +110,8 @@ export async function listDescendantPathsAtVersion(
         return;
       }
 
-      const relativeFilepath = relative(rootWithLeadingSlash, filepathWithLeadingSlash) || '/';
+      const relativeFilepath = relative(rootWithLeadingSlash, filepathWithLeadingSlash);
+      const relativeFilepathWithLeadingSlash = relativeFilepath ? `/${relativeFilepath}` : '/';
 
       if (doCompare) {
         const Aoid = await A?.oid();
@@ -135,9 +136,9 @@ export async function listDescendantPathsAtVersion(
           diffStatus = 'modified';
         }
 
-        return [relativeFilepath, diffStatus];
+        return [relativeFilepathWithLeadingSlash, diffStatus];
       } else {
-        return [relativeFilepath, null];
+        return [relativeFilepathWithLeadingSlash, null];
       }
     },
   });
