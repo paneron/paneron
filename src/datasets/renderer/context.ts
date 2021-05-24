@@ -1,4 +1,5 @@
 import path from 'path';
+import * as R from 'ramda';
 import log from 'electron-log';
 import { useEffect, useState } from 'react';
 import { DatasetContext, RendererPlugin } from '@riboseinc/paneron-extension-kit/types';
@@ -13,6 +14,7 @@ import { DatasetInfo } from '../types';
 
 import {
   describeIndex,
+  filteredIndexUpdated,
   getFilteredObject,
   getObjectDataset,
   getOrCreateFilteredIndex,
@@ -129,17 +131,33 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
     },
 
     useFilteredIndex: function _useFilteredIndex (opts) {
-      return getOrCreateFilteredIndex.renderer!.useValue({
+      const resp = getOrCreateFilteredIndex.renderer!.useValue({
         ...datasetParams,
         ...opts,
       }, { indexID: undefined });
+
+      filteredIndexUpdated.renderer!.useEvent(async ({ workingCopyPath, datasetPath, indexID }) => {
+        if (resp.value.indexID === indexID && workingCopyPath === datasetParams.workingCopyPath && datasetPath === datasetParams.datasetPath) {
+          resp.refresh();
+        }
+      }, [opts.queryExpression]);
+
+      return resp;
     },
 
     useObjectPathFromFilteredIndex: function _useObjectPathFromFilteredIndex (opts) {
-      return getFilteredObject.renderer!.useValue({
+      const resp = getFilteredObject.renderer!.useValue({
         ...datasetParams,
         ...opts,
       }, { objectPath: '' });
+
+      filteredIndexUpdated.renderer!.useEvent(async ({ workingCopyPath, datasetPath, indexID }) => {
+        if (opts.indexID === indexID && workingCopyPath === datasetParams.workingCopyPath && datasetPath === datasetParams.datasetPath) {
+          resp.refresh();
+        }
+      }, [opts.indexID, opts.position]);
+
+      return resp;
     },
 
     getObjectPathFromFilteredIndex: async (opts) => {
