@@ -1,9 +1,10 @@
+import { AbstractIterator } from 'abstract-leveldown';
+import { LevelUp } from 'levelup';
+import EncodingDown from 'encoding-down';
 import { BufferChangeset } from '@riboseinc/paneron-extension-kit/types/buffers';
 import { CommitOutcome, PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
 import { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
 import { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
-import { AbstractIterator, AbstractLevelDOWN } from 'abstract-leveldown';
-import { LevelUp } from 'levelup';
 import { CommitRequestMessage, DatasetOperationParams, GitOperationParams } from 'repositories/types';
 
 
@@ -132,14 +133,14 @@ export namespace API {
         // Includes “default” index and any custom/filtered indexes.
         // Default index ID is 'default'.
         // Filtered index ID is the hash of filter predicate function (query expression) string.
-        [id: string]:  ActiveDatasetIndex<any, any>
+        [id: string]:  ActiveDatasetIndex<any>
       }
     }
 
-    export interface ActiveDatasetIndex<K, V> {
-      dbHandle: LevelUp<AbstractLevelDOWN<K, V>, AbstractIterator<K, V>>
+    export interface ActiveDatasetIndex<V> {
+      dbHandle: LevelUp<EncodingDown<string, V>, AbstractIterator<string, V>>
       status: IndexStatus
-      completionPromise: Promise<true> // Resolves when counting/indexing/etc. is finished and the index is ready to go.
+      completionPromise?: Promise<true> 
 
       //statusSubject: Subject<IndexStatus>
 
@@ -149,28 +150,36 @@ export namespace API {
 
       // These are specific to default or filtered indexes
 
-      // Default index only:
-      commitHash?: string
-
       // Filtered index only:
+      sortedDBHandle?: LevelUp<EncodingDown<number, string>, AbstractIterator<number, string>>
       predicate?: FilteredIndexPredicate
       keyer?: FilteredIndexKeyer
     }
 
-    export type DefaultIndex = ActiveDatasetIndex<string, Record<string, any> | false> & {
-      commitHash: string
-    };
-    // A map of object path to deserialized object data or boolean false.
-    // False values are stored at pre-indexing stage and indicate
-    // that the objects exist but had not yet been indexed.
 
-    export type FilteredIndex = ActiveDatasetIndex<number, string> & {
+    export interface IndexMeta {
+      completed: Date
+      commitHash: string
+      objectCount: number
+    }
+
+    /* A map of object path to deserialized object data or boolean false.
+       False values are stored at pre-indexing stage and indicate
+       that the objects exist but had not yet been indexed. */
+    export type DefaultIndex = ActiveDatasetIndex<Record<string, any> | false> & {
+    };
+
+    export type FilteredIndex = ActiveDatasetIndex<string> & {
+      /* This index’s dbHandle keeps custom keys associated with object paths
+         (which are keys in default index) */
+
+      /* A map of object’s numerical position according to the order of keys in this filtered index, and its path.
+         Requested can use that path to query default index for object data. */
+      sortedDBHandle: LevelUp<EncodingDown<number, string>, AbstractIterator<number, string>>
       accessed: Date
       predicate: FilteredIndexPredicate
       keyer?: FilteredIndexKeyer
     };
-    // A map of object’s position in the index and its path.
-    // Requested can use that path to query default index for object data.
 
     export type FilteredIndexPredicate = (itemPath: string, item: Record<string, any>) => boolean;
 
