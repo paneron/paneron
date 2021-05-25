@@ -61,7 +61,7 @@ export async function updateRepositories(updater: (data: RepoListSpec) => RepoLi
   await FileAccessLock.acquire('1', async () => {
     let data: RepoListSpec;
     try {
-      const rawData: any = await fs.readFile(REPO_LIST_PATH, { encoding: 'utf-8' });
+      const rawData = await fs.readFile(REPO_LIST_PATH, { encoding: 'utf-8' });
       data = yaml.load(rawData) || { workingCopies: {} };
     } catch (e) {
       data = { workingCopies: {} };
