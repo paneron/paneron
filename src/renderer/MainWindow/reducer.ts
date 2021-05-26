@@ -89,7 +89,6 @@ export default function reducer(prevState: State, action: Action): State {
           ...prevState,
           view: 'repo-settings',
           selectedRepoWorkDir: prevState.selectedRepoWorkDir,
-          selectedDatasetID: null,
         };
       } else {
         log.warn("Trying to close dataset, but repo is not open");
