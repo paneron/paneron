@@ -33,17 +33,17 @@ function ({ extension, full, searchString }) {
         &emsp;
         <small className={!extension ? Classes.SKELETON : undefined} css={css`font-weight: normal;`}>
           {extension?.npm.version}&emsp;
-          by
-          {" "}
-          <MarkedText text={author} term={searchString} />
         </small>
       </H5>
+      <div css={css`margin-bottom: 10px;`}>
+        by
+        {" "}
+        <MarkedText text={author} term={searchString} />
+      </div>
       {full && extension?.npm.name
         ? <>
-            <ControlGroup css={css`margin-bottom: 1rem;`} fill>
+            <ControlGroup css={css`margin-bottom: 1rem;`} vertical fill>
               <PluginStatusButton id={extension.npm.name} />
-            </ControlGroup>
-            <ControlGroup css={css`margin-bottom: 1rem;`}>
               <InputGroup title="Extension’s NPM package ID" fill disabled value={extension.npm.name} />
             </ControlGroup>
           </>
