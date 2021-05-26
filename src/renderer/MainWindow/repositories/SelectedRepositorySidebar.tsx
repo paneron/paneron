@@ -1,5 +1,7 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
+
+
 import { jsx } from '@emotion/core';
 
 import React, { useContext } from 'react';
@@ -70,6 +72,8 @@ export const SelectedRepositorySidebar: React.FC<{ workDir: string; repoInfo?: R
     }]}
     className={className} />;
 };
+
+
 const GitRepoPanel: React.FC<{ gitMeta: Repository["gitMeta"]; }> = function ({ gitMeta }) {
   return <>
     <PropertyView label="Remote URL" title="Remote URL">
@@ -82,6 +86,8 @@ const GitRepoPanel: React.FC<{ gitMeta: Repository["gitMeta"]; }> = function ({ 
     </PropertyView>
   </>;
 };
+
+
 const PaneronRepoPanel: React.FC<{ paneronMeta: Repository["paneronMeta"]; }> = function ({ paneronMeta }) {
   if (!paneronMeta) {
     return <>Not a Paneron repository.</>;
