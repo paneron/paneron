@@ -63,7 +63,6 @@ function ({ className }) {
           repositories.selectDataset(state.selectedRepoWorkDir, state.selectedDatasetID) === undefined) {
         log.warn("Main window: Can’t show dataset: Missing dataset or repository",
           state.selectedRepoWorkDir, state.selectedDatasetID, repositories.value);
-        dispatch({ type: 'select-dataset', datasetID: null });
         dispatch({ type: 'close-dataset' });
       } else if (state.selectedRepoWorkDir &&
           repositories.selectRepo(state.selectedRepoWorkDir) === undefined) {
