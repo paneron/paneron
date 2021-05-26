@@ -1184,15 +1184,15 @@
   resolved "https://registry.yarnpkg.com/@popperjs/core/-/core-2.9.2.tgz#adea7b6953cbb34651766b0548468e743c6a2353"
   integrity sha512-VZMYa7+fXHdwIq1TDhSXoVmSPEGM/aa+6Aiq3nVVJ9bXr24zScr+NlKFKC3iPljA7ho/GAZr+d2jOf5GIRC30Q==
 
-"@riboseinc/paneron-extension-kit@2.0.0-dev24":
-  version "2.0.0-dev24"
-  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-extension-kit/-/paneron-extension-kit-2.0.0-dev24.tgz#6ea5be5fa9e22ef821655b9fa1ec7a764c3391e8"
-  integrity sha512-CXSEeV+jgRuFt4ZwWvj5cl5JZhGcZBeHnsVINRqo8gDuK5oHdlLwcVD5XQzlKLVR6G8lUJAMYbnZXI4dELfySA==
+"@riboseinc/paneron-extension-kit@2.0.0-dev25":
+  version "2.0.0-dev25"
+  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-extension-kit/-/paneron-extension-kit-2.0.0-dev25.tgz#027a66235b95202267b6ea06da3874a515950140"
+  integrity sha512-SQGLeGvdUZM/wPgAom8eT9hD+hzNo4QdwrK3vwqEH2PtNxZWrksGMDQcjS4gFh1fImh8VzWAQ8qG81l1/OJhkg==
 
-"@riboseinc/paneron-registry-kit@2.0.0-dev18":
-  version "2.0.0-dev18"
-  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-registry-kit/-/paneron-registry-kit-2.0.0-dev18.tgz#c818b2840f52a3d309717c894442ecc502336e17"
-  integrity sha512-7Q+5ZDWvrffx4nS6gd7B6D3tTUc6L0TQ5yL9AnxXrtBsD6dFk8RCP3t0E0fIdTknxy6PrzECg/FcEE64OXsQPw==
+"@riboseinc/paneron-registry-kit@2.0.0-dev19":
+  version "2.0.0-dev19"
+  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-registry-kit/-/paneron-registry-kit-2.0.0-dev19.tgz#a75a071c1870da5c3a47ca6bc26c34e8fcccc52a"
+  integrity sha512-sRpd22JBbpz9Jds+wl0ph1dvPiWY82KanaCvPcx5mDqB6ijI4gveUBkKzX/vk1K+D5JKMdZ6gqqe0Rc8iWAakA==
 
 "@riboseinc/reprose@^1.0.0-alpha9":
   version "1.0.0-alpha9"
@@ -6762,6 +6762,11 @@ lines-and-columns@^1.1.6:
   version "1.1.6"
   resolved "https://registry.yarnpkg.com/lines-and-columns/-/lines-and-columns-1.1.6.tgz#1c00c743b433cd0a4e80758f7b64a57440d9ff00"
   integrity sha1-HADHQ7QzzQpOgHWPe2SldEDZ/wA=
+
+liquidjs@^9.25.0:
+  version "9.25.0"
+  resolved "https://registry.yarnpkg.com/liquidjs/-/liquidjs-9.25.0.tgz#6975764b74827c81bc1363b5ca4e9bc1140b7bb6"
+  integrity sha512-TIccrphsWN53fVF9G/wDaKD1cHaB097ULLf+FzxxqN2iyJjzp/Oe9xlFjZCR1ZrAeISusWSPg3r7Dg8BD2Uztg==
 
 live-plugin-manager@=0.15.0:
   version "0.15.0"

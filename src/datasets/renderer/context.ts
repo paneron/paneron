@@ -6,7 +6,7 @@ import { DatasetContext, RendererPlugin } from '@riboseinc/paneron-extension-kit
 import { IndexStatus, INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
 import { BaseAction, PersistentStateReducerHook } from '@riboseinc/paneron-extension-kit/usePersistentStateReducer';
 
-import { makeRandomID, chooseFileFromFilesystem } from 'common';
+import { makeRandomID, chooseFileFromFilesystem, saveFileToFilesystem } from 'common';
 import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
 import { copyObjects, requestCopiedObjects } from 'clipboard/ipc';
 
@@ -36,6 +36,7 @@ export interface ContextGetterProps {
 
 
 const decoder = new TextDecoder('utf-8');
+const encoder = new TextEncoder();
 
 
 export function getContext(opts: ContextGetterProps): DatasetContext {
@@ -80,6 +81,8 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
       };
     },
 
+    getBlob: async (val) => encoder.encode(val),
+
     useObjectData: function _useObjectData (opts) {
       const result = getObjectDataset.renderer!.useValue({
         ...datasetParams,
@@ -93,6 +96,20 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
       });
 
       return result;
+    },
+
+    getObjectData: async function _getObjectData(opts) {
+      const resp = await getObjectDataset.renderer!.trigger({
+        ...datasetParams,
+        ...opts,
+      });
+
+      if (resp.result) {
+        return resp.result;
+      } else {
+        log.error("Unable to get object data", opts, resp.result, resp.errors);
+        throw new Error("Unable to get object data");
+      }
     },
 
     useIndexDescription: function _useIndexDescription (opts) {
@@ -219,11 +236,21 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
           if (result.result) {
             return result.result;
           } else {
-            log.error("Unable to request file from filesystem", result.errors);
+            log.error("Unable to request file from filesystem", opts, result.errors);
             throw new Error("Unable to request file from filesystem");
           }
         }
       : undefined,
+
+    writeFileToFilesystem: async function _writeFileToFilesystem (opts) {
+      const result = await saveFileToFilesystem.renderer!.trigger(opts);
+      if (result.result) {
+        return result.result;
+      } else {
+        log.error("Unable to save file to filesystem", opts.dialogOpts, result.errors);
+        throw new Error("Unable to save file to filesystem");
+      }
+    },
 
     makeRandomID: writeAccess
       ? async function _makeRandomID () {

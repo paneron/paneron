@@ -24,7 +24,7 @@ import '../repositories/main';
 import '../datasets/main';
 import '../clipboard/main';
 
-import { mainWindow } from '../common';
+import { mainWindow, saveFileToFilesystem } from '../common';
 import { chooseFileFromFilesystem, makeRandomID } from '../common';
 
 
@@ -81,7 +81,7 @@ async function initMain() {
         'openFile',
         ...(opts.allowMultiple === true ? ['multiSelections' as const] : []),
       ],
-      filters: opts.filters || [],
+      filters: opts.filters ?? [],
     });
 
     const filepaths = (result.filePaths || []);
@@ -102,6 +102,24 @@ async function initMain() {
     }
 
     return filedata;
+  });
+
+  saveFileToFilesystem.main!.handle(async ({ dialogOpts, bufferData }) => {
+    const window = BrowserWindow.getFocusedWindow();
+    if (window === null) { throw new Error("Unable to save file: no focused window detected"); }
+
+    const result = await dialog.showSaveDialog(
+      window, {
+        ...dialogOpts,
+        title: dialogOpts.prompt,
+      });
+
+    if (result.filePath) {
+      await fs.promises.writeFile(result.filePath, bufferData);
+      return { success: true, savedToFileAtPath: result.filePath };
+    } else {
+      throw new Error("No file path was available from save dialog");
+    }
   });
 
   // Prevent closing windows from quitting the app during startup
