@@ -3,7 +3,7 @@
 import path from 'path';
 import fs from 'fs-extra';
 import AsyncLock from 'async-lock';
-import yaml from 'js-yaml';
+import yaml from '@riboseinc/paneron-extension-kit/object-specs/yaml';
 import { app } from 'electron';
 import log from 'electron-log';
 import { normalizeDatasetDir } from '../../datasets/main/loadedDatasets';
@@ -68,7 +68,7 @@ export async function updateRepositories(updater: (data: RepoListSpec) => RepoLi
     }
 
     const newData = updater(data);
-    const newRawData = yaml.dump(newData, { noRefs: true });
+    const newRawData = yaml.dump(newData);
 
     await fs.writeFile(REPO_LIST_PATH, newRawData, { encoding: 'utf-8' });
   });

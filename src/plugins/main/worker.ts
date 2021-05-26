@@ -4,7 +4,7 @@ import { ModuleMethods } from 'threads/dist/types/master';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 
-import * as yaml from 'js-yaml';
+import yaml from '@riboseinc/paneron-extension-kit/object-specs/yaml';
 import AsyncLock from 'async-lock';
 
 import { IPluginInfo, PluginManager } from 'live-plugin-manager';
@@ -89,7 +89,7 @@ async function updateConfig(updater: (data: PluginConfigData) => PluginConfigDat
 
   const config: PluginConfigData = await readConfig();
   const newConfig = updater(config);
-  await fs.writeFile(configPath!, yaml.dump(newConfig, { noRefs: true }), { encoding: 'utf-8' });
+  await fs.writeFile(configPath!, yaml.dump(newConfig), { encoding: 'utf-8' });
 }
 
 

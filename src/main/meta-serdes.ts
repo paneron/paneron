@@ -1,4 +1,4 @@
-import yaml from 'js-yaml';
+import yaml from '@riboseinc/paneron-extension-kit/object-specs/yaml';
 import { decoder, encoder } from './encoders';
 
 
@@ -8,5 +8,5 @@ export function deserializeMeta<T = Record<string, any>>(data: Uint8Array): T {
 
 
 export function serializeMeta(data: Record<string, any>) {
-  return encoder.encode(yaml.dump(data, { noRefs: true }));
+  return encoder.encode(yaml.dump(data));
 }
