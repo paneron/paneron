@@ -14,7 +14,7 @@
   "license": "MIT",
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
-    "teste2e": "ts-mocha test/spec.ts",
+    "test": "env TS_NODE_PROJECT=\"tsconfig.json\" mocha --require esm --require ts-node/register 'test/**/*.ts'",
     "dev": "electron-webpack dev",
     "compile": "electron-webpack",
     "clean": "rm -rf ./bundle ./dist",
@@ -211,6 +211,8 @@
   "devDependencies": {
     "@emotion/eslint-plugin": "^11.0.0",
     "@types/async-lock": "^1.1.1",
+    "@types/chai": "^4.2.18",
+    "@types/chai-as-promised": "^7.1.4",
     "@types/cytoscape": "^3.14.0",
     "@types/encoding-down": "^5.0.0",
     "@types/expect": "^24.3.0",
@@ -246,6 +248,7 @@
     "electron-webpack": "^2.8.2",
     "electron-webpack-ts": "^4.0.1",
     "eslint": "^7.13.0",
+    "esm": "^3.2.25",
     "husky": "^4.2.5",
     "keytar": "^6.0.1",
     "mocha": "^8.4.0",
