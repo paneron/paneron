@@ -12,17 +12,12 @@ import path from 'path'
 chai.use(chaiAsPromised)
 chai.should()
 
-// TODO: Make this platform-independent.
+// TODO: Make this platform-independent and not require build.
 const electronPath = path.join(__dirname, '..', 'dist', 'mac', 'Paneron.app', 'Contents', 'MacOS', 'Paneron')
 
 const app = new Application({
   path: electronPath,
   args: [path.join(__dirname, '..')],
-
-  // A workaround for “DevToolsActivePort file doesn't exist”,
-  // may or may not be necessary.
-  //chromeDriverArgs: ['remote-debugging-port=12209'],
-
   chromeDriverLogPath: '../chromedriverlog.txt',
 })
 

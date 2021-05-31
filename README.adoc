@@ -47,6 +47,11 @@ To make sure you follow the convention:
 There is a pre-push Git hook that compiles the app.
 This helps us catch compilation errors before code reaches CI.
 
+=== Testing
+
+Currently, the test suite works on macOS only (with `yarn test-mac-e2e`),
+and requires the app to be compiled and built first (which makes it very slow to run).
+
 === Releasing
 
 CI builds the application automatically,
