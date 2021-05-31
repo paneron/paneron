@@ -1216,10 +1216,10 @@
   resolved "https://registry.yarnpkg.com/@popperjs/core/-/core-2.9.2.tgz#adea7b6953cbb34651766b0548468e743c6a2353"
   integrity sha512-VZMYa7+fXHdwIq1TDhSXoVmSPEGM/aa+6Aiq3nVVJ9bXr24zScr+NlKFKC3iPljA7ho/GAZr+d2jOf5GIRC30Q==
 
-"@riboseinc/paneron-extension-kit@2.0.0-dev27":
-  version "2.0.0-dev27"
-  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-extension-kit/-/paneron-extension-kit-2.0.0-dev27.tgz#9d86062b3e988a04457cdd5aa835f4f6625caa7e"
-  integrity sha512-jJ5mC1wlr0Ht9J/aE2ZeArGbpQaIPKyDC+tkHE0yppIwDZ+yiIm1G6rceLp+eWrwoxHB+Iu2YEIRVBXmeVVKLg==
+"@riboseinc/paneron-extension-kit@2.0.0-dev28":
+  version "2.0.0-dev28"
+  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-extension-kit/-/paneron-extension-kit-2.0.0-dev28.tgz#542781fa5f05f586180909862920f82c49a2ee5e"
+  integrity sha512-imyqijF271/7e+q9rJXWEVdttG0Zu5csKKm52RER4yB4K9A0yc+uU8qgx8OvnYKap7d5yWVKNk3BzBH2CnHspQ==
 
 "@riboseinc/paneron-registry-kit@2.0.0-dev19":
   version "2.0.0-dev19"
@@ -8212,11 +8212,6 @@ mocha@^8.4.0:
     yargs "16.2.0"
     yargs-parser "20.2.4"
     yargs-unparser "2.0.0"
-
-moment@^2.24.0:
-  version "2.28.0"
-  resolved "https://registry.yarnpkg.com/moment/-/moment-2.28.0.tgz#cdfe73ce01327cee6537b0fafac2e0f21a237d75"
-  integrity sha512-Z5KOjYmnHyd/ukynmFd/WwyXHd7L4J9vTI/nn5Ap9AVUgaAE15VvQ9MOGmJJygEUklupqIrFnor/tjTwRU+tQw==
 
 mousetrap@^1.6.5:
   version "1.6.5"
