@@ -30,7 +30,7 @@ To make sure you follow the convention:
 
 === Pulling
 
-- It is recommended to use “rebase” behavior of pull (make sure to use fresh Git)
+- It is recommended to use “rebase” behavior of pull (make sure to use a fresh version of Git)
   by having this in your global .gitconfig:
 +
 [source]
