@@ -5,9 +5,9 @@ import log from 'electron-log';
 import { throttle } from 'throttle-debounce';
 import { jsx } from '@emotion/core';
 import React, { useEffect, useState } from 'react';
+import { IToastProps } from '@blueprintjs/core';
 import { loadRepository, Repository, repositoryStatusChanged, RepoStatus } from 'repositories/ipc';
 import { Breadcrumb, BreadcrumbProps } from './Breadcrumb';
-import { IToastProps } from '@blueprintjs/core';
 
 
 export const RepoBreadcrumb: React.FC<{
