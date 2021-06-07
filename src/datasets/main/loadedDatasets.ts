@@ -654,18 +654,22 @@ async function initFilteredIndex(
 
   datasets[workDir][datasetDir].indexes[indexID] = idx;
 
-  const meta = await indexMeta(idx);
-  if (!meta || !meta.commitHash || !meta.completed) {
-    await idx.dbHandle.clear();
-    const statusReporter = getFilteredIndexStatusReporter(workDir, datasetDir, indexID);
+  // NOTE: We are wiping the index here because it may be stale.
+  // Filtered indexes are dynamically updated by iterating over ds.indexes populated at runtime as indexes are accessed,
+  // and if an index is affected by an update but not yet accessed it’ll be stale.
+  // However, once an index was initialized here and added under ds.indexes, it doesn’t need to be wiped,
+  // since changes will be applied to it.
+  //
+  // The alternative (possibly a faster one) could be:
+  // await fs.remove(dbPath);
+  // await fs.remove(sortedDBPath);
+  await idx.dbHandle.clear();
+  await idx.sortedDBHandle.clear();
 
-    // This will proceed in background.
-    fillInFilteredIndex(defaultIndex, idx, statusReporter);
-  } else {
-    idx.status = {
-      objectCount: meta.objectCount,
-    };
-  }
+  const statusReporter = getFilteredIndexStatusReporter(workDir, datasetDir, indexID);
+
+  // This will proceed in background.
+  fillInFilteredIndex(defaultIndex, idx, statusReporter);
 
   return idx;
 }
