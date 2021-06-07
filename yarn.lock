@@ -1216,15 +1216,15 @@
   resolved "https://registry.yarnpkg.com/@popperjs/core/-/core-2.9.2.tgz#adea7b6953cbb34651766b0548468e743c6a2353"
   integrity sha512-VZMYa7+fXHdwIq1TDhSXoVmSPEGM/aa+6Aiq3nVVJ9bXr24zScr+NlKFKC3iPljA7ho/GAZr+d2jOf5GIRC30Q==
 
-"@riboseinc/paneron-extension-kit@2.0.0-dev28":
-  version "2.0.0-dev28"
-  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-extension-kit/-/paneron-extension-kit-2.0.0-dev28.tgz#542781fa5f05f586180909862920f82c49a2ee5e"
-  integrity sha512-imyqijF271/7e+q9rJXWEVdttG0Zu5csKKm52RER4yB4K9A0yc+uU8qgx8OvnYKap7d5yWVKNk3BzBH2CnHspQ==
+"@riboseinc/paneron-extension-kit@2.0.0-dev29":
+  version "2.0.0-dev29"
+  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-extension-kit/-/paneron-extension-kit-2.0.0-dev29.tgz#7a8985bb675bc4d3cc21d9d9efd0d61572c74049"
+  integrity sha512-3slSw63g91+7cRmp3rXDKmJYl/tz4zi0FFZEOzmL9QeMu5C7ykfipfrQ0OFbgLPeuNnIMu0g3t3fq20GZwtatg==
 
-"@riboseinc/paneron-registry-kit@2.0.0-dev19":
-  version "2.0.0-dev19"
-  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-registry-kit/-/paneron-registry-kit-2.0.0-dev19.tgz#a75a071c1870da5c3a47ca6bc26c34e8fcccc52a"
-  integrity sha512-sRpd22JBbpz9Jds+wl0ph1dvPiWY82KanaCvPcx5mDqB6ijI4gveUBkKzX/vk1K+D5JKMdZ6gqqe0Rc8iWAakA==
+"@riboseinc/paneron-registry-kit@2.0.0-dev21":
+  version "2.0.0-dev21"
+  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-registry-kit/-/paneron-registry-kit-2.0.0-dev21.tgz#7aa90b22abe7e40cbd99cad342487994eda22938"
+  integrity sha512-xsOn83gI0o9wEg0ZEblBOBOMKINMzROGI9cM8PjuYzTUueYlZzjzomgNPUJ1xzEaCjaVes5P/RXmyWkl071MgQ==
 
 "@riboseinc/reprose@^1.0.0-alpha9":
   version "1.0.0-alpha9"
@@ -6552,6 +6552,11 @@ immediate@^3.2.3:
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/immediate/-/immediate-3.3.0.tgz#1aef225517836bcdf7f2a2de2600c79ff0269266"
   integrity sha512-HR7EVodfFUdQCTIeySw+WDRFJlPcLOJbXfwwZ7Oom6tjsvZ3bOkCDJHehQC3nxJrv7+f9XecwazynjU8e4Vw3Q==
+
+immer@^9.0.2:
+  version "9.0.2"
+  resolved "https://registry.yarnpkg.com/immer/-/immer-9.0.2.tgz#83e4593df9914acaecfd9fac6a8601ef44d883fc"
+  integrity sha512-mkcmzLtIfSp40vAqteRr1MbWNSoI7JE+/PB36FNPoSfJ9RQRmNKuTYCjKkyXyuq3Dgn07HuJBrwJd4ZSk2yUbw==
 
 immutability-helper@^3.1.1:
   version "3.1.1"

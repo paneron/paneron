@@ -74,10 +74,12 @@ const ContextProvider: React.FC<Record<never, never>> = function ({ children }) 
   }
 
   const [state, dispatch, stateLoaded] = usePaneronPersistentStateReducer(
+    'main-window',
+    undefined,
+    undefined,
     reducer,
     initialState,
     null,
-    'main-window',
   );
 
   return (

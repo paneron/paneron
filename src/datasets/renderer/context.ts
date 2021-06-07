@@ -6,8 +6,10 @@ import { DatasetContext, RendererPlugin } from '@riboseinc/paneron-extension-kit
 import { IndexStatus, INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
 import { BaseAction, PersistentStateReducerHook } from '@riboseinc/paneron-extension-kit/usePersistentStateReducer';
 
-import { makeRandomID, chooseFileFromFilesystem, saveFileToFilesystem } from 'common';
+import useTimeTravelingPersistentStateReducer, { TimeTravelingPersistentStateReducerHook } from '@riboseinc/paneron-extension-kit/useTimeTravelingPersistentStateReducer';
 import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
+
+import { makeRandomID, chooseFileFromFilesystem, saveFileToFilesystem } from 'common';
 import { copyObjects, requestCopiedObjects } from 'clipboard/ipc';
 
 import { DatasetInfo } from '../types';
@@ -53,6 +55,38 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
     workingCopyPath,
     datasetPath,
   };
+
+  function usePersistentDatasetStateReducer<S, A extends BaseAction>
+  (...opts: Parameters<PersistentStateReducerHook<S, A>>) {
+    const effectiveOpts: Parameters<PersistentStateReducerHook<S, A>> = [
+      // opts[0] is the storage key in the list of positional parameters.
+      // Extension code should specify locally scoped key,
+      // and this takes care of additionally scoping it by repository and dataset.
+      `${workingCopyPath}/${datasetPath}/${opts[0]}`,
+
+      opts[1], opts[2],
+
+      opts[3], opts[4], opts[5],
+    ];
+    return usePaneronPersistentStateReducer(...effectiveOpts);
+  }
+
+  function useTimeTravelingPersistentDatasetStateReducer<S, A extends BaseAction>
+  (...opts: Parameters<TimeTravelingPersistentStateReducerHook<S, A>>) {
+    const effectiveOpts: Parameters<TimeTravelingPersistentStateReducerHook<S, A>> = [
+      opts[0], opts[1],
+
+      // opts[2] is the storage key in the list of positional parameters.
+      // Extension code should specify locally scoped key,
+      // and this takes care of additionally scoping it by repository and dataset.
+      `${workingCopyPath}/${datasetPath}/${opts[2]}`,
+
+      opts[3], opts[4],
+
+      opts[5], opts[6], opts[7],
+    ];
+    return useTimeTravelingPersistentStateReducer(...effectiveOpts);
+  }
 
   return {
     title: datasetInfo.title,
@@ -207,20 +241,8 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
       }
     },
 
-    usePersistentDatasetStateReducer: function _usePersistentDatasetStateReducer<S, A extends BaseAction>
-    (...opts: Parameters<PersistentStateReducerHook<S, A>>) {
-      const effectiveOpts: Parameters<PersistentStateReducerHook<S, A>> = [
-        opts[0], opts[1], opts[2],
-
-        // opts[3] is the storage key in the list of positional parameters.
-        // Extension can specify locally scoped key,
-        // and this takes care of additionally scoping it by repository and dataset.
-        `${workingCopyPath}/${datasetPath}/${opts[3]}`,
-
-        opts[4],
-      ];
-      return usePaneronPersistentStateReducer(...effectiveOpts);
-    },
+    usePersistentDatasetStateReducer,
+    useTimeTravelingPersistentDatasetStateReducer,
 
     getObjectView,
 
