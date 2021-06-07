@@ -728,11 +728,6 @@ export async function getDefaultIndex(
     throw new Error("Unable to get default index");
   }
 
-  // updateDatasetIndexesIfNeeded(
-  //   workDir,
-  //   datasetDir,
-  // );
-
   return idx;
 }
 
