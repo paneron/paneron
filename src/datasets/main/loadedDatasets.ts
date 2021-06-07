@@ -1075,6 +1075,8 @@ export async function updateDatasetIndexesIfNeeded(
   for (const idxID of filteredIndexIDs) {
     ds.indexes[idxID].completionPromise = completionPromise;
   }
+
+  await completionPromise;
 }
 
 
