@@ -923,12 +923,13 @@ export async function updateDatasetIndexesIfNeeded(
 
     // Update default index and infer which filtered indexes are affected
     for await (const objectPath of changedObjectPaths) {
-      log.debug("Datasets: updateDatasetIndexesIfNeeded: Changed object path", objectPath);
       idx += 1;
       const pathAffectsFilteredIndexes: { [id: string]: { idx: Datasets.Util.FilteredIndex } } = {};
 
       // Read “before” and “after” object versions
       const [objv1, objv2] = await readObjectVersions(objectPath);
+
+      log.debug("Datasets: updateDatasetIndexesIfNeeded: Changed object path", objectPath, objv1, objv2);
 
       // Check all filtered indexes that have not yet been marked as affected
       for (const idxID of filteredIndexIDs) {
@@ -958,6 +959,7 @@ export async function updateDatasetIndexesIfNeeded(
         // Add/update object data in default index
         await defaultIdxDB.put(objectPath, objv2);
         if (objv1 === null) { // Object was added
+          log.debug("Datasets: updateDatasetsIndexesIfNeeded: Added object path", objectPath);
           changes[objectPath] = 'added';
 
           // Add object path in affected filtered indexes
