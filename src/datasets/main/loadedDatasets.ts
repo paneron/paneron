@@ -630,12 +630,15 @@ async function initFilteredIndex(
 
   const defaultIndex = await getDefaultIndex(workDir, datasetDir);
 
+  const dbPath = getDBPath(cacheRoot, `${workDir}/${datasetDir}/${indexID}`);
+  const sortedDBPath = getDBPath(cacheRoot, `${workDir}/${datasetDir}/${indexID}-sorted`);
+
   const idx: Datasets.Util.FilteredIndex = {
-    ...makeIdxStub(workDir, datasetDir, indexID, {
+    ...makeIdxStub(dbPath, {
       keyEncoding: 'string',
       valueEncoding: 'string',
     }),
-    sortedDBHandle: levelup(encode(leveldown(getDBPath(cacheRoot, `${workDir}/${datasetDir}/${indexID}-sorted`)), {
+    sortedDBHandle: levelup(encode(leveldown(sortedDBPath), {
       keyEncoding: {
         type: 'lexicographic-integer',
         encode: (n) => lexint.pack(n, 'hex'),
@@ -687,12 +690,14 @@ async function initDefaultIndex(
   workDir: string,
   datasetDir: string, // Should be normalized.
 ): Promise<Datasets.Util.DefaultIndex> {
-  const codecOptions = {
-    keyEncoding: 'string',
-    valueEncoding: 'json',
-  };
+  const ds = getLoadedDataset(workDir, datasetDir); 
+  const cacheRoot = ds.indexDBRoot;
+  const dbPath = getDBPath(cacheRoot, `${workDir}/${datasetDir}/default`);
   const idx: Datasets.Util.DefaultIndex = {
-    ...makeIdxStub(workDir, datasetDir, 'default', codecOptions),
+    ...makeIdxStub(dbPath, {
+      keyEncoding: 'string',
+      valueEncoding: 'json',
+    }),
   };
 
   datasets[workDir][datasetDir].indexes['default'] = idx;
@@ -1095,12 +1100,8 @@ function getDBPath(cacheRoot: string, id: string) {
 }
 
 
-function makeIdxStub(workDir: string, datasetDir: string, indexID: string, codecOptions: CodecOptions):
+function makeIdxStub(dbPath: string, codecOptions: CodecOptions):
 Datasets.Util.ActiveDatasetIndex<any> {
-  const ds = getLoadedDataset(workDir, datasetDir); 
-  const cacheRoot = ds.indexDBRoot;
-
-  const dbPath = getDBPath(cacheRoot, `${workDir}/${datasetDir}/${indexID}`);
   const idx: Datasets.Util.ActiveDatasetIndex<any> = {
     status: { objectCount: 0 },
     //statusSubject: new Subject<IndexStatus>(), 
