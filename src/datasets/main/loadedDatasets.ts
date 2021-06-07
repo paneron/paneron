@@ -877,9 +877,11 @@ export async function updateDatasetIndexesIfNeeded(
 
   // A list of all filtered index IDs will be useful soon.
   // NOTE: This excludes filtered indexes that are being processed.
-  const filteredIndexIDs: string[] = Object.entries(ds.indexes).
-    filter(([id, idx]) => id !== 'default' && !idx.completionPromise).
-    map(([id, ]) => id);
+  const filteredIndexes = Object.entries(ds.indexes).
+    filter(([id, idx]) => id !== 'default' && !idx.completionPromise);
+  const filteredIndexIDs: string[] = filteredIndexes.map(([id, ]) => id);
+
+  log.debug("updateDatasetIndexesIfNeeded: Operating on filtered indexes", filteredIndexes.map(([, idx]) => idx.predicate));
 
   const completionPromise = (async () => {
 
