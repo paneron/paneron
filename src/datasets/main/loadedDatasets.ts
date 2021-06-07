@@ -1081,14 +1081,16 @@ export async function updateDatasetIndexesIfNeeded(
 /* Drops and rebuilds filtered index sorted DB from its keyed DB. */
 async function rebuildFilteredIndexSortedDB(idx: Datasets.Util.FilteredIndex, onItem?: (obj: number) => void) {
   await idx.sortedDBHandle.clear();
-  let key: number = 0;
+  let position: number = 0;
   for await (const data of idx.dbHandle.createReadStream()) {
-    const { value } = data as unknown as { value: string };
-    //log.debug("Indexing sorted key", value);
-    await idx.sortedDBHandle.put(key, value);
+    const { key, value } = data as unknown as { key: string, value: string };
+    if (key !== INDEX_META_MARKER_DB_KEY) {
+      //log.debug("Indexing sorted key", value);
+      await idx.sortedDBHandle.put(position, value);
 
-    key += 1;
-    onItem?.(key);
+      onItem?.(position);
+      position += 1;
+    }
   }
 }
 
