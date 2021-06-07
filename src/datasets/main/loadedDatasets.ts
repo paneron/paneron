@@ -1055,8 +1055,8 @@ export async function updateDatasetIndexesIfNeeded(
 
     await indexMeta(defaultIndex, { commitHash: oidCurrent, completed: new Date(), objectCount: newDefaultIndexObjectCount });
     for (const [indexID, { idx, newObjectCount }] of Object.entries(affectedFilteredIndexes)) {
-      await rebuildFilteredIndexSortedDB(idx);
       await indexMeta(idx, { commitHash: oidCurrent, completed: new Date(), objectCount: newObjectCount });
+      await rebuildFilteredIndexSortedDB(idx);
       await filteredIndexUpdated.main!.trigger({ workingCopyPath: workDir, datasetPath: datasetDir, indexID });
       idx.completionPromise = undefined;
     }
