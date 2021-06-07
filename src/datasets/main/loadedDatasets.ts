@@ -595,6 +595,8 @@ async function fillInFilteredIndex(
       objectCount: indexed,
     });
 
+    filteredIndex.completionPromise = undefined;
+
     statusReporter({
       objectCount: indexed,
     });
