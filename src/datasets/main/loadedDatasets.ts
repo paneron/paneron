@@ -10,7 +10,6 @@ import { throttle } from 'throttle-debounce';
 
 import { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
 import { Changeset, ChangeStatus, PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
-import { findSerDesRuleForPath } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
 
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
 import { listDescendantPaths } from 'repositories/worker/buffers/list';
@@ -18,7 +17,7 @@ import { hash, stripLeadingSlash, stripTrailingSlash } from 'utils';
 import { API as Datasets, ReturnsPromise } from '../types';
 import { filteredIndexUpdated, indexStatusChanged, objectsChanged } from '../ipc';
 import { listObjectPaths } from './objects/list';
-import { readObjectCold } from './objects/read';
+import { readObjectCold, readObjectVersions } from './objects/read';
 
 
 // We’ll just keep track of loaded datasets right here in memory.
@@ -305,7 +304,13 @@ async function _writeDefaultIndex(
     loaded += 1;
     statusReporter(loaded);
 
-    const obj = await readObjectCold(workDir, path.join(datasetDir, objectPath));
+    let obj: Record<string, any> | null;
+    try {
+      obj = await readObjectCold(workDir, path.join(datasetDir, objectPath));
+    } catch (e) {
+      // Pretend the object does not exist. readObjectCold() should log any deserialization errors.
+      obj = null;
+    }
 
     if (obj !== null) {
       await index.dbHandle.put(objectPath, obj);
@@ -900,34 +905,11 @@ export async function updateDatasetIndexesIfNeeded(
       oidAfter: oidCurrent,
     });
 
-    const { sync } = workers;
-
     log.debug("updateDatasetIndexesIfNeeded: Updating default index");
 
     const defaultIndexStatusReporter = getDefaultIndexStatusReporter(workDir, datasetDir);
 
     let newDefaultIndexObjectCount = defaultIndexMeta.objectCount;
-
-    async function readObjectVersions(objectPath: string):
-    Promise<[ Record<string, any> | null, Record<string, any> | null ]> {
-      const rule = findSerDesRuleForPath(objectPath);
-
-      const bufDs1 = await sync.repo_readBuffersAtVersion({ workDir, rootPath: path.join(datasetDir, objectPath), commitHash: oidIndex! });
-      const bufDs2 = await sync.repo_readBuffersAtVersion({ workDir, rootPath: path.join(datasetDir, objectPath), commitHash: oidCurrent });
-
-      const objDs1: Record<string, any> | null = Object.keys(bufDs1).length > 0 ? rule.deserialize(bufDs1, {}) : null;
-      const objDs2: Record<string, any> | null = Object.keys(bufDs2).length > 0 ? rule.deserialize(bufDs2, {}) : null;
-
-      if (objDs1 === null && objDs2 === null) {
-        log.error("Datasets: updateIndexesIfNeeded: Unable to read either object version", path.join(datasetDir, objectPath), oidIndex, oidCurrent);
-        throw new Error("Unable to read either object version");
-      }
-
-      return [
-        objDs1,
-        objDs2,
-      ];
-    }
 
     const changes: Record<string, true | ChangeStatus> = {};
     let idx: number = 0;
@@ -937,8 +919,20 @@ export async function updateDatasetIndexesIfNeeded(
       idx += 1;
       const pathAffectsFilteredIndexes: { [id: string]: { idx: Datasets.Util.FilteredIndex } } = {};
 
-      // Read “before” and “after” object versions
-      const [objv1, objv2] = await readObjectVersions(objectPath);
+      let objv1: Record<string, any> | null;
+      let objv2: Record<string, any> | null;
+
+      try {
+        [objv1, objv2] = await readObjectVersions(
+          workDir,
+          datasetDir,
+          objectPath,
+          // Read “before” and “after” object versions
+          [oidIndex!, oidCurrent] as string[] & { length: 2 },
+        );
+      } catch (e) {
+        [objv1, objv2] = [null, null];
+      }
 
       log.debug("Datasets: updateDatasetIndexesIfNeeded: Changed object path", objectPath, objv1, objv2);
 

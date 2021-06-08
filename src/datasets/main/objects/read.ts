@@ -1,8 +1,10 @@
-import { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
-import { API as Datasets } from '../../types';
-import { getDefaultIndex, normalizeDatasetDir } from '../loadedDatasets';
+import path from 'path';
+import log from 'electron-log';
+import type { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
 import { findSerDesRuleForPath } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
+import { API as Datasets } from '../../types';
+import { getDefaultIndex, normalizeDatasetDir } from '../loadedDatasets';
 
 
 /* Do not read too many objects at once. May be slow. */
@@ -88,7 +90,63 @@ export async function readObjectCold(
 ): Promise<Record<string, any> | null> {
   const { workers: { reader } } = getLoadedRepository(workDir)
   const bufferDataset = await reader.repo_readBuffers({ workDir, rootPath });
+
+  if (Object.keys(bufferDataset).length < 1) {
+    // Well, seems there’s no buffer or tree at given path.
+    return null;
+  }
+
   const rule = findSerDesRuleForPath(rootPath);
-  const obj: Record<string, any> = rule.deserialize(bufferDataset, {});
-  return obj;
+  try {
+    return rule.deserialize(bufferDataset, {});
+  } catch (e) {
+    log.error("Datasets: readObjectCold(): Error deserializing buffer dataset", workDir, rootPath, e);
+    // Pretend the object does not exist.
+    throw e;
+  }
+}
+
+
+/* Reads any number of versions of the same object.
+   Optimizes by only requesting worker & ser/des rule once for the whole procedure,
+   since it applies to the same object (just different versions of it).
+
+   The last argument is an array of commit hashes, and return value is an array of the same length.
+   Any element of the array can be either deserialized data of the object at that commit hash,
+   or null; however, if *all* values in the array are null, the error is raised.
+*/
+export async function readObjectVersions
+<L extends number, C extends string[] & { length: L }>
+(workDir: string, datasetDir: string, objectPath: string, commitHashes: C):
+Promise<(Record<string, any> | null)[] & { length: L }> {
+  const { workers: { sync } } = getLoadedRepository(workDir)
+  const rule = findSerDesRuleForPath(objectPath);
+
+  const bufferDatasets = await Promise.all(commitHashes.map(oid =>
+    sync.repo_readBuffersAtVersion({ workDir, rootPath: path.join(datasetDir, objectPath), commitHash: oid })
+  )) as Record<string, Uint8Array>[] & { length: L };
+  //const bufDs1 = await sync.repo_readBuffersAtVersion({ workDir, rootPath: path.join(datasetDir, objectPath), commitHash: oidIndex! });
+  //const bufDs2 = await sync.repo_readBuffersAtVersion({ workDir, rootPath: path.join(datasetDir, objectPath), commitHash: oidCurrent });
+
+  const objectDatasets = bufferDatasets.map(bufDs => {
+    if (Object.keys(bufDs).length > 0) {
+      try {
+        return rule.deserialize(bufDs, {});
+      } catch (e) {
+        log.error("Datasets: readObjectVersions(): Error deserializing version for object", workDir, datasetDir, objectPath, e);
+        throw e;
+      }
+    } else {
+      return null;
+    }
+  }) as (Record<string, any> | null)[] & { length: L };
+  //const objDs1: Record<string, any> | null = Object.keys(bufDs1).length > 0 ? rule.deserialize(bufDs1, {}) : null;
+  //const objDs2: Record<string, any> | null = Object.keys(bufDs2).length > 0 ? rule.deserialize(bufDs2, {}) : null;
+
+  if (objectDatasets.filter(ds => ds !== null).length < 1) {
+    log.error("Datasets: updateIndexesIfNeeded: Unable to read any object version", path.join(datasetDir, objectPath), commitHashes);
+    throw new Error("Unable to read any object version");
+  }
+
+  return objectDatasets;
 }
