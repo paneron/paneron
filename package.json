@@ -14,7 +14,7 @@
   "license": "MIT",
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
-    "test": "env TS_NODE_PROJECT=\"tsconfig.json\" mocha --require esm --require ts-node/register 'test/**/*.ts'",
+    "test-e2e": "env TS_NODE_PROJECT=\"tsconfig.json\" mocha --require esm --require ts-node/register 'test/**/*.ts'",
     "test-mac-e2e": "yarn compile && yarn dist:mac && yarn test",
     "dev": "electron-webpack dev",
     "compile": "electron-webpack",
