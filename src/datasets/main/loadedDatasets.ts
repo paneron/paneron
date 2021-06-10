@@ -582,7 +582,7 @@ async function fillInFilteredIndex(
 
         if (predicate(objectPath, objectData) === true) {
           //log.debug("Datasets: fillInFilteredIndex: Checking object using keyer", keyer);
-          const customKey = (keyer ? keyer(objectData) : null) ?? key;
+          const customKey = (keyer ? keyer(objectData) : null) ?? objectPath;
           await filteredIndexKeyedDB.put(customKey, objectPath);
           indexed += 1;
         }
