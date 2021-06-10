@@ -15,7 +15,7 @@ export const DatasetBreadcrumb: React.FC<{
   datasetInfo: DatasetInfo
   onClose: () => void
 }> = function ({ workDir, datasetID, datasetInfo, onClose }) {
-  const [defaultIndexStatus, setDefaultIndexStatus] = useState<IndexStatus | null>(null);
+  const [indexStatus, setIndexStatus] = useState<IndexStatus | null>(null);
 
   const indexDescResp = describeIndex.renderer!.useValue({
     workingCopyPath: workDir,
@@ -24,11 +24,11 @@ export const DatasetBreadcrumb: React.FC<{
 
   indexStatusChanged.renderer!.useEvent(async ({ workingCopyPath, datasetPath, indexID, status }) => {
     if (workingCopyPath === workDir && datasetPath === datasetID && indexID === undefined) {
-      setDefaultIndexStatus(status);
+      setIndexStatus(status);
     }
   }, [workDir, datasetID]);
 
-  const status = defaultIndexStatus ?? indexDescResp.value.status;
+  const status = indexStatus ?? indexDescResp.value.status;
 
   return (
     <Breadcrumb

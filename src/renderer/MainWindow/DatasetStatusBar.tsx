@@ -12,7 +12,7 @@ import { describeIndex, indexStatusChanged } from 'datasets/ipc';
 export const DatasetStatusBar: React.FC<Record<never, never>> = React.memo(function () {
   const { state: { selectedRepoWorkDir, selectedDatasetID } } = useContext(Context);
 
-  const [defaultIndexStatus, setDefaultIndexStatus] = useState<IndexStatus | null>(null);
+  const [indexStatus, setIndexStatus] = useState<IndexStatus | null>(null);
 
   const indexDescResp = describeIndex.renderer!.useValue({
     workingCopyPath: selectedRepoWorkDir ?? '',
@@ -21,11 +21,11 @@ export const DatasetStatusBar: React.FC<Record<never, never>> = React.memo(funct
 
   indexStatusChanged.renderer!.useEvent(async ({ workingCopyPath, datasetPath, indexID, status }) => {
     if (workingCopyPath === selectedRepoWorkDir && datasetPath === selectedDatasetID && indexID === undefined) {
-      setDefaultIndexStatus(status);
+      setIndexStatus(status);
     }
   }, [selectedRepoWorkDir, selectedDatasetID]);
 
-  const status = defaultIndexStatus ?? indexDescResp.value.status;
+  const status = indexStatus ?? indexDescResp.value.status;
 
   const progressValue = Math.floor(100 / (status.progress?.total || 100) * (status.progress?.loaded || 1)) / 100
 
