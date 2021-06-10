@@ -943,6 +943,7 @@ export async function updateDatasetIndexesIfNeeded(
         // mark that index as affected and track object count changes.
         // TODO: Notify frontend about filtered index status.
         if ((objv1 && idx.predicate(objectPath, objv1)) || (objv2 && idx.predicate(objectPath, objv2))) {
+          log.debug("Datasets: updateDatasetIndexesIfNeeded: Path affects filtered indexes", objectPath, idxID)
           pathAffectsFilteredIndexes[idxID] = {
             idx,
           };
