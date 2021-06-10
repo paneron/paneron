@@ -851,6 +851,7 @@ export async function updateDatasetIndexesIfNeeded(
 ) {
   const ds = getLoadedDataset(workDir, datasetDir);
   const affectedFilteredIndexes: { [idxID: string]: { idx: Datasets.Util.FilteredIndex, newObjectCount: number } } = {};
+  const changes: Record<string, true | ChangeStatus> = {};
 
   const defaultIndex = ds.indexes['default'];
   const defaultIdxDB = defaultIndex.dbHandle;
@@ -890,6 +891,8 @@ export async function updateDatasetIndexesIfNeeded(
     filter(([id, idx]) => id !== 'default' && !idx.completionPromise);
   const filteredIndexIDs: string[] = filteredIndexes.map(([id, ]) => id);
 
+  const defaultIndexStatusReporter = getDefaultIndexStatusReporter(workDir, datasetDir);
+
   log.debug("updateDatasetIndexesIfNeeded: Operating on filtered indexes", filteredIndexes.map(([, idx]) => idx.predicate));
 
   const completionPromise = (async () => {
@@ -907,11 +910,8 @@ export async function updateDatasetIndexesIfNeeded(
 
     log.debug("updateDatasetIndexesIfNeeded: Updating default index");
 
-    const defaultIndexStatusReporter = getDefaultIndexStatusReporter(workDir, datasetDir);
-
     let newDefaultIndexObjectCount = defaultIndexMeta.objectCount;
 
-    const changes: Record<string, true | ChangeStatus> = {};
     let idx: number = 0;
 
     // Update default index and infer which filtered indexes are affected
@@ -1046,38 +1046,47 @@ export async function updateDatasetIndexesIfNeeded(
       }
     }
 
-    // Update default & filtered index meta; rebuild filtered index sorted DBs; notify frontend
+    // Update default & filtered index meta; rebuild filtered index sorted DBs
 
     await indexMeta(defaultIndex, { commitHash: oidCurrent, completed: new Date(), objectCount: newDefaultIndexObjectCount });
-    for (const [indexID, { idx, newObjectCount }] of Object.entries(affectedFilteredIndexes)) {
+    for (const { idx, newObjectCount } of Object.values(affectedFilteredIndexes)) {
       await indexMeta(idx, { commitHash: oidCurrent, completed: new Date(), objectCount: newObjectCount });
       await rebuildFilteredIndexSortedDB(idx);
-      await filteredIndexUpdated.main!.trigger({ workingCopyPath: workDir, datasetPath: datasetDir, indexID });
-      idx.completionPromise = undefined;
     }
-    defaultIndex.completionPromise = undefined;
-
-    defaultIndexStatusReporter({
-      objectCount: defaultIndex.status.objectCount,
-    });
-
-    await objectsChanged.main!.trigger({
-      workingCopyPath: workDir,
-      datasetPath: datasetDir,
-      objects: changes,
-    });
 
     return true as const;
 
   })();
 
   defaultIndex.completionPromise = completionPromise;
-
   for (const idxID of filteredIndexIDs) {
     ds.indexes[idxID].completionPromise = completionPromise;
   }
 
   await completionPromise;
+
+  defaultIndex.completionPromise = undefined;
+  for (const idxID of filteredIndexIDs) {
+    ds.indexes[idxID].completionPromise = undefined;
+  }
+
+  // Notify frontend
+  defaultIndexStatusReporter({
+    objectCount: defaultIndex.status.objectCount,
+  });
+
+  objectsChanged.main!.trigger({
+    workingCopyPath: workDir,
+    datasetPath: datasetDir,
+    objects: changes,
+  });
+
+  for (const [indexID, { newObjectCount }] of Object.entries(affectedFilteredIndexes)) {
+    filteredIndexUpdated.main!.trigger({ workingCopyPath: workDir, datasetPath: datasetDir, indexID });
+    indexStatusChanged.main!.trigger({ workingCopyPath: workDir, datasetPath: datasetDir, indexID, status: {
+      objectCount: newObjectCount,
+    } });
+  }
 }
 
 
