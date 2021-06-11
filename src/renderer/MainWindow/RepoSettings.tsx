@@ -9,14 +9,14 @@ import { Button, Classes, Colors, ControlGroup, InputGroup } from '@blueprintjs/
 import makeGrid, { CellProps, GridData, LabelledGridIcon } from '@riboseinc/paneron-extension-kit/widgets/Grid';
 import Workspace from '@riboseinc/paneron-extension-kit/widgets/Workspace';
 import makeSidebar from '@riboseinc/paneron-extension-kit/widgets/Sidebar';
-import { describeRepository, repositoryBuffersChanged } from 'repositories/ipc';
-import { getDatasetInfo } from 'datasets/ipc';
-import { Context } from './context';
-import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
-import { DatasetInfo } from 'datasets/types';
 import PropertyView from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
+import { describeRepository, repositoryBuffersChanged } from 'repositories/ipc';
+import { DatasetInfo } from 'datasets/types';
+import { getDatasetInfo } from 'datasets/ipc';
+import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
 import { getPluginInfo } from 'plugins';
 import DatasetExtension from 'plugins/renderer/DatasetExtensionCard';
+import { Context } from './context';
 
 
 const CELL_WIDTH_PX = 150;

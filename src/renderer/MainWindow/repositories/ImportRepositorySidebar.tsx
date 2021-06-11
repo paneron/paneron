@@ -7,9 +7,9 @@ import { Button } from '@blueprintjs/core';
 import makeSidebar from '@riboseinc/paneron-extension-kit/widgets/Sidebar';
 import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import { addRepository, getNewRepoDefaults } from 'repositories/ipc';
+import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
 import { Context } from '../context';
 import GitCredentialsInput from './GitCredentialsInput';
-import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
 
 
 const Sidebar = makeSidebar(usePaneronPersistentStateReducer);

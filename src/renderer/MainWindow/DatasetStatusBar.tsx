@@ -5,8 +5,8 @@ import { jsx } from '@emotion/react';
 import React, { useContext, useState } from 'react';
 import { ProgressBar, Text } from '@blueprintjs/core';
 import { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
-import { Context } from './context';
 import { describeIndex, indexStatusChanged } from 'datasets/ipc';
+import { Context } from './context';
 
 
 export const DatasetStatusBar: React.FC<Record<never, never>> = React.memo(function () {
