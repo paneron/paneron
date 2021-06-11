@@ -4,7 +4,7 @@
 import { splitEvery } from 'ramda';
 import memoize from 'memoize-one';
 import log from 'electron-log';
-import { jsx, css } from '@emotion/core';
+import { jsx, css } from '@emotion/react';
 import React, { useContext, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { AnchorButton, Button, Classes, Colors, ControlGroup, InputGroup } from '@blueprintjs/core';

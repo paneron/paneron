@@ -2,7 +2,7 @@
 /** @jsxFrag React.Fragment */
 
 import log from 'electron-log';
-import { jsx, css } from '@emotion/core';
+import { jsx, css } from '@emotion/react';
 import React, { useContext, useEffect, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 import { ProgressBar, Spinner, Tag, Text } from '@blueprintjs/core';

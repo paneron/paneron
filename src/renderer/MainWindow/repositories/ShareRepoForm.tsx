@@ -1,7 +1,7 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 
-import { css, jsx } from '@emotion/core';
+import { css, jsx } from '@emotion/react';
 import React, { useContext, useState } from 'react';
 import { ButtonGroup } from '@blueprintjs/core';
 import { getNewRepoDefaults, GitRepository, savePassword, setRemote, unsetRemote, unsetWriteAccess } from 'repositories/ipc';

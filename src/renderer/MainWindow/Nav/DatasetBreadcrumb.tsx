@@ -1,7 +1,7 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 
-import { jsx } from '@emotion/core';
+import { jsx } from '@emotion/react';
 import React, { useState } from 'react';
 import { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
 import { describeIndex, indexStatusChanged } from 'datasets/ipc';

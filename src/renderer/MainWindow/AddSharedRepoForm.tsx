@@ -2,9 +2,7 @@
 /** @jsxFrag React.Fragment */
 
 import log from 'electron-log';
-
-import { jsx } from '@emotion/core';
-
+import { jsx } from '@emotion/react';
 import React, { useContext, useState } from 'react';
 
 import {

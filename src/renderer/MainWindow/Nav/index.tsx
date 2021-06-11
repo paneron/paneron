@@ -1,7 +1,7 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 
-import { jsx, css } from '@emotion/core';
+import { jsx, css } from '@emotion/react';
 import React, { useContext } from 'react';
 import { Classes, Colors, Icon } from '@blueprintjs/core';
 import { describeRepository, repositoryBuffersChanged } from 'repositories/ipc';

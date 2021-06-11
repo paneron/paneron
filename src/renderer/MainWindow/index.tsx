@@ -1,6 +1,6 @@
 /** @jsx jsx */
 
-import { jsx, css } from '@emotion/core';
+import { jsx, css } from '@emotion/react';
 import React, { useContext } from 'react';
 import { Classes, NonIdealState } from '@blueprintjs/core';
 

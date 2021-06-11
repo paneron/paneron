@@ -1,7 +1,7 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 
-import { jsx } from '@emotion/core';
+import { jsx } from '@emotion/react';
 import React, { useContext, useState } from 'react';
 import { ProgressBar, Text } from '@blueprintjs/core';
 import { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';

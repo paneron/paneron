@@ -1,7 +1,7 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 
-import { jsx, css } from '@emotion/core';
+import { jsx, css } from '@emotion/react';
 import { Helmet } from 'react-helmet';
 import React, { useContext } from 'react';
 import { splitEvery } from 'ramda';

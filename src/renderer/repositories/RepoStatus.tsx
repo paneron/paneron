@@ -2,9 +2,9 @@
 /** @jsxFrag React.Fragment */
 
 import { throttle } from 'throttle-debounce';
-import { IButtonProps, Icon, InputGroup, Spinner } from '@blueprintjs/core';
-import { jsx } from '@emotion/core';
+import { jsx } from '@emotion/react';
 import React, { useState } from 'react';
+import { IButtonProps, Icon, InputGroup, Spinner } from '@blueprintjs/core';
 import {
   loadRepository,
   GitRepository,

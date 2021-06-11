@@ -20,7 +20,7 @@ export const PLUGINS_PATH = path.join(remote.app.getPath('userData'), 'plugins')
 export default async function getDataset(workingCopyPath: string, datasetPath?: string): Promise<{
   writeAccess: boolean;
   dataset: DatasetInfo;
-  MainView: React.FC<DatasetContext>;
+  MainView: React.FC<DatasetContext & { className?: string }>;
   getObjectView: RendererPlugin["getObjectView"];
 }> {
 
@@ -28,7 +28,7 @@ export default async function getDataset(workingCopyPath: string, datasetPath?: 
     throw new Error("Invalid repository working copy path");
   }
 
-  let MainView: React.FC<DatasetContext>;
+  let MainView: React.FC<DatasetContext & { className?: string }>;
   let writeAccess: boolean;
   let dataset: DatasetInfo;
   let getObjectView: RendererPlugin["getObjectView"];

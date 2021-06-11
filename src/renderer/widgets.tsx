@@ -3,7 +3,7 @@
 
 import log from 'electron-log';
 import styled from '@emotion/styled';
-import { jsx } from '@emotion/core';
+import { jsx } from '@emotion/react';
 import React, { useState, useEffect, useRef } from 'react';
 import Mark from 'mark.js';
 import { Button as BPButton, ControlGroup, FormGroup, H4, InputGroup } from '@blueprintjs/core';

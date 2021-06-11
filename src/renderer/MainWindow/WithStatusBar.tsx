@@ -1,9 +1,9 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 
-import { Colors } from '@blueprintjs/core';
-import { jsx, css } from '@emotion/core';
+import { jsx, css } from '@emotion/react';
 import React from 'react';
+import { Colors } from '@blueprintjs/core';
 
 
 const WithStatusBar: React.FC<{ statusBar: JSX.Element, className?: string }> =
