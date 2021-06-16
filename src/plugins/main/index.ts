@@ -22,11 +22,11 @@ import { Extension } from '../../plugins/types';
 import { Methods as WorkerMethods, WorkerSpec } from './worker';
 
 
-const devFolder = app.isPackaged === false ? process.env.PANERON_PLUGIN_DIR : undefined;
+const devFolder = process.env.PANERON_PLUGIN_DIR;
 
-const resetPlugins = app.isPackaged === false ? process.env.PANERON_RESET_PLUGINS : undefined;
+const resetPlugins = process.env.PANERON_RESET_PLUGINS;
 
-const devPluginName = app.isPackaged === false ? process.env.PANERON_DEV_PLUGIN : undefined;
+const devPluginName = process.env.PANERON_DEV_PLUGIN;
 
 const devPlugin = devPluginName
   ? {
