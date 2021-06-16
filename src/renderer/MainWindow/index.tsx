@@ -26,8 +26,9 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
                 display: flex;
                 flex-flow: column nowrap;
                 z-index: 1;
+                overflow: hidden;
               `}>
-            <MainView css={css`flex: 1; background: white;`} className={Classes.ELEVATION_3} />
+            <MainView css={css`flex: 1; background: white; overflow: hidden;`} className={Classes.ELEVATION_3} />
           </div>
         </div>
       </ContextProvider>
