@@ -1254,13 +1254,15 @@
   resolved "https://registry.yarnpkg.com/@popperjs/core/-/core-2.9.2.tgz#adea7b6953cbb34651766b0548468e743c6a2353"
   integrity sha512-VZMYa7+fXHdwIq1TDhSXoVmSPEGM/aa+6Aiq3nVVJ9bXr24zScr+NlKFKC3iPljA7ho/GAZr+d2jOf5GIRC30Q==
 
-"@riboseinc/paneron-extension-kit@2.0.0-dev31":
-  version "2.0.0-dev31"
-  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-extension-kit/-/paneron-extension-kit-2.0.0-dev31.tgz#22a611f7d7866e11847a63f6025ab226159194c4"
-  integrity sha512-siva9kTEuHUUKelnx3MH3suh/LWMUl3/KyIXRKfMQUAD7rVevDW7SllXTVIAdEVIEnHqhjQnUMQfCL2KGIw2Pw==
+"@riboseinc/paneron-extension-kit@2.0.0-alpha1":
+  version "2.0.0-alpha1"
+  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-extension-kit/-/paneron-extension-kit-2.0.0-alpha1.tgz#8ce7103d0a5373eb63a2df757997076b92e55589"
+  integrity sha512-mpvCFR/vtd9lmt5OxiW1Pr4zbpqg6lpzviasc43x437GFAKjvKQ80OozN7BrKOkL6r0ks53lVac2nrFHFDEecA==
 
-"@riboseinc/paneron-registry-kit@file:../developer/registry-kit/dist":
-  version "2.0.0-dev25"
+"@riboseinc/paneron-registry-kit@2.0.0-alpha1":
+  version "2.0.0-alpha1"
+  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-registry-kit/-/paneron-registry-kit-2.0.0-alpha1.tgz#c30933fd7d43afa0ca6eb0ef6b3e4ea25546ddde"
+  integrity sha512-HAEQMXPYG8vzb+0KMTY8AJBSkufejcJMuNTr8aHK8u5JRm+o56q/rcx1ziW1M/lKiHQwj+NYBrF7EJj0u0HVYg==
 
 "@riboseinc/reprose@^1.0.0-alpha9":
   version "1.0.0-alpha9"
