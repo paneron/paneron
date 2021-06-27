@@ -37,10 +37,10 @@ export interface Methods {
      return factually installed version. */
   install: (msg: { name: string, version?: string }) => Promise<{ installedVersion: string }>
 
-  remove: (msg: { name: string }) => Promise<{ success: true }>
-
   /* Development environment helper. Installs from a special path in user’s app data. */
   _installDev: (msg: { name: string, fromPath: string }) => Promise<{ installedVersion: string }>
+
+  remove: (msg: { name: string }) => Promise<{ success: true }>
 
   removeAll: () => Promise<{ success: true }>
 
