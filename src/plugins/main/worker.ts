@@ -50,6 +50,8 @@ export interface Methods {
   /* Development environment helper. Installs from a special path in user’s app data. */
   _installDev: (msg: { name: string, fromPath: string }) => Promise<{ installedVersion: string }>
 
+  removeAll: () => Promise<{ success: true }>
+
   getInstalledVersion: (msg: { name: string }) => Promise<{ installedVersion: string | null }>
 
   listInstalledPlugins: () => Promise<IPluginInfo[]>
@@ -148,6 +150,22 @@ const methods: WorkerSpec = {
       await updateConfig((data) => {
         const newData = { ...data };
         delete newData.installedPlugins[name];
+        return newData;
+      });
+    });
+
+    return { success: true };
+  },
+
+  async removeAll() {
+    await pluginLock.acquire('1', async () => {
+      assertInitialized();
+
+      (await manager!.uninstallAll());
+
+      await updateConfig((data) => {
+        const newData = { ...data };
+        newData.installedPlugins = {};
         return newData;
       });
     });

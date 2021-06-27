@@ -47,6 +47,7 @@ export const upgradePlugin = makeEndpoint.main(
 );
 
 
+export const removeAll = makeEndpoint.main(
 export const pluginsUpdated = makeEndpoint.renderer(
   'pluginsChanged',
   <{ changedIDs?: string[] }>_,

@@ -16,7 +16,7 @@ import { MainPlugin } from '@riboseinc/paneron-extension-kit/types';
 import {
   getPluginInfo, getPluginManagerProps,
   installPlugin, listAvailablePlugins,
-  pluginsUpdated, upgradePlugin,
+  pluginsUpdated, removeAll, upgradePlugin,
 } from '../../plugins';
 import { Extension } from '../../plugins/types';
 import { Methods as WorkerMethods, WorkerSpec } from './worker';
@@ -85,6 +85,11 @@ installPlugin.main!.handle(async ({ id, version: versionToInstall }) => {
   }
 
   return { installed: true, installedVersion: version };
+});
+
+
+removeAll.main!.handle(async () => {
+  return (await (await worker).removeAll());
 });
 
 
