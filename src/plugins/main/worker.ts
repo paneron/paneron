@@ -29,7 +29,7 @@ export interface Methods {
 
   /* Initialize plugin manager and config file.
      Must be called before anything else on freshly started worker. */
-  initialize: (msg: { cwd: string, pluginsPath: string, pluginConfigPath: string, devFolder?: string }) => Promise<void>
+  initialize: (msg: { cwd: string, pluginsPath: string, pluginConfigPath: string, devFolder?: string, devPluginName?: string }) => Promise<void>
 
   /* Install latest version if not installed;
      if already installed, do nothing;
@@ -89,7 +89,7 @@ async function updateConfig(updater: (data: PluginConfigData) => PluginConfigDat
 
 const methods: WorkerSpec = {
 
-  async initialize({ cwd, pluginsPath, pluginConfigPath, devFolder }) {
+  async initialize({ cwd, pluginsPath, pluginConfigPath, devFolder, devPluginName }) {
     await fs.ensureDir(pluginsPath);
     await fs.ensureFile(pluginConfigPath);
 
@@ -97,6 +97,7 @@ const methods: WorkerSpec = {
       cwd,
       pluginsPath,
       lockWait: 10000,
+      npmInstallMode: 'noCache',
     });
 
     configPath = pluginConfigPath;
@@ -110,13 +111,11 @@ const methods: WorkerSpec = {
       plugins = {};
     }
 
-    if (!devFolder) {
-      for (const [name, info] of Object.entries(plugins)) {
-        await manager.installFromNpm(name, info.installedVersion || undefined);
-      }
-    } else {
-      for (const [name, ] of Object.entries(plugins)) {
+    for (const [name, info] of Object.entries(plugins)) {
+      if (devFolder && name === devPluginName) {
         await manager.installFromPath(path.join(devFolder, name));
+      } else {
+        await manager.installFromNpm(name, info.installedVersion || undefined);
       }
     }
   },
@@ -209,7 +208,7 @@ const methods: WorkerSpec = {
 
       console.debug("Plugins: Worker: Installing in dev mode…", path.join(fromPath, name));
 
-      const { version } = await manager!.installFromPath(path.join(fromPath, name));
+      const { version } = await manager!.installFromPath(path.join(fromPath, name), { force: true });
 
       console.debug("Plugins: Worker: Installed in dev mode", path.join(fromPath, name), version);
 

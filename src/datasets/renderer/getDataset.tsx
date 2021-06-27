@@ -107,18 +107,18 @@ export default async function getDataset(workingCopyPath: string, datasetPath?: 
   // let pluginPath: string | undefined;
   // Install plugin in renderer
   try {
-    if (process.env.PANERON_DEV_PLUGIN === undefined) {
+    if (process.env.PANERON_DEV_PLUGIN !== pluginName || !process.env.PANERON_PLUGIN_DIR) {
       log.silly("Dataset view: Installing plugin for renderer...", workingCopyPath, pluginName, pluginVersion);
       await pluginManager.installFromNpm(pluginName, pluginVersion);
     } else {
-      const pluginPath = path.join(PLUGINS_PATH, '@riboseinc', `paneron-extension-${process.env.PANERON_DEV_PLUGIN}`);
+      const pluginPath = path.join(process.env.PANERON_PLUGIN_DIR, process.env.PANERON_DEV_PLUGIN);
       log.silly("Dataset view: (DEV) Installing plugin for renderer...", pluginPath);
       await pluginManager.installFromPath(pluginPath);
     }
 
     // pluginPath = pluginManager.getInfo(pluginName)?.location;
   } catch (e) {
-    log.error("Dataset view: Error installing plugin", workingCopyPath, pluginName, pluginVersion, e);
+    log.error("Dataset view: Error installing plugin for renderer", workingCopyPath, pluginName, pluginVersion, e);
     throw new Error("Error loading extension");
   }
 

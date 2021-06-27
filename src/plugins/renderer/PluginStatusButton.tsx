@@ -11,14 +11,17 @@ import { Button, InputGroup, Toaster } from '@blueprintjs/core';
 
 const toaster = Toaster.create({ position: 'bottom' });
 
+const DEV_VERSION = '0.0.0';
+
 
 const PluginStatusButton: React.FC<{ id: string }> =
 function ({ id }) {
   const pluginInfo = getPluginInfo.renderer!.useValue({ id }, { plugin: null });
   const installedVersion = pluginInfo.value.plugin?.installedVersion;
-  const currentNPMVersion = pluginInfo.value.plugin?.npm.version;
+  const availableVersion = pluginInfo.value.plugin?.npm.version ?? DEV_VERSION;
   const [customVersionToInstall, setVersionToInstall] = useState<string | undefined>(undefined);
-  const versionToInstall = customVersionToInstall || currentNPMVersion;
+  const versionToInstall = customVersionToInstall || availableVersion;
+  const isDev = installedVersion === DEV_VERSION && availableVersion === DEV_VERSION;
   const [isBusy, setBusy] = useState(false);
 
   const wantToInstall = (
@@ -27,6 +30,7 @@ function ({ id }) {
     versionToInstall === undefined);
 
   const canInstall = (
+    !isDev &&
     !isBusy &&
     !pluginInfo.isUpdating &&
     installedVersion !== versionToInstall &&
@@ -99,9 +103,9 @@ function ({ id }) {
           </Button>
         : null}
       <InputGroup
-        placeholder={installedVersion === currentNPMVersion
+        placeholder={installedVersion === availableVersion
           ? 'Change version…'
-          : `${currentNPMVersion} (latest)`}
+          : `${availableVersion} (latest)`}
         disabled={isBusy || pluginInfo.isUpdating}
         intent={wantToInstall ? 'primary' : undefined}
         value={customVersionToInstall || ''}

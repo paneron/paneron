@@ -38,7 +38,7 @@ const devPlugin = devPluginName
       iconURL: "https://open.ribose.com/assets/favicon-192x192.png",
       requiredHostAppVersion: app.getVersion(),
       npm: {
-        name: '__your-test-plugin',
+        name: devPluginName,
         bugs: { url: "https://open.ribose.com/" },
         version: '0.0.0',
         dist: {
@@ -162,7 +162,7 @@ getPluginManagerProps.main!.handle(async () => {
 
 async function _installPlugin(name: string, versionToInstall?: string): Promise<string> {
   let version: string;
-  if (devFolder === undefined) {
+  if (devFolder === undefined || name !== devPluginName) {
     version = (await (await worker).install({ name, version: versionToInstall })).installedVersion;
     (await pluginManager).install(name, version);
   } else {
@@ -195,13 +195,20 @@ const _appVersion = process.env.NODE_ENV === 'development'
   : app.getVersion();
 
 export async function requireMainPlugin(name: string, version?: string): Promise<MainPlugin> {
-  if (!_runtimePluginInstanceCache[name]) {
+  const cacheKey = `${name}@${version}`;
+  if (!_runtimePluginInstanceCache[cacheKey]) {
     log.debug("Plugins: Require main plugin: Instance not cached");
 
-    const { installedVersion } = await (await worker).getInstalledVersion({ name });
+    let { installedVersion } = await (await worker).getInstalledVersion({ name });
     if (!installedVersion) {
-      log.error("Plugins: Requiring main plugin that is not installed", name);
-      throw new Error("Extension is not installed");
+      log.warn("Plugins: Requiring main plugin that is not installed", name, version);
+      installedVersion = await _installPlugin(name, version);
+      if (!installedVersion) {
+        log.error("Plugins: Requiring main plugin that is not installed, and could not be installed on demand", name, version);
+        throw new Error("Extension is not installed");
+      } else {
+        log.info("Plugins: Installed main plugin on demand", name, version);
+      }
     }
 
     if (version !== undefined && installedVersion !== version) {
@@ -221,13 +228,13 @@ export async function requireMainPlugin(name: string, version?: string): Promise
       throw new Error("Extension version is not compatible with host application version");
     }
 
-    _runtimePluginInstanceCache[name] = plugin;
+    _runtimePluginInstanceCache[cacheKey] = plugin;
 
   } else {
     log.debug("Plugins: Require main plugin: Got cached instance");
   }
 
-  return _runtimePluginInstanceCache[name];
+  return _runtimePluginInstanceCache[cacheKey];
 }
 
 
@@ -242,6 +249,7 @@ export const pluginManager: Promise<PluginManager> = new Promise((resolve, _) =>
   resolve(new PluginManager({
     cwd: CWD,
     pluginsPath: PLUGINS_PATH,
+    npmInstallMode: 'useCache',
   }));
 });
 
@@ -299,6 +307,7 @@ export const worker: Promise<Thread & WorkerMethods> = new Promise((resolve, rej
       pluginsPath: PLUGINS_PATH,
       pluginConfigPath: PLUGIN_CONFIG_PATH,
       devFolder,
+      devPluginName,
     }).
     then(() => {
       log.debug("Plugins: Installing plugins");
@@ -310,7 +319,9 @@ export const worker: Promise<Thread & WorkerMethods> = new Promise((resolve, rej
           Promise.all(plugins.map(plugin => {
             log.silly("Plugins: Installing in main", plugin.name, plugin.version);
             return new Promise((resolve, reject) => (
-              manager.install(plugin.name, plugin.version).
+              ((devFolder && devPluginName === plugin.name)
+                ? manager.installFromPath(path.join(devFolder, plugin.name))
+                : manager.install(plugin.name, plugin.version)).
               then(plugin => {
                 try {
                   manager.require(plugin.name);
