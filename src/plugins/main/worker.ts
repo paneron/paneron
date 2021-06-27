@@ -12,25 +12,17 @@ import { IPluginInfo, PluginManager } from 'live-plugin-manager';
 import { InstalledPluginInfo } from 'plugins/types';
 
 
-interface InstalledPlugins {
-  [pluginName: string]: InstalledPluginInfo
-}
-
 interface PluginConfigData {
   installedPlugins: {
     [pluginName: string]: Pick<InstalledPluginInfo, 'installedVersion'>
   }
 }
 
-//let plugins: InstalledPlugins = {}
-
 let manager: PluginManager | null = null;
 
 let configPath: string | null = null;
 
 const pluginLock = new AsyncLock();
-
-const installedPlugins: InstalledPlugins = {};
 
 
 export interface Methods {
@@ -140,10 +132,6 @@ const methods: WorkerSpec = {
   async remove({ name }) {
     await pluginLock.acquire('1', async () => {
       assertInitialized();
-
-      if (installedPlugins[name]) {
-        delete installedPlugins[name];
-      }
 
       (await manager!.uninstall(name));
 
