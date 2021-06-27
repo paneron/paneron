@@ -174,7 +174,7 @@
     "axios": "^0.21.1",
     "cytoscape": "3.16.1",
     "date-fns": "^2.22.1",
-    "electron-log": "^4.2.2",
+    "electron-log": "^4.3.0",
     "encoding-down": "^6.3.0",
     "fs-extra": "^9.0.1",
     "globby": "^11.0.1",
