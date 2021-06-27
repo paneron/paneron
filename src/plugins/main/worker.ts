@@ -168,16 +168,16 @@ const methods: WorkerSpec = {
       let installedVersion: string | undefined;
 
       if (version === undefined) {
-        const foundVersion = (await manager!.getInfo(name))?.version;
+        const foundVersion = manager!.getInfo(name)?.version;
         if (foundVersion) {
           installedVersion = foundVersion;
         } else {
           await manager!.installFromNpm(name);
-          installedVersion = (await manager!.getInfo(name))?.version;
+          installedVersion = manager!.getInfo(name)?.version;
         }
       } else {
         await manager!.installFromNpm(name, version);
-        installedVersion = (await manager!.getInfo(name))?.version;
+        installedVersion = manager!.getInfo(name)?.version;
       }
 
       await updateConfig((data) => {
