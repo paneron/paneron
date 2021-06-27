@@ -117,16 +117,30 @@ upgradePlugin.main!.handle(async ({ id, version: versionToUpgradeTo }) => {
 getPluginInfo.main!.handle(async ({ id }) => {
   const name = id;
   const w = await worker;
+
   if (name === devPluginName && devPlugin) {
     return { plugin: { ...devPlugin, installedVersion: '0.0.0' } };
+
   } else {
-    const extensions = await fetchExtensions();
+    let extensions: Record<string, Extension>;
+    try {
+      extensions = await fetchExtensions();
+    } catch (e) {
+      log.error("Unable to fetch Paneron extension index", e);
+      return { plugin: null };
+    }
+
     const ext = extensions[name];
     if (ext) {
-      const { installedVersion } = await w.getInstalledVersion({ name });
-      return { plugin: { ...ext, installedVersion } };
+      try {
+        const { installedVersion } = await w.getInstalledVersion({ name });
+        return { plugin: { ...ext, installedVersion } };
+      } catch (e) {
+        log.error("Unable to fetch information about installed extension version", name);
+        return { plugin: { ...ext, installedVersion: null } };
+      }
     } else {
-      log.error("Cannot locate extension in Paneron index", name);
+      log.error("Cannot locate extension in Paneron extension index", name);
       return { plugin: null };
     }
   }
