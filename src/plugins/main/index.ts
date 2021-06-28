@@ -194,12 +194,17 @@ async function _removePlugin(name: string): Promise<true> {
 
 const _runtimePluginInstanceCache: Record<string, MainPlugin> = {};
 
+function _getPluginCacheKey(name: string, version?: string) {
+  const cacheKey = `${name}@${version ?? ''}`;
+  return cacheKey;
+}
+
 const _appVersion = process.env.NODE_ENV === 'development'
   ? process.env.npm_package_version!
   : app.getVersion();
 
 export async function requireMainPlugin(name: string, version?: string): Promise<MainPlugin> {
-  const cacheKey = `${name}@${version}`;
+  const cacheKey = _getPluginCacheKey(name, version);
   if (!_runtimePluginInstanceCache[cacheKey]) {
     log.debug("Plugins: Require main plugin: Instance not cached");
 
