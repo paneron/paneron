@@ -8,6 +8,7 @@ image:https://img.shields.io/badge/commitizen-friendly-brightgreen.svg[alt="Comm
 
 macOS example:
 
+[source]
 --
 PANERON_PLUGIN_DIR="/path/to/plugin/dir" PANERON_DEV_PLUGIN="@riboseinc/paneron-extension-bs-202000" ~/Applications/Paneron.app/Contents/MacOS/Paneron
 --
@@ -16,7 +17,7 @@ NOTE: In above example, this should be a valid file: `/path/to/plugin/dir/@ribos
 
 === Troubleshooting steps
 
-Considering %APP_DATA% dir is under, e.g., `$HOME/Library/Application Support/Paneron` under macOS:
+Considering `%APP_DATA%` directory is under, e.g., `$HOME/Library/Application Support/Paneron` under macOS:
 
 - Delete `%APP_DATA%/plugins`: This drops any plugins
 - Delete `%APP_DATA%/index-dbs`: This drops LevelDB-backed dataset indexes
