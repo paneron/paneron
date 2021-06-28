@@ -183,7 +183,7 @@ async function _removePlugin(name: string): Promise<true> {
 
   await (await pluginManager).uninstall(name);
 
-  delete _runtimePluginInstanceCache[name];
+  //delete _runtimePluginInstanceCache[name];
 
   return true;
 }
