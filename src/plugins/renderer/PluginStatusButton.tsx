@@ -5,7 +5,7 @@ import { jsx } from '@emotion/react';
 
 import React, { useState } from 'react';
 
-import { getPluginInfo, installPlugin, pluginsUpdated, upgradePlugin } from 'plugins';
+import { getPluginInfo, installPlugin, pluginsUpdated, removePlugin, upgradePlugin } from 'plugins';
 import { Button, InputGroup, Toaster } from '@blueprintjs/core';
 
 
@@ -28,6 +28,10 @@ function ({ id }) {
     !installedVersion ||
     installedVersion !== versionToInstall ||
     versionToInstall === undefined);
+
+  const wantToUninstall = (
+    installedVersion &&
+    !customVersionToInstall);
 
   const canInstall = (
     !isDev &&
@@ -66,6 +70,36 @@ function ({ id }) {
     }
   }
 
+  async function handleUninstall() {
+    setBusy(true);
+    const extName = pluginInfo.value.plugin?.title;
+    if (!extName) {
+      toaster.show({
+        icon: 'heart-broken',
+        intent: 'danger',
+        message: "Failed to uninstall extension: extension info is missing",
+      });
+    }
+    try {
+      await removePlugin.renderer!.trigger({ id });
+      toaster.show({
+        icon: 'tick-circle',
+        intent: 'success',
+        timeout: 4000,
+        message: `Removed extension ${extName}`,
+      });
+    } catch (e) {
+      toaster.show({
+        icon: 'heart-broken',
+        intent: 'danger',
+        message: `Failed to uninstall extension: ${e}`,
+      });
+    } finally {
+      setVersionToInstall(undefined);
+      setBusy(false);
+    }
+  }
+
   pluginsUpdated.renderer!.useEvent(async ({ changedIDs }) => {
     if (changedIDs === undefined || changedIDs.indexOf(id) >= 0) {
       pluginInfo.refresh();
@@ -90,16 +124,18 @@ function ({ id }) {
         leftIcon={installedVersion ? 'tick' : 'cross'}
         intent={installedVersion ? 'success' : undefined}
         value={installedVersion !== null ? `Installed ${installedVersion}` : 'Not installed'} />
-      {wantToInstall
+      {wantToInstall || wantToUninstall
         ? <Button
-              disabled={!canInstall}
+              disabled={!canInstall && !wantToUninstall}
               loading={isBusy || pluginInfo.isUpdating}
-              intent="primary"
-              onClick={handleInstall}
-              icon="play">
-            {installedVersion
-              ? `Update to`
-              : `Install`}
+              intent={wantToInstall ? 'primary' : 'danger'}
+              onClick={wantToInstall ? handleInstall : handleUninstall}
+              icon={wantToInstall ? 'play' : 'cross'}>
+            {wantToInstall
+              ? installedVersion
+                ? `Update to`
+                : `Install`
+              : `Uninstall`}
           </Button>
         : null}
       <InputGroup

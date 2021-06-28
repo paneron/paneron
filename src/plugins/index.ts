@@ -47,6 +47,13 @@ export const upgradePlugin = makeEndpoint.main(
 );
 
 
+export const removePlugin = makeEndpoint.main(
+  'removePlugin',
+  <{ id: string }>_,
+  <{ success: true }>_,
+);
+
+
 export const removeAll = makeEndpoint.main(
   'removeAllPlugins',
   <EmptyPayload>_,
