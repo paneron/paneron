@@ -4,6 +4,24 @@ image:https://img.shields.io/badge/commitizen-friendly-brightgreen.svg[alt="Comm
 
 == Development
 
+=== Launching in dev mode (e.g., for extension testing)
+
+macOS example:
+
+--
+PANERON_PLUGIN_DIR="/path/to/plugin/dir" PANERON_DEV_PLUGIN="@riboseinc/paneron-extension-bs-202000" ~/Applications/Paneron.app/Contents/MacOS/Paneron
+--
+
+NOTE: In above example, this should be a valid file: `/path/to/plugin/dir/@riboseinc/paneron-extension-bs-202000/package.json`
+
+=== Troubleshooting steps
+
+Considering %APP_DATA% dir is under, e.g., `$HOME/Library/Application Support/Paneron` under macOS:
+
+- Delete `%APP_DATA%/plugins`: This drops any plugins
+- Delete `%APP_DATA%/index-dbs`: This drops LevelDB-backed dataset indexes
+- Delete `%APP_DATA%/state`: This drops LevelDB-backed app UI state
+
 === Pre-requisites
 
 NOTE: Development environment has been tested on macOS Catalina and Ubuntu 18.
