@@ -16,7 +16,7 @@ import { MainPlugin } from '@riboseinc/paneron-extension-kit/types';
 import {
   getPluginInfo, getPluginManagerProps,
   installPlugin, listAvailablePlugins,
-  pluginsUpdated, removeAll, removePlugin, upgradePlugin,
+  pluginsUpdated, removePlugin, upgradePlugin,
 } from '../../plugins';
 import { Extension } from '../../plugins/types';
 import { Methods as WorkerMethods, WorkerSpec } from './worker';
@@ -93,12 +93,6 @@ removePlugin.main!.handle(async ({ id }) => {
   await pluginsUpdated.main!.trigger({
     changedIDs: [id],
   });
-  return { success: true };
-});
-
-removeAll.main!.handle(async () => {
-  (await (await worker).removeAll());
-  await pluginsUpdated.main!.trigger({});
   return { success: true };
 });
 
