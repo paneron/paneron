@@ -89,7 +89,7 @@ installPlugin.main!.handle(async ({ id, version: versionToInstall }) => {
 
 
 removePlugin.main!.handle(async ({ id }) => {
-  (await (await worker).remove({ name: id }));
+  await _removePlugin(id);
   await pluginsUpdated.main!.trigger({
     changedIDs: [id],
   });
