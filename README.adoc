@@ -6,7 +6,7 @@ image:https://img.shields.io/badge/commitizen-friendly-brightgreen.svg[alt="Comm
 
 === Launching in dev mode (e.g., for extension testing)
 
-macOS example:
+macOS example of launching Paneron in dev mode from Terminal, allowing to install an extension from local filesystem:
 
 [source]
 --
