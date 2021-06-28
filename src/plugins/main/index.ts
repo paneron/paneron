@@ -181,7 +181,7 @@ async function _installPlugin(name: string, versionToInstall?: string): Promise<
 async function _removePlugin(name: string): Promise<true> {
   (await (await worker).remove({ name }));
 
-  (await pluginManager).uninstall(name);
+  await (await pluginManager).uninstall(name);
 
   delete _runtimePluginInstanceCache[name];
 
