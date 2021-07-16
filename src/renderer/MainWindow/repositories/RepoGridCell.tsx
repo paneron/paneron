@@ -17,15 +17,15 @@ export const RepoGridCell: React.FC<CellProps> = function ({ itemRef, isSelected
 
   return (
     <LabelledGridIcon
-      padding={padding}
-      entityType={{
-        iconProps: { icon: 'git-repo' },
-        name: 'repository',
-      }}
-      isSelected={isSelected}
-      onOpen={onOpen}
-      onSelect={onSelect ? () => onSelect!(description.value.info) : undefined}
-      contentClassName={description.isUpdating ? Classes.SKELETON : undefined}>
+        padding={padding}
+        entityType={{
+          iconProps: { icon: 'git-repo' },
+          name: 'repository',
+        }}
+        isSelected={isSelected}
+        onOpen={onOpen}
+        onSelect={onSelect ? () => onSelect!(description.value.info) : undefined}
+        contentClassName={description.isUpdating ? Classes.SKELETON : undefined}>
       {description.value.info.paneronMeta?.title ?? '(title not available)'}
     </LabelledGridIcon>
   );
