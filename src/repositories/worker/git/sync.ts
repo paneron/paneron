@@ -39,7 +39,7 @@ const clone: WithStatusUpdater<Git.Sync.Clone> = async function (
       http,
       fs,
       dir: opts.workDir,
-      ref: opts.remoteBranch,
+      ref: opts.branch,
       singleBranch: true,
       depth: 1,
       onAuth: () => opts.auth,

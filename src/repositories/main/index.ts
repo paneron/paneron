@@ -113,7 +113,7 @@ loadRepository.main!.handle(async ({ workingCopyPath }) => {
 });
 
 
-setRemote.main!.handle(async ({ workingCopyPath, url, branch, username, password }) => {
+setRemote.main!.handle(async ({ workingCopyPath, url, username, password }) => {
   const w = getLoadedRepository(workingCopyPath).workers.sync;
 
   const auth = { username, password };
@@ -151,7 +151,6 @@ setRemote.main!.handle(async ({ workingCopyPath, url, branch, username, password
       await w.git_push({
         repoURL: url,
         auth,
-        remoteBranch: branch,
       });
     });
 
@@ -410,14 +409,14 @@ queryGitRemote.main!.handle(async ({ url, username, password }) => {
 });
 
 
-addRepository.main!.handle(async ({ gitRemoteURL, username, password }) => {
+addRepository.main!.handle(async ({ gitRemoteURL, branch, username, password }) => {
   const workDirPath = path.join(DEFAULT_WORKING_DIRECTORY_CONTAINER, makeUUIDv4());
 
   if (fs.existsSync(workDirPath)) {
     throw new Error("A repository with this name already exists. Please choose another name!");
   }
 
-  const { author, branch } = await getDefaults();
+  const { author } = await getDefaults();
 
   if (branch === undefined || branch.trim() === '') {
     throw new Error("Please specify default main branch name in settings.");
@@ -457,7 +456,7 @@ addRepository.main!.handle(async ({ gitRemoteURL, username, password }) => {
 
   //await workers.sync.initialize({ workDirPath: workDirPath });
 
-  //await workers.sync.git_clone({
+  //await workers.sync.git_elone({
   //  repoURL: gitRemoteURL,
   //  auth,
   //});

@@ -5,8 +5,8 @@ import { css, jsx } from '@emotion/react';
 import React, { useContext, useState } from 'react';
 import { ButtonGroup } from '@blueprintjs/core';
 import { getNewRepoDefaults, GitRepository, savePassword, setRemote, unsetRemote, unsetWriteAccess } from 'repositories/ipc';
-import GitCredentialsInput from './GitCredentialsInput';
 import { Button } from '../../widgets';
+import GitCredentialsInput from './GitCredentialsInput';
 import { Context } from '../context';
 
 
@@ -56,15 +56,13 @@ function ({ repo }) {
     }
   }
 
-  async function share() {
-    if (canShare) {
+  async function share() { if (canShare) {
       try {
         await setRemote.renderer!.trigger({
           workingCopyPath: repo.workingCopyPath,
           url,
           username,
           password,
-          branch: repo.mainBranch,
         });
       } catch (e) {
         throw new Error("Please check that this URL points to an empty repository, your username has push access, password (if needed) is correct, and your Internet connection is online.");

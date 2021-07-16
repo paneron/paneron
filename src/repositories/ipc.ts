@@ -39,7 +39,7 @@ export const getDefaultWorkingDirectoryContainer = makeEndpoint.main(
 
 export const addRepository = makeEndpoint.main(
   'addRepository',
-  <{ gitRemoteURL: string, username: string, password?: string }>_,
+  <{ gitRemoteURL: string, branch: string, username: string, password?: string }>_,
   <{ workDir: string, success: true }>_,
 );
 

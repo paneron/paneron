@@ -141,7 +141,6 @@ export interface AuthoringGitOperationParams extends GitOperationParams {
 
 export interface RemoteGitOperationParams extends GitOperationParams {
   repoURL: string
-  remoteBranch: string
   auth: GitAuthentication
   _presumeCanceledErrorMeansAwaitingAuth?: true
 }
@@ -152,7 +151,9 @@ export interface InitRequestMessage extends GitOperationParams {
   defaultBranch: string
 }
 
-export interface CloneRequestMessage extends RemoteGitOperationParams {}
+export interface CloneRequestMessage extends RemoteGitOperationParams {
+  branch: string
+}
 export interface PullRequestMessage extends RemoteGitOperationParams, AuthoringGitOperationParams {}
 export interface PushRequestMessage extends RemoteGitOperationParams {
   // Passing this parameter implies rejected push should not be treated as error.

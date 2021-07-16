@@ -32,21 +32,24 @@ const AddSharedRepoForm: React.FC<{
   const [customUsername, setUsername] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [remoteURL, setRemoteURL] = useState<string | null>(null);
+  const [customBranch, setCustomBranch] = useState<string | null>(null);
 
   const [busy, setBusy] = useState(false);
 
-  const defaults = getNewRepoDefaults.renderer!.useValue({}, { defaults: { author: { name: '', email: '' } }});
+  const defaults = getNewRepoDefaults.renderer!.useValue({}, { defaults: { author: { name: '', email: '' }, branch: '' }});
 
   const remoteComponents = (remoteURL ?? '').split('/');
   const defaultName = remoteComponents[remoteComponents.length - 1];
   const name = customName ?? defaultName;
+  const branch = defaults.value.defaults?.branch ?? customBranch ?? '';
 
   const username = customUsername ?? defaults.value.defaults?.remote?.username ?? '';
 
   const canImport =
     (name ?? '').trim() !== '' &&
     (remoteURL ?? '').trim() !== '' &&
-    (username ?? '').trim() !== '';
+    (username ?? '').trim() !== '' &&
+    (branch ?? '').trim() !== '';
 
   async function importRepo() {
     if (!busy && canImport) {
@@ -57,6 +60,7 @@ const AddSharedRepoForm: React.FC<{
           gitRemoteURL: remoteURL!.replace(/\/$/, ''),
           username,
           password: password !== '' ? password : undefined,
+          branch,
         });
         showMessage({ icon: 'tick-circle', intent: 'success', message: "Repository was added and data is being retrieved" });
         setImmediate(() => onCreate());
@@ -81,6 +85,19 @@ const AddSharedRepoForm: React.FC<{
           type="url"
           onChange={(evt: React.FormEvent<HTMLInputElement>) =>
             setRemoteURL(evt.currentTarget.value)
+          } />
+      </FormGroup>
+
+      <FormGroup
+          label="Main branch:"
+          helperText="E.g., “main” or “master”.">
+        <InputGroup
+          value={branch ?? ''}
+          placeholder="main"
+          required
+          type="text"
+          onChange={(evt: React.FormEvent<HTMLInputElement>) =>
+            setCustomBranch(evt.currentTarget.value)
           } />
       </FormGroup>
 

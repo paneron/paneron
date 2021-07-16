@@ -22,6 +22,8 @@ function ({ className, onCreate }) {
   const [password, setPassword] = useState('');
   const [remoteURL, setRemoteURL] = useState<string | null>(null);
 
+  const [customBranch, setBranch] = useState<string | null>(null);
+
   const defaults = getNewRepoDefaults.renderer!.useValue({}, { defaults: { author: { name: '', email: '' } }});
 
   const remoteComponents = (remoteURL ?? '').split('/');
@@ -30,11 +32,14 @@ function ({ className, onCreate }) {
 
   const username = customUsername ?? defaults.value.defaults?.remote?.username ?? '';
 
+  const branch = customBranch ?? defaults.value.defaults?.branch ?? '';
+
   const canImport =
     !isBusy &&
     (name ?? '').trim() !== '' &&
     (remoteURL ?? '').trim() !== '' &&
-    (username ?? '').trim() !== '';
+    (username ?? '').trim() !== '' &&
+    (branch && '').trim() !== '';
 
   return (
     <Sidebar
@@ -49,6 +54,13 @@ function ({ className, onCreate }) {
               value={remoteURL ?? ''}
               inputGroupProps={{ required: true, type: 'url', placeholder: "https://github.com/some-username/some-repository" }}
               onChange={!isBusy ? (val) => setRemoteURL(val) : undefined}
+            />
+          </PropertyView>
+          <PropertyView label="Branch">
+            <TextInput
+              value={branch ?? ''}
+              inputGroupProps={{ required: true, type: 'text', placeholder: "main" }}
+              onChange={!isBusy ? (val) => setBranch(val) : undefined}
             />
           </PropertyView>
         </>,
@@ -69,14 +81,13 @@ function ({ className, onCreate }) {
         title: "Import",
         nonCollapsible: true,
         content:
-          <Button small fill minimal
-              disabled={!canImport}
-              onClick={canImport
+          <Button small fill minimal disabled={!canImport} onClick={canImport
                 ? performOperation('adding shared repository', async () => {
                     const resp = await addRepository.renderer!.trigger({
                       gitRemoteURL: remoteURL!.replace(/\/$/, ''),
                       username,
                       password: password !== '' ? password : undefined,
+                      branch,
                     });
                     if (resp.result?.workDir) {
                       onCreate(resp.result.workDir);
