@@ -17,6 +17,7 @@ export type PaneronRepository = {
 
 export interface GitRepository {
   workingCopyPath: string
+  mainBranch: string
   remote?: GitRemote
   author?: GitAuthor
 }
@@ -43,6 +44,7 @@ export interface RepositoryListQuery {
 export interface NewRepositoryDefaults {
   //workingDirectoryContainer?: string
   remote?: Omit<GitRemote, 'url'>
+  branch?: string
   author: GitAuthor
 }
 
@@ -139,13 +141,16 @@ export interface AuthoringGitOperationParams extends GitOperationParams {
 
 export interface RemoteGitOperationParams extends GitOperationParams {
   repoURL: string
+  remoteBranch: string
   auth: GitAuthentication
   _presumeCanceledErrorMeansAwaitingAuth?: true
 }
 
 
 export interface StatusRequestMessage extends GitOperationParams {}
-export interface InitRequestMessage extends GitOperationParams {}
+export interface InitRequestMessage extends GitOperationParams {
+  defaultBranch: string
+}
 
 export interface CloneRequestMessage extends RemoteGitOperationParams {}
 export interface PullRequestMessage extends RemoteGitOperationParams, AuthoringGitOperationParams {}

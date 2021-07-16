@@ -22,7 +22,7 @@ const Nav: React.FC<NavProps> = function ({ className }) {
 
   const openedRepoResp = describeRepository.renderer!.useValue(
     { workingCopyPath: state.selectedRepoWorkDir ?? '' },
-    { info: { gitMeta: { workingCopyPath: state.selectedRepoWorkDir ?? '' } } });
+    { info: { gitMeta: { workingCopyPath: state.selectedRepoWorkDir ?? '', mainBranch: '' } } });
 
   const openedRepo = openedRepoResp.value.info;
 

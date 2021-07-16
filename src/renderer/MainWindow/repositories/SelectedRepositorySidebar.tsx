@@ -22,7 +22,7 @@ export const SelectedRepositorySidebar: React.FC<{ workDir: string; repoInfo?: R
 
   const openedRepoResp = describeRepository.renderer!.useValue(
     { workingCopyPath: workDir },
-    { info: { gitMeta: { workingCopyPath: workDir } } });
+    { info: { gitMeta: { workingCopyPath: workDir, mainBranch: '' } } });
 
   repositoriesChanged.renderer!.useEvent(async ({ changedWorkingPaths }) => {
     if ((changedWorkingPaths ?? []).indexOf(workDir) >= 0) {

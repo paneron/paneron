@@ -100,7 +100,7 @@ export async function getNewRepoDefaults(): Promise<NewRepositoryDefaults> {
 }
 
 function defaultsAreComplete(defaults: Partial<NewRepositoryDefaults>): defaults is NewRepositoryDefaults {
-  return defaults.author?.email && defaults.author?.name ? true : false;
+  return defaults.author?.email && defaults.author?.name && defaults.branch ? true : false;
 }
 
 

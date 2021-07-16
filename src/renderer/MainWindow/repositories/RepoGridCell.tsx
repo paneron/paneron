@@ -13,7 +13,7 @@ export const RepoGridCell: React.FC<CellProps> = function ({ itemRef, isSelected
 
   const description = describeRepository.renderer!.useValue(
     { workingCopyPath: workDir },
-    { info: { gitMeta: { workingCopyPath: workDir }, paneronMeta: undefined } });
+    { info: { gitMeta: { workingCopyPath: workDir, mainBranch: '' }, paneronMeta: undefined } });
 
   return (
     <LabelledGridIcon

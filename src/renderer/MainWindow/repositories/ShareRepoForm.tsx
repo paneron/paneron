@@ -64,6 +64,7 @@ function ({ repo }) {
           url,
           username,
           password,
+          branch: repo.mainBranch,
         });
       } catch (e) {
         throw new Error("Please check that this URL points to an empty repository, your username has push access, password (if needed) is correct, and your Internet connection is online.");

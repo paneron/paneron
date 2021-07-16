@@ -237,6 +237,7 @@ function syncRepoRepeatedly(
           await w.git_clone({
             repoURL: repoCfg.remote.url,
             auth,
+            remoteBranch: repoCfg.mainBranch,
           });
           await repositoryBuffersChanged.main!.trigger({
             workingCopyPath,

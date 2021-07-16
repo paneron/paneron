@@ -28,7 +28,7 @@ function ({ className }) {
 
   const openedRepoResp = describeRepository.renderer!.useValue(
     { workingCopyPath: selectedRepoWorkDir ?? '' },
-    { info: { gitMeta: { workingCopyPath: selectedRepoWorkDir ?? '' } } });
+    { info: { gitMeta: { workingCopyPath: selectedRepoWorkDir ?? '', mainBranch: '' } } });
 
   repositoryBuffersChanged.renderer!.useEvent(async ({ workingCopyPath }) => {
     if (workingCopyPath === selectedRepoWorkDir) {

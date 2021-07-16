@@ -16,7 +16,7 @@ const validate: Git.WorkDir.Validate = async function ({ workDir }) {
 }
 
 
-const init: Git.WorkDir.Init = async function ({ workDir }) {
+const init: Git.WorkDir.Init = async function ({ workDir, defaultBranch }) {
   if (checkPathIsOccupied(workDir)) {
     throw new Error("Cannot clone into an already existing directory");
   }
@@ -27,7 +27,7 @@ const init: Git.WorkDir.Init = async function ({ workDir }) {
     await git.init({
       fs,
       dir: workDir,
-      defaultBranch: 'master',
+      defaultBranch,
     });
   } catch (e) {
     await remove(workDir);

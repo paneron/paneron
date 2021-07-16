@@ -8,6 +8,7 @@ import type {
   DeleteRequestMessage,
   GitAuthentication,
   GitOperationParams,
+  InitRequestMessage,
   PullRequestMessage,
   PushRequestMessage,
   RepoStatus,
@@ -33,7 +34,7 @@ export namespace Git {
       (msg: GitOperationParams) => Promise<boolean>
 
     export type Init =
-      (msg: GitOperationParams) => Promise<{ success: true }>
+      (msg: InitRequestMessage) => Promise<{ success: true }>
 
     export type DiscardUncommittedChanges =
       (msg: GitOperationParams & { pathSpec?: string }) =>

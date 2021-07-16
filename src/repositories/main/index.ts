@@ -113,7 +113,7 @@ loadRepository.main!.handle(async ({ workingCopyPath }) => {
 });
 
 
-setRemote.main!.handle(async ({ workingCopyPath, url, username, password }) => {
+setRemote.main!.handle(async ({ workingCopyPath, url, branch, username, password }) => {
   const w = getLoadedRepository(workingCopyPath).workers.sync;
 
   const auth = { username, password };
@@ -151,6 +151,7 @@ setRemote.main!.handle(async ({ workingCopyPath, url, username, password }) => {
       await w.git_push({
         repoURL: url,
         auth,
+        remoteBranch: branch,
       });
     });
 
@@ -244,6 +245,7 @@ setAuthorInfo.main!.handle(async ({ workingCopyPath, author }) => {
         workingCopies: {
           ...data.workingCopies,
           [workingCopyPath]: {
+            ...data.workingCopies[workingCopyPath],
             author,
           },
         }
@@ -415,7 +417,11 @@ addRepository.main!.handle(async ({ gitRemoteURL, username, password }) => {
     throw new Error("A repository with this name already exists. Please choose another name!");
   }
 
-  const { author } = await getDefaults();
+  const { author, branch } = await getDefaults();
+
+  if (branch === undefined || branch.trim() === '') {
+    throw new Error("Please specify default main branch name in settings.");
+  }
 
   const auth = { username, password };
   if (!auth.password) {
@@ -437,7 +443,7 @@ addRepository.main!.handle(async ({ gitRemoteURL, username, password }) => {
     if (canPush) {
       remote.writeAccess = true;
     }
-    newData.workingCopies[workDirPath] = { remote, author };
+    newData.workingCopies[workDirPath] = { remote, author, mainBranch: branch };
     return newData;
   });
 
@@ -473,7 +479,11 @@ createRepository.main!.handle(async () => {
     throw new Error("A repository with this name already exists. Please choose another name!");
   }
 
-  const { author } = await getDefaults();
+  const { author, branch } = await getDefaults();
+
+  if (branch === undefined || branch.trim() === '') {
+    throw new Error("Please specify default main branch name in settings.");
+  }
 
   await updateRepositories((data) => {
     if (data.workingCopies?.[workDirPath] !== undefined) {
@@ -482,6 +492,7 @@ createRepository.main!.handle(async () => {
     const newData = { ...data };
     newData.workingCopies[workDirPath] = {
       author,
+      mainBranch: branch,
     };
     return newData;
   });
@@ -491,7 +502,7 @@ createRepository.main!.handle(async () => {
   log.debug("Repositories: Initializing new working directory", workDirPath);
 
   await w.git_init({
-    workDir: workDirPath,
+    defaultBranch: branch,
   });
 
   const paneronMeta: PaneronRepository = {

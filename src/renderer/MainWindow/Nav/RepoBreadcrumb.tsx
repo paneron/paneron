@@ -82,7 +82,8 @@ export const RepoBreadcrumb: React.FC<{
       onNavigate={onNavigate}
       status={<>
         {status.status ? <div>Status: {status.status}</div> : null}
-        <div>Working copy: {repoInfo.gitMeta.workingCopyPath}</div>
+        <div>Working copy: <code>{repoInfo.gitMeta.workingCopyPath}</code></div>
+        <div>Branch: <code>{repoInfo.gitMeta.mainBranch}</code></div>
       </>}
       progress={progress}
       error={error}
