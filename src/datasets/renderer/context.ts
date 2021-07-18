@@ -114,6 +114,7 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
       }
     },
 
+    // NOTE: Confusingly named? Not truly a hook
     useDecodedBlob: ({ blob }) => {
       return {
         asString: decoder.decode(blob),
