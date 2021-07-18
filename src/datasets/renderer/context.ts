@@ -3,6 +3,7 @@ import * as R from 'ramda';
 import log from 'electron-log';
 import { useEffect, useState } from 'react';
 import { DatasetContext, RendererPlugin } from '@riboseinc/paneron-extension-kit/types';
+import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 import { IndexStatus, INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
 import { BaseAction, PersistentStateReducerHook } from '@riboseinc/paneron-extension-kit/usePersistentStateReducer';
 
@@ -90,6 +91,10 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
 
   return {
     title: datasetInfo.title,
+
+    logger: {
+      log: log.log,
+    },
 
     copyObjects: async (dataset) => {
       await copyObjects.renderer!.trigger({
@@ -253,9 +258,13 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
       path.join(workingCopyPath, datasetPath || '', relativeDatasetPath),
 
     requestFileFromFilesystem: writeAccess
-      ? async function  _requestFileFromFilesystem (opts) {
+      ? async function  _requestFileFromFilesystem (opts, callback?: (data: BufferDataset) => void) {
           const result = await chooseFileFromFilesystem.renderer!.trigger(opts);
           if (result.result) {
+            log.info("Requested file from filesystem", opts, result);
+            if (callback) {
+              callback(result.result);
+            }
             return result.result;
           } else {
             log.error("Unable to request file from filesystem", opts, result.errors);
