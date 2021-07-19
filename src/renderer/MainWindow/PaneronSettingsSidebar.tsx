@@ -49,12 +49,17 @@ const NewRepositoryDefaults: React.FC<Record<never, never>> = function () {
     setEditedDefaults({ ...maybeEditedDefaults, remote: { ...maybeEditedDefaults.remote, username: val } });
   }
 
+  function editBranch(val: string) {
+    setEditedDefaults({ ...maybeEditedDefaults, branch: val });
+  }
+
   const maybeEditedDefaults: NewRepositoryDefaults = { author: { name: '', email: '' }, ...defaults, ...editedDefaults };
   const author = maybeEditedDefaults.author;
   const nameValid = author.name.trim() !== '';
   const emailValid = author.email.trim() !== '';
   const remoteValid = defaults?.remote?.username?.trim() !== ''; // can be undefined by design
-  const defaultsValid = nameValid && emailValid && remoteValid;
+  const branchValid = (defaults?.branch ?? '').trim() !== '';
+  const defaultsValid = nameValid && emailValid && remoteValid && branchValid;
   const defaultsChanged = editedDefaults && JSON.stringify(editedDefaults) !== JSON.stringify(defaults ?? {});
 
   return (
@@ -75,6 +80,12 @@ const NewRepositoryDefaults: React.FC<Record<never, never>> = function () {
         <TextInput
           onChange={!busy ? (val) => editRemoteUsername(val) : undefined}
           value={maybeEditedDefaults.remote?.username ?? ''} />
+      </PropertyView>
+      <PropertyView label="Default branch">
+        <TextInput
+          onChange={!busy ? (val) => editBranch(val) : undefined}
+          validationErrors={!branchValid ? ['Please specify a default branch name, e.g. “master” or “main”'] : []}
+          value={maybeEditedDefaults.branch ?? ''} />
       </PropertyView>
       <Button
         disabled={busy || !defaultsValid || !defaultsChanged} small fill outlined

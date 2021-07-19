@@ -93,7 +93,7 @@ export async function getNewRepoDefaults(): Promise<NewRepositoryDefaults> {
   const defaults = (await readRepositories()).defaults;
 
   if (defaults && defaultsAreComplete(defaults)) {
-    return { remote: defaults.remote, author: defaults.author };
+    return { remote: defaults.remote, author: defaults.author, branch: defaults.branch };
   } else {
     throw new Error("Defaults are missing");
   }
