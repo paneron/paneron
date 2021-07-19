@@ -58,7 +58,7 @@ const NewRepositoryDefaults: React.FC<Record<never, never>> = function () {
   const nameValid = author.name.trim() !== '';
   const emailValid = author.email.trim() !== '';
   const remoteValid = defaults?.remote?.username?.trim() !== ''; // can be undefined by design
-  const branchValid = (defaults?.branch ?? '').trim() !== '';
+  const branchValid = (maybeEditedDefaults?.branch ?? '').trim() !== '';
   const defaultsValid = nameValid && emailValid && remoteValid && branchValid;
   const defaultsChanged = editedDefaults && JSON.stringify(editedDefaults) !== JSON.stringify(defaults ?? {});
 
