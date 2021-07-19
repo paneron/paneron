@@ -46,13 +46,16 @@ export async function readRepoConfig(workingCopyPath: string): Promise<GitReposi
 
 export async function readRepositories(): Promise<RepoListSpec> {
   await fs.ensureFile(REPO_LIST_PATH);
-  const rawData = await fs.readFile(REPO_LIST_PATH, { encoding: 'utf-8' });
+  try {
+    const rawData = await fs.readFile(REPO_LIST_PATH, { encoding: 'utf-8' });
+    const data = yaml.load(rawData);
 
-  const data = yaml.load(rawData);
-
-  if (data.workingCopies) {
-    return (data as RepoListSpec);
-  } else {
+    if (data.workingCopies) {
+      return (data as RepoListSpec);
+    } else {
+      return { workingCopies: {} };
+    }
+  } catch (e) {
     return { workingCopies: {} };
   }
 }
