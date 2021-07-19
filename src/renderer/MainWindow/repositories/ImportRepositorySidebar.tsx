@@ -39,7 +39,7 @@ function ({ className, onCreate }) {
     (name ?? '').trim() !== '' &&
     (remoteURL ?? '').trim() !== '' &&
     (username ?? '').trim() !== '' &&
-    (branch && '').trim() !== '';
+    (branch ?? '').trim() !== '';
 
   return (
     <Sidebar
