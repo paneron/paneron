@@ -258,21 +258,19 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
     makeAbsolutePath: relativeDatasetPath =>
       path.join(workingCopyPath, datasetPath || '', relativeDatasetPath),
 
-    requestFileFromFilesystem: writeAccess
-      ? async function  _requestFileFromFilesystem (opts, callback?: (data: BufferDataset) => void) {
-          const result = await chooseFileFromFilesystem.renderer!.trigger(opts);
-          if (result.result) {
-            log.info("Requested file from filesystem", opts, result);
-            if (callback) {
-              callback(result.result);
-            }
-            return result.result;
-          } else {
-            log.error("Unable to request file from filesystem", opts, result.errors);
-            throw new Error("Unable to request file from filesystem");
-          }
+    requestFileFromFilesystem:  async function  _requestFileFromFilesystem (opts, callback?: (data: BufferDataset) => void) {
+      const result = await chooseFileFromFilesystem.renderer!.trigger(opts);
+      if (result.result) {
+        log.info("Requested file from filesystem", opts, result);
+        if (callback) {
+          callback(result.result);
         }
-      : undefined,
+        return result.result;
+      } else {
+        log.error("Unable to request file from filesystem", opts, result.errors);
+        throw new Error("Unable to request file from filesystem");
+      }
+    },
 
     writeFileToFilesystem: async function _writeFileToFilesystem (opts) {
       const result = await saveFileToFilesystem.renderer!.trigger(opts);
