@@ -77,6 +77,8 @@ export const open: WindowOpener = async (props) => {
             url,
             _winParams,
             showWhileLoading === true,
+
+            // TODO: Check that it shouldn’t be forceDebug instead?
             ignoreCache);
 
         } else {
