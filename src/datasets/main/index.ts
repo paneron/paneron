@@ -91,8 +91,8 @@ initializeDataset.main!.handle(async ({ workingCopyPath, meta: datasetMeta, data
     datasetMeta.type.id,
     datasetMeta.type.version);
 
-  const initialMigration = await plugin.getInitialMigration();
-  const initialMigrationResult = await initialMigration.default({
+  const initialMigration = plugin.initialMigration;
+  const initialMigrationResult = await initialMigration({
     datasetRootPath: path.join(workingCopyPath, datasetPath),
     onProgress: (msg) => log.debug("Migration progress:", msg),
   });
@@ -330,6 +330,8 @@ deleteDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
   delete repoMeta.datasets[datasetPath];
   const newMetaBuffer = serializeMeta(repoMeta);
 
+  const datasetMetaPath = path.join(datasetPath, DATASET_FILENAME);
+
   const repoMetaUpdateResult = await w.repo_updateBuffers({
     workDir: workingCopyPath,
     commitMessage: "Record dataset deletion",
@@ -345,6 +347,13 @@ deleteDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
   if (repoMetaUpdateResult.newCommitHash) {
     await repositoriesChanged.main!.trigger({
       changedWorkingPaths: [workingCopyPath],
+    });
+    await repositoryBuffersChanged.main!.trigger({
+      workingCopyPath,
+      changedPaths: {
+        [datasetMetaPath]: true,
+        [PANERON_REPOSITORY_META_FILENAME]: true,
+      },
     });
     return { success: true };
   } else {

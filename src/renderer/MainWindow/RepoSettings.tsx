@@ -3,20 +3,22 @@
 
 import { jsx, css } from '@emotion/react';
 import { Helmet } from 'react-helmet';
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { splitEvery } from 'ramda';
-import { Button, Classes, Colors, ControlGroup, InputGroup } from '@blueprintjs/core';
+import { Button, Classes, Colors, ControlGroup, InputGroup, NonIdealState } from '@blueprintjs/core';
 import makeGrid, { CellProps, GridData, LabelledGridIcon } from '@riboseinc/paneron-extension-kit/widgets/Grid';
 import Workspace from '@riboseinc/paneron-extension-kit/widgets/Workspace';
 import makeSidebar from '@riboseinc/paneron-extension-kit/widgets/Sidebar';
 import PropertyView from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import { describeRepository, repositoryBuffersChanged } from 'repositories/ipc';
 import { DatasetInfo } from 'datasets/types';
-import { getDatasetInfo } from 'datasets/ipc';
+import { deleteDataset, getDatasetInfo } from 'datasets/ipc';
 import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
 import { getPluginInfo } from 'plugins';
 import DatasetExtension from 'plugins/renderer/DatasetExtensionCard';
 import { Context } from './context';
+import SelectedRepositorySidebar from './repositories/SelectedRepositorySidebar';
+import InitializeDatasetSidebar from './repositories/InitializeDatasetSidebar';
 
 
 const CELL_WIDTH_PX = 150;
@@ -29,6 +31,8 @@ function ({ className }) {
   const openedRepoResp = describeRepository.renderer!.useValue(
     { workingCopyPath: selectedRepoWorkDir ?? '' },
     { info: { gitMeta: { workingCopyPath: selectedRepoWorkDir ?? '', mainBranch: '' } } });
+
+  const [specialSidebar, setSpecialSidebar] = useState<'initialize-dataset' | 'settings'>('settings');
 
   repositoryBuffersChanged.renderer!.useEvent(async ({ workingCopyPath }) => {
     if (workingCopyPath === selectedRepoWorkDir) {
@@ -49,14 +53,17 @@ function ({ className }) {
         onClick={() => dispatch({ type: 'close-repo' })} />
       <Button
           fill
+          active={specialSidebar === 'initialize-dataset' && selectedDatasetID === null}
           icon="add"
-          disabled>
+          onClick={() => { dispatch({ type: 'select-dataset', datasetID: null }); setSpecialSidebar('initialize-dataset') }}>
         Initialize new dataset within this repository
       </Button>
       <Button
         icon="settings"
+        active={specialSidebar === 'settings' && selectedDatasetID === null}
         title="Show repository settings"
-        disabled />
+        onClick={() => { dispatch({ type: 'select-dataset', datasetID: null }); setSpecialSidebar('settings') }}
+      />
     </ControlGroup>
   );
 
@@ -64,7 +71,7 @@ function ({ className }) {
     if (selectedRepoWorkDir) {
       return {
         items: splitEvery(
-          Math.floor(viewportWidth / CELL_WIDTH_PX),
+          Math.floor(viewportWidth / CELL_WIDTH_PX) || 1,
           datasetIDs),
         extraData: { workDir: selectedRepoWorkDir },
         selectedItem: selectedDatasetID,
@@ -78,13 +85,31 @@ function ({ className }) {
     return null;
   }
 
-  const sidebar: JSX.Element | undefined = selectedRepoWorkDir && selectedDatasetID
-    ? <SelectedDatasetSidebar
+  let mainView: JSX.Element;
+  let sidebar: JSX.Element | undefined;
+  if (selectedRepoWorkDir) {
+    mainView = <Grid getGridData={getGridData} />;
+    if (selectedDatasetID) {
+      sidebar = <SelectedDatasetSidebar
         workDir={selectedRepoWorkDir}
         datasetDir={selectedDatasetID}
         css={css`width: 280px; background: ${Colors.LIGHT_GRAY5}; z-index: 1;`}
-      />
-    : undefined;
+      />;
+    } else if (specialSidebar === 'initialize-dataset') {
+      sidebar = <InitializeDatasetSidebar
+        workDir={selectedRepoWorkDir}
+        css={css`width: 280px; background: ${Colors.LIGHT_GRAY5}; z-index: 1;`}
+      />;
+    } else {
+      sidebar = <SelectedRepositorySidebar
+        workDir={selectedRepoWorkDir}
+        css={css`width: 280px; background: ${Colors.LIGHT_GRAY5}; z-index: 1;`}
+        repoInfo={openedRepoResp.value.info} />
+    }
+  } else {
+    mainView = <NonIdealState title="No repository is selected" />;
+    sidebar = undefined;
+  }
 
   return (
     <Workspace
@@ -102,7 +127,7 @@ function ({ className }) {
       <Helmet>
         <title>{`Repository ${openedRepo.paneronMeta?.title ?? openedRepo.gitMeta.workingCopyPath}: ${datasetIDs.length} dataset(s)`}</title>
       </Helmet>
-      <Grid getGridData={getGridData} />
+      {mainView}
     </Workspace>
   );
 }
@@ -146,7 +171,7 @@ export const SelectedDatasetSidebar: React.FC<{
   datasetInfo?: DatasetInfo;
   className?: string;
 }> = function ({ workDir, datasetDir, datasetInfo, className }) {
-  //const { performOperation, isBusy } = useContext(Context);
+  const { performOperation, isBusy, dispatch } = useContext(Context);
 
   const openedDatasetResp = getDatasetInfo.renderer!.useValue(
     { workingCopyPath: workDir, datasetPath: datasetDir },
@@ -160,7 +185,7 @@ export const SelectedDatasetSidebar: React.FC<{
     { id: ds?.type.id ?? ''},
     { plugin: null });
 
-  //const canDelete = !openedDatasetResp.isUpdating && !isBusy;
+  const canDelete = !openedDatasetResp.isUpdating && !isBusy;
 
   return <Sidebar
     stateKey='selected-dataset-panels'
@@ -182,6 +207,23 @@ export const SelectedDatasetSidebar: React.FC<{
           full
           extension={pluginInfo.value.plugin ?? undefined}
         />,
+    }, {
+      key: 'delete-dataset',
+      title: "Delete",
+      collapsedByDefault: true,
+      content: <>
+        <Button small fill minimal
+          disabled={!canDelete}
+          intent={canDelete ? 'danger' : undefined}
+          onClick={canDelete
+            ? performOperation('deleting dataset', async () => {
+                await deleteDataset.renderer!.trigger({ workingCopyPath: workDir, datasetPath: datasetDir });
+                dispatch({ type: 'select-dataset', datasetID: null });
+              })
+            : undefined}>
+          Delete this dataset
+        </Button>
+      </>,
     }]}
     className={className} />;
 };
