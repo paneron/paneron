@@ -1082,6 +1082,7 @@ export async function updateDatasetIndexesIfNeeded(
   });
 
   for (const [indexID, { newObjectCount }] of Object.entries(affectedFilteredIndexes)) {
+    ds.indexes[indexID].status.objectCount = newObjectCount;
     filteredIndexUpdated.main!.trigger({ workingCopyPath: workDir, datasetPath: datasetDir, indexID });
     indexStatusChanged.main!.trigger({ workingCopyPath: workDir, datasetPath: datasetDir, indexID, status: {
       objectCount: newObjectCount,
