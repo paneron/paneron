@@ -62,8 +62,8 @@ export const SelectedRepositorySidebar: React.FC<{ workDir: string; repoInfo?: R
           intent={canDelete ? 'danger' : undefined}
           onClick={canDelete
             ? performOperation('deleting repository', async () => {
-              await deleteRepository.renderer!.trigger({ workingCopyPath: workDir });
-            })
+                await deleteRepository.renderer!.trigger({ workingCopyPath: workDir });
+              })
             : undefined}>
           Delete this repository
         </Button>
