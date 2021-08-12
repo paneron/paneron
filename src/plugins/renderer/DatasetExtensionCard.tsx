@@ -36,8 +36,6 @@ function ({ extension, full, searchString }) {
         </small>
       </H5>
       <div css={css`margin-bottom: 10px;`}>
-        by
-        {" "}
         <MarkedText text={author} term={searchString} />
       </div>
       {full && extension?.npm.name
