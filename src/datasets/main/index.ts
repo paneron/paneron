@@ -153,16 +153,16 @@ initializeDataset.main!.handle(async ({ workingCopyPath, meta: datasetMeta, data
 
 
 loadDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
-  const dataset = await readDatasetMeta(workingCopyPath, datasetPath);
-  const plugin = await requireMainPlugin(dataset.type.id);
+  //const dataset = await readDatasetMeta(workingCopyPath, datasetPath);
+  //const plugin = await requireMainPlugin(dataset.type.id);
 
-  const migration = plugin.getMigration(dataset.type.version);
-  if (migration) {
-    // Having encountered an error while loading the dataset,
-    // GUI is expected to query the outstanding migration
-    // using another IPC endpoint, and prompt the user to apply it (yet another IPC endpoint).
-    throw new Error("Dataset migration is required");
-  }
+  //const migration = plugin.getMigration(dataset.type.version);
+  //if (migration) {
+  //  // Having encountered an error while loading the dataset,
+  //  // GUI is expected to query the outstanding migration
+  //  // using another IPC endpoint, and prompt the user to apply it (yet another IPC endpoint).
+  //  throw new Error("Dataset migration is required");
+  //}
 
   const cacheRoot = path.join(app.getPath('userData'), 'index-dbs');
 
