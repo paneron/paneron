@@ -123,7 +123,7 @@ function ({ id }) {
         disabled
         leftIcon={installedVersion ? 'tick' : 'cross'}
         intent={installedVersion ? 'success' : undefined}
-        value={installedVersion !== null ? `Installed ${installedVersion}` : 'Not installed'} />
+        value={installedVersion !== null ? `Installed ${installedVersion ?? 'N/A'}` : 'Not installed'} />
       {wantToInstall || wantToUninstall
         ? <Button
               disabled={!canInstall && !wantToUninstall}
