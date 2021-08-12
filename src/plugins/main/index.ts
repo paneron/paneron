@@ -1,4 +1,5 @@
-import axios from 'axios';
+import rax from 'retry-axios';
+import _axios from 'axios';
 
 import { app } from 'electron';
 import log from 'electron-log';
@@ -21,6 +22,12 @@ import {
 import { Extension } from '../../plugins/types';
 import { Methods as WorkerMethods, WorkerSpec } from './worker';
 
+
+const axios = _axios.create();
+axios.defaults.raxConfig = {
+  instance: axios,
+};
+rax.attach(axios);
 
 const devFolder = process.env.PANERON_PLUGIN_DIR;
 
@@ -120,6 +127,11 @@ upgradePlugin.main!.handle(async ({ id, version: versionToUpgradeTo }) => {
 
 getPluginInfo.main!.handle(async ({ id }) => {
   const name = id;
+
+  if (!name) {
+    return { plugin: null };
+  }
+
   const w = await worker;
 
   if (name === devPluginName && devPlugin) {
@@ -168,10 +180,10 @@ async function _installPlugin(name: string, versionToInstall?: string): Promise<
   let version: string;
   if (devFolder === undefined || name !== devPluginName) {
     version = (await (await worker).install({ name, version: versionToInstall })).installedVersion;
-    (await pluginManager).install(name, version);
+    await (await pluginManager).install(name, version);
   } else {
     version = (await (await worker)._installDev({ name, fromPath: devFolder })).installedVersion;
-    (await pluginManager).installFromPath(path.join(devFolder, name));
+    await (await pluginManager).installFromPath(path.join(devFolder, name));
   }
 
   return version;
@@ -266,15 +278,15 @@ export const pluginManager: Promise<PluginManager> = new Promise((resolve, _) =>
 
 // Querying extension directory
 
-let _extensionCache: { [packageID: string]: Extension } | undefined = undefined;
-
+//let _extensionCache: { [packageID: string]: Extension } | undefined = undefined;
 export async function fetchExtensions(): Promise<{ [packageID: string]: Extension }> {
-  if (_extensionCache === undefined) {
-    _extensionCache = (
-      (await axios.get("https://extensions.paneron.org/extensions.json")).
-      data.extensions);
-  }
-  return _extensionCache!;
+  return (await axios.get("https://extensions.paneron.org/extensions.json")).data.extensions;
+  // if (_extensionCache === undefined) {
+  //   _extensionCache = (
+  //     (await axios.get("https://extensions.paneron.org/extensions.json")).
+  //     data.extensions);
+  // }
+  // return _extensionCache!;
 }
 
 
