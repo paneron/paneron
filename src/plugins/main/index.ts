@@ -234,7 +234,9 @@ export async function requireMainPlugin(name: string, version?: string): Promise
 
     if (version !== undefined && installedVersion !== version) {
       log.error("Plugins: Requiring main plugin: requested version is different from installed", name, version);
-      throw new Error("Installed extension version is different from requested");
+      await _removePlugin(name);
+      installedVersion = await _installPlugin(name, version);
+      //throw new Error("Installed extension version is different from requested");
     }
 
     // TODO: Cache each plugin instance at runtime
