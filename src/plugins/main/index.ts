@@ -268,6 +268,11 @@ const CWD = app.getPath('userData');
 const PLUGINS_PATH = path.join(CWD, 'plugins');
 const PLUGIN_CONFIG_PATH = path.join(CWD, 'plugin-config.yaml');
 
+export async function clearPluginData() {
+  fs.rmdirSync(PLUGINS_PATH, { recursive: true });
+  fs.removeSync(PLUGIN_CONFIG_PATH);
+}
+
 export const pluginManager: Promise<PluginManager> = new Promise((resolve, _) => {
   resolve(new PluginManager({
     cwd: CWD,

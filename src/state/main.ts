@@ -1,4 +1,5 @@
 import path from 'path';
+import fs from 'fs';
 import { app } from 'electron';
 import levelup from 'levelup';
 import leveldown from 'leveldown';
@@ -45,6 +46,7 @@ export async function resetState(key: string) {
 
 export async function resetStateGlobal() {
   await stateStorage.clear();
+  fs.rmdirSync(STATE_STORAGE_PATH, { recursive: true });
 }
 
 

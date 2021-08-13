@@ -1,3 +1,4 @@
+import fs from 'fs';
 import { ensureDir } from 'fs-extra';
 import path from 'path';
 import { app } from 'electron';
@@ -152,6 +153,14 @@ initializeDataset.main!.handle(async ({ workingCopyPath, meta: datasetMeta, data
 });
 
 
+const INDEX_DB_ROOT = path.join(app.getPath('userData'), 'index-dbs');
+
+
+export async function clearIndexes() {
+  fs.rmdirSync(INDEX_DB_ROOT, { recursive: true });
+}
+
+
 loadDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
   //const dataset = await readDatasetMeta(workingCopyPath, datasetPath);
   //const plugin = await requireMainPlugin(dataset.type.id);
@@ -164,18 +173,16 @@ loadDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
   //  throw new Error("Dataset migration is required");
   //}
 
-  const cacheRoot = path.join(app.getPath('userData'), 'index-dbs');
+  log.debug("Datasets: Load: Ensuring cache root dir…", INDEX_DB_ROOT);
 
-  log.debug("Datasets: Load: Ensuring cache root dir…", cacheRoot);
-
-  await ensureDir(cacheRoot);
+  await ensureDir(INDEX_DB_ROOT);
 
   //log.debug("Datasets: Load: Getting loaded repository worker");
   //const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
 
   log.debug("Datasets: Load: Loading dataset…");
 
-  await loadedDatasets.load({ workDir: workingCopyPath, datasetDir: datasetPath, cacheRoot });
+  await loadedDatasets.load({ workDir: workingCopyPath, datasetDir: datasetPath, cacheRoot: INDEX_DB_ROOT });
 
   log.debug("Datasets: Load: Done");
 

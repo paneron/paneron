@@ -24,8 +24,13 @@ import '../repositories/main';
 import '../datasets/main';
 import '../clipboard/main';
 
-import { mainWindow, saveFileToFilesystem } from '../common';
+import { clearDataAndRestart, ClearOption, mainWindow, saveFileToFilesystem } from '../common';
 import { chooseFileFromFilesystem, makeRandomID } from '../common';
+
+import { resetStateGlobal } from '../state/main';
+import { clearPluginData } from '../plugins/main';
+import { clearRepoConfig, clearRepoData } from 'repositories/main/readRepoConfig';
+import { clearIndexes } from '../datasets/main';
 
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
@@ -120,6 +125,37 @@ async function initMain() {
     } else {
       throw new Error("No file path was available from save dialog");
     }
+  });
+
+  const CLEAR_OPTION_ROUTINES: Record<ClearOption, () => Promise<void>> = {
+    'ui-state': async () => {
+      await resetStateGlobal();
+    },
+    'db-indexes': async () => {
+      await clearIndexes();
+    },
+    plugins: async () => {
+      await clearPluginData();
+    },
+    repositories: async () => {
+      await clearRepoConfig();
+      await clearRepoData();
+    },
+  };
+
+  clearDataAndRestart.main!.handle(async ({ options }) => {
+    const opts: ClearOption[] = Object.entries(options).filter(([, checked]) => checked === true).map(([optID, ]) => optID as ClearOption);
+
+    console.warn("Clearing data according to options", opts);
+
+    for (const opt of opts) {
+      await CLEAR_OPTION_ROUTINES[opt]();
+    }
+
+    app.relaunch();
+    app.quit();
+
+    return { success: true };
   });
 
   // Prevent closing windows from quitting the app during startup

@@ -31,6 +31,20 @@ interface RepoListSpec {
 
 const FileAccessLock = new AsyncLock();
 
+export async function clearRepoConfig() {
+  await fs.remove(REPO_LIST_PATH);
+}
+export async function clearRepoData() {
+  const workingCopyPaths = Object.keys((await readRepositories()).workingCopies);
+  for (const wcPath of workingCopyPaths) {
+    try {
+      fs.rmdirSync(wcPath, { recursive: true });
+    } catch (e) {
+      log.error("Error clearing repository working path", wcPath);
+    }
+  }
+}
+
 export async function readRepoConfig(workingCopyPath: string): Promise<GitRepository> {
   const cfg: GitRepository | undefined = {
     workingCopyPath,

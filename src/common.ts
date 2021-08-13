@@ -4,6 +4,23 @@ import { makeWindowForComponent } from './window';
 import { EmptyPayload, makeEndpoint, _ } from './ipc';
 
 
+export const CLEAR_OPTIONS = [
+  'ui-state',
+  'db-indexes',
+  'plugins',
+  //'settings',
+  'repositories',
+] as const;
+
+export type ClearOption = typeof CLEAR_OPTIONS[number];
+
+
+export const clearDataAndRestart = makeEndpoint.main(
+  'clearDataAndRestart',
+  <{ options: Record<ClearOption, boolean> }>_,
+  <{ success: true }>_,
+);
+
 export const chooseFileFromFilesystem = makeEndpoint.main(
   'chooseFileFromFilesystem',
   <OpenDialogProps>_,

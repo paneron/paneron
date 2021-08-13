@@ -1,20 +1,62 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
-import { jsx } from '@emotion/react';
+import { jsx, css } from '@emotion/react';
 
 import React, { useContext, useState } from 'react';
-import { Button } from '@blueprintjs/core';
+import { Button, Switch } from '@blueprintjs/core';
 import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import makeSidebar from '@riboseinc/paneron-extension-kit/widgets/Sidebar';
 import { getNewRepoDefaults, NewRepositoryDefaults, setNewRepoDefaults } from 'repositories/ipc';
 import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
 import { Context } from './context';
+import { Popover2 } from '@blueprintjs/popover2';
+import { clearDataAndRestart, ClearOption, CLEAR_OPTIONS } from 'common';
 
 
 const Sidebar = makeSidebar(usePaneronPersistentStateReducer);
 
 
+const CLEAR_OPTION_INFO: Record<ClearOption, { label: JSX.Element, description?: JSX.Element, warning?: JSX.Element }> = {
+  'ui-state': {
+    label: <>State</>,
+    description: <>The state of application interface (such as what’s selected and which sidebar blocks are collapsed).</>,
+  },
+  'db-indexes': {
+    label: <>Index DBs</>,
+    description: <>Indexed data caches. They will be auto-rebuilt on next use.</>,
+  },
+  plugins: {
+    label: <>Extensions</>,
+    description: <>Information about installed extensions, as well as themselves. They can be reinstalled afterwords as you need them.</>,
+  },
+  //settings: {
+  //  label: <>Settings</>,
+  //  description: <>App settings, such as author name, email, default branch, default Git username, etc.</>,
+  //},
+  repositories: {
+    label: <>Repositories</>,
+    description: <>Information about repositories, as well as new repository defaults (e.g., author name and email), and most importantly <strong>repository data itself</strong>.</>,
+    warning: <>This will clear repository configuration <strong>and all local data,</strong> but will not remove repository copies on remote Git servers (you’ll be able to re-import those afterwards). Please double-check all important changes were synchronized.</>,
+  }
+}
+
+
 export const PaneronSettingsSidebar: React.FC<{ className?: string; }> = function ({ className }) {
+  const [clearOptionSelection, setClearOptionSelection] = useState<Record<typeof CLEAR_OPTIONS[number], boolean>>({
+    plugins: false,
+    //settings: false,
+    'db-indexes': false,
+    'ui-state': false,
+    repositories: false,
+  });
+
+  const canClear = Object.values(clearOptionSelection).indexOf(true) >= 0;
+
+  async function handleClear() {
+    await clearDataAndRestart.renderer!.trigger({
+      options: clearOptionSelection,
+    });
+  }
 
   return <Sidebar
     stateKey='paneron-settings'
@@ -24,11 +66,35 @@ export const PaneronSettingsSidebar: React.FC<{ className?: string; }> = functio
       key: 'new-repo-defaults',
       title: "Repository defaults",
       content: <NewRepositoryDefaults />,
-    }/*, {
-      key: 'extensions',
-      title: "Installed extensions",
-      content: <></>,
-    }*/]}
+    }, {
+      key: 'reset',
+      title: "Reset",
+      collapsedByDefault: true,
+      content: <>
+        <div css={css`display: flex; flex-flow: column nowrap; margin-bottom: 5px;`}>
+          {CLEAR_OPTIONS.map(opt =>
+            <Popover2 interactionKind="hover-target" placement="left" content={<>
+                <div css={css`padding: 10px; width: 280px`}>
+                  <div>{CLEAR_OPTION_INFO[opt].description}</div>
+                  {CLEAR_OPTION_INFO[opt].warning
+                    ? <div css={css`font-weight: strong`}>{CLEAR_OPTION_INFO[opt].warning}</div>
+                    : null}
+                </div>
+            </>}>
+              <Switch
+                css={css`margin: 0;`}
+                labelElement={CLEAR_OPTION_INFO[opt].label}
+                checked={clearOptionSelection[opt] === true}
+                onChange={(evt) => setClearOptionSelection({ ...clearOptionSelection, [opt]: evt.currentTarget.checked })} />
+            </Popover2>
+          )}
+        </div>
+
+        <Button fill small intent={canClear ? 'danger' : undefined} disabled={!canClear} onClick={handleClear}>
+          Clear &amp; restart
+        </Button>
+      </>,
+    }]}
   />;
 };
 
