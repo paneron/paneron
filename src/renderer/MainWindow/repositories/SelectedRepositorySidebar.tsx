@@ -49,10 +49,6 @@ export const SelectedRepositorySidebar: React.FC<{ workDir: string; repoInfo?: R
       title: "DVCS repository",
       content: <GitRepoPanel gitMeta={repo.gitMeta} />,
     }, {
-      key: 'workdir',
-      title: "Working directory",
-      content: <GitRepoPanel gitMeta={repo.gitMeta} />,
-    }, {
       key: 'delete-repo',
       title: "Delete",
       collapsedByDefault: true,
