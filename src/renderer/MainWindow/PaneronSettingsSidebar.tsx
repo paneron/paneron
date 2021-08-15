@@ -3,8 +3,8 @@
 import { jsx, css } from '@emotion/react';
 
 import React, { useContext, useState } from 'react';
-import { Button, HTMLSelect, Icon, Switch } from '@blueprintjs/core';
-import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
+import { Button, Icon, Switch } from '@blueprintjs/core';
+import PropertyView, { TextInput, Select } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import makeSidebar from '@riboseinc/paneron-extension-kit/widgets/Sidebar';
 import { getNewRepoDefaults, NewRepositoryDefaults, setNewRepoDefaults } from 'repositories/ipc';
 import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
@@ -82,7 +82,7 @@ export const PaneronSettingsSidebar: React.FC<{ className?: string; }> = functio
       title: "Settings",
       content: <>
         <PropertyView label="Sidebar position">
-          <HTMLSelect
+          <Select
             options={[{ value: 'left', label: "Left" }, { value: 'right', label: "Right" }]}
             onChange={evt => handleUpdate('sidebarPosition', evt.currentTarget.value as 'left' | 'right')}
             value={settings.sidebarPosition}
