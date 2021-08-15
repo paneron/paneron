@@ -166,7 +166,7 @@
     "@blueprintjs/select": "^3.15.9",
     "@emotion/react": "^11.4.0",
     "@emotion/styled": "^11.3.0",
-    "@riboseinc/paneron-extension-kit": "2.0.0-alpha5",
+    "@riboseinc/paneron-extension-kit": "2.0.0-alpha6",
     "@riboseinc/paneron-registry-kit": "2.0.0-alpha3",
     "@riboseinc/reprose": "^1.0.0-alpha10",
     "@types/mark.js": "^8.11.5",
