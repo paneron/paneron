@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { DatasetContext, RendererPlugin } from '@riboseinc/paneron-extension-kit/types';
 import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 import { IndexStatus, INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
+import { INITIAL_GLOBAL_SETTINGS } from '@riboseinc/paneron-extension-kit/settings';
 import { BaseAction, PersistentStateReducerHook } from '@riboseinc/paneron-extension-kit/usePersistentStateReducer';
 
 import useTimeTravelingPersistentStateReducer, { TimeTravelingPersistentStateReducerHook } from '@riboseinc/paneron-extension-kit/useTimeTravelingPersistentStateReducer';
@@ -26,6 +27,8 @@ import {
   objectsChanged,
   updateObjects,
 } from '../ipc';
+
+import { updateSetting, useSettings } from 'renderer/MainWindow/settings';
 
 
 export interface ContextGetterProps {
@@ -89,11 +92,25 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
     return useTimeTravelingPersistentStateReducer(...effectiveOpts);
   }
 
+  const EXT_SETTINGS_SCOPE = `${workingCopyPath}-${datasetPath}`;
+
   return {
     title: datasetInfo.title,
 
     logger: {
       log: log.log,
+    },
+
+    useSettings: () => {
+      return useSettings(EXT_SETTINGS_SCOPE, {});
+    },
+
+    useGlobalSettings: () => {
+      return useSettings('global', INITIAL_GLOBAL_SETTINGS);
+    },
+
+    updateSetting: async ({ key, value }) => {
+      return await updateSetting(EXT_SETTINGS_SCOPE, { key, value });
     },
 
     copyObjects: async (dataset) => {
