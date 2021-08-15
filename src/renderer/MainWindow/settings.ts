@@ -26,5 +26,5 @@ export async function updateSetting(scope: string, { key, value }: { key: string
     newState: { ...settings, [key]: value },
   });
 
-  return { success: true as true };
+  return { success: true as const };
 };
