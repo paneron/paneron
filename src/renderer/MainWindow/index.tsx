@@ -11,6 +11,9 @@ import RepoList from './RepoList';
 import RepoSettings from './RepoSettings';
 import ContextProvider, { Context } from './context';
 import Dataset from './Dataset';
+import { GlobalSettingsContext } from '@riboseinc/paneron-extension-kit/SettingsContext';
+import { useSettings } from './settings';
+import { INITIAL_GLOBAL_SETTINGS } from '@riboseinc/paneron-extension-kit/settings';
 
 
 const MainWindow: React.FC<WindowComponentProps> = function () {
@@ -39,12 +42,18 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
 
 const MainView: React.FC<{ className?: string }> = function ({ className }) {
   const { state: { view } } = useContext(Context);
+  const settings = useSettings('global', INITIAL_GLOBAL_SETTINGS);
+
+  const settingsContext = {
+    settings: settings.value.settings,
+    refresh: settings.refresh,
+  };
 
   if (view === 'repo-list') {
-    return <RepoList className={className} />;
+    return <GlobalSettingsContext.Provider value={settingsContext}><RepoList className={className} /></GlobalSettingsContext.Provider>;
 
   } else if (view === 'repo-settings') {
-    return <RepoSettings className={className} />;
+    return <GlobalSettingsContext.Provider value={settingsContext}><RepoSettings className={className} /></GlobalSettingsContext.Provider>;
 
   } else if (view === 'dataset') {
     return <Dataset className={className} />;

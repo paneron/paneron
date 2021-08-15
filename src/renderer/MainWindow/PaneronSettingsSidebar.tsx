@@ -3,7 +3,7 @@
 import { jsx, css } from '@emotion/react';
 
 import React, { useContext, useState } from 'react';
-import { Button, Switch } from '@blueprintjs/core';
+import { Button, HTMLSelect, Icon, Switch } from '@blueprintjs/core';
 import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import makeSidebar from '@riboseinc/paneron-extension-kit/widgets/Sidebar';
 import { getNewRepoDefaults, NewRepositoryDefaults, setNewRepoDefaults } from 'repositories/ipc';
@@ -11,6 +11,8 @@ import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateRed
 import { Context } from './context';
 import { Popover2 } from '@blueprintjs/popover2';
 import { clearDataAndRestart, ClearOption, CLEAR_OPTIONS } from 'common';
+import { updateSetting } from './settings';
+import { GlobalSettingsContext } from '@riboseinc/paneron-extension-kit/SettingsContext';
 
 
 const Sidebar = makeSidebar(usePaneronPersistentStateReducer);
@@ -18,7 +20,7 @@ const Sidebar = makeSidebar(usePaneronPersistentStateReducer);
 
 const CLEAR_OPTION_INFO: Record<ClearOption, { label: JSX.Element, description?: JSX.Element, warning?: JSX.Element }> = {
   'ui-state': {
-    label: <>State</>,
+    label: <>UI state and settings</>,
     description: <>The state of application interface (such as what’s selected and which sidebar blocks are collapsed).</>,
   },
   'db-indexes': {
@@ -34,7 +36,7 @@ const CLEAR_OPTION_INFO: Record<ClearOption, { label: JSX.Element, description?:
   //  description: <>App settings, such as author name, email, default branch, default Git username, etc.</>,
   //},
   repositories: {
-    label: <>Repositories</>,
+    label: <>Repositories <Icon iconSize={Icon.SIZE_STANDARD} icon="warning-sign" /></>,
     description: <>Information about repositories, as well as new repository defaults (e.g., author name and email), and most importantly <strong>repository data itself</strong>.</>,
     warning: <>This will clear repository configuration <strong>and all local data,</strong> but will not remove repository copies on remote Git servers (you’ll be able to re-import those afterwards). Please double-check all important changes were synchronized.</>,
   }
@@ -42,6 +44,8 @@ const CLEAR_OPTION_INFO: Record<ClearOption, { label: JSX.Element, description?:
 
 
 export const PaneronSettingsSidebar: React.FC<{ className?: string; }> = function ({ className }) {
+  const { settings, refresh: refreshSettings } = useContext(GlobalSettingsContext);
+
   const [clearOptionSelection, setClearOptionSelection] = useState<Record<typeof CLEAR_OPTIONS[number], boolean>>({
     plugins: false,
     //settings: false,
@@ -58,6 +62,13 @@ export const PaneronSettingsSidebar: React.FC<{ className?: string; }> = functio
     });
   }
 
+  async function handleUpdate(key: string, value: any) {
+    await updateSetting(
+      'global',
+      { key, value });
+    refreshSettings();
+  }
+
   return <Sidebar
     stateKey='paneron-settings'
     title="Paneron settings"
@@ -66,6 +77,18 @@ export const PaneronSettingsSidebar: React.FC<{ className?: string; }> = functio
       key: 'new-repo-defaults',
       title: "Repository defaults",
       content: <NewRepositoryDefaults />,
+    }, {
+      key: 'settings',
+      title: "Settings",
+      content: <>
+        <PropertyView label="Sidebar position">
+          <HTMLSelect
+            options={[{ value: 'left', label: "Left" }, { value: 'right', label: "Right" }]}
+            onChange={evt => handleUpdate('sidebarPosition', evt.currentTarget.value as 'left' | 'right')}
+            value={settings.sidebarPosition}
+          />
+        </PropertyView>
+      </>,
     }, {
       key: 'reset',
       title: "Reset",
