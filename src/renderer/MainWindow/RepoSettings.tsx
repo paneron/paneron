@@ -195,6 +195,9 @@ export const SelectedDatasetSidebar: React.FC<{
       key: 'paneron-dataset',
       title: "Dataset metadata",
       content: <>
+        <PropertyView label="ID" tooltip="Dataset location within the repository.">
+          <InputGroup disabled value={datasetDir} />
+        </PropertyView>
         <PropertyView label="Title">
           <InputGroup disabled value={ds?.title ?? 'N/A'} />
         </PropertyView>
