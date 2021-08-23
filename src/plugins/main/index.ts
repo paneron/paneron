@@ -270,6 +270,7 @@ const PLUGIN_CONFIG_PATH = path.join(CWD, 'plugin-config.yaml');
 
 export async function clearPluginData() {
   fs.rmdirSync(PLUGINS_PATH, { recursive: true });
+  fs.removeSync(path.join(PLUGINS_PATH, 'install.lock'));
   fs.removeSync(PLUGIN_CONFIG_PATH);
 }
 
