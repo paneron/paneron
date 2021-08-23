@@ -27,7 +27,7 @@ import '../clipboard/main';
 import { clearDataAndRestart, ClearOption, mainWindow, saveFileToFilesystem } from '../common';
 import { chooseFileFromFilesystem, makeRandomID } from '../common';
 
-import { resetStateGlobal } from '../state/main';
+import { resetStateGlobal } from '../state/manage';
 import { clearPluginData } from '../plugins/main';
 import { clearRepoConfig, clearRepoData } from 'repositories/main/readRepoConfig';
 import { clearIndexes } from '../datasets/main';

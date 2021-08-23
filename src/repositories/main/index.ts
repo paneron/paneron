@@ -5,7 +5,7 @@ import { app } from 'electron';
 import log from 'electron-log';
 
 import { serializeMeta } from 'main/meta-serdes';
-import { loadState } from 'state/main';
+import { loadState } from 'state/manage';
 
 import {
   addRepository, createRepository, deleteRepository,
