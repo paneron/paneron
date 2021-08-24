@@ -47,6 +47,8 @@ export async function terminateRepoWorkers(workDir: string) {
   log.debug("Repositories: Terminating workers for repo", workDir);
 
   if (repoPromise) {
+    delete WORKERS[workDir];
+
     const repo = await repoPromise;
 
     await terminateWorker(repo.sync);
@@ -56,8 +58,6 @@ export async function terminateRepoWorkers(workDir: string) {
   } else {
     log.debug("Repositories: Terminating workers for repo: Nothing to be done", workDir);
   }
-
-  delete WORKERS[workDir];
 }
 
 async function terminateAllWorkers() {
@@ -72,9 +72,6 @@ async function terminateAllWorkers() {
 
 export function getRepoWorkers(workDir: string): Promise<RepoWorkers> {
   if (!WORKERS[workDir]) {
-    // Kill workers for other repositories to save resources.
-    terminateAllWorkers();
-
     log.debug("Repositories: Workers not spawned yet, spawning now…")
     WORKERS[workDir] = new Promise((resolve, reject) => {
       terminateAllWorkers().
