@@ -5,17 +5,12 @@ import { jsx, css } from '@emotion/react';
 import React, { useContext, useState } from 'react';
 import { Button, Icon, Switch } from '@blueprintjs/core';
 import PropertyView, { TextInput, Select } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
-import makeSidebar from '@riboseinc/paneron-extension-kit/widgets/Sidebar';
 import { getNewRepoDefaults, NewRepositoryDefaults, setNewRepoDefaults } from 'repositories/ipc';
-import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
 import { Context } from './context';
-import { Popover2 } from '@blueprintjs/popover2';
+import { Tooltip2 } from '@blueprintjs/popover2';
 import { clearDataAndRestart, ClearOption, CLEAR_OPTIONS } from 'common';
 import { updateSetting } from './settings';
 import { GlobalSettingsContext } from '@riboseinc/paneron-extension-kit/SettingsContext';
-
-
-const Sidebar = makeSidebar(usePaneronPersistentStateReducer);
 
 
 const CLEAR_OPTION_INFO: Record<ClearOption, { label: JSX.Element, description?: JSX.Element, warning?: JSX.Element }> = {
@@ -69,60 +64,46 @@ export const PaneronSettingsSidebar: React.FC<{ className?: string; }> = functio
     refreshSettings();
   }
 
-  return <Sidebar
-    stateKey='paneron-settings'
-    title="Paneron settings"
-    className={className}
-    blocks={[{
-      key: 'new-repo-defaults',
-      title: "Repository defaults",
-      content: <NewRepositoryDefaults />,
-    }, {
-      key: 'settings',
-      title: "Settings",
-      content: <>
-        <PropertyView label="Sidebar position">
-          <Select
-            options={[{ value: 'left', label: "Left" }, { value: 'right', label: "Right" }]}
-            onChange={evt => handleUpdate('sidebarPosition', evt.currentTarget.value as 'left' | 'right')}
-            value={settings.sidebarPosition}
-          />
-        </PropertyView>
-      </>,
-    }, {
-      key: 'reset',
-      title: "Reset",
-      collapsedByDefault: true,
-      content: <>
-        <div css={css`display: flex; flex-flow: column nowrap; margin-bottom: 5px;`}>
+  return (
+    <div className={className}>
+      <NewRepositoryDefaults css={css`padding: 15px;`} />
+
+      <PropertyView label="Sidebar position">
+        <Select
+          options={[{ value: 'left', label: "Left" }, { value: 'right', label: "Right" }]}
+          onChange={evt => handleUpdate('sidebarPosition', evt.currentTarget.value as 'left' | 'right')}
+          value={settings.sidebarPosition}
+        />
+      </PropertyView>
+
+      <div css={css`padding: 15px;`}>
+        <div css={css`display: flex; flex-flow: column nowrap; align-items: flex-start; margin-bottom: 5px;`}>
           {CLEAR_OPTIONS.map(opt =>
-            <Popover2 interactionKind="hover-target" placement="left" content={<>
-                <div css={css`padding: 10px; width: 280px`}>
-                  <div>{CLEAR_OPTION_INFO[opt].description}</div>
-                  {CLEAR_OPTION_INFO[opt].warning
-                    ? <div css={css`font-weight: strong`}>{CLEAR_OPTION_INFO[opt].warning}</div>
-                    : null}
-                </div>
-            </>}>
+            <Tooltip2 interactionKind="hover-target" position="bottom" content={<div css={css`width: 70vw`}>
+                <div>{CLEAR_OPTION_INFO[opt].description}</div>
+                {CLEAR_OPTION_INFO[opt].warning
+                  ? <div css={css`font-weight: strong`}>{CLEAR_OPTION_INFO[opt].warning}</div>
+                  : null}
+            </div>}>
               <Switch
                 css={css`margin: 0;`}
                 labelElement={CLEAR_OPTION_INFO[opt].label}
                 checked={clearOptionSelection[opt] === true}
                 onChange={(evt) => setClearOptionSelection({ ...clearOptionSelection, [opt]: evt.currentTarget.checked })} />
-            </Popover2>
+            </Tooltip2>
           )}
         </div>
 
-        <Button fill small intent={canClear ? 'danger' : undefined} disabled={!canClear} onClick={handleClear}>
+        <Button fill small outlined intent={canClear ? 'danger' : undefined} disabled={!canClear} onClick={handleClear}>
           Clear &amp; restart
         </Button>
-      </>,
-    }]}
-  />;
+      </div>
+    </div>
+  );
 };
 
 
-const NewRepositoryDefaults: React.FC<Record<never, never>> = function () {
+const NewRepositoryDefaults: React.FC<{ className?: string }> = function ({ className }) {
   const { performOperation, isBusy } = useContext(Context);
   const defaultsResp = getNewRepoDefaults.renderer!.useValue({}, { defaults: null });
   const defaults = defaultsResp.value.defaults;
@@ -152,7 +133,7 @@ const NewRepositoryDefaults: React.FC<Record<never, never>> = function () {
   const defaultsChanged = editedDefaults && JSON.stringify(editedDefaults) !== JSON.stringify(defaults ?? {});
 
   return (
-    <>
+    <div className={className}>
       <PropertyView label="Author name">
         <TextInput
           onChange={!busy ? (val) => editAuthor({ ...author, name: val }) : undefined}
@@ -185,9 +166,9 @@ const NewRepositoryDefaults: React.FC<Record<never, never>> = function () {
               defaultsResp.refresh();
             })
           : undefined}>
-        Update defaults
+        Update repository defaults
       </Button>
-    </>
+    </div>
   );
 };
 

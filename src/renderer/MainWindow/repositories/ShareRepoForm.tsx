@@ -80,7 +80,7 @@ function ({ repo }) {
 
   return (
     <>
-      <ButtonGroup vertical fill css={css`margin-bottom: 5px;`}>
+      <ButtonGroup vertical fill css={css`margin-bottom: 5px; height: unset !important;`}>
         {hasRemote && repo.remote?.writeAccess === true
           ? <Button small outlined
                 onClick={performOperation('turning off push', turnOffPush)}>

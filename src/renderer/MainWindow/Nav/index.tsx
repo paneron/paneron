@@ -48,16 +48,12 @@ const Nav: React.FC<NavProps> = function ({ className }) {
     />);
   }
 
-  if (openedRepo && state.view !== 'repo-list') {
+  if (openedRepo && state.view !== 'welcome-screen') {
     breadcrumbs.push(<RepoBreadcrumb
       key={state.selectedRepoWorkDir}
       repoInfo={openedRepo}
       workDir={state.selectedRepoWorkDir}
       onMessage={showMessage}
-      onClose={() => dispatch({ type: 'close-repo' })}
-      onNavigate={state.view === 'dataset'
-        ? () => dispatch({ type: 'close-dataset' })
-        : undefined}
     />);
   }
 
@@ -65,8 +61,8 @@ const Nav: React.FC<NavProps> = function ({ className }) {
     key="paneron"
     title={'Paneron'}
     icon={{ type: 'file', fileName: `file://${__static}/icon.png` }}
-    onNavigate={state.view !== 'repo-list'
-      ? () => dispatch({ type: 'close-repo' })
+    onNavigate={state.view !== 'welcome-screen'
+      ? () => dispatch({ type: 'close-dataset' })
       : undefined}
   />);
 

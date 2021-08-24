@@ -5,19 +5,15 @@ import { jsx } from '@emotion/react';
 
 import React, { useContext } from 'react';
 import { Button } from '@blueprintjs/core';
-import makeSidebar from '@riboseinc/paneron-extension-kit/widgets/Sidebar';
-import PropertyView from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
+import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import PanelSeparator from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PanelSeparator';
 import ShareRepoForm from 'renderer/MainWindow/repositories/ShareRepoForm';
-import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
 import { deleteRepository, describeRepository, repositoriesChanged, Repository } from 'repositories/ipc';
 import { Context } from '../context';
 
 
-const Sidebar = makeSidebar(usePaneronPersistentStateReducer);
-
-
-export const SelectedRepositorySidebar: React.FC<{ workDir: string; repoInfo?: Repository; className?: string; }> = function ({ workDir, repoInfo, className }) {
+const RepositorySettings: React.FC<{ workDir: string; repoInfo?: Repository; className?: string; }> =
+function ({ workDir, repoInfo, className }) {
   const { performOperation, isBusy } = useContext(Context);
 
   const openedRepoResp = describeRepository.renderer!.useValue(
@@ -36,49 +32,37 @@ export const SelectedRepositorySidebar: React.FC<{ workDir: string; repoInfo?: R
 
   const canDelete = !openedRepoResp.isUpdating && !isBusy;
 
-  return <Sidebar
-    stateKey='selected-repo-panels'
-    representsSelection
-    title={repo.paneronMeta?.title ?? repo.gitMeta.workingCopyPath}
-    blocks={[{
-      key: 'paneron-repo',
-      title: "Paneron metadata",
-      content: <PaneronRepoPanel paneronMeta={repo.paneronMeta} />,
-    }, {
-      key: 'git-repo',
-      title: "DVCS repository",
-      content: <GitRepoPanel gitMeta={repo.gitMeta} />,
-    }, {
-      key: 'delete-repo',
-      title: "Delete",
-      collapsedByDefault: true,
-      content: <>
-        <Button small fill minimal
-          disabled={!canDelete}
-          intent={canDelete ? 'danger' : undefined}
-          onClick={canDelete
-            ? performOperation('deleting repository', async () => {
-                await deleteRepository.renderer!.trigger({ workingCopyPath: workDir });
-              })
-            : undefined}>
-          Delete this repository
-        </Button>
-      </>,
-    }]}
-    className={className} />;
+  return (
+    <div className={className}>
+      <PaneronRepoPanel paneronMeta={repo.paneronMeta} />
+      <PanelSeparator />
+      <GitRepoPanel gitMeta={repo.gitMeta} />
+      <PanelSeparator />
+      <Button small fill minimal
+        disabled={!canDelete}
+        intent={canDelete ? 'danger' : undefined}
+        onClick={canDelete
+          ? performOperation('deleting repository', async () => {
+              await deleteRepository.renderer!.trigger({ workingCopyPath: workDir });
+            })
+          : undefined}>
+        Delete this repository
+      </Button>
+    </div>
+  );
 };
 
 
 const GitRepoPanel: React.FC<{ gitMeta: Repository["gitMeta"]; }> = function ({ gitMeta }) {
   return <>
-    <PropertyView label="Remote URL" title="Remote URL">
-      {gitMeta.remote?.url ?? ''}
-    </PropertyView>
-    <ShareRepoForm repo={gitMeta} />
-    <PanelSeparator />
     <PropertyView label="Work dir." title="Working directory">
       {gitMeta.workingCopyPath}
     </PropertyView>
+    <PanelSeparator />
+    <PropertyView label="Remote URL" title="Remote URL">
+      <TextInput value={gitMeta.remote?.url ?? ''} />
+    </PropertyView>
+    <ShareRepoForm repo={gitMeta} />
   </>;
 };
 
@@ -99,4 +83,4 @@ const PaneronRepoPanel: React.FC<{ paneronMeta: Repository["paneronMeta"]; }> = 
 };
 
 
-export default SelectedRepositorySidebar;
+export default RepositorySettings;

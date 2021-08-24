@@ -5,9 +5,7 @@ import { jsx, css } from '@emotion/react';
 
 import React, { useContext, useState } from 'react';
 import { Card, Button, Colors, InputGroup, Classes } from '@blueprintjs/core';
-import makeSidebar from '@riboseinc/paneron-extension-kit/widgets/Sidebar';
 import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
-import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
 import { describeRepository, repositoriesChanged, Repository } from 'repositories/ipc';
 import { Context } from '../context';
 import DatasetExtension, { DatasetExtensionCardProps } from 'plugins/renderer/DatasetExtensionCard';
@@ -16,10 +14,7 @@ import { listAvailablePlugins } from 'plugins';
 import { initializeDataset, proposeDatasetPath } from 'datasets/ipc';
 
 
-const Sidebar = makeSidebar(usePaneronPersistentStateReducer);
-
-
-export const InitializeDatasetSidebar: React.FC<{ workDir: string; repoInfo?: Repository; className?: string; }> = function ({ workDir, repoInfo, className }) {
+const InitializeDataset: React.FC<{ workDir: string; repoInfo?: Repository; className?: string; }> = function ({ workDir, repoInfo, className }) {
   const { performOperation, isBusy } = useContext(Context);
 
   const [selectedExtension, selectExtension] = useState<Extension | null>(null);
@@ -65,17 +60,14 @@ export const InitializeDatasetSidebar: React.FC<{ workDir: string; repoInfo?: Re
     }
   }
 
-  return <Sidebar
-    stateKey='initialize-dataset-panels'
-    title="Initialize new dataset"
-    blocks={[{
-      key: 'extension',
-      title: "Extension",
-      content: <DatasetExtensionBrowser onSelect={selectExtension} selectedExtension={selectedExtension ?? undefined} />,
-    }, {
-      key: 'meta',
-      title: "Metadata",
-      content: <>
+  return (
+    <>
+      <DatasetExtensionBrowser
+        css={css`flex: 1;`}
+        onSelect={selectExtension}
+        selectedExtension={selectedExtension ?? undefined}
+      />
+      <div css={css`padding: 5px; z-index: 2;`} className={Classes.ELEVATION_2}>
         <PropertyView label="ID">
           <TextInput
             value={datasetID}
@@ -93,13 +85,7 @@ export const InitializeDatasetSidebar: React.FC<{ workDir: string; repoInfo?: Re
             onChange={setTitle}
             validationErrors={title.trim() === '' ? ["Short descriptive human-readable title for the new dataset."] : []} />
         </PropertyView>
-      </>
-    }, {
-      key: 'initialize',
-      title: "Initialize",
-      nonCollapsible: true,
-      content: <>
-        <Button small fill
+        <Button fill
           disabled={!canInitialize || isBusy}
           intent={canInitialize ? 'primary' : undefined}
           onClick={canInitialize
@@ -107,13 +93,13 @@ export const InitializeDatasetSidebar: React.FC<{ workDir: string; repoInfo?: Re
             : undefined}>
           Initialize {selectedExtension?.title} dataset
         </Button>
-      </>,
-    }]}
-    className={className} />;
+      </div>
+    </>
+  );
 };
 
-const DatasetExtensionBrowser: React.FC<{ onSelect?: (extension: Extension) => void, selectedExtension?: Extension }> =
-function ({ selectedExtension, onSelect }) {
+const DatasetExtensionBrowser: React.FC<{ onSelect?: (extension: Extension) => void, selectedExtension?: Extension, className?: string }> =
+function ({ selectedExtension, onSelect, className }) {
   const [searchString, setSearchString] = useState('');
   const extensionResp = listAvailablePlugins.renderer!.useValue({}, { extensions: [] });
   const extensions = extensionResp.value.extensions.filter(ext => {
@@ -130,24 +116,23 @@ function ({ selectedExtension, onSelect }) {
   });
 
   return (
-    <div css={css`
-        flex: 1;
+    <div className={className} css={css`
         display: flex;
         flex-flow: column nowrap;
         overflow: hidden;
       `}>
-      <div css={css`padding: .15rem 0 .25rem 0; z-index: 1;`} className={Classes.ELEVATION_1}>
+      <div css={css`padding: 5px; z-index: 1;`} className={Classes.ELEVATION_1}>
         <InputGroup
           fill
           leftIcon="search"
-          placeholder="Search…"
+          placeholder="Search extensions…"
           rightElement={
             <Button minimal disabled={searchString.trim() === ''} onClick={() => setSearchString('')} icon="cross" />
           }
           value={searchString}
           onChange={(evt: React.FormEvent<HTMLInputElement>) => setSearchString(evt.currentTarget.value)} />
       </div>
-      <div css={css`height: 30vh; overflow-y: auto; background: ${Colors.LIGHT_GRAY1};`}>
+      <div css={css`flex: 1; overflow-y: auto; background: ${Colors.LIGHT_GRAY1};`}>
         {extensionResp.isUpdating
           ? <>
               {/* Placeholders */}
@@ -184,4 +169,4 @@ React.FC<DatasetExtensionCardProps & { onSelect?: () => void, selected?: true }>
 }
 
 
-export default InitializeDatasetSidebar;
+export default InitializeDataset;
