@@ -17,7 +17,7 @@ ValueHook<RepositoryList> & {
   const hookResult = listRepositories.renderer!.useValue({ query }, { objects: [] });
 
   repositoriesChanged.renderer!.useEvent(async () => {
-    log.debug("Handling repositories changed event");
+    log.debug("useRepositoryList: Handling repositories changed event");
     hookResult.refresh();
   }, []);
 
