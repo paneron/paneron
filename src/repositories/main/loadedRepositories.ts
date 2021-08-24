@@ -48,7 +48,7 @@ export async function loadRepository(workingCopyPath: string): Promise<RepoStatu
   const loadedSorted = Object.entries(loadedRepositories).
     sort((r1, r2) => r1[1].loadTime > r2[1].loadTime ? -1 : 1);
   for (const [workDir] of loadedSorted.slice(0, MAX_LOADED_REPOSITORIES)) {
-    log.debug("Repositories: Load: Unloading first to free resources", workDir, workingCopyPath);
+    log.debug("Repositories: Load: Unloading first to free resources", workDir, "for", workingCopyPath);
     await unloadRepository(workDir);
   }
 
