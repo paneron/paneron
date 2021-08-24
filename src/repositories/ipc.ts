@@ -45,7 +45,7 @@ export const addRepository = makeEndpoint.main(
 
 export const createRepository = makeEndpoint.main(
   'createRepository',
-  <EmptyPayload>_,
+  <{ title?: string }>_,
   <{ success: true }>_,
 );
 

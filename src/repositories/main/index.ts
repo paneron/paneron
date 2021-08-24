@@ -471,7 +471,7 @@ addRepository.main!.handle(async ({ gitRemoteURL, branch, username, password }) 
 });
 
 
-createRepository.main!.handle(async () => {
+createRepository.main!.handle(async ({ title }) => {
   const workDirPath = path.join(DEFAULT_WORKING_DIRECTORY_CONTAINER, makeUUIDv4());
 
   if (fs.existsSync(workDirPath)) {
@@ -505,7 +505,7 @@ createRepository.main!.handle(async () => {
   });
 
   const paneronMeta: PaneronRepository = {
-    title: "Unnamed repository",
+    title: title ?? "Unnamed repository",
     datasets: {},
   };
 
