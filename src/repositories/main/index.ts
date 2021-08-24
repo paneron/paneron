@@ -446,6 +446,8 @@ addRepository.main!.handle(async ({ gitRemoteURL, branch, username, password }) 
     return newData;
   });
 
+  await loadRepo(workDirPath);
+
   repositoriesChanged.main!.trigger({
     changedWorkingPaths: [],
     deletedWorkingPaths: [],
@@ -530,6 +532,8 @@ createRepository.main!.handle(async ({ title }) => {
   }
 
   log.debug("Repositories: Notifying about newly created repository");
+
+  await loadRepo(workDirPath);
 
   repositoriesChanged.main!.trigger({
     changedWorkingPaths: [],
