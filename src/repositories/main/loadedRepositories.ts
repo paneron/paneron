@@ -197,18 +197,18 @@ function syncRepoRepeatedly(
     let repoCfg: GitRepository | null;
     if (!loadedRepositories[workingCopyPath]) {
       repoSyncLog('warn', "Removing status and aborting sync");
-      return unloadRepository(workingCopyPath);
+      return await unloadRepository(workingCopyPath);
     } else {
       repoSyncLog('debug', "Checking configuration");
       try {
         repoCfg = await readRepoConfig(workingCopyPath);
         if (!repoCfg.author) {
           repoSyncLog('error', "Configuration is missing author info");
-          return unloadRepository(workingCopyPath);
+          return await unloadRepository(workingCopyPath);
         }
       } catch (e) {
         repoSyncLog('error', "Configuration cannot be read");
-        return unloadRepository(workingCopyPath);
+        return await unloadRepository(workingCopyPath);
       }
 
       const isBusy = loadedRepositories[workingCopyPath].latestStatus?.busy;
@@ -327,8 +327,8 @@ export async function reportBufferChanges(
 }
 
 
-app.on('quit', () => {
+app.on('quit', async () => {
   for (const workingCopyPath of Object.keys(loadedRepositories)) {
-    unloadRepository(workingCopyPath);
+    await unloadRepository(workingCopyPath);
   }
 });
