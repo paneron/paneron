@@ -290,10 +290,16 @@ listRepositories.main!.handle(async ({ query: { matchesText, sortBy } }) => {
   const filteredRepositories: Repository[] = repositories.filter(repo => {
     if (matchesText) {
       const normalizedSubstring = matchesText.toLowerCase();
+
       const workDirMatches = repo.gitMeta.workingCopyPath.indexOf(normalizedSubstring) >= 0;
+
       const normalizedTitle = repo.paneronMeta?.title?.toLowerCase();
       const titleMatches = normalizedTitle !== undefined && normalizedTitle.indexOf(normalizedSubstring) >= 0;
-      const matches: boolean = workDirMatches || titleMatches;
+
+      const datasetIDs = (Object.keys(repo.paneronMeta?.datasets ?? {})).join('');
+      const datasetIDsMatch = datasetIDs.indexOf(normalizedSubstring) >= 0;
+
+      const matches: boolean = workDirMatches || titleMatches || datasetIDsMatch;
       return matches;
     } else {
       return true;
