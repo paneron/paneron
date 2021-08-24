@@ -12,6 +12,12 @@ export type ReturnsPromise<F extends (...opts: any[]) => any> =
   (...opts: Parameters<F>) => Promise<ReturnType<F>>
 
 
+export type RecentlyOpenedDataset = {
+  workDir: string
+  datasetID: string
+}
+
+
 export interface DatasetType {
   id: string
   version: string

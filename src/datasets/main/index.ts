@@ -39,7 +39,13 @@ import {
   getFilteredObject,
   locateFilteredIndexPosition,
   updateObjects,
+  listRecentlyOpenedDatasets,
 } from '../ipc';
+
+import {
+  list as _listRecentlyOpenedDatasets,
+  record as _recordRecentlyOpenedDataset,
+} from './recent';
 
 import './migrations';
 
@@ -161,6 +167,13 @@ export async function clearIndexes() {
 }
 
 
+listRecentlyOpenedDatasets.main!.handle(async () => {
+  return {
+    datasets: await _listRecentlyOpenedDatasets(),
+  };
+});
+
+
 loadDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
   //const dataset = await readDatasetMeta(workingCopyPath, datasetPath);
   //const plugin = await requireMainPlugin(dataset.type.id);
@@ -172,6 +185,8 @@ loadDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
   //  // using another IPC endpoint, and prompt the user to apply it (yet another IPC endpoint).
   //  throw new Error("Dataset migration is required");
   //}
+
+  await _recordRecentlyOpenedDataset(workingCopyPath, datasetPath);
 
   log.debug("Datasets: Load: Ensuring cache root dir…", INDEX_DB_ROOT);
 

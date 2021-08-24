@@ -2,7 +2,7 @@ import { ObjectChangeset, ObjectDataset } from '@riboseinc/paneron-extension-kit
 import { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
 import { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
 import { EmptyPayload, makeEndpoint, _ } from '../ipc';
-import { DatasetInfo, DatasetType, MigrationSequenceOutcome } from './types';
+import { DatasetInfo, DatasetType, MigrationSequenceOutcome, RecentlyOpenedDataset } from './types';
 
 
 /* List dataset types, provided by extensions, available for dataset initialization */
@@ -10,6 +10,12 @@ export const listAvailableTypes = makeEndpoint.main(
   'listAvailableTypes',
   <EmptyPayload>_,
   <{ types: DatasetType[] }>_,
+);
+
+export const listRecentlyOpenedDatasets = makeEndpoint.main(
+  'listRecentlyOpenedDatasets',
+  <EmptyPayload>_,
+  <{ datasets: RecentlyOpenedDataset[] }>_,
 );
 
 export const getDatasetInfo = makeEndpoint.main(
