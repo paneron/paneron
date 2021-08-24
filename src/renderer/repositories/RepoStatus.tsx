@@ -4,7 +4,7 @@
 import { throttle } from 'throttle-debounce';
 import { jsx } from '@emotion/react';
 import React, { useState } from 'react';
-import { IButtonProps, Icon, InputGroup, Spinner } from '@blueprintjs/core';
+import { ButtonProps, Icon, InputGroup, Spinner } from '@blueprintjs/core';
 import {
   loadRepository,
   GitRepository,
@@ -48,7 +48,7 @@ const RepoStatus: React.FC<{ repo: GitRepository }> = function ({ repo }) {
 
   const status = latestStatus || repoStatus.value;
 
-  let buttonProps: IButtonProps = {};
+  let buttonProps: ButtonProps = {};
   let buttonText: string | null;
   let extraWidget: JSX.Element | null = null;
 
