@@ -13,6 +13,7 @@ const RecentDatasets: React.FC<{ onOpenDataset?: (workDir: string, dsID: string)
   return (
     <Menu>
       {datasets.map(({ workDir, datasetID }) => <DatasetMenuItem
+        key={`${workDir}-${datasetID}`}
         workDir={workDir}
         datasetID={datasetID}
         showRepoInfo
