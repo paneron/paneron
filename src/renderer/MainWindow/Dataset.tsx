@@ -80,7 +80,7 @@ function ({ className }) {
         }}>
       <div css={css`display: flex; flex-flow: row nowrap;`} className={className}>
         <Helmet>
-          <title>Dataset {datasetContext?.title ?? selectedDatasetID}</title>
+          <title>{datasetContext?.title ?? selectedDatasetID} (dataset)</title>
         </Helmet>
         {datasetView}
       </div>
