@@ -92,16 +92,12 @@ function ({
         username,
         password: password !== '' ? password : undefined,
       });
-      if (remote.result) {
-        setTestResult(remote.result);
-        setTimeout(() => {
-          setTestResult(undefined);
-        }, 5000);
-      } else {
-        setTestResult({ error: remote.errors[0]?.message ?? 'unknown error' });
-      }
+      setTestResult(remote.result);
+      setTimeout(() => {
+        setTestResult(undefined);
+      }, 5000);
     } catch (e) {
-      setTestResult({ error: e.message ?? 'unknown error' });
+      setTestResult({ error: (e as any)?.toString() ?? 'unknown error' });
     } finally {
       setBusy(false);
     }

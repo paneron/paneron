@@ -66,7 +66,7 @@ const clone: WithStatusUpdater<Git.Sync.Clone> = async function (
     });
   } catch (e) {
     //log.error(`C/db/isogit/worker: Error cloning repository`, e);
-    if (e.code !== 'UserCanceledError') {
+    if ((e as any).code !== 'UserCanceledError') {
       updateStatus({
         busy: {
           operation: 'cloning',
@@ -120,8 +120,9 @@ async function push(opts: PushRequestMessage, updateStatus: RepoStatusUpdater) {
       status: 'ready',
     });
 
-  } catch (e) {
+  } catch (_e) {
     //log.error(`C/db/isogit/worker: Error pushing to repository`, e);
+    const e = _e as any;
     const suppress: boolean =
       (e.code === 'UserCanceledError' && _presumeCanceledErrorMeansAwaitingAuth === true) ||
       (e.code === 'PushRejectedError' && _presumeRejectedPushMeansNothingToPush === true);
@@ -187,7 +188,7 @@ const pull: WithStatusUpdater<Git.Sync.Pull> = async function (
   } catch (e) {
     //log.error(`C/db/isogit/worker: Error pulling from repository`, e);
     const suppress: boolean =
-      (e.code === 'UserCanceledError' && opts._presumeCanceledErrorMeansAwaitingAuth === true);
+      ((e as any).code === 'UserCanceledError' && opts._presumeCanceledErrorMeansAwaitingAuth === true);
     if (!suppress) {
       updateStatus({
         busy: {

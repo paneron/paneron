@@ -175,7 +175,7 @@ applyOutstandingMigrations.main!.handle(async ({ workingCopyPath, datasetPath })
       outcome: {
         success: false,
         error: {
-          message: `Migration reported an error (though some changes may have been applied): ${e.message}`,
+          message: `Migration reported an error (though some changes may have been applied): ${(e as any).toString?.() ?? e}`,
         },
         changesApplied,
       },

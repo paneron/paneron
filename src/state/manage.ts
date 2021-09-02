@@ -11,7 +11,7 @@ export async function loadState<S extends Record<string, any>>(key: string): Pro
   try {
     return await stateStorage.get(key);
   } catch (e) {
-    if (e.type === 'NotFoundError') {
+    if ((e as any).type === 'NotFoundError') {
       return undefined;
     } else {
       throw e;

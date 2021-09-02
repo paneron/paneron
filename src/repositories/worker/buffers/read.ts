@@ -96,7 +96,7 @@ export function readBuffer(fullPath: string): Uint8Array | null {
   try {
     return fs.readFileSync(fullPath);
   } catch (e) {
-    if (e.code === 'ENOENT') {
+    if ((e as any).code === 'ENOENT') {
       return null;
     } else {
       throw e;
@@ -126,7 +126,7 @@ export async function readBufferAtVersion(
       filepath,
     })).blob;
   } catch (e) {
-    if (e.code === 'NotFoundError') {
+    if ((e as any).code === 'NotFoundError') {
       return null;
     } else {
       throw e;

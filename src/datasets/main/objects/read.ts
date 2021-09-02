@@ -52,7 +52,7 @@ export async function readObject(
   try {
     result = await idx.dbHandle.get(objectPath);
   } catch (e) {
-    if (e.type === 'NotFoundError') {
+    if ((e as any).type === 'NotFoundError') {
       return null;
     } else {
       throw e;

@@ -6,7 +6,7 @@ export function checkPathIsOccupied(absolutePath: string): boolean {
   try {
     statSync(absolutePath);
   } catch (e) {
-    if (e.code === 'ENOENT') {
+    if ((e as any).code === 'ENOENT') {
       return false;
     } else {
       throw e;

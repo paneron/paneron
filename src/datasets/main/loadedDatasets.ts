@@ -320,7 +320,7 @@ async function _writeDefaultIndex(
         await index.dbHandle.del(objectPath);
         //log.debug("Datasets: updateDefaultIndex: Deleted", objectPath);
       } catch (e) {
-        if (e.type !== 'NotFoundError') {
+        if ((e as any).type !== 'NotFoundError') {
           throw e;
         }
       }
@@ -813,7 +813,7 @@ async function indexMeta(
       { valueEncoding: 'json' },
     ) as Datasets.Util.IndexMeta | null) || null;
   } catch (e) {
-    if (e.type === 'NotFoundError') {
+    if ((e as any).type === 'NotFoundError') {
       meta = null;
     } else {
       throw e;
@@ -1036,7 +1036,7 @@ export async function updateDatasetIndexesIfNeeded(
             }
           }
         } catch (e) {
-          if (e.type === 'NotFoundError') {
+          if ((e as any).type === 'NotFoundError') {
             // (or even never existed)
             changes[objectPath] = true;
           } else {

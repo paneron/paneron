@@ -52,11 +52,12 @@ const ContextProvider: React.FC<Record<never, never>> = function ({ children }) 
         return result;
       } catch (e) {
         let errMsg: string;
-        if (e.message.indexOf('Error:')) {
-          const msgParts = e.message.split('Error:');
+        const rawErrMsg = (e as any).toString?.();
+        if (rawErrMsg.indexOf('Error:')) {
+          const msgParts = rawErrMsg.split('Error:');
           errMsg = msgParts[msgParts.length - 1].trim();
         } else {
-          errMsg = e.message;
+          errMsg = rawErrMsg;
         }
         toaster.dismiss(opKey);
         toaster.show({
