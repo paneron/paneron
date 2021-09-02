@@ -122,13 +122,8 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
     },
 
     requestCopiedObjects: async () => {
-      const { result, errors } = await requestCopiedObjects.renderer!.trigger({});
-      if (result) {
-        return result;
-      } else {
-        log.error("Failed to request copied objects, errors were:", errors.join('; '));
-        throw new Error("Failed to request copied objects");
-      }
+      const { result } = await requestCopiedObjects.renderer!.trigger({});
+      return result;
     },
 
     // NOTE: Confusingly named? Not truly a hook
@@ -161,12 +156,7 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
         ...opts,
       });
 
-      if (resp.result) {
-        return resp.result;
-      } else {
-        log.error("Unable to get object data", opts, resp.result, resp.errors);
-        throw new Error("Unable to get object data");
-      }
+      return resp.result;
     },
 
     useIndexDescription: function _useIndexDescription (opts) {
@@ -276,27 +266,17 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
       path.join(workingCopyPath, datasetPath || '', relativeDatasetPath),
 
     requestFileFromFilesystem:  async function  _requestFileFromFilesystem (opts, callback?: (data: BufferDataset) => void) {
-      const result = await chooseFileFromFilesystem.renderer!.trigger(opts);
-      if (result.result) {
-        log.info("Requested file from filesystem", opts, result);
-        if (callback) {
-          callback(result.result);
-        }
-        return result.result;
-      } else {
-        log.error("Unable to request file from filesystem", opts, result.errors);
-        throw new Error("Unable to request file from filesystem");
+      const resp = await chooseFileFromFilesystem.renderer!.trigger(opts);
+      log.info("Requested file from filesystem", opts, resp);
+      if (callback) {
+        callback(resp.result);
       }
+      return resp.result;
     },
 
     writeFileToFilesystem: async function _writeFileToFilesystem (opts) {
-      const result = await saveFileToFilesystem.renderer!.trigger(opts);
-      if (result.result) {
-        return result.result;
-      } else {
-        log.error("Unable to save file to filesystem", opts.dialogOpts, result.errors);
-        throw new Error("Unable to save file to filesystem");
-      }
+      const { result } = await saveFileToFilesystem.renderer!.trigger(opts);
+      return result;
     },
 
     makeRandomID: writeAccess
@@ -315,12 +295,7 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
             ...datasetParams,
             ...opts,
           }));
-          if (result.result) {
-            return result.result;
-          } else {
-            log.error("Unable to change objects", result.errors)
-            throw new Error("Unable to change objects");
-          }
+          return result.result;
         }
       : undefined,
   }

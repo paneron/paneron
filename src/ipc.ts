@@ -34,8 +34,7 @@ type BoundHandler = {
 export type MainHandler<I extends Payload, O extends Payload> = (params: I) => Promise<O>;
 
 export type MainEndpointResponse<O extends Payload> = {
-  result: O | undefined
-  errors: Error[]
+  result: O
   payloadHash: string
 }
 
@@ -52,8 +51,8 @@ type MainEndpoint<I extends Payload, O extends Payload> = {
     trigger: (payload: I) => Promise<MainEndpointResponse<O>>
     useValue: (payload: I, initialValue: O) => {
       value: O
-      errors: Error[]
-      findError: (ofClass: string) => Error | undefined
+      errors: string[]
+      findError: (ofClass: string) => string | undefined
       isUpdating: boolean
       refresh: () => void
       _reqCounter: number
@@ -137,14 +136,11 @@ export const makeEndpoint: EndpointMaker = {
             Promise<MainEndpointResponse<O>> {
               let result: O | undefined;
 
-              // Originally we caught errors, but now we just let it throw.
-              let errors: Error[] = [];
-
               result = await handler(payload);
 
               const payloadSnapshot = toJSONPreservingUndefined(payload);
 
-              return { result, errors, payloadHash: hash(payloadSnapshot) };
+              return { result, payloadHash: hash(payloadSnapshot) };
             }
 
             ipcMain.removeHandler(name);
@@ -170,7 +166,7 @@ export const makeEndpoint: EndpointMaker = {
           },
           useValue: (payload: I, initialValue: O) => {
             const [value, updateValue] = useState(initialValue);
-            const [errors, updateErrors] = useState([] as Error[]);
+            const [errors, updateErrors] = useState<string[]>([]);
             const [isUpdating, setUpdating] = useState(true);
 
             const [reqCounter, updateReqCounter] = useState(0);
@@ -186,13 +182,9 @@ export const makeEndpoint: EndpointMaker = {
 
                 try {
                   //log.debug("IPC: Invoking", name, payloadSliceToLog);
-                  const maybeResp: any = await ipcRenderer.invoke(name, payload);
+                  const maybeResp = await ipcRenderer.invoke(name, payload);
 
-                  if (maybeResp.errors  !== undefined) {
-                    // NOTE: Presence of `errors` here does not mean there are errors.
-                    // It is a duck-typing check that we are getting a properly formatted response structure.
-                    // TODO: Hook into TypeScript with some macros to validate the value against expected type?
-
+                  if (maybeResp.result) {
                     const resp = maybeResp as MainEndpointResponse<O>;
 
                     if (resp.payloadHash !== payloadHash) {
@@ -203,30 +195,19 @@ export const makeEndpoint: EndpointMaker = {
                         resp.payloadHash);
                     }
 
-                    if (resp.result === undefined) {
-                      if (resp.errors.length > 0) {
-                        updateErrors(resp.errors);
-                      } else {
-                        log.error("IPC: Unknown error: Missing result in main IPC response", maybeResp);
-                        updateErrors([new Error("IPC: Unknown error: Missing result in main IPC response")]);
-                      }
-                      updateValue(initialValue);
-                    } else {
-                      updateErrors([]);
-                      updateValue(resp.result);
-                      //log.debug("IPC: Got result", name, resp.result);
-                    }
+                    updateErrors([]);
+                    updateValue(resp.result);
+                    //log.debug("IPC: Got result", name, resp.result);
                   } else {
-                    // TODO: updateErrors()?
-                    log.error("IPC: Improperly structured main IPC response; returning whole value", maybeResp);
-                    updateValue(maybeResp as O);
+                    log.error("IPC: Improperly structured main IPC response; returning the entire value", maybeResp);
+                    updateErrors(["Invalid IPC response"]);
+                    // Consider updateErrors()?
+                    //updateValue(maybeResp as O);
                   }
-
                 } catch (e) {
                   log.error("IPC: Failed to invoke method", name, payloadSliceToLog, e);
-                  updateErrors([e]);
+                  updateErrors([(e as any).toString?.() ?? `${e}`]);
                   updateValue(initialValue);
-
                 } finally {
                   setUpdating(false);
                 }
@@ -241,7 +222,7 @@ export const makeEndpoint: EndpointMaker = {
               value,
               errors,
               isUpdating,
-              findError: (ofClass) => errors.find(e => e.message.indexOf(`${ofClass}:`)),
+              findError: (substring) => errors.find(e => e.indexOf(`${substring}`) >= 0),
               refresh: () => updateReqCounter(counter => { return counter += 1 }),
               _reqCounter: reqCounter,
             };

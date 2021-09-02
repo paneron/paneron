@@ -85,11 +85,11 @@ export default async function getDataset(workingCopyPath: string, datasetPath?: 
     let _version = pluginInfo.result?.plugin?.installedVersion;
     if (!_version) {
       log.warn("Dataset view: Extension is not installed?", workingCopyPath, pluginID, pluginInfo);
-      const installationResult = await installPlugin.renderer!.trigger({ id: pluginID });
-      if (installationResult.result && installationResult.result.installed && installationResult.result.installedVersion) {
+      try {
+        const installationResult = await installPlugin.renderer!.trigger({ id: pluginID });
         _version = installationResult.result.installedVersion;
-      } else {
-        log.error("Dataset view: Extension could not be installed on the fly", installationResult.errors);
+      } catch (e) {
+        log.error("Dataset view: Extension could not be installed on the fly", e);
         throw new Error("Required extension could not be installed");
       }
     }
