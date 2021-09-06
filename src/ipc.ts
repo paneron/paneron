@@ -52,7 +52,6 @@ type MainEndpoint<I extends Payload, O extends Payload> = {
     useValue: (payload: I, initialValue: O) => {
       value: O
       errors: string[]
-      findError: (ofClass: string) => string | undefined
       isUpdating: boolean
       refresh: () => void
       _reqCounter: number
@@ -222,7 +221,6 @@ export const makeEndpoint: EndpointMaker = {
               value,
               errors,
               isUpdating,
-              findError: (substring) => errors.find(e => e.indexOf(`${substring}`) >= 0),
               refresh: () => updateReqCounter(counter => { return counter += 1 }),
               _reqCounter: reqCounter,
             };
