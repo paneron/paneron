@@ -42,11 +42,11 @@ function ({ workDir, repoInfo, className }) {
         disabled={!canDelete}
         intent={canDelete ? 'danger' : undefined}
         onClick={canDelete
-          ? performOperation('deleting repository', async () => {
+          ? performOperation('deleting working copy', async () => {
               await deleteRepository.renderer!.trigger({ workingCopyPath: workDir });
             })
           : undefined}>
-        Delete this repository
+        Delete working copy
       </Button>
     </div>
   );
