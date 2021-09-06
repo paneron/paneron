@@ -107,7 +107,7 @@ function ({ id }) {
   }, []);
 
   if (!installedVersion && versionToInstall === undefined) {
-    const fetchError = pluginInfo.findError('FetchError');
+    const fetchError = pluginInfo.errors.find(err => err.indexOf('FetchError') >= 0);
     if (fetchError && fetchError.indexOf('registry.npmjs.org') >= 0) {
       return <Button icon="offline" disabled>Cannot connect to package registry</Button>;
     } else if (pluginInfo.isUpdating) {
