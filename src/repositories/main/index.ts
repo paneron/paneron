@@ -24,6 +24,7 @@ import {
   getBufferDataset,
   updateBuffers,
   describeGitRepository,
+  addDisconnected,
 } from '../ipc';
 
 import { makeUUIDv4 } from 'utils';
@@ -476,6 +477,49 @@ addRepository.main!.handle(async ({ gitRemoteURL, branch, username, password }) 
   //});
 
   return { success: true, workDir: workDirPath };
+});
+
+
+addDisconnected.main!.handle(async ({ gitRemoteURL, branch, username, password }) => {
+  const workDirPath = path.join(DEFAULT_WORKING_DIRECTORY_CONTAINER, makeUUIDv4());
+  if (fs.existsSync(workDirPath) || ((await readRepositories())).workingCopies[workDirPath] !== undefined) {
+    throw new Error("Could not generate a valid non-occupied repository path inside given container.");
+  }
+  if (branch === undefined || branch.trim() === '') {
+    throw new Error("Main branch name is not specified.");
+  }
+  const auth = { username, password };
+  if (!auth.password) {
+    auth.password = (await getAuth(gitRemoteURL, username)).password;
+  }
+
+  const workers = await getRepoWorkers(workDirPath);
+
+  try {
+    await workers.sync.git_clone({
+      repoURL: gitRemoteURL,
+      auth,
+      branch,
+    });
+    await workers.sync.git_deleteOrigin({
+      workDir: workDirPath,
+    });
+    await updateRepositories((data) => {
+      const newData = { ...data };
+      newData.workingCopies[workDirPath] = { mainBranch: branch };
+      return newData;
+    });
+    repositoriesChanged.main!.trigger({
+      changedWorkingPaths: [],
+      deletedWorkingPaths: [],
+      createdWorkingPaths: [workDirPath],
+    });
+    return { workDir: workDirPath, success: true };
+
+  } catch (e) {
+    fs.removeSync(workDirPath);
+    throw e;
+  }
 });
 
 

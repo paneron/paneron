@@ -43,6 +43,12 @@ export const addRepository = makeEndpoint.main(
   <{ workDir: string, success: true }>_,
 );
 
+export const addDisconnected = makeEndpoint.main(
+  'addRepositoryDisconnected',
+  <{ gitRemoteURL: string, branch: string, username: string, password?: string }>_,
+  <{ workDir: string, success: true }>_,
+)
+
 export const createRepository = makeEndpoint.main(
   'createRepository',
   <{ title?: string }>_,
