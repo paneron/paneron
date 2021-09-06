@@ -202,9 +202,8 @@ function syncRepoRepeatedly(
       repoSyncLog('debug', "Checking configuration");
       try {
         repoCfg = await readRepoConfig(workingCopyPath);
-        if (!repoCfg.author) {
-          repoSyncLog('error', "Configuration is missing author info");
-          return await unloadRepository(workingCopyPath);
+        if (!repoCfg.author && repoCfg.remote) {
+          repoSyncLog('error', "Configuration is missing author info required for remote sync");
         }
       } catch (e) {
         repoSyncLog('error', "Configuration cannot be read");
@@ -257,7 +256,7 @@ function syncRepoRepeatedly(
 
     // 2. Perform actual sync.
     try {
-      if (repoCfg.remote) {
+      if (repoCfg.remote && repoCfg.author) {
         const auth = await getAuth(repoCfg.remote.url, repoCfg.remote.username);
 
         repoSyncLog('info', "Got auth data; pulling…");
