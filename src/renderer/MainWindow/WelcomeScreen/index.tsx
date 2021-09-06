@@ -3,9 +3,9 @@
 
 import React, { useContext, useState } from 'react';
 import { jsx, css } from '@emotion/react';
-import { Button, Classes, Colors, Icon, InputGroup, Tab, Tabs } from '@blueprintjs/core';
+import { Button, Classes, Colors, Icon, IconName, InputGroup, Tab, Tabs } from '@blueprintjs/core';
 import useDebounce from '@riboseinc/paneron-extension-kit/useDebounce';
-import { createRepository } from 'repositories/ipc';
+import { createRepository, Repository } from 'repositories/ipc';
 import useRepositoryList from '../useRepositoryList';
 import { Context } from '../context';
 import RepositoryDetails from './RepositoryDetails';
@@ -86,7 +86,7 @@ function ({ onOpenDataset, className }) {
         <Tab
           key={`repo-${repo.gitMeta.workingCopyPath}`}
           id={`Repository-${repo.gitMeta.workingCopyPath}`}
-          title={<><Icon icon="git-repo" />&ensp;{repo.paneronMeta?.title ?? '(no title)'}</>}
+          title={<><Icon icon={getRepoIcon(repo)} />&ensp;{repo.paneronMeta?.title ?? '(no title)'}</>}
           panel={<RepositoryDetails
             workDir={repo.gitMeta.workingCopyPath}
             onOpen={dsID => handleOpenDataset(repo.gitMeta.workingCopyPath, dsID)}
@@ -95,12 +95,12 @@ function ({ onOpenDataset, className }) {
       )}
       <Tabs.Expander />
       <Tab
-        title={<><Icon icon="add" />&ensp;Create repository</>}
+        title={<><Icon icon="lab-test" />&ensp;New local repository</>}
         id="create-repo"
         panel={<CreateRepoForm onCreate={handleCreateRepo} css={css`padding: 10px;`} />}
       />
       <Tab
-        title={<><Icon icon="bring-data" />&ensp;Add shared repository</>}
+        title={<><Icon icon="add" />&ensp;Add shared repository</>}
         id="add-shared-repo"
         panel={<AddSharedRepository css={css`padding: 10px;`} />}
       />
@@ -117,6 +117,17 @@ function ({ onOpenDataset, className }) {
     </Tabs>
   );
 };
+
+
+function getRepoIcon(repo: Repository): IconName {
+  const publishingToRemote = repo.gitMeta.remote?.writeAccess === true;
+  const fetchingChanges = repo.gitMeta.remote && repo.gitMeta.remote?.writeAccess !== true;
+  return publishingToRemote
+    ? 'cloud'
+    : fetchingChanges
+      ? 'cloud-download'
+      : 'lab-test';
+}
 
 
 export default WelcomeScreen;
