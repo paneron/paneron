@@ -418,8 +418,8 @@ queryGitRemote.main!.handle(async ({ url, username, password }) => {
 addRepository.main!.handle(async ({ gitRemoteURL, branch, username, password }) => {
   const workDirPath = path.join(DEFAULT_WORKING_DIRECTORY_CONTAINER, makeUUIDv4());
 
-  if (fs.existsSync(workDirPath)) {
-    throw new Error("A repository with this name already exists. Please choose another name!");
+  if (fs.existsSync(workDirPath) || ((await readRepositories())).workingCopies[workDirPath] !== undefined) {
+    throw new Error("Could not generate a valid non-occupied repository path inside given container.");
   }
 
   const { author } = await getDefaults();
