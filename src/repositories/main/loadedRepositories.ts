@@ -196,7 +196,7 @@ function syncRepoRepeatedly(
     // 1.1. Check configuration
     let repoCfg: GitRepository | null;
     if (!loadedRepositories[workingCopyPath]) {
-      repoSyncLog('warn', "Removing status and aborting sync");
+      repoSyncLog('info', "Not loaded; clearing status cache and aborting sync");
       return await unloadRepository(workingCopyPath);
     } else {
       repoSyncLog('debug', "Checking configuration");
