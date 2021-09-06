@@ -281,7 +281,7 @@ function syncRepoRepeatedly(
           });
         }
 
-        repoSyncLog('info', "Finishing sync attemtp");
+        repoSyncLog('info', "Finishing sync attempt");
 
         if (loadedRepositories[workingCopyPath]) {
           repoSyncLog('debug', "Cooldown before next sync", REPOSITORY_SYNC_INTERVAL_MS);
