@@ -52,6 +52,8 @@ export namespace Git {
       auth: GitAuthentication
     }) => Promise<{ isBlank: boolean, canPush: boolean }>;
 
+    // TODO: workDir below is likely redundant?
+    // repoOperation decorator provides it for initialized workers.
     export type AddOrigin = (msg: {
       workDir: string
       url: string
