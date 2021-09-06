@@ -425,7 +425,7 @@ addRepository.main!.handle(async ({ gitRemoteURL, branch, username, password }) 
   const { author } = await getDefaults();
 
   if (branch === undefined || branch.trim() === '') {
-    throw new Error("Please specify default main branch name in settings.");
+    throw new Error("Main branch name is not specified.");
   }
 
   const auth = { username, password };
