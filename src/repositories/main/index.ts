@@ -49,7 +49,7 @@ import {
   setNewRepoDefaults as setDefaults,
 } from './readRepoConfig';
 
-import { saveAuth, getAuth } from './repoAuth';
+import { saveAuth, getAuth } from './remoteAuth';
 
 
 const DEFAULT_WORKING_DIRECTORY_CONTAINER = path.join(app.getPath('userData'), 'working_copies');

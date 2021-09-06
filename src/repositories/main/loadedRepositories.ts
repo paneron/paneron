@@ -10,7 +10,7 @@ import { repositoryBuffersChanged, repositoryStatusChanged } from '../ipc';
 
 import { getRepoWorkers, RepoWorkers, terminateRepoWorkers } from './workerManager';
 import { readRepoConfig } from './readRepoConfig';
-import { getAuth } from './repoAuth';
+import { getAuth } from './remoteAuth';
 
 
 const loadedRepositories: {
