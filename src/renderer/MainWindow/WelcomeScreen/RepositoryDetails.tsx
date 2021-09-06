@@ -1,13 +1,14 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { jsx, css } from '@emotion/react';
 import { Menu, MenuDivider, MenuItem, NonIdealState, Panel, PanelStack2, Spinner } from '@blueprintjs/core';
-import { describeRepository, Repository, repositoryBuffersChanged } from 'repositories/ipc';
+import { addDisconnected, describeRepository, Repository, repositoryBuffersChanged } from 'repositories/ipc';
 import RepositorySettings from './RepositorySettings';
 import InitializeDataset from './InitializeDataset';
 import DatasetMenuItem from './DatasetMenuItem';
+import { Context } from '../context';
 
 
 const RepositoryDetails: React.FC<{ workDir: string; onOpen: (datasetID: string) => void; }> = function ({ workDir, onOpen }) {
@@ -103,6 +104,41 @@ interface RepoMenuProps {
 const RepoMenu: React.FC<RepoMenuProps> = function ({ repo, onOpenDataset, onOpenSettings, onCreateDataset }) {
   const { workingCopyPath: workDir } = repo.gitMeta;
 
+  const { performOperation, isBusy } = useContext(Context);
+
+  const makePrivateCopy = repo.gitMeta.remote && !isBusy
+    ? performOperation('making private working copy', async () => {
+        repo.gitMeta.remote
+          ? await addDisconnected.renderer!.trigger({
+              gitRemoteURL: repo.gitMeta.remote.url,
+              username: repo.gitMeta.remote.username,
+              branch: repo.gitMeta.mainBranch,
+            })
+          : void 0;
+      })
+    : () => void 0;
+
+  const publishingToRemote = repo.gitMeta.remote?.writeAccess === true;
+  const fetchingChanges = repo.gitMeta.remote && repo.gitMeta.remote?.writeAccess !== true;
+  const sharingMenu = publishingToRemote
+    ? <>
+        <MenuItem
+          text="Remote connected"
+          icon="cloud"
+          disabled />
+        <MenuItem
+          text="Make private working copy"
+          title="Good for experiments and tests."
+          onClick={makePrivateCopy}
+          icon="lab-test" />
+      </>
+    : fetchingChanges
+      ? <MenuItem
+          text="Remote connected (fetching only)"
+          icon="cloud-download"
+          disabled />
+      : null;
+
   const settingsMenuItem: JSX.Element = (
     <MenuItem
       text="Repository settings"
@@ -121,13 +157,14 @@ const RepoMenu: React.FC<RepoMenuProps> = function ({ repo, onOpenDataset, onOpe
           workDir={workDir}
           datasetID={dsID}
           onClick={onOpenDataset ? () => onOpenDataset!(dsID) : undefined} />)}
-        <MenuDivider title="Manage" />
         <MenuItem
           text="Create new dataset"
           icon="add"
           onClick={onCreateDataset}
           disabled={!onCreateDataset} />
+        <MenuDivider />
         {settingsMenuItem}
+        {sharingMenu}
       </Menu>
     );
   } else {
