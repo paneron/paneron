@@ -184,6 +184,12 @@ export interface CommitRequestMessage extends AuthoringGitOperationParams, Datas
   _dangerouslySkipValidation?: true
 }
 
+export interface TreeUpdateCommitRequestMessage extends AuthoringGitOperationParams, DatasetOperationParams {
+  oldSubtreePath: string
+  newSubtreePath: string | null // NOTE: if null, deletes subtree
+  commitMessage: string
+}
+
 export interface DeleteRequestMessage extends GitOperationParams {
   yesReallyDestroyLocalWorkingCopy: true
 }

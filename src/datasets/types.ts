@@ -5,7 +5,7 @@ import { BufferChangeset } from '@riboseinc/paneron-extension-kit/types/buffers'
 import { CommitOutcome, PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
 import { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
 import { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
-import { CommitRequestMessage, DatasetOperationParams, GitOperationParams } from 'repositories/types';
+import { CommitRequestMessage, DatasetOperationParams, GitOperationParams, TreeUpdateCommitRequestMessage } from 'repositories/types';
 
 
 export type ReturnsPromise<F extends (...opts: any[]) => any> =
@@ -127,6 +127,12 @@ export namespace API {
        Returns commit hash and/or conflicts, if any. */
     export type UpdateObjects =
       (msg: CommitRequestMessage) => Promise<CommitOutcome>
+
+    /* This proxies a call to repository manager,
+       requesting to delete or move an entire subtree.
+       Does not do any consistency checks and can ruin data integrity if not used carefully. */
+    export type UpdateTree =
+      (msg: TreeUpdateCommitRequestMessage) => Promise<CommitOutcome>
   }
 
   export namespace Util {

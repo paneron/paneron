@@ -1,5 +1,6 @@
 import * as R from 'ramda';
-import { ChangeStatus } from '@riboseinc/paneron-extension-kit/types/changes';
+import path from 'path';
+import { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
 import { ObjectChangeset, ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
 import { normalizeDatasetDir, updateDatasetIndexesIfNeeded } from '../loadedDatasets';
@@ -49,6 +50,43 @@ async function ({
   //const idx = getLoadedDataset(workDir, datasetDir).indexes.default as Datasets.Util.DefaultIndex;
   //await getDefaultIndex(workDir, datasetDirNormalized);
   //await fillInDefaultIndex(workDir, datasetDir, idx, true);
+
+  return result;
+}
+
+
+export const updateTree: Datasets.Data.UpdateTree =
+async function ({
+  workDir,
+  datasetDir,
+  author,
+  commitMessage,
+  oldSubtreePath,
+  newSubtreePath,
+}) {
+  const datasetDirNormalized = normalizeDatasetDir(datasetDir);
+  const { workers: { sync } } = getLoadedRepository(workDir);
+
+  let result: CommitOutcome;
+
+  if (newSubtreePath) {
+    result = await sync.repo_moveTree({
+      workDir,
+      author,
+      commitMessage,
+      oldTreeRoot: path.posix.join(datasetDirNormalized, oldSubtreePath),
+      newTreeRoot: path.posix.join(datasetDirNormalized, newSubtreePath),
+    });
+  } else {
+    result = await sync.repo_deleteTree({
+      workDir,
+      author,
+      commitMessage,
+      treeRoot: path.posix.join(datasetDir, oldSubtreePath),
+    });
+  }
+
+  updateDatasetIndexesIfNeeded(workDir, datasetDirNormalized);
 
   return result;
 }

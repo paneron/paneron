@@ -107,6 +107,18 @@ export const updateObjects = makeEndpoint.main(
   <CommitOutcome>_,
 );
 
+export const updateSubtree = makeEndpoint.main(
+  'datasets_updateSubtree',
+  <{
+    workingCopyPath: string
+    datasetPath: string
+    commitMessage: string
+    subtreeRoot: string // dataset-relative
+    newSubtreeRoot: string | null // if null, deletes subtree
+  }>_,
+  <CommitOutcome>_,
+);
+
 
 // Events
 

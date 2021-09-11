@@ -27,6 +27,7 @@ import { getObjectDataset as getDataset } from './objects/read';
 
 import {
   updateObjects as _updateObjects,
+  updateTree as _updateTree,
 } from './objects/update';
 
 import {
@@ -43,6 +44,7 @@ import {
   locateFilteredIndexPosition,
   updateObjects,
   listRecentlyOpenedDatasets,
+  updateSubtree,
 } from '../ipc';
 
 import {
@@ -318,6 +320,22 @@ updateObjects.main!.handle(async ({ workingCopyPath, datasetPath, objectChangese
     commitMessage,
     _dangerouslySkipValidation,
     author,
+  });
+});
+
+
+updateSubtree.main!.handle(async ({ workingCopyPath, datasetPath, commitMessage, subtreeRoot, newSubtreeRoot }) => {
+  const { author } = await readRepoConfig(workingCopyPath);
+  if (!author) {
+    throw new Error("Repository configuration is missing author information");
+  }
+  return await _updateTree({
+    workDir: workingCopyPath,
+    datasetDir: datasetPath,
+    commitMessage,
+    author,
+    oldSubtreePath: subtreeRoot,
+    newSubtreePath: newSubtreeRoot,
   });
 });
 
