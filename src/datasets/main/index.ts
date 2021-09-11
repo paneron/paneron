@@ -135,15 +135,17 @@ initializeDataset.main!.handle(async ({ workingCopyPath, meta: datasetMeta, data
   const datasetMetaPath = path.join(datasetPath, DATASET_FILENAME);
   const migrationChangeset = initialMigrationResult.bufferChangeset;
 
+  const bufferChangeset = {
+    [datasetMetaPath]: datasetMetaAddition,
+    [PANERON_REPOSITORY_META_FILENAME]: repoMetaChange,
+    ...migrationChangeset,
+  };
+
   const { newCommitHash } = await repos.repo_updateBuffers({
     workDir: workingCopyPath,
     commitMessage: `Initialize dataset at ${datasetPath}`,
     author,
-    bufferChangeset: {
-      [datasetMetaPath]: datasetMetaAddition,
-      [PANERON_REPOSITORY_META_FILENAME]: repoMetaChange,
-      ...migrationChangeset,
-    },
+    bufferChangeset,
   });
 
   if (newCommitHash) {
