@@ -11,6 +11,7 @@ import { Context } from '../context';
 import DatasetExtension, { DatasetExtensionCardProps } from 'plugins/renderer/DatasetExtensionCard';
 import { Extension } from 'plugins/types';
 import { listAvailablePlugins } from 'plugins';
+import { loadRepository } from 'repositories/ipc';
 import { initializeDataset, proposeDatasetPath } from 'datasets/ipc';
 
 
@@ -44,6 +45,9 @@ const InitializeDataset: React.FC<{ workDir: string; repoInfo?: Repository; clas
       throw new Error("Missing information required for dataset initialization");
     }
     if (title && checkResult.value.path && selectedExtension) {
+      await loadRepository.renderer!.trigger({
+        workingCopyPath: workDir,
+      });
       await initializeDataset.renderer!.trigger({
         workingCopyPath: workDir,
         meta: {
