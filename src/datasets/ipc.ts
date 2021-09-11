@@ -5,7 +5,7 @@ import { EmptyPayload, makeEndpoint, _ } from '../ipc';
 import { DatasetInfo, DatasetType, MigrationSequenceOutcome, RecentlyOpenedDataset } from './types';
 
 
-/* List dataset types, provided by extensions, available for dataset initialization */
+/** List dataset types, provided by extensions, available for dataset initialization */
 export const listAvailableTypes = makeEndpoint.main(
   'listAvailableTypes',
   <EmptyPayload>_,
@@ -24,14 +24,14 @@ export const getDatasetInfo = makeEndpoint.main(
   <{ info: DatasetInfo | null }>_
 );
 
-/* Checks whether a dataset can be initialized at given location. Returns a path if it’s valid, undefined otherwise. */
+/** Checks whether a dataset can be initialized at given location. Returns a path if it’s valid, undefined otherwise. */
 export const proposeDatasetPath = makeEndpoint.main(
   'proposeDatasetPath',
   <{ workingCopyPath: string, datasetPath?: string /* Can be undefined, meaning dataset is at repository root */}>_,
   <{ path?: string }>_,
 );
 
-/* Initializes a new dataset using dataset type extension specified in meta.type */
+/** Initializes a new dataset using dataset type extension specified in meta.type */
 export const initializeDataset = makeEndpoint.main(
   'initializeDataset',
   <{
@@ -42,8 +42,8 @@ export const initializeDataset = makeEndpoint.main(
   <{ info: DatasetInfo }>_,
 );
 
-/* Loads dataset. This may call extension to run indexing, etc.
-   throw if a migration is outstanding. */
+/** Loads dataset. This may call extension to run indexing, etc.
+    throw if a migration is outstanding. */
 export const loadDataset = makeEndpoint.main(
   'loadDataset',
   <{ workingCopyPath: string, datasetPath: string }>_,

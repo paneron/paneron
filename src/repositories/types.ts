@@ -51,11 +51,11 @@ export interface NewRepositoryDefaults {
 
 // Repository status
 
-/* Initializing a new repository locally */
+/** Initializing a new repository locally */
 interface CreationStatus {
   operation: 'creating'
 }
-/* During start up */
+/** During start up */
 interface InitStatus {
   operation: 'initializing'
 }
@@ -109,7 +109,7 @@ export type RepoStatusUpdater = (newStatus: RepoStatus) => void;
 // Git-related types used by worker
 // TODO: Consolidate Git-related types
 
-/* Authentication as expected by Isomorphic Git */
+/** Authentication as expected by Isomorphic Git */
 export interface GitAuthentication {
   username?: string
   password?: string

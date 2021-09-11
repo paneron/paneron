@@ -7,10 +7,11 @@ import git from 'isomorphic-git';
 import { Repositories } from '../types';
 
 
-/* Applies given BufferChangeset and commits changes.
-   Does not check for conflicts.
+/**
+ * Applies given BufferChangeset and commits changes.
+ * Does not check for conflicts.
 
-   TODO: Check for conflicts.
+ * TODO: Check for conflicts.
 */
 export const updateBuffers: Repositories.Data.UpdateBuffersWithStatusReporter = async function (
   opts,

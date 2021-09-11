@@ -94,8 +94,7 @@ function lockingRepoOperationWithStatusReporter<I extends GitOperationParams, O>
 }
 
 
-// Worker API
-
+/** Worker API */
 export type WorkerSpec = ModuleMethods & WorkerMethods;
 
 

@@ -90,14 +90,15 @@ export namespace Repositories {
 
   export namespace Data {
 
-    /* Takes commit hash before and after a change.
-
-       Infers which buffer paths changed,
-       infers which object paths in which datasets are affected,
-       reindexes objects as appropriate,
-       and sends IPC events to let Paneron & extension windows
-       refresh shown data.
-    */
+    /**
+     * Takes commit hash before and after a change.
+     * 
+     * Infers which buffer paths changed,
+     * infers which object paths in which datasets are affected,
+     * reindexes objects as appropriate,
+     * and sends IPC events to let Paneron & extension windows
+     * refresh shown data.
+     */
     export type ResolveChanges = (msg: GitOperationParams & {
       rootPath: string
       oidBefore: string
@@ -106,29 +107,35 @@ export namespace Repositories {
       changedBuffers: [path: string, changeStatus: ChangeStatus][]
     }>
 
-    /* Given a list of commit hashes,
-       walks back history and returns one that was created most recently. */
+    /**
+     * Given a list of commit hashes,
+     * walks back history and returns one that was created most recently.
+     */
     export type ChooseMostRecentCommit = (msg: GitOperationParams & {
       candidates: string[]
     }) => Promise<{ commitHash: string }>
 
-    /* Returns the hash of the latest commit in the repository. */
+    /** Returns the hash of the latest commit in the repository. */
     export type GetCurrentCommit = (msg: GitOperationParams) =>
       Promise<{ commitHash: string }>
 
-    /* Given a list of buffer paths,
-       returns a map of buffer paths to buffers or null. */
+    /**
+     * Given a list of buffer paths,
+     * returns a map of buffer paths to buffers or null.
+     */
     export type GetBufferDataset = (msg: GitOperationParams & {
       paths: string[]
     }) => Promise<BufferDataset>
 
-    /* Given a path, returns a map of descendant buffer paths
-       to buffers. */
+    /**
+     * Given a path, returns a map of descendant buffer paths
+     * to buffers.
+     */
     export type ReadBuffers = (msg: GitOperationParams & {
       rootPath: string
     }) => Promise<Record<string, Uint8Array>>
 
-    /* Given a path, returns a map of descendant buffer paths
+    /** Given a path, returns a map of descendant buffer paths
        to buffers. */
     export type ReadBuffersAtVersion = (msg: GitOperationParams & {
       rootPath: string
@@ -160,8 +167,11 @@ export namespace Repositories {
 export default interface WorkerMethods {
   destroy: () => Promise<void>
 
-  /* Initialize worker: give it Git repo’s working directory path,
-     and get an observable for monitoring repository status in return. */
+  /**
+   * Initialize worker: give it Git repo’s working directory path,
+   * and get an observable for monitoring repository status in return.
+   * 
+   */
   initialize: (msg: { workDirPath: string }) => Observable<RepoStatus>
 
 

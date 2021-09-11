@@ -287,7 +287,7 @@ export default {
 };
 
 
-/* Given paths, reads objects from filesystem into the index. */
+/** Given paths, reads objects from filesystem into the index. */
 async function _writeDefaultIndex(
   workDir: string,
   datasetDir: string,
@@ -361,6 +361,7 @@ export function changesetToPathChanges(
 
 // Below, datasetDir is expected to be normalized (no leading slash).
 
+/** Strips leading and trailing slashes from dataset directory. */
 export function normalizeDatasetDir(datasetDir: string) {
   return stripTrailingSlash(stripLeadingSlash(datasetDir));
 }
@@ -380,7 +381,7 @@ export function getLoadedDataset(
 
 // Indexes
 
-/* Writes default index from scratch. */
+/** Writes default index from scratch. */
 export async function fillInDefaultIndex(
   workDir: string,
   datasetDir: string,
@@ -499,7 +500,7 @@ export async function fillInDefaultIndex(
 }
 
 
-/* Fills in filtered index from scratch. */
+/** Fills in filtered index from scratch. */
 async function fillInFilteredIndex(
   defaultIndex: Datasets.Util.DefaultIndex,
   filteredIndex: Datasets.Util.FilteredIndex,
@@ -843,8 +844,7 @@ async function indexMeta(
 // }
 
 
-/* Updates default index and any affected filtered indexes. Notifies the UI.
-   To be called when */
+/** Updates default index and any affected filtered indexes. Notifies the UI. */
 export async function updateDatasetIndexesIfNeeded(
   workDir: string,
   datasetDir: string, // Should be normalized.
@@ -1091,7 +1091,7 @@ export async function updateDatasetIndexesIfNeeded(
 }
 
 
-/* Drops and rebuilds filtered index sorted DB from its keyed DB. */
+/** Drops and rebuilds filtered index sorted DB from its keyed DB. */
 async function rebuildFilteredIndexSortedDB(idx: Datasets.Util.FilteredIndex, onItem?: (obj: number) => void) {
   await idx.sortedDBHandle.clear();
   let position: number = 0;
