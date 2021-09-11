@@ -24,7 +24,10 @@ import { getLoadedRepository } from 'repositories/main/loadedRepositories';
 
 import loadedDatasets from './loadedDatasets';
 import { getObjectDataset as getDataset } from './objects/read';
-import { updateObjects as updateObj } from './objects/update';
+
+import {
+  updateObjects as _updateObjects,
+} from './objects/update';
 
 import {
   deleteDataset,
@@ -308,7 +311,7 @@ updateObjects.main!.handle(async ({ workingCopyPath, datasetPath, objectChangese
     throw new Error("Repository configuration is missing author information");
   }
   // TODO: Save a version
-  return await updateObj({
+  return await _updateObjects({
     workDir: workingCopyPath,
     datasetDir: datasetPath,
     objectChangeset,
