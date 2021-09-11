@@ -1,4 +1,4 @@
-import { ensureFile, removeSync, remove } from 'fs-extra';
+import { ensureFile, removeSync, remove, move } from 'fs-extra';
 import fs from 'fs';
 import path from 'path';
 import git from 'isomorphic-git';
@@ -95,6 +95,64 @@ export const updateBuffers: Repositories.Data.UpdateBuffersWithStatusReporter = 
       status: 'ready',
     });
   }
+
+  return { newCommitHash };
+}
+
+
+export const moveTree: Repositories.Data.MoveTree = async function ({
+  workDir,
+  oldTreeRoot,
+  newTreeRoot,
+  commitMessage,
+  author,
+}) {
+  // This will throw in case something is off
+  // and workDir is not a Git repository.
+  await git.resolveRef({ fs, dir: workDir, ref: 'HEAD' });
+
+  try {
+    const oldFullPath = path.join(workDir, oldTreeRoot);
+    const newFullPath = path.join(workDir, newTreeRoot);
+
+    await move(oldFullPath, newFullPath, { overwrite: false });
+
+    const WORKDIR = 2, FILE = 0;
+
+    const deletedPaths = (await git.statusMatrix({ fs, dir: workDir })).
+      filter(row => row[WORKDIR] === 0).
+      filter(row => row[FILE].startsWith(`${oldTreeRoot}/`)).
+      map(row => row[FILE]);
+
+    for (const dp of deletedPaths) {
+      await git.remove({ fs, dir: workDir, filepath: dp });
+    }
+
+    const addedPaths = (await git.statusMatrix({ fs, dir: workDir })).
+      filter(row => row[WORKDIR] === 2).
+      filter(row => row[FILE].startsWith(`${newTreeRoot}/`)).
+      map(row => row[FILE]);
+
+    for (const ap of addedPaths) {
+      await git.add({ fs, dir: workDir, filepath: ap });
+    }
+
+  } catch (e) {
+    await git.checkout({
+      fs,
+      dir: workDir,
+      force: true,
+      filepaths: [oldTreeRoot, newTreeRoot],
+    });
+    throw e;
+  }
+
+  const newCommitHash = await git.commit({
+    fs,
+    dir: workDir,
+    message: commitMessage,
+    author: author,
+  });
 
   return { newCommitHash };
 }

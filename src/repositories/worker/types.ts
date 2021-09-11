@@ -147,6 +147,12 @@ export namespace Repositories {
       commitMessage: string
     }) => Promise<CommitOutcome>
 
+    export type MoveTree = (msg: AuthoringGitOperationParams & {
+      oldTreeRoot: string
+      newTreeRoot: string
+      commitMessage: string
+    }) => Promise<CommitOutcome>
+
   }
 }
 
@@ -191,5 +197,6 @@ export default interface WorkerMethods {
   repo_readBuffersAtVersion: Repositories.Data.ReadBuffersAtVersion
   repo_updateBuffers: Repositories.Data.UpdateBuffers
   repo_deleteTree: Repositories.Data.DeleteTree
+  repo_moveTree: Repositories.Data.MoveTree
   repo_resolveChanges: Repositories.Data.ResolveChanges
 }

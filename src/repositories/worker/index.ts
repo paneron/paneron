@@ -21,7 +21,7 @@ import {
 import WorkerMethods from './types';
 
 import { getBufferDataset, readBuffers, readBuffersAtVersion } from './buffers/read';
-import { deleteTree, updateBuffers } from './buffers/update';
+import { deleteTree, moveTree, updateBuffers } from './buffers/update';
 import { resolveChanges } from './buffers/list';
 import commits from './git/commits';
 import remotes from './git/remotes';
@@ -207,6 +207,7 @@ const methods: WorkerSpec = {
     readBuffersAtVersion(workDir, rootPath, commitHash),
   repo_getBufferDataset: getBufferDataset,
   repo_deleteTree: lockingRepoOperation(deleteTree),
+  repo_moveTree: lockingRepoOperation(moveTree),
   repo_resolveChanges: lockingRepoOperation(resolveChanges),
 
   git_workDir_discardUncommittedChanges: lockingRepoOperation(workDir.discardUncommitted),
