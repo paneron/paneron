@@ -16,6 +16,8 @@ import { copyObjects, requestCopiedObjects } from 'clipboard/ipc';
 
 import { describeRepository } from 'repositories/ipc';
 
+import { updateSetting, useSettings } from 'renderer/MainWindow/settings';
+
 import { DatasetInfo } from '../types';
 
 import {
@@ -30,8 +32,6 @@ import {
   updateObjects,
   updateSubtree,
 } from '../ipc';
-
-import { updateSetting, useSettings } from 'renderer/MainWindow/settings';
 
 
 export interface ContextGetterProps {
