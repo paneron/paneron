@@ -28,7 +28,15 @@ export function toBufferChangeset(
   for (const [objectPath, change] of Object.entries(objectChangeset)) {
     const rule = findSerDesRuleForPath(objectPath);
 
-    const oldObjectBuffersRelative = rule.serialize(change.oldValue, {});
+    // When conflict check is disabled
+    // (_dangerouslySkipValidation in updateObjects),
+    // `oldValue`s will be undefined.
+    // However, we can actually ignore them, because the only caller
+    // (updateObjects) does not actually use them.
+    const oldObjectBuffersRelative =
+      change.oldValue !== undefined
+        ? rule.serialize(change.oldValue, {})
+        : {};
     const newObjectBuffersRelative = rule.serialize(change.newValue, {});
 
     const bufferChanges = mergeBufferDatasetsIntoChangeset(
