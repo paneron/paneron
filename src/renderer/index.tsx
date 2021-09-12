@@ -56,7 +56,7 @@ async function renderApp() {
         log.error(`Unable to import or initialize top-level window component ${componentID}`, e);
         topLevelEl = <ErrorState
           viewName="window"
-          error={e}
+          error={(e as any)?.toString() ?? `${e}`}
           technicalDetails={<>Unable to initialize component <code>{componentID}</code>.</>} />;
       }
     }
