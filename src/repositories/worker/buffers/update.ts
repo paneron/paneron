@@ -10,9 +10,14 @@ import { Repositories } from '../types';
 /**
  * Applies given BufferChangeset and commits changes.
  * Does not check for conflicts.
-
- * TODO: Check for conflicts.
-*/
+ *
+ * NOTE: Does not check for conflicts at this point
+ * (`oldValue`s in the changeset are ignored).
+ *
+ * TODO: Verify preexisting values at physical buffer level as well,
+ * or do something about BufferChangeset being passed
+ * here with unnecessary `oldValue`s.
+ */
 export const updateBuffers: Repositories.Data.UpdateBuffersWithStatusReporter = async function (
   opts,
   updateStatus,
