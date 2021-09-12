@@ -204,7 +204,7 @@ export namespace API {
       keyer?: FilteredIndexKeyer
     };
 
-    export type FilteredIndexPredicate = (itemPath: string, item: Record<string, any>) => boolean;
+    export type FilteredIndexPredicate = (objPath: string, obj: Record<string, any>) => boolean;
 
     export type FilteredIndexKeyer = (item: Record<string, any>) => string | null
 
