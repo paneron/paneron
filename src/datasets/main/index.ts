@@ -141,6 +141,8 @@ initializeDataset.main!.handle(async ({ workingCopyPath, meta: datasetMeta, data
     ...migrationChangeset,
   };
 
+  log.info("datasets: Initializing with buffer changeset", JSON.stringify(bufferChangeset, undefined, 4), datasetPath);
+
   const { newCommitHash } = await repos.repo_updateBuffers({
     workDir: workingCopyPath,
     commitMessage: `Initialize dataset at ${datasetPath}`,
