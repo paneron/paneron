@@ -801,7 +801,7 @@ function getDefaultIndexStatusReporter(workingCopyPath: string, datasetPath: str
 
 const INDEX_META_MARKER_DB_KEY: string = '**meta';
 
-/* Fetch or update index metadata. */
+/** Fetch or update index metadata. */
 async function indexMeta(
     idx: Datasets.Util.ActiveDatasetIndex<any>,
     newMeta?: Datasets.Util.IndexMeta | null,

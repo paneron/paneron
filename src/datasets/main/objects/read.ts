@@ -7,7 +7,7 @@ import { API as Datasets } from '../../types';
 import { getDefaultIndex, normalizeDatasetDir } from '../loadedDatasets';
 
 
-/* Do not read too many objects at once. May be slow. */
+/** Do not read too many objects at once. May be slow. */
 export const getObjectDataset: Datasets.Data.GetObjectDataset = async function ({
   workDir,
   datasetDir,
@@ -34,9 +34,10 @@ export const getObjectDataset: Datasets.Data.GetObjectDataset = async function (
 }
 
 
-/* Reads structured object data.
-   Object must be loaded into default dataset index first.
-*/
+/**
+ * Reads structured object data.
+ * Object must be loaded into default dataset index first.
+ */
 export async function readObject(
   objectPath: string,
   workDir: string,
@@ -81,9 +82,17 @@ export async function readObject(
 // }
 
 
-/* Given a root path to an object, reads data from filesystem
-   and deserializes it into memory structure
-   according to the rule corresponding to given extension. */
+/**
+ * Given a root path to an object, reads data from filesystem
+ * and deserializes it into memory structure
+ * according to ser/des rule provided by Paneron core.
+ * 
+ * @param workDir repository working copy
+ * @param rootPath object path
+ * @returns Record<string, any> | null
+ */
+   
+   
 export async function readObjectCold(
   workDir: string,
   rootPath: string,
@@ -107,14 +116,15 @@ export async function readObjectCold(
 }
 
 
-/* Reads any number of versions of the same object.
-   Optimizes by only requesting worker & ser/des rule once for the whole procedure,
-   since it applies to the same object (just different versions of it).
-
-   The last argument is an array of commit hashes, and return value is an array of the same length.
-   Any element of the array can be either deserialized data of the object at that commit hash,
-   or null; however, if *all* values in the array are null, the error is raised.
-*/
+/**
+ * Reads any number of versions of the same object.
+ * Optimizes by only requesting worker & ser/des rule once for the whole procedure,
+ * since it applies to the same object (just different versions of it).
+ * 
+ * The last argument is an array of commit hashes, and return value is an array of the same length.
+ * Any element of the array can be either deserialized data of the object at that commit hash,
+ * or null; however, if *all* values in the array are null, the error is raised.
+ */ 
 export async function readObjectVersions
 <L extends number, C extends string[] & { length: L }>
 (workDir: string, datasetDir: string, objectPath: string, commitHashes: C):
