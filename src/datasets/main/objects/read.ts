@@ -69,8 +69,8 @@ export async function readObject(
 }
 
 
-/* Given a generator of object paths, yields objects.
-   Each object is created using the provided makeObject. */
+// /* Given a generator of object paths, yields objects.
+//    Each object is created using the provided makeObject. */
 // export async function* readObjectsCold(
 //   objectPaths: AsyncGenerator<string>,
 //   makeObject: (fromBuffers: Record<string, Uint8Array>) => Record<string, any>,
