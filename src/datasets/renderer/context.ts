@@ -14,6 +14,8 @@ import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateRed
 import { makeRandomID, chooseFileFromFilesystem, saveFileToFilesystem } from 'common';
 import { copyObjects, requestCopiedObjects } from 'clipboard/ipc';
 
+import { describeRepository } from 'repositories/ipc';
+
 import { DatasetInfo } from '../types';
 
 import {
@@ -97,9 +99,7 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
   return {
     title: datasetInfo.title,
 
-    logger: {
-      log: log.log,
-    },
+    logger: log,
 
     useSettings: () => {
       return useSettings(EXT_SETTINGS_SCOPE, {});
@@ -109,8 +109,23 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
       return useSettings('global', INITIAL_GLOBAL_SETTINGS);
     },
 
+    performOperation: <P>() => async () => (void 0) as unknown as P,
+
     updateSetting: async ({ key, value }) => {
       return await updateSetting(EXT_SETTINGS_SCOPE, { key, value });
+    },
+
+    useRemoteUsername: () => {
+      const resp = describeRepository.renderer!.useValue(
+        { workingCopyPath },
+        { info: { gitMeta: { workingCopyPath, mainBranch: '' } } },
+      );
+      const username = resp.value.info.gitMeta.remote?.username;
+      const value = username ? { username } : {};
+      return {
+        ...resp,
+        value,
+      };
     },
 
     copyObjects: async (dataset) => {
