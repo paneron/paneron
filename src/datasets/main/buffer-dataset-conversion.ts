@@ -58,6 +58,9 @@ function mergeBufferDatasetsIntoChangeset(
 
   for (const p of paths) {
     const change: BufferChange = {
+      // NOTE: Something may be fishy about null values here.
+      // Generally, null values mean absence of an object,
+      // while undefined means ommitted value (e.g., to disable oldValue comparison).
       oldValue: oldDataset[p] ?? null,
       newValue: newDataset[p] ?? null,
     };
