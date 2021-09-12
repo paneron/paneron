@@ -28,6 +28,7 @@ import {
   locateFilteredIndexPosition,
   objectsChanged,
   updateObjects,
+  updateSubtree,
 } from '../ipc';
 
 import { updateSetting, useSettings } from 'renderer/MainWindow/settings';
@@ -307,6 +308,16 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
     updateObjects: writeAccess
       ? async function _updateObjects (opts) {
           const result = (await updateObjects.renderer!.trigger({
+            ...datasetParams,
+            ...opts,
+          }));
+          return result.result;
+        }
+      : undefined,
+
+    updateTree: writeAccess
+      ? async function _updateSubtree (opts) {
+          const result = (await updateSubtree.renderer!.trigger({
             ...datasetParams,
             ...opts,
           }));
