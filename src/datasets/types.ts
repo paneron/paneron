@@ -49,13 +49,15 @@ export namespace API {
 
 
   export namespace Lifecycle {
-    /* Registers object specs and starts creating the default index
-       that contains all objects in the dataset. */
+    /**
+     * Registers object specs and starts creating the default index
+     * that contains all objects in the dataset.
+     */
     export type Load = (msg: DatasetOperationParams & {
       cacheRoot: string
     }) => Promise<void>
 
-    /* Stops all indexing, deregisters object specs. */
+    /** Stops all indexing, deregisters object specs. */
     export type Unload =
       (msg: DatasetOperationParams) => Promise<void>
 
@@ -65,20 +67,21 @@ export namespace API {
 
 
   export namespace Indexes {
-    /* Creates a custom index that filters items in default index
-       using given query expression that evaluates in context of each object.
 
-       Custom indexes contain object paths only, object data
-       is retrieved from default index.
-
-       Returns index ID that can be used to query items.
-    */
+    /**
+     * Creates a custom index that filters items in default index
+     * using given query expression that evaluates in context of each object.
+     * 
+     * Custom indexes contain object paths only, object data
+     * is retrieved from default index.
+     * 
+     * Returns index ID that can be used to query items. */
     export type GetOrCreateFiltered = (msg: DatasetOperationParams & {
       queryExpression: string
       keyExpression?: string
     }) => { indexID: string }
 
-    /* If indexID is omitted, default index is described. */
+    /** If indexID is omitted, default index is described. */
     export type Describe = (msg: DatasetOperationParams & {
       indexID?: string
     }) => { status: IndexStatus }
@@ -94,8 +97,8 @@ export namespace API {
     //   indexID?: string
     // }) => Promise<{ objectCount: number }>
 
-    /* Retrieves dataset-relative path of an object
-       in the index at specified position. */
+    /** Retrieves dataset-relative path of an object
+        in the index at specified position. */
     export type GetFilteredObject = (msg: DatasetOperationParams & {
       indexID: string
       position: number
@@ -110,27 +113,33 @@ export namespace API {
 
   export namespace Data {
 
-    /* Counts all objects in the dataset using default index. */
+    /** Counts all objects in the dataset using default index. */
     export type CountObjects =
       (msg: DatasetOperationParams) => Promise<{ objectCount: number }>
 
-    /* Returns structured data of objects matching given paths.
-       Uses object specs to build objects from buffers. */
+    /**
+     * Returns structured data of objects matching given paths.
+     * Uses object specs to build objects from buffers.
+     */
     export type GetObjectDataset = (msg: DatasetOperationParams & {
       objectPaths: string[]
     }) => Promise<ObjectDataset>
 
-    /* Converts given objects to buffers using previously registered object specs,
-       checks for conflicts,
-       makes changes to buffers in working area,
-       stages and commits.
-       Returns commit hash and/or conflicts, if any. */
+    /**
+     * Converts given objects to buffers using previously registered object specs,
+     * checks for conflicts,
+     * makes changes to buffers in working area,
+     * stages and commits.
+     * Returns commit hash and/or conflicts, if any.
+     */
     export type UpdateObjects =
       (msg: CommitRequestMessage) => Promise<CommitOutcome>
 
-    /* This proxies a call to repository manager,
-       requesting to delete or move an entire subtree.
-       Does not do any consistency checks and can ruin data integrity if not used carefully. */
+    /**
+     * This proxies a call to repository manager,
+     * requesting to delete or move an entire subtree.
+     * Does not do any consistency checks and can ruin data integrity if not used carefully.
+     */
     export type UpdateTree =
       (msg: TreeUpdateCommitRequestMessage) => Promise<CommitOutcome>
   }
@@ -138,7 +147,7 @@ export namespace API {
   export namespace Util {
 
     export interface LoadedDataset {
-      // Absolute path to directory that will contain index caches
+      /** Absolute path to directory that will contain index caches. */
       indexDBRoot: string
 
       indexes: {
@@ -175,18 +184,20 @@ export namespace API {
       objectCount: number
     }
 
-    /* A map of object path to deserialized object data or boolean false.
-       False values are stored at pre-indexing stage and indicate
-       that the objects exist but had not yet been indexed. */
+    /**
+     * A map of object path to deserialized object data or boolean false.
+     * False values are stored at pre-indexing stage and indicate
+     * that the objects exist but had not yet been indexed.
+     */
     export type DefaultIndex = ActiveDatasetIndex<Record<string, any> | false> & {
     };
 
+    /** This index’s dbHandle keeps custom keys associated with object paths
+        (which are keys in default index) */
     export type FilteredIndex = ActiveDatasetIndex<string> & {
-      /* This index’s dbHandle keeps custom keys associated with object paths
-         (which are keys in default index) */
 
-      /* A map of object’s numerical position according to the order of keys in this filtered index, and its path.
-         Requested can use that path to query default index for object data. */
+      /** A map of object’s numerical position according to the order of keys in this filtered index, and its path.
+          Requested can use that path to query default index for object data. */
       sortedDBHandle: LevelUp<EncodingDown<number, string>, AbstractIterator<number, string>>
       accessed: Date
       predicate: FilteredIndexPredicate
