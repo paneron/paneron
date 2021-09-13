@@ -294,15 +294,8 @@ app.on('quit', clearLockfile);
 
 // Querying extension directory
 
-//let _extensionCache: { [packageID: string]: Extension } | undefined = undefined;
 export async function fetchExtensions(): Promise<{ [packageID: string]: Extension }> {
   return (await axios.get("https://extensions.paneron.org/extensions.json")).data.extensions;
-  // if (_extensionCache === undefined) {
-  //   _extensionCache = (
-  //     (await axios.get("https://extensions.paneron.org/extensions.json")).
-  //     data.extensions);
-  // }
-  // return _extensionCache!;
 }
 
 
