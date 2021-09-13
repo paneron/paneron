@@ -1,3 +1,5 @@
+/** Note: dataset migrations are likely deprecated in the upcoming extension API update. */
+
 import path from 'path';
 import log from 'electron-log';
 
