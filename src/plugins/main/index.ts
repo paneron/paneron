@@ -319,7 +319,7 @@ export const worker: Promise<Thread & WorkerMethods> = new Promise((resolve, rej
     log.debug("Plugins: Spawning worker: Done");
 
     async function terminateWorker() {
-      log.debug("Plugins: Terminating worker")
+      log.debug("Plugins: Terminating worker");
       await Thread.terminate(worker);
     }
 
