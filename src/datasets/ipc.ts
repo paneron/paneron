@@ -24,7 +24,10 @@ export const getDatasetInfo = makeEndpoint.main(
   <{ info: DatasetInfo | null }>_
 );
 
-/** Checks whether a dataset can be initialized at given location. Returns a path if it’s valid, undefined otherwise. */
+/**
+ * Checks whether a dataset can be initialized at given location.
+ * Returns a path if it’s valid, undefined otherwise.
+ */
 export const proposeDatasetPath = makeEndpoint.main(
   'proposeDatasetPath',
   <{ workingCopyPath: string, datasetPath?: string /* Can be undefined, meaning dataset is at repository root */}>_,
@@ -42,8 +45,10 @@ export const initializeDataset = makeEndpoint.main(
   <{ info: DatasetInfo }>_,
 );
 
-/** Loads dataset. This may call extension to run indexing, etc.
-    throw if a migration is outstanding. */
+/**
+ * Loads dataset. This may call extension to run indexing, etc.
+ * Throws if a migration is outstanding.
+ */
 export const loadDataset = makeEndpoint.main(
   'loadDataset',
   <{ workingCopyPath: string, datasetPath: string }>_,
