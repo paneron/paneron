@@ -20,7 +20,15 @@ export const listRecentlyOpenedDatasets = makeEndpoint.main(
 
 export const getDatasetInfo = makeEndpoint.main(
   'getDatasetInfo',
-  <{ workingCopyPath: string, datasetPath?: string /* Can be undefined, meaning dataset is at repository root */}>_,
+  <{
+    workingCopyPath: string
+
+    /**
+     * Undefined datasetPath means dataset is at repository root,
+     * which is actually no longer supported.
+     */
+    datasetPath?: string
+  }>_,
   <{ info: DatasetInfo | null }>_
 );
 
