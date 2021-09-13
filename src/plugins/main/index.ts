@@ -340,14 +340,14 @@ export const worker: Promise<Thread & WorkerMethods> = new Promise((resolve, rej
       devPluginName,
     }).
     then(() => {
-      log.debug("Plugins: Installing plugins");
+      log.debug("Plugins: Init: Installing plugins based on configuration");
 
       worker.listInstalledPlugins().
       then((plugins) => {
         pluginManager.
         then(manager => {
           Promise.all(plugins.map(plugin => {
-            log.silly("Plugins: Installing in main", plugin.name, plugin.version);
+            log.silly("Plugins: Init: Installing in main", plugin.name, plugin.version);
             return new Promise((resolve, reject) => (
               ((devFolder && devPluginName === plugin.name)
                 ? manager.installFromPath(path.join(devFolder, plugin.name))
@@ -357,14 +357,14 @@ export const worker: Promise<Thread & WorkerMethods> = new Promise((resolve, rej
                   manager.require(plugin.name);
                   resolve(true);
                 } catch (e) {
-                  log.error("Plugins: Failed to require plugin during init; removing plugin", e)
+                  log.error("Plugins: Init: Failed to require plugin in main; removing plugin", e)
                   worker.remove({ name: plugin.name }).then(resolve).catch(reject);
                 }
               }).
               catch(reject)));
           })).
           then(() => {
-            log.debug("Plugins: Initializing worker: Done");
+            log.debug("Plugins: Init: Worker initialized");
             resolve(worker);
           }).
           catch(reject);
