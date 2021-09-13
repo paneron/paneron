@@ -233,7 +233,7 @@ export async function requireMainPlugin(name: string, version?: string): Promise
     }
 
     if (version !== undefined && installedVersion !== version) {
-      log.error("Plugins: Requiring main plugin: requested version is different from installed", name, version);
+      log.warn("Plugins: Requiring main plugin: Requested version is different from installed, reinstalling", name, version);
       await _removePlugin(name);
       installedVersion = await _installPlugin(name, version);
       //throw new Error("Installed extension version is different from requested");
