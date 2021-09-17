@@ -1,7 +1,7 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 
-import log from 'electron-log';
+//import log from 'electron-log';
 import { jsx, css } from '@emotion/react';
 import React, { useContext, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
@@ -12,6 +12,7 @@ import { unloadDataset } from 'datasets/ipc';
 import getDataset from 'datasets/renderer/getDataset';
 import { ContextGetterProps, getContext } from 'datasets/renderer/context';
 import { Context } from './context';
+import { DatasetInfo } from 'datasets/types';
 
 
 const NODE_MODULES_PATH = process.env.NODE_ENV === 'production'
@@ -26,14 +27,17 @@ const toaster = Toaster.create({ position: 'bottom' });
 
 const Dataset: React.FC<{ className?: string }> =
 function ({ className }) {
-  const { state: { selectedRepoWorkDir, selectedDatasetID }, showMessage } = useContext(Context);
+  const { state: { selectedRepoWorkDir, selectedDatasetID } } = useContext(Context);
+  const [isLoading, setLoading] = useState(false);
+  const [dsProps, setDatasetProperties] = useState<{
+    writeAccess: boolean;
+    dataset: DatasetInfo;
+    MainView: React.FC<DatasetContext & { className?: string }>;
+  } | null>(null);
 
-  const [datasetView, setDatasetView] = useState<JSX.Element | null>(null);
-  const [datasetContext, setDatasetContext] = useState<DatasetContext | null>(null);
-
-  const [_operationKey, setOperationKey] = useState<string | undefined>(undefined);
-  function performOperation<R>(gerund: string, func: () => Promise<R>) {
-    return async () => {
+  const [operationKey, setOperationKey] = useState<string | undefined>(undefined);
+  function performOperation<P extends any[], R>(gerund: string, func: (...opts: P) => Promise<R>) {
+    return async (...opts: P) => {
       const opKey = toaster.show({
         message: `${gerund}…`,
         intent: 'primary',
@@ -44,7 +48,7 @@ function ({ className }) {
       try {
         // TODO: Investigate why calls to console or electron-log from within func()
         // are not resulting in expected console output.
-        const result: R = await func();
+        const result: R = await func(...opts);
         toaster.dismiss(opKey);
         toaster.show({ message: `Done ${gerund}`, intent: 'success', icon: 'tick-circle' });
         setOperationKey(undefined);
@@ -73,37 +77,22 @@ function ({ className }) {
     }
   }
 
-  useEffect(() => {
-    (async () => {
-      if (selectedRepoWorkDir && selectedDatasetID) {
-        try {
-          const { MainView, dataset, writeAccess } = await getDataset(selectedRepoWorkDir, selectedDatasetID);
-
-          const datasetGetterProps: ContextGetterProps = {
-            writeAccess,
-            workingCopyPath: selectedRepoWorkDir,
-            datasetPath: selectedDatasetID,
-            nodeModulesPath: NODE_MODULES_PATH,
-            datasetInfo: dataset,
-            getObjectView: () => () => <></>,
-          };
-
-          const datasetContext = getContext(datasetGetterProps);
-          datasetContext.performOperation = performOperation;
-
-          setDatasetContext(datasetContext);
-          setDatasetView(<MainView {...datasetContext} />);
-        } catch (e) {
-          log.error("Error loading dataset", e);
-          setDatasetContext(null);
-          setDatasetView(<NonIdealState icon="heart-broken" title="Failed to load dataset" />);
-          showMessage({ intent: 'danger', icon: 'error', message: "Failed to load dataset" });
-        }
-      } else {
-        setDatasetContext(null);
-        setDatasetView(<NonIdealState icon="heart-broken" title="Nothing to show here" />);
+  const loadDataset = performOperation('loading dataset', async () => {
+    setLoading(true);
+    if (selectedRepoWorkDir && selectedDatasetID) {
+      try {
+        setDatasetProperties(await getDataset(selectedRepoWorkDir, selectedDatasetID));
+      } finally {
+        setLoading(false);
       }
-    })();
+    } else {
+      setLoading(false);
+      setDatasetProperties(null);
+    }
+  })
+
+  useEffect(() => {
+    loadDataset();
     return function cleanup() {
       if (selectedRepoWorkDir && selectedDatasetID) {
         unloadDataset.renderer!.trigger({
@@ -113,6 +102,26 @@ function ({ className }) {
       }
     }
   }, [selectedRepoWorkDir, selectedDatasetID]);
+
+  const ctx = selectedRepoWorkDir && selectedDatasetID && dsProps
+    ? { ...getContext({
+        writeAccess: dsProps.writeAccess,
+        workingCopyPath: selectedRepoWorkDir,
+        datasetPath: selectedDatasetID,
+        nodeModulesPath: NODE_MODULES_PATH,
+        datasetInfo: dsProps.dataset,
+        getObjectView: () => () => <></>,
+      }), performOperation, operationKey }
+    : null;
+
+  const view = ctx && dsProps
+    ? <dsProps.MainView {...ctx} />
+    : isLoading
+      ? <NonIdealState
+          icon={<Spinner />}
+          description={<>This should take a few seconds<br />Please make sure you’re online</>}
+        />
+      : <NonIdealState icon="heart-broken" description="Unable to load dataset" />
 
   return (
     <MathJax.Context
@@ -126,9 +135,9 @@ function ({ className }) {
         }}>
       <div css={css`display: flex; flex-flow: row nowrap;`} className={className}>
         <Helmet>
-          <title>{datasetContext?.title ?? selectedDatasetID} (dataset)</title>
+          <title>{ctx?.title ?? selectedDatasetID} (dataset)</title>
         </Helmet>
-        {datasetView}
+        {view}
       </div>
     </MathJax.Context>
   );
