@@ -10,7 +10,8 @@ import { IconSize, NonIdealState, Spinner, Toaster } from '@blueprintjs/core';
 import { DatasetContext } from '@riboseinc/paneron-extension-kit/types';
 import { unloadDataset } from 'datasets/ipc';
 import getDataset from 'datasets/renderer/getDataset';
-import { ContextGetterProps, getContext } from 'datasets/renderer/context';
+import { getContext } from 'datasets/renderer/context';
+import { ErrorBoundary } from '../widgets';
 import { Context } from './context';
 import { DatasetInfo } from 'datasets/types';
 
@@ -115,7 +116,7 @@ function ({ className }) {
     : null;
 
   const view = ctx && dsProps
-    ? <dsProps.MainView {...ctx} />
+    ? <ErrorBoundary viewName="dataset"><dsProps.MainView {...ctx} /></ErrorBoundary>
     : isLoading
       ? <NonIdealState
           icon={<Spinner />}
