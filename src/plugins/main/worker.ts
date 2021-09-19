@@ -90,8 +90,7 @@ async function updateConfig(updater: (data: PluginConfigData) => PluginConfigDat
 const methods: WorkerSpec = {
 
   async initialize({ cwd, pluginsPath, pluginConfigPath, devFolder, devPluginName }) {
-    await fs.ensureDir(pluginsPath);
-    await fs.ensureFile(pluginConfigPath);
+    configPath = pluginConfigPath;
 
     manager = new PluginManager({
       cwd,
@@ -100,24 +99,25 @@ const methods: WorkerSpec = {
       npmInstallMode: 'noCache',
     });
 
-    configPath = pluginConfigPath;
-
-    let plugins: PluginConfigData["installedPlugins"]
     try {
-      plugins = (await readConfig()).installedPlugins;
+      if ((await readConfig())?.installedPlugins?.length === undefined) {
+        throw new Error("Invalid plugin configuration");
+      };
     } catch (e) {
-      await fs.remove(configPath);
+      await fs.remove(pluginConfigPath);
+      await fs.remove(pluginsPath);
       await updateConfig(() => ({ installedPlugins: {} }));
-      plugins = {};
     }
 
-    for (const [name, info] of Object.entries(plugins)) {
-      if (devFolder && name === devPluginName) {
-        await manager.installFromPath(path.join(devFolder, name));
-      } else {
-        await manager.installFromNpm(name, info.installedVersion || undefined);
-      }
-    }
+    await fs.ensureDir(pluginsPath);
+
+    //for (const [name, info] of Object.entries(plugins)) {
+    //  if (devFolder && name === devPluginName) {
+    //    await manager.installFromPath(path.join(devFolder, name));
+    //  } else {
+    //    await manager.installFromNpm(name, info.installedVersion || undefined);
+    //  }
+    //}
   },
 
   async listInstalledPlugins() {
