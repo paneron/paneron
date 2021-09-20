@@ -39,8 +39,6 @@ export const open: WindowOpener = async (props) => {
   }
 
   if (windowsBeingOpened[title] === undefined) {
-    log.warn("Race! A window with this title is already being opened:", title)
-
     windowsBeingOpened[title] = (async (): Promise<BrowserWindow> => {
       try {
         const _framelessOpts = {
@@ -111,6 +109,8 @@ export const open: WindowOpener = async (props) => {
         delete windowsBeingOpened[title];
       }
     })();
+  } else {
+    log.warn("Race! A window with this title is already being opened:", title)
   }
 
   return windowsBeingOpened[title];
