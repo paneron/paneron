@@ -75,10 +75,18 @@ function ({ icon, title, onClose, onNavigate, status, progress, onRefresh, class
               interactionKind={PopoverInteractionKind.HOVER}
               hoverCloseDelay={200}
               position="bottom-right"
-              content={<div css={css`font-size: 80%`} onClick={e => e.stopPropagation()}>
-                {progressDescription ? <div css={css`text-transform: capitalize`}>{progressDescription}</div> : null}
-                {status ? <div>{status}</div> : null}
-              </div>}>
+              content={
+                <div
+                    css={css`font-size: 80%`}
+                    onClick={e => e.stopPropagation()}>
+                  {progressDescription
+                    ? <div css={css`text-transform: capitalize`}>{progressDescription}</div>
+                    : null}
+                  {status
+                    ? <div>{status}</div>
+                    : null}
+                </div>
+              }>
             {titleEl}
           </Tooltip>
         : titleEl}
