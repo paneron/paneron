@@ -3,7 +3,7 @@
 
 import { jsx, css } from '@emotion/react';
 import React from 'react';
-import { Icon, IconName, PopoverInteractionKind, Spinner } from '@blueprintjs/core';
+import { Icon, IconName, PopoverInteractionKind, Spinner, Colors } from '@blueprintjs/core';
 import { Tooltip2 as Tooltip } from '@blueprintjs/popover2';
 
 
@@ -49,19 +49,21 @@ function ({ icon, title, onClose, onNavigate, status, progress, onRefresh, class
     progressDescription = null;
   }
 
-  const titleEl: JSX.Element = <span onClick={onNavigate} css={css`${onNavigate ? 'cursor: pointer;' : ''}`}>
-    {title}
-  </span>;
+  const titleEl: JSX.Element = <span>{title}</span>;
 
   return (
     <div
       css={css`
-          padding: 0 10px;
+          padding: 0 5px;
+          margin: 0 5px;
           display: flex;
           flex-flow: row nowrap;
+          cursor: default;
           align-items: center;
           transform: skew(45deg);
+          ${onNavigate ? `&:hover { background: ${Colors.LIGHT_GRAY2} }` : ''}
         `}
+      onClick={onNavigate}
       className={className}>
 
       <div css={css`margin-right: .5rem;`}>
