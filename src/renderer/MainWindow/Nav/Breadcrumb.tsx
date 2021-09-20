@@ -72,7 +72,6 @@ function ({ icon, title, onClose, onNavigate, status, progress, onRefresh, class
 
       {status || progressDescription
         ? <Tooltip
-              minimal
               interactionKind={PopoverInteractionKind.HOVER}
               hoverCloseDelay={200}
               position="bottom-right"
