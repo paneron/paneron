@@ -4,7 +4,7 @@
 import styled from '@emotion/styled';
 import { jsx, css } from '@emotion/react';
 import React, { useContext } from 'react';
-import { Button, Classes, Colors, Icon } from '@blueprintjs/core';
+import { Classes, Colors, Icon } from '@blueprintjs/core';
 import { describeRepository, repositoryBuffersChanged } from 'repositories/ipc';
 import { getDatasetInfo } from 'datasets/ipc';
 import { Context } from '../context';
@@ -14,12 +14,15 @@ import RepoBreadcrumb from './RepoBreadcrumb';
 
 
 export interface NavProps {
-  onOpenSettings: () => void
   className?: string
 }
 
 
-const Nav: React.FC<NavProps> = function ({ onOpenSettings, className }) {
+/**
+ * Shows Paneron-wide nav (repository, dataset).
+ * Children will be appended after the final entry and intended for additional buttons.
+ */
+const Nav: React.FC<NavProps> = function ({ children, className }) {
   const { state, dispatch, showMessage } = useContext(Context);
 
   const openedRepoResp = describeRepository.renderer!.useValue(
@@ -42,7 +45,6 @@ const Nav: React.FC<NavProps> = function ({ onOpenSettings, className }) {
 
   if (state.selectedDatasetID && openedDataset && state.view === 'dataset') {
     breadcrumbs.push(<DatasetBreadcrumb
-      key={state.selectedDatasetID}
       workDir={state.selectedRepoWorkDir}
       datasetID={state.selectedDatasetID}
       datasetInfo={openedDataset}
@@ -52,7 +54,6 @@ const Nav: React.FC<NavProps> = function ({ onOpenSettings, className }) {
 
   if (openedRepo && state.view !== 'welcome-screen') {
     breadcrumbs.push(<RepoBreadcrumb
-      key={state.selectedRepoWorkDir}
       repoInfo={openedRepo}
       workDir={state.selectedRepoWorkDir}
       onMessage={showMessage}
@@ -60,7 +61,6 @@ const Nav: React.FC<NavProps> = function ({ onOpenSettings, className }) {
   }
 
   breadcrumbs.push(<Breadcrumb
-    key="paneron"
     title={'Paneron'}
     icon={{ type: 'file', fileName: `file://${__static}/icon.png` }}
     onNavigate={state.view !== 'welcome-screen'
@@ -90,15 +90,7 @@ const Nav: React.FC<NavProps> = function ({ onOpenSettings, className }) {
           {bc}
         </React.Fragment>
       )}
-      <Button
-        small
-        minimal
-        icon="settings"
-        css={css`transform: skew(45deg); border-radius: 0;`}
-        title="Settings"
-        disabled={!onOpenSettings}
-        onClick={onOpenSettings}
-      />
+      {children}
     </div>
   );
 };

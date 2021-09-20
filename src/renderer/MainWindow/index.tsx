@@ -3,7 +3,7 @@
 
 import { jsx, css } from '@emotion/react';
 import React, { useContext, useState } from 'react';
-import { Classes, Colors, Dialog, NonIdealState } from '@blueprintjs/core';
+import { Button, Classes, Colors, Dialog, NonIdealState } from '@blueprintjs/core';
 
 import { WindowComponentProps } from 'window/types';
 
@@ -30,8 +30,17 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
       <ContextProvider>
         <div css={css`position: absolute; top: 0; right: 0; bottom: 0; left: 0; box-sizing: border-box; overflow: hidden;`}>
           <Nav
-            onOpenSettings={() => setSettingsDialogOpen(true)}
-            css={css`position: absolute; bottom: 0; right: -15px; left: -15px; height: ${NAV_HEIGHT_PX}px; z-index: 2;`} />
+              css={css`position: absolute; bottom: 0; right: -15px; left: -15px; height: ${NAV_HEIGHT_PX}px; z-index: 2;`}>
+            <Button
+              small
+              minimal
+              icon="settings"
+              css={css`transform: skew(45deg); border-radius: 0;`}
+              title="Settings"
+              active={settingsDialogOpen}
+              onClick={() => setSettingsDialogOpen(true)}
+            />
+          </Nav>
           <div
               css={css`
                 position: absolute; top: 0; right: 0; left: 0; bottom: ${NAV_HEIGHT_PX}px;
