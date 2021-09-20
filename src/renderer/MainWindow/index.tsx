@@ -15,6 +15,7 @@ import ContextProvider, { Context } from './context';
 import Dataset from './Dataset';
 import WelcomeScreen from './WelcomeScreen';
 import GlobalSettingsForm from './GlobalSettingsForm';
+import { mainWindow } from 'common';
 
 
 const MainWindow: React.FC<WindowComponentProps> = function () {
@@ -31,8 +32,11 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
         <div css={css`position: absolute; top: 0; right: 0; bottom: 0; left: 0; box-sizing: border-box; overflow: hidden;`}>
           <Nav
               css={css`position: absolute; bottom: 0; right: -15px; left: -15px; height: ${NAV_HEIGHT_PX}px; z-index: 2;`}>
-              small
-              minimal
+            <NavbarButton
+              icon="refresh"
+              title="Refresh window"
+              onClick={mainWindow.renderer!.refresh}
+            />
             <NavbarButton
               icon="settings"
               title="Settings"
