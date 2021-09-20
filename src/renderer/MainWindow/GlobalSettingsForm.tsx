@@ -24,7 +24,7 @@ const CLEAR_OPTION_INFO: Record<ClearOption, { label: JSX.Element, description?:
   },
   plugins: {
     label: <>extensions</>,
-    description: <>Information about installed extensions, as well as themselves. They can be reinstalled afterwords as you need them.</>,
+    description: <>Information about installed extensions, as well as extensions themselves. They will be reinstalled afterwords as you need them.</>,
   },
   //settings: {
   //  label: <>settings</>,
