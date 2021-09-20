@@ -230,19 +230,18 @@ async function createWindow(
 }
 
 
-export async function notifyAll(eventName: string, payload?: any) {
-  await Promise.all(windows.map(async (window) => {
+export function notifyAll(eventName: string, payload?: any) {
+  windows.map(async (window) => {
     if (window) {
-      await window.webContents.send(eventName, payload);
+      window.webContents.send(eventName, payload);
     }
-    return;
-  }));
+  });
 }
 
 
-export async function notifyWithTitle(windowTitle: string, eventName: string, payload?: any) {
+export function notifyWithTitle(windowTitle: string, eventName: string, payload?: any) {
   const window = getByTitle(windowTitle);
   if (window) {
-    await window.webContents.send(eventName, payload);
+    window.webContents.send(eventName, payload);
   }
 }
