@@ -4,17 +4,17 @@
 import { jsx, css } from '@emotion/react';
 import React, { useContext, useState } from 'react';
 import { Button, Classes, Colors, Dialog, NonIdealState } from '@blueprintjs/core';
+import { GlobalSettingsContext } from '@riboseinc/paneron-extension-kit/SettingsContext';
+import { INITIAL_GLOBAL_SETTINGS } from '@riboseinc/paneron-extension-kit/settings';
 
 import { WindowComponentProps } from 'window/types';
+import { useSettings } from './settings';
 
 import Nav from './Nav';
 import ContextProvider, { Context } from './context';
 import Dataset from './Dataset';
 import WelcomeScreen from './WelcomeScreen';
 import GlobalSettingsForm from './GlobalSettingsForm';
-import { GlobalSettingsContext } from '@riboseinc/paneron-extension-kit/SettingsContext';
-import { INITIAL_GLOBAL_SETTINGS } from '@riboseinc/paneron-extension-kit/settings';
-import { useSettings } from './settings';
 
 
 const MainWindow: React.FC<WindowComponentProps> = function () {
