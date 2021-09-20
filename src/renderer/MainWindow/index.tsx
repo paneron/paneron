@@ -3,7 +3,7 @@
 
 import { jsx, css } from '@emotion/react';
 import React, { useContext, useState } from 'react';
-import { Button, Classes, Colors, Dialog, NonIdealState } from '@blueprintjs/core';
+import { Classes, Colors, Dialog, NonIdealState } from '@blueprintjs/core';
 
 import { WindowComponentProps } from 'window/types';
 
