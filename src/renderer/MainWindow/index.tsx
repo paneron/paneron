@@ -54,16 +54,17 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
               css={css`flex: 1; background: white; overflow: hidden;`}
               className={Classes.ELEVATION_3}
             />
+            <Dialog
+                isOpen={settingsDialogOpen}
+                title="Settings"
+                usePortal={false}
+                onClose={() => setSettingsDialogOpen(false)}
+                css={css`padding-bottom: 0; height: 70vh; width: 70vw;`}>
+              <GlobalSettingsContext.Provider value={globalSettingsContext}>
+                <GlobalSettingsForm css={css`padding: 5px;`} />
+              </GlobalSettingsContext.Provider>
+            </Dialog>
           </div>
-          <Dialog
-              isOpen={settingsDialogOpen}
-              title="Settings"
-              onClose={() => setSettingsDialogOpen(false)}
-              css={css`padding-bottom: 0;`}>
-            <GlobalSettingsContext.Provider value={globalSettingsContext}>
-              <GlobalSettingsForm css={css`padding: 5px;`} />
-            </GlobalSettingsContext.Provider>
-          </Dialog>
         </div>
       </ContextProvider>
     </React.StrictMode>
