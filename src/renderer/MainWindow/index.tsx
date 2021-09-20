@@ -3,7 +3,7 @@
 
 import { jsx, css } from '@emotion/react';
 import React, { useContext, useState } from 'react';
-import { Button, Classes, Colors, Dialog, NonIdealState } from '@blueprintjs/core';
+import { Button, ButtonProps, Classes, Colors, Dialog, NonIdealState } from '@blueprintjs/core';
 import { GlobalSettingsContext } from '@riboseinc/paneron-extension-kit/SettingsContext';
 import { INITIAL_GLOBAL_SETTINGS } from '@riboseinc/paneron-extension-kit/settings';
 
@@ -31,11 +31,10 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
         <div css={css`position: absolute; top: 0; right: 0; bottom: 0; left: 0; box-sizing: border-box; overflow: hidden;`}>
           <Nav
               css={css`position: absolute; bottom: 0; right: -15px; left: -15px; height: ${NAV_HEIGHT_PX}px; z-index: 2;`}>
-            <Button
               small
               minimal
+            <NavbarButton
               icon="settings"
-              css={css`transform: skew(45deg); border-radius: 0;`}
               title="Settings"
               active={settingsDialogOpen}
               onClick={() => setSettingsDialogOpen(true)}
@@ -70,6 +69,22 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
     </React.StrictMode>
   );
 };
+
+
+const NavbarButton: React.FC<ButtonProps & { title?: string }> = function (props) {
+  return <Button
+    small
+    minimal
+    css={css`
+      transform: skew(45deg);
+      border-radius: 0;
+      .bp3-icon {
+        transform: scale(0.7);
+      }
+    `}
+    {...props}
+  />;
+}
 
 
 const MainView: React.FC<{ className?: string }> = function ({ className }) {
