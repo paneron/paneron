@@ -7,7 +7,7 @@ import { Icon, IconName, PopoverInteractionKind, Spinner } from '@blueprintjs/co
 import { Tooltip2 as Tooltip } from '@blueprintjs/popover2';
 
 
-const iconSizePx = 12;
+const iconSizePx = 14;
 
 const ICON_PROPS = {
   iconSize: iconSizePx,

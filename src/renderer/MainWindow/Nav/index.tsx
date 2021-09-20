@@ -1,9 +1,10 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 
+import styled from '@emotion/styled';
 import { jsx, css } from '@emotion/react';
 import React, { useContext } from 'react';
-import { Classes, Colors, Icon } from '@blueprintjs/core';
+import { Button, Classes, Colors, Icon } from '@blueprintjs/core';
 import { describeRepository, repositoryBuffersChanged } from 'repositories/ipc';
 import { getDatasetInfo } from 'datasets/ipc';
 import { Context } from '../context';
@@ -13,11 +14,12 @@ import RepoBreadcrumb from './RepoBreadcrumb';
 
 
 export interface NavProps {
+  onOpenSettings: () => void
   className?: string
 }
 
 
-const Nav: React.FC<NavProps> = function ({ className }) {
+const Nav: React.FC<NavProps> = function ({ onOpenSettings, className }) {
   const { state, dispatch, showMessage } = useContext(Context);
 
   const openedRepoResp = describeRepository.renderer!.useValue(
@@ -69,12 +71,13 @@ const Nav: React.FC<NavProps> = function ({ className }) {
   return (
     <div
         css={css`
-          display: flex; flex-flow: row nowrap; align-items: center;
+          display: flex; flex-flow: row nowrap; align-items: stretch;
+          justify-content: flex-end;
           font-size: 80%;
           box-sizing: border-box;
           background: linear-gradient(to bottom, ${Colors.LIGHT_GRAY5}, ${Colors.LIGHT_GRAY3});
           line-height: 0;
-          transform: skew(-45deg) translateX(15px);
+          transform: skew(-45deg);
           padding: 0 25px;
           transition: width 1s linear;
         `}
@@ -82,14 +85,29 @@ const Nav: React.FC<NavProps> = function ({ className }) {
       {breadcrumbs.map((bc, idx) =>
         <React.Fragment key={idx}>
           {idx !== 0
-            ? <Icon icon="chevron-left" iconSize={10} key={idx} css={css`transform: skew(45deg)`} />
+            ? <BreadcrumbSeparator icon="chevron-left" iconSize={10} />
             : null}
           {bc}
         </React.Fragment>
       )}
+      <Button
+        small
+        minimal
+        icon="settings"
+        css={css`transform: skew(45deg); border-radius: 0;`}
+        title="Settings"
+        disabled={!onOpenSettings}
+        onClick={onOpenSettings}
+      />
     </div>
   );
 };
+
+
+const BreadcrumbSeparator = styled(Icon)`
+  transform: skew(45deg);
+  align-self: center;
+`
 
 
 export default Nav;

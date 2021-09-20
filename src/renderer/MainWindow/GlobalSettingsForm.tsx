@@ -19,26 +19,26 @@ const CLEAR_OPTION_INFO: Record<ClearOption, { label: JSX.Element, description?:
     description: <>The state of application interface (such as what’s selected and which sidebar blocks are collapsed).</>,
   },
   'db-indexes': {
-    label: <>Index DBs</>,
+    label: <>index DBs</>,
     description: <>Indexed data caches. They will be auto-rebuilt on next use.</>,
   },
   plugins: {
-    label: <>Extensions</>,
+    label: <>extensions</>,
     description: <>Information about installed extensions, as well as themselves. They can be reinstalled afterwords as you need them.</>,
   },
   //settings: {
-  //  label: <>Settings</>,
+  //  label: <>settings</>,
   //  description: <>App settings, such as author name, email, default branch, default Git username, etc.</>,
   //},
   repositories: {
-    label: <>Repositories <Icon iconSize={Icon.SIZE_STANDARD} icon="warning-sign" /></>,
+    label: <>repositories <Icon iconSize={Icon.SIZE_STANDARD} icon="warning-sign" /></>,
     description: <>Information about repositories, as well as new repository defaults (e.g., author name and email), and most importantly <strong>repository data itself</strong>.</>,
     warning: <>This will clear repository configuration <strong>and all local data,</strong> but will not remove repository copies on remote Git servers (you’ll be able to re-import those afterwards). Please double-check all important changes were synchronized.</>,
   }
 }
 
 
-export const PaneronSettingsSidebar: React.FC<{ className?: string; }> = function ({ className }) {
+export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({ className }) {
   const { settings, refresh: refreshSettings } = useContext(GlobalSettingsContext);
 
   const [clearOptionSelection, setClearOptionSelection] = useState<Record<typeof CLEAR_OPTIONS[number], boolean>>({
@@ -68,7 +68,7 @@ export const PaneronSettingsSidebar: React.FC<{ className?: string; }> = functio
     <div className={className}>
       <NewRepositoryDefaults css={css`padding: 15px;`} />
 
-      <PropertyView label="Sidebar position">
+      <PropertyView label="Sidebar position" tooltip="Changes take effect next time a dataset is loaded.">
         <Select
           options={[{ value: 'left', label: "Left" }, { value: 'right', label: "Right" }]}
           onChange={evt => handleUpdate('sidebarPosition', evt.currentTarget.value as 'left' | 'right')}
@@ -87,7 +87,7 @@ export const PaneronSettingsSidebar: React.FC<{ className?: string; }> = functio
             </div>}>
               <Switch
                 css={css`margin: 0;`}
-                labelElement={CLEAR_OPTION_INFO[opt].label}
+                labelElement={<>Clear {CLEAR_OPTION_INFO[opt].label}</>}
                 checked={clearOptionSelection[opt] === true}
                 onChange={(evt) => setClearOptionSelection({ ...clearOptionSelection, [opt]: evt.currentTarget.checked })} />
             </Tooltip2>
@@ -173,4 +173,4 @@ const NewRepositoryDefaults: React.FC<{ className?: string }> = function ({ clas
 };
 
 
-export default PaneronSettingsSidebar;
+export default GlobalSettingsForm;
