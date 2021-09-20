@@ -16,6 +16,9 @@ export let windows: BrowserWindow[] = [];
 // Allows to locate window ID by label
 let windowsByTitle: { [title: string]: BrowserWindow } = {};
 
+// Allows to locate window by ID
+let windowsByID: { [id: number]: BrowserWindow } = {};
+
 // Tracks promises for windows
 let windowsBeingOpened: { [title: string]: Promise<BrowserWindow> } = {};
 
@@ -93,9 +96,11 @@ export const open: WindowOpener = async (props) => {
 
         windows.push(window);
         windowsByTitle[title] = window;
+        windowsByID[window.id] = window;
 
         window.on('closed', () => {
           delete windowsByTitle[title];
+          delete windowsByID[window.id];
           cleanUpWindows();
         });
 
@@ -119,6 +124,10 @@ export const open: WindowOpener = async (props) => {
 
 export function getByTitle(title: string): BrowserWindow | undefined {
   return windowsByTitle[title];
+}
+
+export function getByID(id: number): BrowserWindow | undefined {
+  return windowsByID[id];
 }
 
 
@@ -243,5 +252,14 @@ export function notifyWithTitle(windowTitle: string, eventName: string, payload?
   const window = getByTitle(windowTitle);
   if (window) {
     window.webContents.send(eventName, payload);
+  }
+}
+
+export function refreshByID(windowID: number) {
+  const window = getByID(windowID);
+  if (window) {
+    window.reload();
+  } else {
+    throw new Error("Cannot refresh window: no window with such ID");
   }
 }
