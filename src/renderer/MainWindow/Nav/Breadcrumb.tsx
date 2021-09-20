@@ -17,6 +17,24 @@ const SPINNER_PROPS = {
   size: iconSizePx,
 };
 
+export interface BreadcrumbProps {
+  icon?: { type: 'blueprint'; iconName: IconName; } | { type: 'file'; fileName: string; };
+  title: string | JSX.Element;
+
+  status?: JSX.Element;
+  error?: true | string;
+  progress?: {
+    phase: string;
+    loaded?: number;
+    total?: number;
+  };
+  onRefresh?: () => void;
+
+  onClose?: () => void;
+  onNavigate?: () => void;
+
+  className?: string;
+}
 export const Breadcrumb: React.FC<BreadcrumbProps> =
 function ({ icon, title, onClose, onNavigate, status, progress, onRefresh, className }) {
   let statusIcon: JSX.Element;
@@ -94,26 +112,6 @@ function ({ icon, title, onClose, onNavigate, status, progress, onRefresh, class
     </div>
   );
 };
-
-
-export interface BreadcrumbProps {
-  icon?: { type: 'blueprint'; iconName: IconName; } | { type: 'file'; fileName: string; };
-  title: string | JSX.Element;
-
-  status?: JSX.Element;
-  error?: true | string;
-  progress?: {
-    phase: string;
-    loaded?: number;
-    total?: number;
-  };
-  onRefresh?: () => void;
-
-  onClose?: () => void;
-  onNavigate?: () => void;
-
-  className?: string;
-}
 
 
 export default Breadcrumb;
