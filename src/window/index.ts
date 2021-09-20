@@ -1,6 +1,6 @@
 import log from 'electron-log';
-import { makeEndpoint, _ } from '../ipc';
-import { open as openWindow } from './main';
+import { EmptyPayload, makeEndpoint, _ } from '../ipc';
+import { open as openWindow, refreshByID } from './main';
 import { WindowComponentProps, WindowOptions, WindowOpenerParams } from './types';
 
 
@@ -11,13 +11,13 @@ type DefaultImporter<T> = () => Promise<{ default: T | Promise<T> }>;
 type WindowComponentImporter = DefaultImporter<React.FC<WindowComponentProps>>;
 
 let windowComponents: {
-  [key: string]: WindowComponentImporter
+  [componentName: string]: WindowComponentImporter
 } = {}
 
 
-export function getComponent(key: string) {
-  log.debug("Getting component", key, windowComponents);
-  return windowComponents[key];
+export function getComponent(componentName: string) {
+  log.silly("Getting window component", componentName, windowComponents);
+  return windowComponents[componentName];
 }
 
 
@@ -29,6 +29,8 @@ export function makeWindowForComponent
     componentParams?: string
   } & Omit<WindowOptions, 'title'>;
 
+  let windowID: number | null = null;
+
   if (windowComponents[componentName]) {
     log.error("Attempt to register duplicate component", componentName);
     throw new Error("Attempt to register duplicate window component");
@@ -36,10 +38,16 @@ export function makeWindowForComponent
     windowComponents[componentName] = importer;
   }
 
-  const windowEndpoint = makeEndpoint.main(
+  const windowOpenEndpoint = makeEndpoint.main(
     `open-window-${componentName}`,
     <AdHocOptions>_,
     <{ opened: boolean }>_,
+  );
+
+  const windowRefreshEndpoint = makeEndpoint.main(
+    `refresh-window-${componentName}`,
+    <EmptyPayload>_,
+    <{ success: true }>_,
   );
 
   async function open(extraOpts: AdHocOptions) {
@@ -47,17 +55,27 @@ export function makeWindowForComponent
       ...opts,
       component: componentName,
       componentParams: extraOpts.componentParams,
-      title: `${title} ${extraOpts.title || ''}`,
+      title: `${title} ${extraOpts.title ?? ''}`,
     };
 
-    await openWindow(effectiveParams);
+    const win = await openWindow(effectiveParams);
+    windowID = win.id;
   }
 
   if (process.type === 'browser') {
-    windowEndpoint.main!.handle(async (opts) => {
+    windowOpenEndpoint.main!.handle(async (opts) => {
       await open(opts);
       return { opened: true };
     });
+    windowRefreshEndpoint.main!.handle(async () => {
+      if (windowID) {
+        refreshByID(windowID);
+      } else {
+        throw new Error("windowRefreshEndpoint: ID is missing");
+      }
+      return { success: true };
+    });
+
     return {
       main: {
         open: async (opts?: AdHocOptions) => {
@@ -70,7 +88,10 @@ export function makeWindowForComponent
     return {
       renderer: {
         open: async (opts?: AdHocOptions) => {
-          return await windowEndpoint.renderer!.trigger(opts || {});
+          return await windowOpenEndpoint.renderer!.trigger(opts || {});
+        },
+        refresh: async () => {
+          return await windowRefreshEndpoint.renderer!.trigger({});
         },
       },
     };
