@@ -58,6 +58,7 @@ export const open: WindowOpener = async (props) => {
         };
 
         let window: BrowserWindow;
+        let windowID: number;
 
         if (isComponentWindowSource(props)) {
           const { component, componentParams } = props;
@@ -86,6 +87,8 @@ export const open: WindowOpener = async (props) => {
           throw new Error("window.openWindow() expects either component or url");
         }
 
+        windowID = window.id;
+
         if (!isMacOS) {
           if (menuTemplate) {
             window.setMenu(Menu.buildFromTemplate(menuTemplate));
@@ -96,11 +99,11 @@ export const open: WindowOpener = async (props) => {
 
         windows.push(window);
         windowsByTitle[title] = window;
-        windowsByID[window.id] = window;
+        windowsByID[windowID] = window;
 
         window.on('closed', () => {
           delete windowsByTitle[title];
-          delete windowsByID[window.id];
+          delete windowsByID[windowID];
           cleanUpWindows();
         });
 
