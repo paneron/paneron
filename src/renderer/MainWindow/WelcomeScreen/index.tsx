@@ -57,8 +57,10 @@ function ({ onOpenDataset, className }) {
         id="WelcomeScreenNav"
         vertical
         className={`${Classes.ELEVATION_3} ${className ?? ''}`}
-        css={css`position: absolute; inset: 0; margin: auto; height: 70vh; width: 70vw; overflow: hidden;
+        css={css`
+          overflow: hidden;
           border-radius: 5px;
+
           .bp3-tab-list[role=tablist] {
             overflow-y: auto;
             padding: 5px;

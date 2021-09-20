@@ -78,6 +78,7 @@ const MainView: React.FC<{ className?: string }> = function ({ className }) {
   if (view === 'welcome-screen') {
     return <WelcomeScreen
       className={className}
+      css={css`position: absolute; inset: 0; margin: auto; height: 70vh; width: 70vw;`}
       onOpenDataset={(workDir, datasetID) => dispatch({ type: 'open-dataset', workDir, datasetID })}
     />;
 
