@@ -94,7 +94,13 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
           )}
         </div>
 
-        <Button fill small outlined intent={canClear ? 'danger' : undefined} disabled={!canClear} onClick={handleClear}>
+        <Button
+            fill
+            small
+            outlined
+            intent={canClear ? 'danger' : undefined}
+            disabled={!canClear}
+            onClick={handleClear}>
           Clear &amp; restart
         </Button>
       </div>
