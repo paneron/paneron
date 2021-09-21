@@ -64,7 +64,7 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
                 onClose={() => setSettingsDialogOpen(false)}
                 css={css`padding-bottom: 0; height: 70vh; width: 70vw;`}>
               <GlobalSettingsContext.Provider value={globalSettingsContext}>
-                <GlobalSettingsForm css={css`padding: 5px;`} />
+                <GlobalSettingsForm css={css`overflow-y: auto;`} />
               </GlobalSettingsContext.Provider>
             </Dialog>
           </div>

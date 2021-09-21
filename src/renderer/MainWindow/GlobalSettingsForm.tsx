@@ -3,7 +3,7 @@
 import { jsx, css } from '@emotion/react';
 
 import React, { useContext, useState } from 'react';
-import { Button, Icon, IconSize, Switch } from '@blueprintjs/core';
+import { Button, Classes, H5, Icon, IconSize, Switch } from '@blueprintjs/core';
 import PropertyView, { TextInput, Select } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import { getNewRepoDefaults, NewRepositoryDefaults, setNewRepoDefaults } from 'repositories/ipc';
 import { Context } from './context';
@@ -38,6 +38,16 @@ const CLEAR_OPTION_INFO: Record<ClearOption, { label: JSX.Element, description?:
 }
 
 
+const SettingsFormSection: React.FC<{ title?: string }> = function ({ title, children }) {
+  return <div css={css`padding: 15px;`} className={Classes.ELEVATION_0}>
+    {title
+      ? <H5>{title}</H5>
+      : null}
+    {children}
+  </div>
+}
+
+
 export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({ className }) {
   const { settings, refresh: refreshSettings } = useContext(GlobalSettingsContext);
 
@@ -66,17 +76,21 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
 
   return (
     <div className={className}>
-      <NewRepositoryDefaults css={css`padding: 15px;`} />
+      <SettingsFormSection title="Authoring info &amp; repository defaults">
+        <NewRepositoryDefaults />
+      </SettingsFormSection>
 
-      <PropertyView label="Sidebar position" tooltip="Changes take effect next time a dataset is loaded.">
-        <Select
-          options={[{ value: 'left', label: "Left" }, { value: 'right', label: "Right" }]}
-          onChange={evt => handleUpdate('sidebarPosition', evt.currentTarget.value as 'left' | 'right')}
-          value={settings.sidebarPosition}
-        />
-      </PropertyView>
+      <SettingsFormSection title="Interface options">
+        <PropertyView label="Sidebar position" tooltip="Changes take effect next time a dataset is loaded.">
+          <Select
+            options={[{ value: 'left', label: "Left" }, { value: 'right', label: "Right" }]}
+            onChange={evt => handleUpdate('sidebarPosition', evt.currentTarget.value as 'left' | 'right')}
+            value={settings.sidebarPosition}
+          />
+        </PropertyView>
+      </SettingsFormSection>
 
-      <div css={css`padding: 15px;`}>
+      <SettingsFormSection title="Reset (for troubleshooting)">
         <div css={css`display: flex; flex-flow: column nowrap; align-items: flex-start; margin-bottom: 5px;`}>
           {CLEAR_OPTIONS.map(opt =>
             <Tooltip2 interactionKind="hover-target" position="bottom" content={<div css={css`width: 70vw`}>
@@ -103,7 +117,7 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
             onClick={handleClear}>
           Clear &amp; restart
         </Button>
-      </div>
+      </SettingsFormSection>
     </div>
   );
 };
