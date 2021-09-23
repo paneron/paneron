@@ -107,7 +107,7 @@ export default async function getDataset(workingCopyPath: string, datasetPath?: 
   // let pluginPath: string | undefined;
   // Install plugin in renderer
   try {
-    // NOTE: This requires nodeIntegration to be true on Electron’s window.
+    // NOTE: This requires `nodeIntegration` to be true on Electron’s window.
     // Ideally, we want to get rid of that.
     if (process.env.PANERON_DEV_PLUGIN !== pluginName || !process.env.PANERON_PLUGIN_DIR) {
       log.silly("Dataset view: Installing plugin for renderer...", workingCopyPath, pluginName, pluginVersion);
