@@ -41,7 +41,7 @@ const CLEAR_OPTION_INFO: Record<ClearOption, { label: JSX.Element, description?:
 const SettingsFormSection: React.FC<{ title?: string | JSX.Element }> = function ({ title, children }) {
   return <div css={css`padding: 15px;`} className={Classes.ELEVATION_0}>
     {title
-      ? <H5>{title}</H5>
+      ? <H4>{title}</H4>
       : null}
     {children}
   </div>
