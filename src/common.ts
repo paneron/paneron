@@ -21,6 +21,7 @@ export const clearDataAndRestart = makeEndpoint.main(
   <{ success: true }>_,
 );
 
+
 export const chooseFileFromFilesystem = makeEndpoint.main(
   'chooseFileFromFilesystem',
   <OpenFileDialogProps>_,
