@@ -12,6 +12,8 @@ export const getPluginManagerProps = makeEndpoint.main(
 )
 
 
+// Querying
+
 export const listInstalledPlugins = makeEndpoint.main(
   'listInstalledPlugins',
   <EmptyPayload>_,
@@ -32,6 +34,8 @@ export const getPluginInfo = makeEndpoint.main(
   <{ plugin: InstalledPluginInfo | null }>_,
 );
 
+
+// (Un)installation
 
 export const installPlugin = makeEndpoint.main(
   'installPlugin',
@@ -60,6 +64,8 @@ export const removeAll = makeEndpoint.main(
   <{ success: true }>_,
 );
 
+
+// Events
 
 export const pluginsUpdated = makeEndpoint.renderer(
   'pluginsChanged',
