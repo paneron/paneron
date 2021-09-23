@@ -4,16 +4,11 @@ image:https://img.shields.io/badge/commitizen-friendly-brightgreen.svg[alt="Comm
 
 == Development
 
-=== Launching in dev mode (e.g., for extension testing)
+=== Loading local extensions
 
-macOS example of launching Paneron in dev mode from Terminal, allowing to install an extension from local filesystem:
-
-[source]
---
-PANERON_PLUGIN_DIR="/path/to/plugin/dir" PANERON_DEV_PLUGIN="@riboseinc/paneron-extension-bs-202000" ~/Applications/Paneron.app/Contents/MacOS/Paneron
---
-
-NOTE: In above example, this should be a valid file: `/path/to/plugin/dir/@riboseinc/paneron-extension-bs-202000/package.json`
+Use Paneron settings window to specify directories with built extension packages.
+Paneron will attempt to load versions in those directories
+whenever corresponding extensions are requested.
 
 === Troubleshooting steps
 

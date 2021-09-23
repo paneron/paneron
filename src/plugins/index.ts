@@ -1,5 +1,5 @@
 import { makeEndpoint, _, EmptyPayload } from '../ipc';
-import { Extension, InstalledPluginInfo } from './types';
+import { Extension, ExtensionRegistry, InstalledPluginInfo } from './types';
 
 
 // export const NPM_EXTENSION_PREFIX = '@riboseinc/paneron-extension-';
@@ -62,6 +62,27 @@ export const removeAll = makeEndpoint.main(
   'removeAllPlugins',
   <EmptyPayload>_,
   <{ success: true }>_,
+);
+
+
+// Local plugins
+
+export const specifyLocalPluginPath = makeEndpoint.main(
+  'specifyLocalPluginPath',
+  <{ directoryPath: string }>_,
+  <Extension>_,
+);
+
+export const removeLocalPluginPath = makeEndpoint.main(
+  'removeLocalPluginPath',
+  <{ pluginName: string }>_,
+  <{ success: true }>_,
+);
+
+export const listLocalPlugins = makeEndpoint.main(
+  'listLocalPlugins',
+  <EmptyPayload>_,
+  <ExtensionRegistry>_,
 );
 
 

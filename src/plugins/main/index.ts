@@ -17,9 +17,10 @@ import { MainPlugin } from '@riboseinc/paneron-extension-kit/types';
 import {
   getPluginInfo, getPluginManagerProps,
   installPlugin, listAvailablePlugins,
-  pluginsUpdated, removePlugin, upgradePlugin,
+  listLocalPlugins,
+  pluginsUpdated, removeLocalPluginPath, removePlugin, specifyLocalPluginPath, upgradePlugin,
 } from '../../plugins';
-import { Extension } from '../../plugins/types';
+import { Extension, ExtensionRegistry } from '../../plugins/types';
 import { Methods as WorkerMethods, WorkerSpec } from './worker';
 
 
@@ -29,40 +30,6 @@ axios.defaults.raxConfig = {
 };
 rax.attach(axios);
 
-const devFolder = process.env.PANERON_PLUGIN_DIR;
-
-const resetPlugins = process.env.PANERON_RESET_PLUGINS;
-
-const devPluginName = process.env.PANERON_DEV_PLUGIN;
-
-const devPlugin = devPluginName
-  ? {
-      title: devPluginName,
-      author: 'You',
-      description: "Your test plugin",
-      latestUpdate: new Date(),
-      featured: true,
-      iconURL: "https://open.ribose.com/assets/favicon-192x192.png",
-      requiredHostAppVersion: app.getVersion(),
-      npm: {
-        name: devPluginName,
-        bugs: { url: "https://open.ribose.com/" },
-        version: '0.0.0',
-        dist: {
-          shasum: '000',
-          integrity: '000',
-          unpackedSize: 10000,
-          'npm-signature': '000',
-        },
-      },
-    }
-  : undefined;
-
-
-if (devFolder) {
-  log.warn("Using development plugin folder", devFolder);
-}
-
 
 listAvailablePlugins.main!.handle(async () => {
   const packages = await fetchExtensions();
@@ -71,10 +38,8 @@ listAvailablePlugins.main!.handle(async () => {
   sort(([_0, ext1], [_1, ext2]) => compareDesc(parseJSON(ext1.latestUpdate), parseJSON(ext2.latestUpdate))).
   map(([_, ext]) => ext);
 
-  const _devPlugin: Extension[] = devPlugin ? [devPlugin] : [];
-
   return {
-    extensions: [ ...extensions, ..._devPlugin ],
+    extensions,
   };
 });
 
@@ -134,31 +99,26 @@ getPluginInfo.main!.handle(async ({ id }) => {
 
   const w = await worker;
 
-  if (name === devPluginName && devPlugin) {
-    return { plugin: { ...devPlugin, installedVersion: '0.0.0' } };
+  let extensions: Record<string, Extension>;
+  try {
+    extensions = await fetchExtensions();
+  } catch (e) {
+    log.error("Unable to fetch Paneron extension index", e);
+    return { plugin: null };
+  }
 
-  } else {
-    let extensions: Record<string, Extension>;
+  const ext = extensions[name];
+  if (ext) {
     try {
-      extensions = await fetchExtensions();
+      const { installedVersion } = await w.getInstalledVersion({ name });
+      return { plugin: { ...ext, installedVersion } };
     } catch (e) {
-      log.error("Unable to fetch Paneron extension index", e);
-      return { plugin: null };
+      log.error("Unable to fetch information about installed extension version", name);
+      return { plugin: { ...ext, installedVersion: null } };
     }
-
-    const ext = extensions[name];
-    if (ext) {
-      try {
-        const { installedVersion } = await w.getInstalledVersion({ name });
-        return { plugin: { ...ext, installedVersion } };
-      } catch (e) {
-        log.error("Unable to fetch information about installed extension version", name);
-        return { plugin: { ...ext, installedVersion: null } };
-      }
-    } else {
-      log.error("Cannot locate extension in Paneron extension index", name);
-      return { plugin: null };
-    }
+  } else {
+    log.error("Cannot locate extension in Paneron extension index", name);
+    return { plugin: null };
   }
 });
 
@@ -171,19 +131,42 @@ getPluginManagerProps.main!.handle(async () => {
 });
 
 
-// function getNPMNameForPlugin(pluginID: string): string {
-//   return `${NPM_EXTENSION_PREFIX}${pluginID}`;
-// }
+// Local plugins
 
+specifyLocalPluginPath.main!.handle(async ({ directoryPath }) => {
+  const ext = await (await worker).specifyLocalPluginPath({ directoryPath });
+  await _removePlugin(ext.npm.name);
+  await pluginsUpdated.main!.trigger({});
+  return ext;
+});
+
+removeLocalPluginPath.main!.handle(async ({ pluginName }) => {
+  await _removePlugin(pluginName);
+  const result = await (await worker).removeLocalPlugin({ pluginName });
+  await pluginsUpdated.main!.trigger({});
+  return result;
+});
+
+listLocalPlugins.main!.handle(async () => {
+  return await (await worker).listLocalPlugins();
+});
+
+
+// (Un)installation helpers
 
 async function _installPlugin(name: string, versionToInstall?: string): Promise<string> {
   let version: string;
-  if (devFolder === undefined || name !== devPluginName) {
-    version = (await (await worker).install({ name, version: versionToInstall })).installedVersion;
+  const w = await worker;
+  const localPlugins = await w.listLocalPlugins();
+  const localPlugin = localPlugins[name];
+
+  version = (await w.install({ name, version: versionToInstall })).installedVersion;
+  if (!localPlugin?.localPath) {
+    log.debug("Plugins: installing...", name);
     await (await pluginManager).install(name, version);
   } else {
-    version = (await (await worker)._installDev({ name, fromPath: devFolder })).installedVersion;
-    await (await pluginManager).installFromPath(path.join(devFolder, name));
+    log.debug("Plugins: installing (local)...", name, localPlugin.localPath);
+    await (await pluginManager).installFromPath(localPlugin.localPath);
   }
 
   return version;
@@ -294,8 +277,23 @@ app.on('quit', clearLockfile);
 
 // Querying extension directory
 
-export async function fetchExtensions(): Promise<{ [packageID: string]: Extension }> {
+async function fetchPublishedExtensions(): Promise<ExtensionRegistry> {
   return (await axios.get("https://extensions.paneron.org/extensions.json")).data.extensions;
+}
+
+export async function fetchExtensions(): Promise<ExtensionRegistry> {
+  let publishedExtensions: ExtensionRegistry
+  try {
+    publishedExtensions = await fetchPublishedExtensions();
+  } catch (e) {
+    log.error("Plugins: Unable to fetch published extensions", e);
+    publishedExtensions = {};
+  }
+  const devExtensions = await (await worker).listLocalPlugins();
+  return {
+    ...publishedExtensions,
+    ...devExtensions,
+  };
 }
 
 
@@ -304,15 +302,6 @@ export async function fetchExtensions(): Promise<{ [packageID: string]: Extensio
 
 export const worker: Promise<Thread & WorkerMethods> = new Promise((resolve, reject) => {
   log.debug("Plugins: Spawning worker");
-
-  if (resetPlugins !== undefined) {
-    log.debug("Plugins: Resetting plugins…");
-
-    fs.removeSync(PLUGIN_CONFIG_PATH);
-    fs.removeSync(PLUGINS_PATH);
-
-    log.debug("Plugins: Resetting plugins: Cleared paths");
-  }
 
   spawn<WorkerSpec>(new Worker('./worker')).
   then((worker) => {
@@ -334,48 +323,16 @@ export const worker: Promise<Thread & WorkerMethods> = new Promise((resolve, rej
       // TODO: Respawn on worker exit?
     });
 
-    log.debug("Plugins: Initializing worker");
+    log.debug("Plugins: Initializing worker", CWD, PLUGINS_PATH, PLUGIN_CONFIG_PATH);
 
     worker.initialize({
       cwd: CWD,
       pluginsPath: PLUGINS_PATH,
       pluginConfigPath: PLUGIN_CONFIG_PATH,
-      devFolder,
-      devPluginName,
     }).
     then(() => {
-      log.debug("Plugins: Init: Installing plugins based on configuration");
-
-      worker.listInstalledPlugins().
-      then((plugins) => {
-        pluginManager.
-        then(manager => {
-          Promise.all(plugins.map(plugin => {
-            log.silly("Plugins: Init: Installing in main", plugin.name, plugin.version);
-            return new Promise((resolve, reject) => (
-              ((devFolder && devPluginName === plugin.name)
-                ? manager.installFromPath(path.join(devFolder, plugin.name))
-                : manager.install(plugin.name, plugin.version)).
-              then(plugin => {
-                try {
-                  manager.require(plugin.name);
-                  resolve(true);
-                } catch (e) {
-                  log.error("Plugins: Init: Failed to require plugin in main; removing plugin", e)
-                  worker.remove({ name: plugin.name }).then(resolve).catch(reject);
-                }
-              }).
-              catch(reject)));
-          })).
-          then(() => {
-            log.debug("Plugins: Init: Worker initialized");
-            resolve(worker);
-          }).
-          catch(reject);
-        }).
-        catch(reject);
-      }).
-      catch(reject);
+      log.debug("Plugins: Init: Worker initialized");
+      resolve(worker);
     }).
     catch(reject);
   }).

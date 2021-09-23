@@ -3,14 +3,16 @@
 import { jsx, css } from '@emotion/react';
 
 import React, { useContext, useState } from 'react';
-import { Button, Classes, H5, Icon, IconSize, Switch } from '@blueprintjs/core';
+import { Button, Classes, Colors, H4, Icon, IconSize, InputGroup, Switch } from '@blueprintjs/core';
 import PropertyView, { TextInput, Select } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import { getNewRepoDefaults, NewRepositoryDefaults, setNewRepoDefaults } from 'repositories/ipc';
 import { Context } from './context';
 import { Tooltip2 } from '@blueprintjs/popover2';
-import { clearDataAndRestart, ClearOption, CLEAR_OPTIONS } from 'common';
+import { clearDataAndRestart, ClearOption, CLEAR_OPTIONS, selectDirectoryPath } from 'common';
 import { updateSetting } from './settings';
 import { GlobalSettingsContext } from '@riboseinc/paneron-extension-kit/SettingsContext';
+import { listLocalPlugins, pluginsUpdated, removeLocalPluginPath, specifyLocalPluginPath } from 'plugins';
+import DatasetExtension from 'plugins/renderer/DatasetExtensionCard';
 
 
 const CLEAR_OPTION_INFO: Record<ClearOption, { label: JSX.Element, description?: JSX.Element, warning?: JSX.Element }> = {
@@ -50,6 +52,10 @@ const SettingsFormSection: React.FC<{ title?: string | JSX.Element }> = function
 
 export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({ className }) {
   const { settings, refresh: refreshSettings } = useContext(GlobalSettingsContext);
+  const { performOperation } = useContext(Context);
+
+  const localExtensionQuery = listLocalPlugins.renderer!.useValue({}, {});
+  pluginsUpdated.renderer!.useEvent(async () => localExtensionQuery.refresh(), []);
 
   const [clearOptionSelection, setClearOptionSelection] =
   useState<Record<typeof CLEAR_OPTIONS[number], boolean>>({
@@ -61,6 +67,26 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
   });
 
   const canClear = Object.values(clearOptionSelection).indexOf(true) >= 0;
+
+  async function _handleAddLocalExtension() {
+    const dirResult = await selectDirectoryPath.renderer!.trigger({
+      prompt: "Select development extension folder",
+    });
+    const directoryPath = dirResult.result.directoryPath;
+    if (directoryPath && directoryPath.trim() !== '') {
+      await specifyLocalPluginPath.renderer!.trigger({ directoryPath });
+    } else {
+      throw new Error("No directory was selected");
+    }
+  }
+
+  const handleAddLocalExtension = performOperation('adding local extension', _handleAddLocalExtension);
+
+  function handleDeleteLocalExtension(pluginName: string) {
+    return performOperation('removing local extension', async () =>
+      await removeLocalPluginPath.renderer!.trigger({ pluginName })
+    );
+  }
 
   async function handleClear() {
     await clearDataAndRestart.renderer!.trigger({
@@ -74,6 +100,11 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
       { key, value });
     refreshSettings();
   }
+
+  const localExtensions = Object.entries(localExtensionQuery.value).map(([id, ext]) => ({
+    id,
+    ext,
+  }));
 
   return (
     <div className={className}>
@@ -89,6 +120,38 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
             value={settings.sidebarPosition}
           />
         </PropertyView>
+      </SettingsFormSection>
+
+      <SettingsFormSection title={<>
+          Local extensions
+          &ensp;
+          <Tooltip2 content="Specify local path to an extension, which will force Paneron to use it (even if a publicly released version is available) for any dataset that requires it. The folder you specify must contain a “package.json” file.">
+            <Button minimal small intent="primary" icon="add" onClick={handleAddLocalExtension} />
+          </Tooltip2>
+        </>}>
+        {localExtensions.map(({ id, ext }) =>
+          <div
+              key={id}
+              css={css`position: relative; margin: 5px 0; background: ${Colors.LIGHT_GRAY4};`}>
+            <InputGroup
+              fill
+              value={ext.localPath}
+              disabled
+              rightElement={
+                <Button
+                  small minimal intent="danger"
+                  onClick={handleDeleteLocalExtension(id)}
+                  icon="cross"
+                  title="Delete this local extension"
+                  css={css`position: absolute; top: 0; right: 0;`}
+                />
+              }
+            />
+            <div css={css`background: white; transform: scale(0.9); transform-origin: top center; padding: 5px;`}>
+              <DatasetExtension extension={ext} />
+            </div>
+          </div>
+        )}
       </SettingsFormSection>
 
       <SettingsFormSection title="Reset (for troubleshooting)">

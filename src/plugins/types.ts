@@ -4,6 +4,9 @@ export interface InstalledPluginInfo extends Extension {
 }
 
 
+export type ExtensionRegistry = { [packageID: string]: Extension & { localPath?: string } };
+
+
 // TODO: Remove type duplication in extensions.paneron.org codebase
 // Separate into a package?
 export interface Extension extends PaneronExtensionMeta {

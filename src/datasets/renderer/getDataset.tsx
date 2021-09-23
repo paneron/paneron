@@ -7,7 +7,8 @@ import { RendererPlugin, DatasetContext } from '@riboseinc/paneron-extension-kit
 import {
   getPluginInfo,
   getPluginManagerProps,
-  installPlugin
+  installPlugin,
+  listLocalPlugins,
 } from 'plugins';
 import { describeRepository, loadRepository } from 'repositories/ipc';
 import { DatasetInfo } from '../types';
@@ -109,13 +110,14 @@ export default async function getDataset(workingCopyPath: string, datasetPath?: 
   try {
     // NOTE: This requires `nodeIntegration` to be true on Electron’s window.
     // Ideally, we want to get rid of that.
-    if (process.env.PANERON_DEV_PLUGIN !== pluginName || !process.env.PANERON_PLUGIN_DIR) {
+    const { result: localPlugins } = await listLocalPlugins.renderer!.trigger({});
+    if (!localPlugins[pluginName]?.localPath) {
       log.silly("Dataset view: Installing plugin for renderer...", workingCopyPath, pluginName, pluginVersion);
       await pluginManager.installFromNpm(pluginName, pluginVersion);
     } else {
-      const pluginPath = path.join(process.env.PANERON_PLUGIN_DIR, process.env.PANERON_DEV_PLUGIN);
-      log.silly("Dataset view: (DEV) Installing plugin for renderer...", pluginPath);
-      await pluginManager.installFromPath(pluginPath);
+      const localPath = localPlugins[pluginName].localPath!;
+      log.silly("Dataset view: Installing plugin for renderer (local)...", workingCopyPath, pluginName, pluginVersion, localPath);
+      await pluginManager.installFromPath(localPath);
     }
 
     // pluginPath = pluginManager.getInfo(pluginName)?.location;
