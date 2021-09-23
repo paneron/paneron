@@ -24,7 +24,7 @@ import '../repositories/main';
 import '../datasets/main';
 import '../clipboard/main';
 
-import { clearDataAndRestart, ClearOption, mainWindow, saveFileToFilesystem } from '../common';
+import { clearDataAndRestart, ClearOption, mainWindow, saveFileToFilesystem, selectDirectoryPath } from '../common';
 import { chooseFileFromFilesystem, makeRandomID } from '../common';
 
 import { resetStateGlobal } from '../state/manage';
@@ -107,6 +107,23 @@ async function initMain() {
     }
 
     return filedata;
+  });
+
+  selectDirectoryPath.main!.handle(async (opts) => {
+    const window = BrowserWindow.getFocusedWindow();
+    if (window === null) { throw new Error("Unable to choose file: no focused window detected"); }
+
+    const result = await dialog.showOpenDialog(window, {
+      properties: [
+        'openDirectory',
+      ],
+    });
+
+    const filepaths = (result.filePaths || []);
+
+    log.info("Select directory path from filesystem: got", filepaths[0]);
+
+    return { directoryPath: filepaths[0] };
   });
 
   saveFileToFilesystem.main!.handle(async ({ dialogOpts, bufferData }) => {

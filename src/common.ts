@@ -1,4 +1,4 @@
-import type { OpenFileDialogProps, SaveFileDialogProps } from '@riboseinc/paneron-extension-kit/types/dialogs';
+import type { OpenFileDialogProps, SelectDirectoryProps, SaveFileDialogProps } from '@riboseinc/paneron-extension-kit/types/dialogs';
 import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 import { makeWindowForComponent } from './window';
 import { EmptyPayload, makeEndpoint, _ } from './ipc';
@@ -26,6 +26,13 @@ export const chooseFileFromFilesystem = makeEndpoint.main(
   'chooseFileFromFilesystem',
   <OpenFileDialogProps>_,
   <BufferDataset>_,
+);
+
+
+export const selectDirectoryPath = makeEndpoint.main(
+  'selectDirectoryPath',
+  <SelectDirectoryProps>_,
+  <{ directoryPath?: string }>_,
 );
 
 
