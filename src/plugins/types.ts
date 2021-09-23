@@ -36,10 +36,10 @@ export interface NPMPackageVersion {
     email: string
     name: string
   }
-  bugs: {
+  bugs?: {
     url: string
   }
-  dist: {
+  dist?: {
     integrity: string
     "npm-signature": string
     shasum: string
