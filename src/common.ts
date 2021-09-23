@@ -1,4 +1,4 @@
-import type { OpenDialogProps, SaveDialogProps } from '@riboseinc/paneron-extension-kit/types';
+import type { OpenFileDialogProps, SaveFileDialogProps } from '@riboseinc/paneron-extension-kit/types/dialogs';
 import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 import { makeWindowForComponent } from './window';
 import { EmptyPayload, makeEndpoint, _ } from './ipc';
@@ -23,14 +23,14 @@ export const clearDataAndRestart = makeEndpoint.main(
 
 export const chooseFileFromFilesystem = makeEndpoint.main(
   'chooseFileFromFilesystem',
-  <OpenDialogProps>_,
+  <OpenFileDialogProps>_,
   <BufferDataset>_,
 );
 
 
 export const saveFileToFilesystem = makeEndpoint.main(
   'saveFileToFilesystem',
-  <{ dialogOpts: SaveDialogProps, bufferData: Uint8Array }>_,
+  <{ dialogOpts: SaveFileDialogProps, bufferData: Uint8Array }>_,
   <{ success: true, savedToFileAtPath: string }>_,
 );
 
