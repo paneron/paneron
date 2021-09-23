@@ -51,7 +51,8 @@ const SettingsFormSection: React.FC<{ title?: string }> = function ({ title, chi
 export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({ className }) {
   const { settings, refresh: refreshSettings } = useContext(GlobalSettingsContext);
 
-  const [clearOptionSelection, setClearOptionSelection] = useState<Record<typeof CLEAR_OPTIONS[number], boolean>>({
+  const [clearOptionSelection, setClearOptionSelection] =
+  useState<Record<typeof CLEAR_OPTIONS[number], boolean>>({
     plugins: false,
     //settings: false,
     'db-indexes': false,
