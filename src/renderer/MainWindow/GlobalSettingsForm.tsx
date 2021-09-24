@@ -4,15 +4,15 @@ import { jsx, css } from '@emotion/react';
 
 import React, { useContext, useState } from 'react';
 import { Button, Classes, Colors, H4, Icon, IconSize, InputGroup, Switch } from '@blueprintjs/core';
-import PropertyView, { TextInput, Select } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
-import { getNewRepoDefaults, NewRepositoryDefaults, setNewRepoDefaults } from 'repositories/ipc';
-import { Context } from './context';
 import { Tooltip2 } from '@blueprintjs/popover2';
-import { clearDataAndRestart, ClearOption, CLEAR_OPTIONS, selectDirectoryPath } from 'common';
-import { updateSetting } from './settings';
 import { GlobalSettingsContext } from '@riboseinc/paneron-extension-kit/SettingsContext';
+import PropertyView, { TextInput, Select } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
+import { clearDataAndRestart, ClearOption, CLEAR_OPTIONS, selectDirectoryPath } from 'common';
+import { getNewRepoDefaults, NewRepositoryDefaults, setNewRepoDefaults } from 'repositories/ipc';
 import { listLocalPlugins, pluginsUpdated, removeLocalPluginPath, specifyLocalPluginPath } from 'plugins';
 import DatasetExtension from 'plugins/renderer/DatasetExtensionCard';
+import { Context } from './context';
+import { updateSetting } from './settings';
 
 
 const CLEAR_OPTION_INFO: Record<ClearOption, { label: JSX.Element, description?: JSX.Element, warning?: JSX.Element }> = {
