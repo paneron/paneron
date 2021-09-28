@@ -98,6 +98,11 @@ export function getRepoWorkers(workDir: string): Promise<RepoWorkers> {
 app.on('quit', terminateAllWorkers);
 
 
+/**
+ * Spawns a repository worker.
+ * IMPORTANT: It’s caller’s responsibility to keep track of and terminate workers spawned this way.
+ * For termination, use `terminateWorker()`.
+ */
 export async function spawnWorker(): Promise<Thread & WorkerMethods> {
   return new Promise((resolve, reject) => {
     log.debug("Repositories: Spawning worker");
