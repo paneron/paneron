@@ -13,6 +13,7 @@ import { listLocalPlugins, pluginsUpdated, removeLocalPluginPath, specifyLocalPl
 import DatasetExtension from 'plugins/renderer/DatasetExtensionCard';
 import { Context } from './context';
 import { updateSetting } from './settings';
+import AuthorForm from './repositories/AuthorForm';
 
 
 const CLEAR_OPTION_INFO: Record<ClearOption, { label: JSX.Element, description?: JSX.Element, warning?: JSX.Element }> = {
@@ -220,18 +221,10 @@ const NewRepositoryDefaults: React.FC<{ className?: string }> = function ({ clas
 
   return (
     <div className={className}>
-      <PropertyView label="Author name">
-        <TextInput
-          onChange={!busy ? (val) => editAuthor({ ...author, name: val }) : undefined}
-          validationErrors={author.name === '' ? ['Please specify author name.'] : []}
-          value={author.name} />
-      </PropertyView>
-      <PropertyView label="Author email">
-        <TextInput
-          onChange={!busy ? (val) => editAuthor({ ...author, email: val }) : undefined}
-          validationErrors={author.email === '' ? ['Please specify author email.'] : []}
-          value={author.email} />
-      </PropertyView>
+      <AuthorForm
+        author={maybeEditedDefaults.author}
+        onChange={editAuthor}
+      />
       <PropertyView label="Remote username">
         <TextInput
           onChange={!busy ? (val) => editRemoteUsername(val) : undefined}
