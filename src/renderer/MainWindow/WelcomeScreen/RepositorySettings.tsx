@@ -3,13 +3,15 @@
 
 import { jsx } from '@emotion/react';
 
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { Button } from '@blueprintjs/core';
 import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import PanelSeparator from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PanelSeparator';
 import ShareRepoForm from 'renderer/MainWindow/repositories/ShareRepoForm';
-import { deleteRepository, describeRepository, repositoriesChanged, Repository } from 'repositories/ipc';
+import { deleteRepository, describeRepository, repositoriesChanged, Repository, setAuthorInfo } from 'repositories/ipc';
+import { GitAuthor } from 'repositories/types';
 import { Context } from '../context';
+import AuthorForm from '../repositories/AuthorForm';
 
 
 const RepositorySettings: React.FC<{ workDir: string; repoInfo?: Repository; className?: string; }> =
@@ -54,10 +56,44 @@ function ({ workDir, repoInfo, className }) {
 
 
 const GitRepoPanel: React.FC<{ gitMeta: Repository["gitMeta"]; }> = function ({ gitMeta }) {
+  const [busy, setBusy] = useState(false);
+  const [newAuthor, setNewAuthor] = useState<GitAuthor | null>(null);
+
+  const canSave = (
+    newAuthor &&
+    JSON.stringify(newAuthor) !== JSON.stringify(gitMeta.author ?? {}) &&
+    !busy);
+
+  const author: GitAuthor | null = newAuthor ?? gitMeta.author ?? null;
+
+  async function handleSaveAuthorInfo() {
+    if (newAuthor?.name && newAuthor?.email && !busy) {
+      setBusy(true);
+      try {
+        await setAuthorInfo.renderer!.trigger({
+          workingCopyPath: gitMeta.workingCopyPath,
+          author: newAuthor,
+        });
+        setTimeout(() => {
+          setNewAuthor(null);
+        }, 200);
+      } finally {
+        setBusy(false);
+      }
+    }
+  }
   return <>
     <PropertyView label="Work dir." title="Working directory">
       {gitMeta.workingCopyPath}
     </PropertyView>
+    <PanelSeparator />
+    <AuthorForm
+      author={author ?? { name: '', email: '' }}
+      onChange={!busy ? setNewAuthor : undefined}
+    />
+    <Button small fill minimal disabled={!canSave} onClick={handleSaveAuthorInfo}>
+      Update author information
+    </Button>
     <PanelSeparator />
     <PropertyView label="Remote URL" title="Remote URL">
       <TextInput value={gitMeta.remote?.url ?? ''} />
