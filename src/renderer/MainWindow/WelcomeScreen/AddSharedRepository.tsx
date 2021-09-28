@@ -19,14 +19,16 @@ function ({ className, onAfterCreate }) {
 
   const [customBranch, setBranch] = useState<string | null>(null);
 
-  const defaults = getNewRepoDefaults.renderer!.useValue({}, { defaults: { author: { name: '', email: '' } }});
+  const defaults = getNewRepoDefaults.renderer!.useValue(
+    {},
+    { defaults: { author: { name: '', email: '' } }}
+  );
 
   const remoteComponents = (remoteURL ?? '').split('/');
   const defaultName = remoteComponents[remoteComponents.length - 1];
   const name = defaultName;
 
   const username = customUsername ?? defaults.value.defaults?.remote?.username ?? '';
-
   const branch = customBranch ?? defaults.value.defaults?.branch ?? '';
 
   const canImport =
@@ -41,7 +43,11 @@ function ({ className, onAfterCreate }) {
       <PropertyView label="Remote URL">
         <TextInput
           value={remoteURL ?? ''}
-          inputGroupProps={{ required: true, type: 'url', placeholder: "https://github.com/some-username/some-repository" }}
+          inputGroupProps={{
+            required: true,
+            type: 'url',
+            placeholder: "https://github.com/some-username/some-repository",
+          }}
           onChange={!isBusy ? (val) => setRemoteURL(val) : undefined}
         />
       </PropertyView>

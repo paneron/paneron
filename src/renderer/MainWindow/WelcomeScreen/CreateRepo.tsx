@@ -23,7 +23,7 @@ function ({ onCreate, className }) {
         Create empty repository
       </Button>
     </div>
-  )
+  );
 }
 
 export default CreateRepoForm;
