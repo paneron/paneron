@@ -64,15 +64,17 @@ export const listRepositories = makeEndpoint.main(
   <{ objects: Repository[] }>_,
 );
 
-/* This would set up repository worker and start repository sync.
-   Required to load datasets and query structured data. */
+/** 
+ * This would set up repository worker and start repository sync.
+ * Required to load datasets and query structured data.
+ */
 export const loadRepository = makeEndpoint.main(
   'loadRepository',
   <{ workingCopyPath: string }>_,
   <RepoStatus>_,
 );
 
-/* Only works on loaded repositories. */
+/** Only works on already loaded repositories. */
 export const describeRepository = makeEndpoint.main(
   'getRepository',
   <{ workingCopyPath: string }>_,
