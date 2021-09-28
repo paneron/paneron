@@ -1,17 +1,33 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 
-import { jsx } from '@emotion/react';
+import { UL } from '@blueprintjs/core';
+import { jsx, css } from '@emotion/react';
 import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
+import { openExternalURL } from 'common';
 import React from 'react';
+import { ColorNeutralLink } from 'renderer/widgets';
 import { GitAuthor } from 'repositories/types';
 
 
 const AuthorForm: React.FC<{ author: GitAuthor, onChange?: (newAuthor: GitAuthor) => void }> =
 function ({ author, onChange }) {
+
+  function handleOpenGitHubCommitEmailDocs() {
+    openExternalURL.renderer!.trigger({
+      url: 'https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-github-user-account/managing-email-preferences/setting-your-commit-email-address#about-commit-email-addresses',
+    })
+  }
+
   return (
     <>
-      <PropertyView label="Author name">
+      <PropertyView
+          label="Author name"
+          tooltip={<>
+            The name that will be associated with your commits in VCS.
+            {" "}
+            Note that for public repositories, this name will be publicly discoverable.
+          </>}>
         <TextInput
           onChange={onChange
             ? (val) => onChange({ ...author, name: val })
@@ -19,7 +35,20 @@ function ({ author, onChange }) {
           validationErrors={author.name === '' ? ['Please specify author name.'] : []}
           value={author.name} />
       </PropertyView>
-      <PropertyView label="Author email">
+      <PropertyView
+          label="Author email"
+          tooltipIntent="warning"
+          tooltip={<>
+            The email that will be associated with your commits in VCS.
+            <UL>
+              <li>Note that for public repositories, this email will be publicly discoverable.</li>
+              <li>
+                For GitHub, you can use the no-reply email in the form of <code css={css`white-space: nowrap;`}>…@users.noreply.github.com</code>
+                {" "}
+                (see GitHub help’s <ColorNeutralLink onClick={handleOpenGitHubCommitEmailDocs}>About commit email addresses</ColorNeutralLink>).
+              </li>
+            </UL>
+          </>}>
         <TextInput
           onChange={onChange
             ? (val) => onChange({ ...author, email: val })
