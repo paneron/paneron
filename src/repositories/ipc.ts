@@ -93,7 +93,7 @@ export const deleteRepository = makeEndpoint.main(
 export const queryGitRemote = makeEndpoint.main(
   'queryRemote',
   <{ url: string, username: string, password?: string }>_,
-  <{ isBlank: boolean, canPush: boolean }>_,
+  <{ isBlank: boolean, canPush: boolean, mainBranchName?: string }>_,
 );
 
 export const describeGitRepository = makeEndpoint.main(

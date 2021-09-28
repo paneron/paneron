@@ -7,6 +7,8 @@ import { Git } from '../types';
 
 const ORIGIN_REMOTE_NAME = 'origin';
 
+const HEAD_REF_PREFIX = 'refs/heads/';
+
 
 const describe: Git.Remotes.Describe = async function ({ url, auth }) {
   const normalizedURL = normalizeURL(url);
@@ -36,10 +38,12 @@ const describe: Git.Remotes.Describe = async function ({ url, auth }) {
   }
 
   const isBlank = refs.length === 0;
+  const mainBranchName = getMainBranchName(refs);
 
   return {
     isBlank,
     canPush,
+    mainBranchName,
   };
 };
 
@@ -70,3 +74,23 @@ export default {
   addOrigin,
   deleteOrigin,
 };
+
+
+
+function getMainBranchName(refs: ServerRef[]): string | undefined {
+  if (refs.length > 0) {
+    const headRefOid = refs.find(r => r.ref === 'HEAD')?.oid;
+    if (headRefOid) {
+      const mainBranchRef = refs.find(r => r.ref.startsWith(HEAD_REF_PREFIX) && r.oid === headRefOid);
+      if (mainBranchRef) {
+        return mainBranchRef.ref.replace(HEAD_REF_PREFIX, '');
+      } else {
+        throw new Error("Unable to locate a ref pointing to current HEAD under /refs/heads/");
+      }
+    } else {
+      throw new Error("Unable to locate HEAD ref");
+    }
+  } else {
+    return undefined;
+  }
+}
