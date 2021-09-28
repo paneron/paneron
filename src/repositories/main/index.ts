@@ -32,7 +32,7 @@ import { makeUUIDv4 } from 'utils';
 import loadedDatasets, { changesetToPathChanges } from '../../datasets/main/loadedDatasets';
 import { PaneronRepository, GitRemote, Repository } from '../types';
 
-import { getRepoWorkers, spawnWorker, terminateWorker } from './workerManager';
+import { getRepoWorkers, oneOffWorkerTask } from './workerManager';
 
 import {
   getLoadedRepository,
@@ -411,8 +411,7 @@ queryGitRemote.main!.handle(async ({ url, username, password }) => {
   if (!auth.password) {
     auth.password = (await getAuth(url, username)).password;
   }
-  const worker = await spawnWorker();
-  return await worker.git_describeRemote({ url, auth });
+  return await oneOffWorkerTask(w => w.git_describeRemote({ url, auth }));
 });
 
 
@@ -433,9 +432,7 @@ addRepository.main!.handle(async ({ gitRemoteURL, branch, username, password }) 
   if (!auth.password) {
     auth.password = (await getAuth(gitRemoteURL, username)).password;
   }
-  const worker = await spawnWorker();
-  const { canPush } = await worker.git_describeRemote({ url: gitRemoteURL, auth });
-  await terminateWorker(worker);
+  const { canPush } = await oneOffWorkerTask(w => w.git_describeRemote({ url: gitRemoteURL, auth }));
 
   await updateRepositories((data) => {
     if (data.workingCopies[workDirPath] !== undefined) {
@@ -606,14 +603,12 @@ deleteRepository.main!.handle(async ({ workingCopyPath }) => {
     log.warn("Repositories: Delete: Not loaded", workingCopyPath);
   }
 
-  const w = await spawnWorker();
-
-  await w.git_delete({
+  await oneOffWorkerTask(w => w.git_delete({
     workDir: workingCopyPath,
 
     // TODO: Make it so that this flag has to be passed all the way from calling code?
     yesReallyDestroyLocalWorkingCopy: true,
-  });
+  }));
 
   await updateRepositories((data) => {
     if (data.workingCopies?.[workingCopyPath]) {
