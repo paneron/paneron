@@ -57,7 +57,7 @@ function ({ className, onAfterCreate }) {
           onChange={!isBusy ? (val) => setRemoteURL(val) : undefined}
         />
       </PropertyView>
-      <PropertyView label="Branch">
+      <PropertyView label="Branch" tooltip="Main branch’s name is typically ‘main’ or ‘master’.">
         <TextInput
           value={branch ?? ''}
           inputGroupProps={{ required: true, type: 'text', placeholder: "main" }}
