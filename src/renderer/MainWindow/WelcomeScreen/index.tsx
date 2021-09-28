@@ -6,7 +6,7 @@ import { jsx, css } from '@emotion/react';
 import { Helmet } from 'react-helmet';
 import { Button, Classes, Colors, Icon, IconName, InputGroup, Tab, Tabs } from '@blueprintjs/core';
 import useDebounce from '@riboseinc/paneron-extension-kit/useDebounce';
-import { createRepository, Repository } from 'repositories/ipc';
+import { createRepository, GitAuthor, Repository } from 'repositories/ipc';
 import useRepositoryList from '../useRepositoryList';
 import { Context } from '../context';
 import RepositoryDetails from './RepositoryDetails';
@@ -47,9 +47,9 @@ function ({ onOpenDataset, className }) {
     onOpenDataset(workDir, datasetID);
   }
 
-  async function handleCreateRepo(title: string) {
+  async function handleCreateRepo(title: string, author: GitAuthor, mainBranchName: string) {
     performOperation('creating repository', async () => {
-      await createRepository.renderer!.trigger({ title });
+      await createRepository.renderer!.trigger({ title, author, mainBranchName });
     })();
   }
 

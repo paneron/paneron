@@ -5,9 +5,11 @@ import { jsx, css } from '@emotion/react';
 import React, { useContext, useState } from 'react';
 import { Button } from '@blueprintjs/core';
 import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
-import { addRepository, loadRepository, getNewRepoDefaults } from 'repositories/ipc';
+import PanelSeparator from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PanelSeparator';
+import { addRepository, loadRepository, getNewRepoDefaults, GitAuthor } from 'repositories/ipc';
 import { Context } from '../context';
 import GitCredentialsInput from '../repositories/GitCredentialsInput';
+import AuthorForm from '../repositories/AuthorForm';
 
 
 const AddSharedRepository: React.FC<{ className?: string; onAfterCreate?: (workDir: string) => void }> =
@@ -24,6 +26,9 @@ function ({ className, onAfterCreate }) {
     { defaults: { author: { name: '', email: '' } }}
   );
 
+  const [customAuthor, setCustomAuthor] = useState<GitAuthor | null>(null);
+  const author: GitAuthor | null = customAuthor ?? defaults.value.defaults?.author ?? null;
+
   const remoteComponents = (remoteURL ?? '').split('/');
   const defaultName = remoteComponents[remoteComponents.length - 1];
   const name = defaultName;
@@ -36,7 +41,8 @@ function ({ className, onAfterCreate }) {
     (name ?? '').trim() !== '' &&
     (remoteURL ?? '').trim() !== '' &&
     (username ?? '').trim() !== '' &&
-    (branch ?? '').trim() !== '';
+    (branch ?? '').trim() !== '' &&
+    author?.name && author?.email;
 
   return (
     <div className={className}>
@@ -58,6 +64,12 @@ function ({ className, onAfterCreate }) {
           onChange={!isBusy ? (val) => setBranch(val) : undefined}
         />
       </PropertyView>
+      <PanelSeparator />
+      <AuthorForm
+        author={author ?? { name: '', email: '' }}
+        onChange={setCustomAuthor}
+      />
+      <PanelSeparator />
       <GitCredentialsInput
         username={username}
         password={password}
@@ -78,6 +90,7 @@ function ({ className, onAfterCreate }) {
                   username,
                   password: password !== '' ? password : undefined,
                   branch,
+                  author,
                 });
                 if (resp.result?.workDir) {
                   await loadRepository.renderer!.trigger({ workingCopyPath: resp.result.workDir });

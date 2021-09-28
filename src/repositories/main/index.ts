@@ -415,14 +415,12 @@ queryGitRemote.main!.handle(async ({ url, username, password }) => {
 });
 
 
-addRepository.main!.handle(async ({ gitRemoteURL, branch, username, password }) => {
+addRepository.main!.handle(async ({ gitRemoteURL, branch, username, password, author }) => {
   const workDirPath = path.join(DEFAULT_WORKING_DIRECTORY_CONTAINER, makeUUIDv4());
 
   if (fs.existsSync(workDirPath) || ((await readRepositories())).workingCopies[workDirPath] !== undefined) {
     throw new Error("Could not generate a valid non-occupied repository path inside given container.");
   }
-
-  const { author } = await getDefaults();
 
   if (branch === undefined || branch.trim() === '') {
     throw new Error("Main branch name is not specified.");
@@ -520,14 +518,12 @@ addDisconnected.main!.handle(async ({ gitRemoteURL, branch, username, password }
 });
 
 
-createRepository.main!.handle(async ({ title }) => {
+createRepository.main!.handle(async ({ title, author, mainBranchName: branch }) => {
   const workDirPath = path.join(DEFAULT_WORKING_DIRECTORY_CONTAINER, makeUUIDv4());
 
   if (fs.existsSync(workDirPath)) {
     throw new Error("A repository with this name already exists. Please choose another name!");
   }
-
-  const { author, branch } = await getDefaults();
 
   if (branch === undefined || branch.trim() === '') {
     throw new Error("Please specify default main branch name in settings.");
