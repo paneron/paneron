@@ -22,6 +22,17 @@ export const Button = styled(BPButton)`
 `;
 
 
+export const ColorNeutralLink = styled.a`
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  &:hover {
+    color: inherit;
+    text-decoration-style: solid;
+  }
+`;
+
+
 export const MarkedText: React.FC<{ text: string, term?: string }> =
 function ({ text, term }) {
   const ref = useRef<HTMLSpanElement>(null);
