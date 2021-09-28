@@ -1,12 +1,14 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 
-import { jsx, css } from '@emotion/react';
+import { jsx, ClassNames } from '@emotion/react';
 import React, { useState } from 'react';
 import { Button, ButtonProps, Callout, UL } from '@blueprintjs/core';
+import { Popover2 } from '@blueprintjs/popover2';
 import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import { queryGitRemote } from 'repositories/ipc';
-import { Popover2 } from '@blueprintjs/popover2';
+import { openExternalURL } from 'common';
+import { ColorNeutralLink } from 'renderer/widgets';
 
 
 interface GitCredentialsInputProps {
@@ -94,9 +96,17 @@ function ({
     }
   }
 
+  function handleOpenGitHubPATHelp() {
+    openExternalURL.renderer!.trigger({
+      url: "https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token#creating-a-token",
+    });
+  }
+
   return (
     <>
-      <PropertyView label="Username" title="In case of GitHub, use your GitHub username">
+      <PropertyView
+          label="Username"
+          tooltip="In case of GitHub, this is your GitHub account’s username.">
         <TextInput
           value={username}
           inputGroupProps={{ required: true }}
@@ -105,9 +115,28 @@ function ({
             : undefined} />
       </PropertyView>
       <PropertyView
-          label="Password"
-          title="In case of GitHub, your GitHub password (might not work) or Personal Access Token (recommended). \
-            Paneron stores your password or PAT using your system’s secret management mechanism, and communicates it only to this remote and only during synchronization.">
+          label="Secret"
+          tooltip={<>
+            The password used by Git server to authenticate. Required for write access.
+            {onEditPassword
+              ? <UL>
+                  <li>
+                    If you have provided it to Paneron before, it might already be stored by your operating system;
+                    {" "}
+                    to verify this you can leave it empty and use Test connection to verify you have write access.
+                  </li>
+                  <li>
+                    Note that for repositories hosted on GitHub you must supply a Personal Access Token
+                    {" "}
+                    rather than your GitHub account’s actual password
+                    {" "}
+                    (see <ColorNeutralLink onClick={handleOpenGitHubPATHelp}>Creating a personal access token</ColorNeutralLink>).
+                  </li>
+                </UL>
+              : null}
+            {" "}
+            Paneron stores your password or PAT using your system’s secret management mechanism, and communicates it only to this remote and only during synchronization.
+          </>}>
         <TextInput
           value={onEditPassword ? password : '•••••••••'}
           inputGroupProps={{ type: 'password', placeholder: 'Password or PAT' }}
