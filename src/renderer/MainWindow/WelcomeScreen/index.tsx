@@ -3,6 +3,7 @@
 
 import React, { useContext, useState } from 'react';
 import { jsx, css } from '@emotion/react';
+import { Helmet } from 'react-helmet';
 import { Button, Classes, Colors, Icon, IconName, InputGroup, Tab, Tabs } from '@blueprintjs/core';
 import useDebounce from '@riboseinc/paneron-extension-kit/useDebounce';
 import { createRepository, Repository } from 'repositories/ipc';
@@ -75,6 +76,9 @@ function ({ onOpenDataset, className }) {
             border-left: 1px solid silver;
           }
         `}>
+      <Helmet>
+        <title>Paneron start screen</title>
+      </Helmet>
       {SPECIAL_SECTIONS.map(sectionID => {
         const SectionView = specialSectionConfiguration[sectionID].view;
         return <Tab
