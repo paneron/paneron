@@ -113,27 +113,31 @@ function ({
           inputGroupProps={{ type: 'password', placeholder: 'Password or PAT' }}
           onChange={!isBusy && onEditPassword ? (val) => onEditPassword!(val) : undefined} />
       </PropertyView>
-      <Popover2
-          minimal
-          fill
-          isOpen={testResultNotes !== null}
-          usePortal={false}
-          content={testResultNotes
-            ? <Callout
-                  title={testPassed ? "It works, but" : "There may have been an issue"}
-                  intent={testPassed ? 'primary' : 'danger'}>
-                {testResultNotes}
-              </Callout>
-            : undefined}
-          onClose={() => setTestResult(undefined)}>
-        <Button
-          small
-          fill
-          outlined
-          {...testButtonProps}
-          css={css`.bp3-button-text { overflow: hidden; }`}
-        />
-      </Popover2>
+      <ClassNames>
+        {({ css, cx }) => (
+          <Popover2
+              minimal
+              fill
+              isOpen={testResultNotes !== null}
+              popoverClassName={`${css`margin: 10px;`}`}
+              content={testResultNotes
+                ? <Callout
+                      title={testPassed ? "It works, but" : "There may have been an issue"}
+                      intent={testPassed ? 'primary' : 'danger'}>
+                    {testResultNotes}
+                  </Callout>
+                : undefined}
+              onClose={() => setTestResult(undefined)}>
+            <Button
+              small
+              fill
+              outlined
+              {...testButtonProps}
+              css={css`.bp3-button-text { overflow: hidden; }`}
+            />
+          </Popover2>
+        )}
+      </ClassNames>
     </>
 
   );
