@@ -36,6 +36,13 @@ export const selectDirectoryPath = makeEndpoint.main(
 );
 
 
+export const openExternalURL = makeEndpoint.main(
+  'openExternalURL',
+  <{ url: string }>_,
+  <EmptyPayload>_,
+);
+
+
 export const saveFileToFilesystem = makeEndpoint.main(
   'saveFileToFilesystem',
   <{ dialogOpts: SaveFileDialogProps, bufferData: Uint8Array }>_,

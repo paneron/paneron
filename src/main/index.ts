@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { app, BrowserWindow, dialog, protocol } from 'electron';
+import { app, BrowserWindow, dialog, protocol, shell } from 'electron';
 import log from 'electron-log';
 import type { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 
@@ -24,7 +24,7 @@ import '../repositories/main';
 import '../datasets/main';
 import '../clipboard/main';
 
-import { clearDataAndRestart, ClearOption, mainWindow, saveFileToFilesystem, selectDirectoryPath } from '../common';
+import { clearDataAndRestart, ClearOption, mainWindow, openExternalURL, saveFileToFilesystem, selectDirectoryPath } from '../common';
 import { chooseFileFromFilesystem, makeRandomID } from '../common';
 
 import { resetStateGlobal } from '../state/manage';
@@ -75,6 +75,11 @@ async function initMain() {
 
   makeRandomID.main!.handle(async () => {
     return { id: makeUUIDv4() };
+  });
+
+  openExternalURL.main!.handle(async ({ url }) => {
+    shell.openExternal(url);
+    return {};
   });
 
   chooseFileFromFilesystem.main!.handle(async (opts) => {
