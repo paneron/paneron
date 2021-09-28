@@ -7,6 +7,7 @@ import { Button, Classes, Colors, H4, Icon, IconSize, InputGroup, Switch } from 
 import { Tooltip2 } from '@blueprintjs/popover2';
 import { GlobalSettingsContext } from '@riboseinc/paneron-extension-kit/SettingsContext';
 import PropertyView, { TextInput, Select } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
+import PanelSeparator from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PanelSeparator';
 import { clearDataAndRestart, ClearOption, CLEAR_OPTIONS, selectDirectoryPath } from 'common';
 import { getNewRepoDefaults, NewRepositoryDefaults, setNewRepoDefaults } from 'repositories/ipc';
 import { listLocalPlugins, pluginsUpdated, removeLocalPluginPath, specifyLocalPluginPath } from 'plugins';
@@ -225,6 +226,7 @@ const NewRepositoryDefaults: React.FC<{ className?: string }> = function ({ clas
         author={maybeEditedDefaults.author}
         onChange={editAuthor}
       />
+      <PanelSeparator />
       <PropertyView label="Remote username">
         <TextInput
           onChange={!busy ? (val) => editRemoteUsername(val) : undefined}
