@@ -127,6 +127,7 @@ function ({ repo }) {
         username={username}
         password={password}
         remoteURL={url || ''}
+        requireMainBranchName={repo.mainBranch}
         onEditPassword={!isBusy && (!hasRemote || editingPassword) ? setPassword : undefined}
         onEditUsername={!isBusy && !hasRemote ? setUsername : undefined}
         requireBlankRepo={!hasRemote}

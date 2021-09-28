@@ -16,6 +16,7 @@ interface GitCredentialsInputProps {
 
   requireBlankRepo?: boolean
   requirePush?: boolean
+  requireMainBranchName?: string
 
   onEditUsername?: (newValue: string) => void
   onEditPassword?: (newValue: string) => void
@@ -24,7 +25,7 @@ export const GitCredentialsInput: React.FC<GitCredentialsInputProps> =
 function ({
   username, password,
   remoteURL,
-  requireBlankRepo, requirePush,
+  requireBlankRepo, requirePush, requireMainBranchName,
   onEditUsername, onEditPassword,
 }) {
   const [isBusy, setBusy] = useState(false);
@@ -36,9 +37,9 @@ function ({
     onClick: handleTest,
   };
 
-  const testPassed = testResult && passed(testResult, requireBlankRepo, requirePush);
+  const testPassed = testResult && passed(testResult, requireBlankRepo, requirePush, requireMainBranchName);
   const testResultNotes = testResult
-    ? getNotes(testResult, requireBlankRepo, requirePush)
+    ? getNotes(testResult, requireBlankRepo, requirePush, requireMainBranchName)
     : null;
 
   if (testPassed) {
@@ -82,7 +83,7 @@ function ({
       });
       setTestResult(remote.result);
       setTimeout(() => {
-        if (!getNotes(remote.result, requireBlankRepo, requirePush)) {
+        if (!getNotes(remote.result, requireBlankRepo, requirePush, requireMainBranchName)) {
           setTestResult(undefined);
         }
       }, 5000);
@@ -99,7 +100,7 @@ function ({
         <TextInput
           value={username}
           inputGroupProps={{ required: true }}
-          onChange={onEditUsername
+          onChange={!isBusy && onEditUsername
             ? (val) => onEditUsername!(val.replace(/ /g,'-').replace(/[^\w-]+/g,''))
             : undefined} />
       </PropertyView>
@@ -110,7 +111,7 @@ function ({
         <TextInput
           value={onEditPassword ? password : '•••••••••'}
           inputGroupProps={{ type: 'password', placeholder: 'Password or PAT' }}
-          onChange={onEditPassword ? (val) => onEditPassword!(val) : undefined} />
+          onChange={!isBusy && onEditPassword ? (val) => onEditPassword!(val) : undefined} />
       </PropertyView>
       <Popover2
           minimal
@@ -144,10 +145,12 @@ export default GitCredentialsInput;
 type RepositoryConnectionTestResult = {
   isBlank: boolean
   canPush: boolean
+  mainBranchName?: string
   error?: undefined
 } | {
   isBlank?: undefined
   canPush?: undefined
+  mainBranchName?: string
   error: string
 }
 
@@ -155,12 +158,14 @@ function passed(
   testResult: RepositoryConnectionTestResult,
   requireBlankRepo?: boolean,
   requirePush?: boolean,
+  requireMainBranchName?: string,
 ): boolean {
   return (
     testResult !== undefined &&
     testResult.error === undefined &&
     (!requireBlankRepo || testResult.isBlank) &&
-    (!requirePush || testResult.canPush)
+    (!requirePush || testResult.canPush) &&
+    (!requireMainBranchName || testResult.mainBranchName === requireMainBranchName)
   );
 }
 
@@ -168,8 +173,9 @@ function getNotes(
   testResult: RepositoryConnectionTestResult,
   requireBlankRepo?: boolean,
   requirePush?: boolean,
+  requireMainBranchName?: string,
 ): JSX.Element | null {
-  if (!passed(testResult, requireBlankRepo, requirePush)) {
+  if (!passed(testResult, requireBlankRepo, requirePush, requireMainBranchName)) {
     return (
       <UL>
         {testResult.error
@@ -180,18 +186,29 @@ function getNotes(
                 <small>({testResult.error?.replace("Error: Error invoking remote method 'queryRemote': ", "") ?? "Error message not available."})</small>
               </li>
               <li>
-                Please check repository URL and access credentials, if applicable.
+                Please check repository URL and, if applicable, access credentials.
               </li>
               <li>
                 Please check your connection.
               </li>
+              <li>
+                Wait in case provider server is experiencing downtime.
+              </li>
+              <li>
+                Otherwise, please contact us and let us know the error message.
+              </li>
             </>
           : <>
-              {!testResult.isBlank
+              {!testResult.isBlank && requireBlankRepo
                 ? <li>Repository is not empty</li>
                 : null}
-              {!testResult.canPush
+              {!testResult.canPush && requirePush
                 ? <li>Read-only access</li>
+                : null}
+              {requireMainBranchName && requireMainBranchName !== testResult.mainBranchName
+                ? <li>
+                    Main branch name doesn’t match: you entered <code>{requireMainBranchName}</code>, but this repository appears to be using <code>{testResult.mainBranchName}</code>
+                  </li>
                 : null}
             </>}
       </UL>

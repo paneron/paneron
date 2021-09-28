@@ -56,6 +56,7 @@ function ({ className, onAfterCreate }) {
         username={username}
         password={password}
         remoteURL={remoteURL ?? ''}
+        requireMainBranchName={branch}
         onEditPassword={!isBusy ? setPassword : undefined}
         onEditUsername={!isBusy ? setUsername : undefined}
       />
