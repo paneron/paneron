@@ -32,17 +32,6 @@ export interface RepoWorkers {
 }
 
 
-export async function terminateWorker(worker: Thread & WorkerMethods) {
-  log.debug("Repositories: Terminating worker");
-  try {
-    await worker.destroy();
-  } catch (e) {
-    log.error("Repositories: Error terminating worker (suppressed)", e);
-  } finally {
-    await Thread.terminate(worker);
-  }
-}
-
 export async function terminateRepoWorkers(workDir: string) {
   const repoPromise = WORKERS[workDir];
   log.debug("Repositories: Terminating workers for repo", workDir);
@@ -118,6 +107,17 @@ export async function spawnWorker(): Promise<Thread & WorkerMethods> {
     }).
     catch(reject);
   });
+}
+
+export async function terminateWorker(worker: Thread & WorkerMethods) {
+  log.debug("Repositories: Terminating worker");
+  try {
+    await worker.destroy();
+  } catch (e) {
+    log.error("Repositories: Error terminating worker (suppressed)", e);
+  } finally {
+    await Thread.terminate(worker);
+  }
 }
 
 // export const syncWorker = initializeWorker();
