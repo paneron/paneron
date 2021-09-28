@@ -3,9 +3,10 @@
 
 import { jsx, css } from '@emotion/react';
 import React, { useState } from 'react';
-import { Button, IButtonProps } from '@blueprintjs/core';
+import { Button, ButtonProps, Callout, UL } from '@blueprintjs/core';
 import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import { queryGitRemote } from 'repositories/ipc';
+import { Popover2 } from '@blueprintjs/popover2';
 
 
 interface GitCredentialsInputProps {
@@ -26,34 +27,25 @@ function ({
   requireBlankRepo, requirePush,
   onEditUsername, onEditPassword,
 }) {
-  type TestResult = {
-    isBlank: boolean
-    canPush: boolean
-    error?: undefined
-  } | {
-    isBlank?: undefined
-    canPush?: undefined
-    error: string
-  }
-
   const [isBusy, setBusy] = useState(false);
-  const [testResult, setTestResult] = useState<TestResult | undefined>(undefined);
+  const [testResult, setTestResult] =
+    useState<RepositoryConnectionTestResult | undefined>(undefined);
 
-  const canConfirm: boolean = (
-    testResult !== undefined &&
-    testResult.error === undefined &&
-    (!requireBlankRepo || testResult.isBlank) &&
-    (!requirePush || testResult.canPush));
-
-  const testButtonProps: IButtonProps = {
-    disabled: isBusy,
+  const testButtonProps: ButtonProps = {
+    disabled: isBusy || remoteURL.trim() === '',
     onClick: handleTest,
   };
 
-  if (canConfirm) {
+  const testPassed = testResult && passed(testResult, requireBlankRepo, requirePush);
+  const testResultNotes = testResult
+    ? getNotes(testResult, requireBlankRepo, requirePush)
+    : null;
+
+  if (testPassed) {
     testButtonProps.intent = 'success';
   } else if (testResult !== undefined) {
     testButtonProps.intent = 'danger';
+    testButtonProps.text = "Try again";
     testButtonProps.rightIcon = 'warning-sign';
     testButtonProps.alignText = 'left';
   }
@@ -62,15 +54,11 @@ function ({
     testButtonProps.text = "Test connection";
     testButtonProps.alignText = 'center';
 
-  // Error cases
-  } else if (testResult.error) {
-    testButtonProps.text = `Failed to connect—please check URL, credentials and connection and click again. ${testResult.error}`;
-  } else if (!testResult.isBlank && requireBlankRepo) {
-    testButtonProps.text = "Repository is not empty";
-  } else if (!testResult.canPush && requirePush) {
-    testButtonProps.text = "No write access";
+  // Test failed
+  } else if (!testPassed) {
+    testButtonProps.rightIcon = 'warning-sign';
 
-  // Successful cases
+  // Test passed
   } else {
     if (testResult.canPush) {
       testButtonProps.text = "Write access";
@@ -94,7 +82,9 @@ function ({
       });
       setTestResult(remote.result);
       setTimeout(() => {
-        setTestResult(undefined);
+        if (!getNotes(remote.result, requireBlankRepo, requirePush)) {
+          setTestResult(undefined);
+        }
       }, 5000);
     } catch (e) {
       setTestResult({ error: (e as any)?.toString() ?? 'unknown error' });
@@ -109,7 +99,9 @@ function ({
         <TextInput
           value={username}
           inputGroupProps={{ required: true }}
-          onChange={onEditUsername ? (val) => onEditUsername!(val.replace(/ /g,'-').replace(/[^\w-]+/g,'')) : undefined} />
+          onChange={onEditUsername
+            ? (val) => onEditUsername!(val.replace(/ /g,'-').replace(/[^\w-]+/g,''))
+            : undefined} />
       </PropertyView>
       <PropertyView
           label="Password"
@@ -120,10 +112,103 @@ function ({
           inputGroupProps={{ type: 'password', placeholder: 'Password or PAT' }}
           onChange={onEditPassword ? (val) => onEditPassword!(val) : undefined} />
       </PropertyView>
-      <Button small fill outlined {...testButtonProps} css={css`.bp3-button-text { overflow: hidden; }`} />
+      <Popover2
+          minimal
+          fill
+          isOpen={testResultNotes !== null}
+          usePortal={false}
+          content={testResultNotes
+            ? <Callout
+                  title={testPassed ? "It works, but" : "There may have been an issue"}
+                  intent={testPassed ? 'primary' : 'danger'}>
+                {testResultNotes}
+              </Callout>
+            : undefined}
+          onClose={() => setTestResult(undefined)}>
+        <Button
+          small
+          fill
+          outlined
+          {...testButtonProps}
+          css={css`.bp3-button-text { overflow: hidden; }`}
+        />
+      </Popover2>
     </>
 
   );
 }
 
 export default GitCredentialsInput;
+
+
+type RepositoryConnectionTestResult = {
+  isBlank: boolean
+  canPush: boolean
+  error?: undefined
+} | {
+  isBlank?: undefined
+  canPush?: undefined
+  error: string
+}
+
+function passed(
+  testResult: RepositoryConnectionTestResult,
+  requireBlankRepo?: boolean,
+  requirePush?: boolean,
+): boolean {
+  return (
+    testResult !== undefined &&
+    testResult.error === undefined &&
+    (!requireBlankRepo || testResult.isBlank) &&
+    (!requirePush || testResult.canPush)
+  );
+}
+
+function getNotes(
+  testResult: RepositoryConnectionTestResult,
+  requireBlankRepo?: boolean,
+  requirePush?: boolean,
+): JSX.Element | null {
+  if (!passed(testResult, requireBlankRepo, requirePush)) {
+    return (
+      <UL>
+        {testResult.error
+          ? <>
+              <li>
+                There was a problem connecting.
+                &emsp;
+                <small>({testResult.error?.replace("Error: Error invoking remote method 'queryRemote': ", "") ?? "Error message not available."})</small>
+              </li>
+              <li>
+                Please check repository URL and access credentials, if applicable.
+              </li>
+              <li>
+                Please check your connection.
+              </li>
+            </>
+          : <>
+              {!testResult.isBlank
+                ? <li>Repository is not empty</li>
+                : null}
+              {!testResult.canPush
+                ? <li>Read-only access</li>
+                : null}
+            </>}
+      </UL>
+    );
+  } else if (!testResult.canPush) {
+    return (
+      <UL>
+        <li>
+          If you expect to be able to make changes, please make sure that the username and secret are correct
+          and your account has the required access provisioned.
+        </li>
+        <li>
+          Otherwise, you can ignore this message.
+        </li>
+      </UL>
+    );
+  } else {
+    return null;
+  }
+}
