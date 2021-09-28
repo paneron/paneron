@@ -192,7 +192,7 @@ function getNotes(
                 Please check your connection.
               </li>
               <li>
-                Wait in case provider server is experiencing downtime.
+                Wait in case repository hosting is experiencing downtime.
               </li>
               <li>
                 Otherwise, please contact us and let us know the error message.
