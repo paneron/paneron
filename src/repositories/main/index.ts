@@ -255,6 +255,12 @@ setAuthorInfo.main!.handle(async ({ workingCopyPath, author }) => {
     }
   });
 
+  await repositoriesChanged.main!.trigger({
+    changedWorkingPaths: [workingCopyPath],
+    deletedWorkingPaths: [],
+    createdWorkingPaths: [],
+  });
+
   return { success: true };
 });
 
