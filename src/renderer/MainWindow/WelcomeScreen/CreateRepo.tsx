@@ -48,7 +48,7 @@ function ({ onCreate, className }) {
         onChange={setAuthor}
       />
       <PanelSeparator />
-      <PropertyView label="Main branch">
+      <PropertyView label="Main branch" tooltip="Typically it’s called ‘main’ or ‘master’.">
         <TextInput value={branchName ?? 'main'} onChange={setBranch} />
       </PropertyView>
       <Button
