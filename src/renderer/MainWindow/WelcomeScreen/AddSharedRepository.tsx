@@ -46,7 +46,10 @@ function ({ className, onAfterCreate }) {
 
   return (
     <div className={className}>
-      <PropertyView label="Remote URL">
+      <PanelSeparator title="Remote options" tooltip={<>Paneron uses Git VCS to synchronize data. This section describes Git repository remote.</>} />
+      <PropertyView
+          label="Remote URL"
+          tooltip={<>For repositories hosted on GitHub, use format <code>https://github.com/&lt;username&gt;/&lt;repository&gt;</code></>}>
         <TextInput
           value={remoteURL ?? ''}
           inputGroupProps={{
@@ -64,12 +67,6 @@ function ({ className, onAfterCreate }) {
           onChange={!isBusy ? (val) => setBranch(val) : undefined}
         />
       </PropertyView>
-      <PanelSeparator />
-      <AuthorForm
-        author={author ?? { name: '', email: '' }}
-        onChange={setCustomAuthor}
-      />
-      <PanelSeparator />
       <GitCredentialsInput
         username={username}
         password={password}
@@ -77,6 +74,11 @@ function ({ className, onAfterCreate }) {
         requireMainBranchName={branch}
         onEditPassword={!isBusy ? setPassword : undefined}
         onEditUsername={!isBusy ? setUsername : undefined}
+      />
+      <PanelSeparator />
+      <AuthorForm
+        author={author ?? { name: '', email: '' }}
+        onChange={setCustomAuthor}
       />
       <Button
           fill
