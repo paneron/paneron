@@ -233,14 +233,14 @@ function getNotes(
             </>
           : <>
               {!testResult.isBlank && requireBlankRepo
-                ? <li>Repository is not empty</li>
+                ? <li>Repository is not empty.</li>
                 : null}
               {!testResult.canPush && requirePush
-                ? <li>Read-only access</li>
+                ? <li>There is no write access.</li>
                 : null}
               {requireMainBranchName && requireMainBranchName !== testResult.mainBranchName
                 ? <li>
-                    Main branch name doesn’t match: you entered <code>{requireMainBranchName}</code>, but this repository appears to be using <code>{testResult.mainBranchName}</code>
+                    Main branch name doesn’t match: you entered <code>{requireMainBranchName}</code>, but this repository appears to be using <code>{testResult.mainBranchName}</code>.
                   </li>
                 : null}
             </>}
