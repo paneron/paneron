@@ -5,7 +5,7 @@ import { jsx, css } from '@emotion/react';
 import React, { useContext, useState } from 'react';
 import { Button } from '@blueprintjs/core';
 import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
-import PanelSeparator from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PanelSeparator';
+import PanelSeparator from '@riboseinc/paneron-extension-kit/widgets/panels/PanelSeparator';
 import { addRepository, loadRepository, getNewRepoDefaults, GitAuthor } from 'repositories/ipc';
 import { Context } from '../context';
 import GitCredentialsInput from '../repositories/GitCredentialsInput';
