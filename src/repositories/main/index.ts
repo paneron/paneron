@@ -429,7 +429,7 @@ addRepository.main!.handle(async ({ gitRemoteURL, branch, username, password, au
   }
 
   if (branch === undefined || branch.trim() === '') {
-    throw new Error("Main branch name is not specified.");
+    throw new Error("Main branch name is not specified");
   }
 
   const auth = { username, password };
