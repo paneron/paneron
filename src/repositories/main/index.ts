@@ -421,6 +421,11 @@ queryGitRemote.main!.handle(async ({ url, username, password }) => {
 });
 
 
+function isValidBranchName(val: string): boolean {
+  return ['main', 'master'].indexOf(val) >= 0;
+}
+
+
 addRepository.main!.handle(async ({ gitRemoteURL, branch, username, password, author }) => {
   const workDirPath = path.join(DEFAULT_WORKING_DIRECTORY_CONTAINER, makeUUIDv4());
 
@@ -430,6 +435,10 @@ addRepository.main!.handle(async ({ gitRemoteURL, branch, username, password, au
 
   if (branch === undefined || branch.trim() === '') {
     throw new Error("Main branch name is not specified");
+  }
+
+  if (!isValidBranchName(branch)) {
+    throw new Error("Unexpected main branch name")
   }
 
   const auth = { username, password };
@@ -533,6 +542,10 @@ createRepository.main!.handle(async ({ title, author, mainBranchName: branch }) 
 
   if (branch === undefined || branch.trim() === '') {
     throw new Error("Missing main branch name");
+  }
+
+  if (!isValidBranchName(branch)) {
+    throw new Error("Unexpected main branch name")
   }
 
   await updateRepositories((data) => {
