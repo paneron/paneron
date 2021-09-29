@@ -77,7 +77,7 @@ function ({ onOpenDataset, className }) {
           }
         `}>
       <Helmet>
-        <title>Paneron start screen</title>
+        <title>Paneron</title>
       </Helmet>
       {SPECIAL_SECTIONS.map(sectionID => {
         const SectionView = specialSectionConfiguration[sectionID].view;
