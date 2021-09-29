@@ -39,11 +39,6 @@ function ({ onCreate, className }) {
 
   return (
     <div className={className} css={css`display: flex; flex-flow: column nowrap;`}>
-      <AuthorForm
-        author={author ?? { name: '', email: '' }}
-        onChange={setAuthor}
-      />
-      <PanelSeparator />
       <PropertyView label="Paneron repository title">
         <TextInput value={repoTitle} onChange={setRepoTitle} />
       </PropertyView>
@@ -51,6 +46,11 @@ function ({ onCreate, className }) {
       <PropertyView label="Git repository main branch name" tooltip="This is generally not customized. Typical values are ‘main’ and ‘master’.">
         <TextInput value={branchName ?? 'main'} onChange={setBranch} />
       </PropertyView>
+      <PanelSeparator title="Authoring information" titleStyle={{ alignSelf: 'flex-start' }} />
+      <AuthorForm
+        author={author ?? { name: '', email: '' }}
+        onChange={setAuthor}
+      />
       <Button
           intent={canCreate ? 'primary' : undefined}
           disabled={!canCreate}

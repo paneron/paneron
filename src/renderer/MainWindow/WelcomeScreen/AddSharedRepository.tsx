@@ -75,7 +75,7 @@ function ({ className, onAfterCreate }) {
         onEditPassword={!isBusy ? setPassword : undefined}
         onEditUsername={!isBusy ? setUsername : undefined}
       />
-      <PanelSeparator />
+      <PanelSeparator title="Authoring information" />
       <AuthorForm
         author={author ?? { name: '', email: '' }}
         onChange={setCustomAuthor}
