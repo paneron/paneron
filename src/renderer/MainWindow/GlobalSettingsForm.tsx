@@ -112,7 +112,7 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
 
   return (
     <div className={className}>
-      <SettingsFormSection title="Authoring info &amp; repository defaults">
+      <SettingsFormSection title="Authoring info &amp; Git repository defaults">
         <NewRepositoryDefaults />
       </SettingsFormSection>
 
@@ -232,7 +232,7 @@ const NewRepositoryDefaults: React.FC<{ className?: string }> = function ({ clas
           onChange={!busy ? (val) => editRemoteUsername(val) : undefined}
           value={maybeEditedDefaults.remote?.username ?? ''} />
       </PropertyView>
-      <PropertyView label="Default branch">
+      <PropertyView label="Default main branch name">
         <TextInput
           onChange={!busy ? (val) => editBranch(val) : undefined}
           validationErrors={!branchValid ? ['Please specify a default branch name, e.g. “master” or “main”'] : []}
