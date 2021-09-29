@@ -532,7 +532,7 @@ createRepository.main!.handle(async ({ title, author, mainBranchName: branch }) 
   }
 
   if (branch === undefined || branch.trim() === '') {
-    throw new Error("Please specify default main branch name in settings.");
+    throw new Error("Missing main branch name");
   }
 
   await updateRepositories((data) => {
