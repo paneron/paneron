@@ -79,7 +79,7 @@ export default {
 
 function getMainBranchName(refs: ServerRef[]): string | undefined {
   if (refs.length > 0) {
-    const headRefOid = refs.find(r => r.ref === 'HEAD')?.oid;
+    const headRefOid = refs.find(r => r.ref.toLowerCase() === 'head')?.oid;
     if (headRefOid) {
       const mainBranchRef = refs.find(r => r.ref.startsWith(HEAD_REF_PREFIX) && r.oid === headRefOid);
       if (mainBranchRef) {
