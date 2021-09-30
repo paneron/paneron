@@ -148,7 +148,7 @@ function ({
               minimal
               fill
               isOpen={testResultNotes !== null}
-              popoverClassName={`${css`margin: 10px;`}`}
+              popoverClassName={`${css`&& { margin: 10px !important; }`}`}
               content={testResultNotes
                 ? <Callout
                       title={testPassed ? "It works, but" : "There may have been an issue"}
