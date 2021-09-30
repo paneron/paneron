@@ -240,7 +240,11 @@ function getNotes(
                 : null}
               {requireMainBranchName && requireMainBranchName !== testResult.mainBranchName
                 ? <li>
-                    Main branch name doesn’t match: you entered <code>{requireMainBranchName}</code>, but this repository appears to be using <code>{testResult.mainBranchName}</code>.
+                    Main branch name doesn’t match: <code>{requireMainBranchName}</code> was requested,
+                    {" "}
+                    but this repository appears to be using <code>{testResult.mainBranchName}</code>.
+                    {" "}
+                    You may want to specify <code>{testResult.mainBranchName}</code>.
                   </li>
                 : null}
             </>}
