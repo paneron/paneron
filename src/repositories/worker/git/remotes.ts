@@ -85,7 +85,7 @@ function getMainBranchName(refs: ServerRef[]): string | undefined {
       if (mainBranchRef) {
         return mainBranchRef.ref.replace(HEAD_REF_PREFIX, '');
       } else {
-        throw new Error("Unable to locate a ref pointing to current HEAD under /refs/heads/");
+        throw new Error("Unable to locate a ref pointing to current HEAD under refs/heads/");
       }
     } else {
       throw new Error("Unable to locate HEAD ref");
