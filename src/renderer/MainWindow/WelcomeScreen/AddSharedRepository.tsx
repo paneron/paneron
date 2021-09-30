@@ -34,7 +34,8 @@ function ({ className, onAfterCreate }) {
   const name = defaultName;
 
   const username = customUsername ?? defaults.value.defaults?.remote?.username ?? '';
-  const branch = customBranch ?? defaults.value.defaults?.branch ?? '';
+  const defaultBranch = defaults.value.defaults?.branch || 'main';
+  const branch: string = customBranch || defaultBranch;
 
   const canImport =
     !isBusy &&
@@ -62,8 +63,8 @@ function ({ className, onAfterCreate }) {
       </PropertyView>
       <PropertyView label="Branch" tooltip="Main branch’s name is typically ‘main’ or ‘master’.">
         <TextInput
-          value={branch ?? ''}
-          inputGroupProps={{ required: true, type: 'text', placeholder: "main" }}
+          value={customBranch ?? ''}
+          inputGroupProps={{ type: 'text', placeholder: branch }}
           onChange={!isBusy ? (val) => setBranch(val) : undefined}
         />
       </PropertyView>

@@ -28,25 +28,36 @@ function ({ onCreate, className }) {
   const [customAuthor, setAuthor] = useState<GitAuthor | null>(null);
 
   const author: GitAuthor | null = customAuthor ?? defaults.value.defaults?.author ?? null;
-  const branchName: string | null = customBranch ?? defaults.value.defaults?.branch ?? null;
+  const defaultBranch = defaults.value.defaults?.branch || 'main';
+  const branch: string = customBranch || defaultBranch;
 
   const canCreate = (
     repoTitle.trim() !== '' &&
     author?.name &&
     author?.email &&
-    branchName?.trim() &&
+    branch?.trim() &&
     onCreate);
 
   return (
     <div className={className} css={css`display: flex; flex-flow: column nowrap;`}>
-      <PropertyView label="Paneron repository title">
+      <PropertyView
+          label="Paneron repository title">
         <TextInput value={repoTitle} onChange={setRepoTitle} />
       </PropertyView>
       <PanelSeparator />
-      <PropertyView label="Git repository main branch name" tooltip="This is generally not customized. Typical values are ‘main’ and ‘master’.">
-        <TextInput value={branchName ?? 'main'} onChange={setBranch} />
+      <PropertyView
+          label="Git repository main branch name"
+          tooltip="This is generally not customized. Typical values are ‘main’ and ‘master’.">
+        <TextInput
+          value={customBranch ?? ''}
+          onChange={setBranch}
+          inputGroupProps={{ required: true, type: 'text', placeholder: branch }}
+        />
       </PropertyView>
-      <PanelSeparator title="Authoring information" titleStyle={{ alignSelf: 'flex-start' }} />
+      <PanelSeparator
+        title="Authoring information"
+        titleStyle={{ alignSelf: 'flex-start' }}
+      />
       <AuthorForm
         author={author ?? { name: '', email: '' }}
         onChange={setAuthor}
@@ -55,7 +66,7 @@ function ({ onCreate, className }) {
           intent={canCreate ? 'primary' : undefined}
           disabled={!canCreate}
           onClick={canCreate
-            ? () => onCreate!(repoTitle, author, branchName!)
+            ? () => onCreate!(repoTitle, author, branch!)
             : undefined}>
         Create empty repository
       </Button>
