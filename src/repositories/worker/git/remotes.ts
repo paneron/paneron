@@ -21,6 +21,8 @@ const describe: Git.Remotes.Describe = async function ({ url, auth }) {
       http,
       url: normalizedURL,
       forPush: true,
+      symrefs: true,
+      protocolVersion: 1,
       onAuth: () => auth,
       onAuthFailure: () => ({ cancel: true }),
     });
@@ -31,6 +33,8 @@ const describe: Git.Remotes.Describe = async function ({ url, auth }) {
       http,
       url: normalizedURL,
       forPush: false,
+      symrefs: true,
+      protocolVersion: 1,
       onAuth: () => auth,
       onAuthFailure: () => ({ cancel: true }),
     });
