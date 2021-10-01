@@ -14,35 +14,31 @@ const describe: Git.Remotes.Describe = async function ({ url, auth }) {
   const normalizedURL = normalizeURL(url);
 
   let canPush: boolean;
-  let refs: ServerRef[];
-
   try {
-    refs = await git.listServerRefs({
+    await git.listServerRefs({
       http,
       url: normalizedURL,
       forPush: true,
-      symrefs: true,
-      protocolVersion: 1,
       onAuth: () => auth,
       onAuthFailure: () => ({ cancel: true }),
     });
     canPush = true;
-
   } catch (e) {
-    refs = await git.listServerRefs({
-      http,
-      url: normalizedURL,
-      forPush: false,
-      symrefs: true,
-      protocolVersion: 1,
-      onAuth: () => auth,
-      onAuthFailure: () => ({ cancel: true }),
-    });
     canPush = false;
   }
 
-  const isBlank = refs.length === 0;
-  const mainBranchName = getMainBranchName(refs);
+  const branchRefs = await git.listServerRefs({
+    http,
+    url: normalizedURL,
+    forPush: false,
+    symrefs: true,
+    protocolVersion: 1,
+    onAuth: () => auth,
+    onAuthFailure: () => ({ cancel: true }),
+  });
+
+  const isBlank = branchRefs.length === 0;
+  const mainBranchName = getMainBranchName(branchRefs);
 
   return {
     isBlank,
@@ -82,6 +78,7 @@ export default {
 
 
 function getMainBranchName(refs: ServerRef[]): string | undefined {
+  console.debug("Locaing HEAD among refs", refs);
   if (refs.length > 0) {
     const headRefOid = refs.find(r => r.ref.toLowerCase() === 'head')?.oid;
     if (headRefOid) {
