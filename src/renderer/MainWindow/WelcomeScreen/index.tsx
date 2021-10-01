@@ -103,12 +103,12 @@ function ({ onOpenDataset, className }) {
       <Tab
         title={<><Icon icon="lab-test" />&ensp;New local repository</>}
         id="create-repo"
-        panel={<CreateRepoForm onCreate={handleCreateRepo} css={css`padding: 10px;`} />}
+        panel={<CreateRepoForm onCreate={handleCreateRepo} css={css`position: absolute; inset: 0; padding: 10px; overflow-y: auto;`} />}
       />
       <Tab
         title={<><Icon icon="add" />&ensp;Add shared repository</>}
         id="add-shared-repo"
-        panel={<AddSharedRepository css={css`padding: 10px;`} />}
+        panel={<AddSharedRepository css={css`position: absolute; inset: 0; padding: 10px; overflow-y: auto;`} />}
       />
       <InputGroup
         leftIcon="search"

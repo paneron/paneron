@@ -39,30 +39,35 @@ function ({ onCreate, className }) {
     onCreate);
 
   return (
-    <div className={className} css={css`display: flex; flex-flow: column nowrap;`}>
-      <PropertyView
-          label="Paneron repository title">
-        <TextInput value={repoTitle} onChange={setRepoTitle} />
-      </PropertyView>
-      <PanelSeparator />
-      <PropertyView
-          label="Git repository main branch name"
-          tooltip="This is generally not customized. Typical values are ‘main’ and ‘master’.">
-        <TextInput
-          value={customBranch ?? ''}
-          onChange={setBranch}
-          inputGroupProps={{ required: true, type: 'text', placeholder: branch }}
+    <div
+        className={className}
+        css={css`display: flex; flex-flow: column nowrap;`}>
+      <div css={css`flex: 1;`}>
+        <PropertyView
+            label="Paneron repository title">
+          <TextInput value={repoTitle} onChange={setRepoTitle} />
+        </PropertyView>
+        <PanelSeparator
+          title="Authoring information"
+          titleStyle={{ alignSelf: 'flex-start' }}
         />
-      </PropertyView>
-      <PanelSeparator
-        title="Authoring information"
-        titleStyle={{ alignSelf: 'flex-start' }}
-      />
-      <AuthorForm
-        author={author ?? { name: '', email: '' }}
-        onChange={setAuthor}
-      />
+        <AuthorForm
+          author={author ?? { name: '', email: '' }}
+          onChange={setAuthor}
+        />
+        <PanelSeparator />
+        <PropertyView
+            label="Git repository main branch name"
+            tooltip="This is generally not customized. Typical values are ‘main’ and ‘master’.">
+          <TextInput
+            value={customBranch ?? ''}
+            onChange={setBranch}
+            inputGroupProps={{ required: true, type: 'text', placeholder: branch }}
+          />
+        </PropertyView>
+      </div>
       <Button
+          css={css`margin-top: 10px;`}
           intent={canCreate ? 'primary' : undefined}
           disabled={!canCreate}
           onClick={canCreate

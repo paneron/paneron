@@ -46,44 +46,51 @@ function ({ className, onAfterCreate }) {
     author?.name && author?.email;
 
   return (
-    <div className={className}>
-      <PanelSeparator title="Remote options" tooltip={<>Paneron uses Git VCS to synchronize data. This section describes Git repository remote.</>} />
-      <PropertyView
-          label="Remote URL"
-          tooltip={<>For repositories hosted on GitHub, use format <code>https://github.com/&lt;username&gt;/&lt;repository&gt;</code></>}>
-        <TextInput
-          value={remoteURL ?? ''}
-          inputGroupProps={{
-            required: true,
-            type: 'url',
-            placeholder: "https://github.com/some-username/some-repository",
-          }}
-          onChange={!isBusy ? (val) => setRemoteURL(val) : undefined}
+    <div
+        className={className}
+        css={css`display: flex; flex-flow: column nowrap;`}>
+      <div css={css`flex: 1;`}>
+        <PanelSeparator
+          title="Remote options"
+          tooltip={<>Paneron uses Git VCS to synchronize data. This section describes Git repository remote.</>}
         />
-      </PropertyView>
-      <PropertyView label="Branch" tooltip="Main branch’s name is typically ‘main’ or ‘master’.">
-        <TextInput
-          value={customBranch ?? ''}
-          inputGroupProps={{ type: 'text', placeholder: branch }}
-          onChange={!isBusy ? (val) => setBranch(val) : undefined}
+        <PropertyView
+            label="Remote URL"
+            tooltip={<>For repositories hosted on GitHub, use format <code>https://github.com/&lt;username&gt;/&lt;repository&gt;</code></>}>
+          <TextInput
+            value={remoteURL ?? ''}
+            inputGroupProps={{
+              required: true,
+              type: 'url',
+              placeholder: "https://github.com/some-username/some-repository",
+            }}
+            onChange={!isBusy ? (val) => setRemoteURL(val) : undefined}
+          />
+        </PropertyView>
+        <PropertyView label="Branch" tooltip="Main branch’s name is typically ‘main’ or ‘master’.">
+          <TextInput
+            value={customBranch ?? ''}
+            inputGroupProps={{ type: 'text', placeholder: branch }}
+            onChange={!isBusy ? (val) => setBranch(val) : undefined}
+          />
+        </PropertyView>
+        <GitCredentialsInput
+          username={username}
+          password={password}
+          remoteURL={remoteURL ?? ''}
+          requireMainBranchName={branch}
+          onEditPassword={!isBusy ? setPassword : undefined}
+          onEditUsername={!isBusy ? setUsername : undefined}
         />
-      </PropertyView>
-      <GitCredentialsInput
-        username={username}
-        password={password}
-        remoteURL={remoteURL ?? ''}
-        requireMainBranchName={branch}
-        onEditPassword={!isBusy ? setPassword : undefined}
-        onEditUsername={!isBusy ? setUsername : undefined}
-      />
-      <PanelSeparator title="Authoring information" />
-      <AuthorForm
-        author={author ?? { name: '', email: '' }}
-        onChange={setCustomAuthor}
-      />
+        <PanelSeparator title="Authoring information" />
+        <AuthorForm
+          author={author ?? { name: '', email: '' }}
+          onChange={setCustomAuthor}
+        />
+      </div>
       <Button
           fill
-          css={css`margin-top: 5px;`}
+          css={css`margin-top: 10px;`}
           intent={canImport ? 'primary' : undefined}
           disabled={!canImport}
           onClick={canImport
