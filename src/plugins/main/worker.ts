@@ -35,6 +35,8 @@ let manager: PluginManager | null = null;
 
 let configPath: string | null = null;
 
+let pluginPath: string | null = null;
+
 const pluginLock = new AsyncLock();
 
 
@@ -86,7 +88,7 @@ export type WorkerSpec = ModuleMethods & Methods;
 
 
 function assertInitialized() {
-  if (manager === null || configPath === null) {
+  if (manager === null || configPath === null || pluginPath === null) {
     throw new Error("Plugin worker not initialized");
   }
 }
@@ -137,6 +139,7 @@ const methods: WorkerSpec = {
 
   async initialize({ cwd, pluginsPath, pluginConfigPath }) {
     configPath = pluginConfigPath;
+    pluginPath = pluginsPath;
 
     manager = new PluginManager({
       cwd,
@@ -206,6 +209,16 @@ const methods: WorkerSpec = {
   async remove({ name }) {
     await pluginLock.acquire('1', async () => {
       assertInitialized();
+
+      const pluginInfo = manager!.getInfo(name);
+      if (pluginInfo?.location) {
+        console.debug("Want to remove", pluginInfo.location);
+        if (pluginInfo.location.startsWith(pluginPath!)) {
+          fs.removeSync(pluginInfo.location)
+        } else {
+          throw new Error("Can’t remove plugin (plugin path is not a descendant of root plugin path)");
+        }
+      }
 
       (await manager!.uninstall(name));
 
