@@ -9,6 +9,7 @@ import {
   getPluginManagerProps,
   installPlugin,
   listLocalPlugins,
+  removePlugin,
 } from 'plugins';
 import { describeRepository, loadRepository } from 'repositories/ipc';
 import { DatasetInfo } from '../types';
@@ -116,7 +117,8 @@ export default async function getDataset(workingCopyPath: string, datasetPath?: 
       await pluginManager.installFromNpm(pluginName, pluginVersion);
     } else {
       const localPath = localPlugins[pluginName].localPath!;
-      log.silly("Dataset view: Installing plugin for renderer (local)...", workingCopyPath, pluginName, pluginVersion, localPath);
+      log.silly("Dataset view: (Re)installing plugin for renderer (local)...", workingCopyPath, pluginName, pluginVersion, localPath);
+      await removePlugin.renderer!.trigger({ id: pluginName });
       await pluginManager.installFromPath(localPath);
     }
 
