@@ -50,7 +50,7 @@ function ({ className }) {
       });
       setOperationKey(opKey);
       try {
-        // TODO: Investigate why calls to console or electron-log from within func()
+        // TODO: Investigate whether/why calls to console or electron-log from within func()
         // are not resulting in expected console output.
         const result: R = await func(...opts);
         toaster.dismiss(opKey);
