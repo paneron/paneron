@@ -6,7 +6,7 @@ import { jsx, css } from '@emotion/react';
 import React, { useContext, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import MathJax from 'react-mathjax2';
-import { IconSize, NonIdealState, Spinner, Toaster } from '@blueprintjs/core';
+import { NonIdealState, ProgressBar, Spinner, Toaster } from '@blueprintjs/core';
 import { DatasetContext } from '@riboseinc/paneron-extension-kit/types';
 import { unloadDataset } from 'datasets/ipc';
 import getDataset from 'datasets/renderer/getDataset';
@@ -23,7 +23,7 @@ const NODE_MODULES_PATH = process.env.NODE_ENV === 'production'
 const MATHJAX_PATH = `${NODE_MODULES_PATH}/mathjax/MathJax.js?config=AM_HTMLorMML`;
 
 
-const toaster = Toaster.create({ position: 'bottom' });
+const toaster = Toaster.create({ position: 'bottom-left', canEscapeKeyClear: false });
 
 
 const Dataset: React.FC<{ className?: string }> =
@@ -40,9 +40,12 @@ function ({ className }) {
   function performOperation<P extends any[], R>(gerund: string, func: (...opts: P) => Promise<R>) {
     return async (...opts: P) => {
       const opKey = toaster.show({
-        message: `${gerund}…`,
+        message: <div css={css`display: flex; flex-flow: row nowrap; white-space: nowrap; align-items: center;`}>
+          <ProgressBar intent="primary" css={css`width: 50px;`} />
+          &emsp;
+          {gerund}…
+        </div>,
         intent: 'primary',
-        icon: <Spinner size={IconSize.STANDARD} />,
         timeout: 0,
       });
       setOperationKey(opKey);
