@@ -7,7 +7,7 @@ import { normalizeDatasetDir, updateDatasetIndexesIfNeeded } from '../loadedData
 import { toBufferChangeset } from '../buffer-dataset-conversion';
 import { API as Datasets } from '../../types';
 import { diffObjectDatasets } from './equality';
-import { readObject } from './read';
+import { readObjectCold } from './read';
 
 
 export const updateObjects: Datasets.Data.UpdateObjects =
@@ -108,7 +108,7 @@ async function findFirstConflictingObjectPath(
   Promise<[ Record<string, any> | null, Record<string, any> | null ]> {
     return [
       referenceObjectDataset[p],
-      await readObject(p, workDir, datasetDir),
+      await readObjectCold(workDir, path.join(datasetDir, p)),
     ];
   }
 

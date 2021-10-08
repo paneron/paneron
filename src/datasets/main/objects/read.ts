@@ -20,10 +20,9 @@ export const getObjectDataset: Datasets.Data.GetObjectDataset = async function (
   const objectDataset: ObjectDataset = (await Promise.all(
     objectPaths?.map(async (objectPath) => {
       return {
-        [objectPath]: await readObject(
-          objectPath,
+        [objectPath]: await readObjectCold(
           workDir,
-          datasetDirNormalized),
+          path.join(datasetDirNormalized, objectPath)),
       };
     }) ?? []
   )).reduce((prev, curr) => ({ ...prev, ...curr }), {});
