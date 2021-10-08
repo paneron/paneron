@@ -91,8 +91,6 @@ export async function readObject(
  * @param rootPath object path, relative to working directory root
  * @returns Record<string, any> | null
  */
-   
-   
 export async function readObjectCold(
   workDir: string,
   rootPath: string,
