@@ -96,7 +96,20 @@ export async function readObjectCold(
   rootPath: string,
 ): Promise<Record<string, any> | null> {
   const { workers: { reader } } = getLoadedRepository(workDir);
-  const bufferDataset = await reader.repo_readBuffers({ workDir, rootPath });
+
+  let bufferDataset: Record<string, Uint8Array>;
+  try {
+    bufferDataset = await reader.repo_readBuffers({ workDir, rootPath });
+  } catch (e) {
+    // Check if it’s actually a nonexistent file error
+    const repr = (e as any)?.toString?.() ?? '';
+    if (repr.indexOf('ENOENT') >= 0) {
+      return null;
+    } else {
+      console.error("readObjectCold: can’t read buffers", repr);
+      throw e;
+    }
+  }
 
   if (Object.keys(bufferDataset).length < 1) {
     // Well, seems there’s no buffer or tree at given path.
