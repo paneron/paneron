@@ -95,7 +95,7 @@ export async function readObjectCold(
   workDir: string,
   rootPath: string,
 ): Promise<Record<string, any> | null> {
-  const { workers: { reader } } = getLoadedRepository(workDir)
+  const { workers: { reader } } = getLoadedRepository(workDir);
   const bufferDataset = await reader.repo_readBuffers({ workDir, rootPath });
 
   if (Object.keys(bufferDataset).length < 1) {
