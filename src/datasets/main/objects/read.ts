@@ -87,8 +87,8 @@ export async function readObject(
  * and deserializes it into memory structure
  * according to ser/des rule provided by Paneron core.
  * 
- * @param workDir repository working copy
- * @param rootPath object path
+ * @param workDir repository working directory
+ * @param rootPath object path, relative to working directory root
  * @returns Record<string, any> | null
  */
    
