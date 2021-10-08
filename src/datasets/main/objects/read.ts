@@ -121,7 +121,7 @@ export async function readObjectCold(
     return rule.deserialize(bufferDataset, {});
   } catch (e) {
     log.error("Datasets: readObjectCold(): Error deserializing buffer dataset", workDir, rootPath, e);
-    // Pretend the object does not exist.
+    // Pretend the object does not exist?
     throw e;
   }
 }
