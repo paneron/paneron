@@ -11,7 +11,7 @@ import { BaseAction, PersistentStateReducerHook } from '@riboseinc/paneron-exten
 import useTimeTravelingPersistentStateReducer, { TimeTravelingPersistentStateReducerHook } from '@riboseinc/paneron-extension-kit/useTimeTravelingPersistentStateReducer';
 import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
 
-import { makeRandomID, chooseFileFromFilesystem, saveFileToFilesystem } from 'common';
+import { makeRandomID, chooseFileFromFilesystem, saveFileToFilesystem, openExternalURL } from 'common';
 import { copyObjects, requestCopiedObjects } from 'clipboard/ipc';
 
 import { describeRepository } from 'repositories/ipc';
@@ -101,6 +101,12 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
     title: datasetInfo.title,
 
     logger: log,
+
+    openExternalLink: async ({ uri }) => {
+      await openExternalURL.renderer!.trigger({
+        url: uri,
+      });
+    },
 
     useSettings: () => {
       return useSettings(EXT_SETTINGS_SCOPE, {});
