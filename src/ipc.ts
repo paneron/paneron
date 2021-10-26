@@ -150,14 +150,19 @@ export const _ = <unknown>null;
  * to set up listeners (handlers) or to trigger them,
  * however, must be split into thread-specific files.
  * 
- * ### Example of creating & using a main-thread endpoint:
+ * ### Example of creating & using a main-side endpoint:
+ * 
+ * (For a renderer-side endpoint, it’s more or less the reverse.)
  *
  * Defining endpoint (will be imported in both threads later):
  * 
  * ```typescript
  *   // shared-ipc.ts
  *   import { _, makeEndpoint } from 'ipc'
- *   export const doSomething = makeEndpoint.main('do-something', <{ foo: string }>_, <{ bar: number }>_)
+ *   export const doSomething = makeEndpoint.main(
+ *     'do-something',
+ *     <{ foo: string }>_,
+ *     <{ bar: number }>_)
  * ```
  * 
  * Defining the handler:
@@ -166,7 +171,7 @@ export const _ = <unknown>null;
  *   // main/some-file.ts
  *   import { doSomething } from 'shared-ipc'
  *   doSomething.main!.handle(async (payload) => {
- *     // The type of `payload` is magically known to be `{ foo: string }`,
+ *     // Here, type of `payload` is known to be `{ foo: string }`,
  *     // and TS will warn you if you don’t return `{ bar: number }`
  *     return { bar: 123 };
  *   })
@@ -180,7 +185,7 @@ export const _ = <unknown>null;
  *   async function handleClick() {
  *     // TS will warn you if you don’t pass `{ foo: string }`
  *     const result = await doSomething.renderer!.trigger({ foo: 'hello world' })
- *     // The type of `result` is magically known to be `{ bar: number }`
+ *     // Here, the type of `result` is known to be `{ bar: number }`
  *   }
  * ```
  */
