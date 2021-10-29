@@ -190,6 +190,8 @@ async function createWindowForLocalComponent(
 
   const window = await createWindow(title, url, winParams, showWhileLoading, forceDebug || isDevelopment);
 
+  window.removeMenu();
+
   if (forceDebug || isDevelopment) {
     window.webContents.on('devtools-opened', () => {
       window.focus();
