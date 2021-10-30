@@ -149,22 +149,6 @@ async function initMain() {
     }
   });
 
-  const CLEAR_OPTION_ROUTINES: Record<ClearOption, () => Promise<void>> = {
-    'ui-state': async () => {
-      await resetStateGlobal();
-    },
-    'db-indexes': async () => {
-      await clearIndexes();
-    },
-    plugins: async () => {
-      await clearPluginData();
-    },
-    repositories: async () => {
-      await clearRepoConfig();
-      await clearRepoData();
-    },
-  };
-
   clearDataAndRestart.main!.handle(async ({ options }) => {
     const opts: ClearOption[] = Object.entries(options).filter(([, checked]) => checked === true).map(([optID, ]) => optID as ClearOption);
 
@@ -186,6 +170,23 @@ async function initMain() {
   mainWindow.main!.open();
 
 }
+
+
+const CLEAR_OPTION_ROUTINES: Record<ClearOption, () => Promise<void>> = {
+  'ui-state': async () => {
+    await resetStateGlobal();
+  },
+  'db-indexes': async () => {
+    await clearIndexes();
+  },
+  plugins: async () => {
+    await clearPluginData();
+  },
+  repositories: async () => {
+    await clearRepoConfig();
+    await clearRepoData();
+  },
+};
 
 initMain();
 
