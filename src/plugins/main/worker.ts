@@ -297,6 +297,11 @@ async function getInstalledVersion(name: string): Promise<string | null> {
   return (await readConfig()).installedPlugins[name]?.installedVersion ?? null;
 }
 
+
+/**
+ * Reads local plugins;
+ * as a side-effect, confirms directory/metadata validity and removes any invalid plugins.
+ */
 async function readLocalPlugins(): Promise<ExtensionRegistry> {
   const { localPlugins } = await readConfig();
   const registry: ExtensionRegistry = {};
