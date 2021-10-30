@@ -190,6 +190,9 @@ const methods: WorkerSpec = {
       delete newData.localPlugins[pluginName];
       return newData;
     });
+
+    (await manager!.uninstall(pluginName));
+
     return { success: true };
   },
 
