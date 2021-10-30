@@ -99,7 +99,11 @@ export async function spawnWorker(): Promise<Thread & WorkerMethods> {
     spawn<WorkerSpec>(new Worker('../worker/index')).
     then((worker) => {
       Thread.events(worker).subscribe(evt => {
-        // log.debug("Repositories: Worker event:", evt);
+        if (evt.type === 'internalError') {
+          log.error("Repositories: Worker error:", evt);
+        } else if (evt.type === 'termination') {
+          log.warn("Repositories: Worker termination:", evt);
+        }
         // TODO: Respawn on worker exit?
       });
       log.debug("Repositories: Spawning worker: Done");
