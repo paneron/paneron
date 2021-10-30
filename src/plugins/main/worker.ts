@@ -294,7 +294,7 @@ expose(methods);
 
 
 async function getInstalledVersion(name: string): Promise<string | null> {
-  return (await readConfig()).installedPlugins[name]?.installedVersion || null;
+  return (await readConfig()).installedPlugins[name]?.installedVersion ?? null;
 }
 
 async function readLocalPlugins(): Promise<ExtensionRegistry> {
