@@ -14,7 +14,18 @@ import '!style-loader!css-loader!./renderer.css';
 
 import ErrorState from '@riboseinc/paneron-extension-kit/widgets/ErrorState';
 
-import { getComponent } from 'window';
+import { WindowComponentProps } from 'window/types';
+
+
+type DefaultImporter<T> = () => Promise<{ default: T | Promise<T> }>;
+
+type WindowComponentImporter = DefaultImporter<React.FC<WindowComponentProps>>;
+
+const WINDOW_COMPONENTS: {
+  [componentID: string]: WindowComponentImporter
+} = {
+  mainWindow:  () => import('./MainWindow/index'),
+}
 
 
 require('events').EventEmitter.defaultMaxListeners = 20;
@@ -44,7 +55,7 @@ async function renderApp() {
   log.debug("Opening window", componentID);
 
   if (componentID !== null) {
-    const importer = getComponent(componentID);
+    const importer = WINDOW_COMPONENTS[componentID];
     if (importer) {
       try {
         let Component = (await importer()).default;
@@ -70,5 +81,6 @@ async function renderApp() {
 import 'common';
 import 'repositories/ipc';
 import 'datasets/ipc';
+
 
 renderApp();

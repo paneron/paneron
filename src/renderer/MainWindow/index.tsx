@@ -7,7 +7,9 @@ import { Button, ButtonProps, Classes, Colors, Dialog, NonIdealState } from '@bl
 import { GlobalSettingsContext } from '@riboseinc/paneron-extension-kit/SettingsContext';
 import { INITIAL_GLOBAL_SETTINGS } from '@riboseinc/paneron-extension-kit/settings';
 
+import { refreshMainWindow, showGlobalSettings } from 'common';
 import { WindowComponentProps } from 'window/types';
+
 import { useSettings } from './settings';
 
 import Nav from './Nav';
@@ -15,7 +17,6 @@ import ContextProvider, { Context } from './context';
 import Dataset from './Dataset';
 import WelcomeScreen from './WelcomeScreen';
 import GlobalSettingsForm from './GlobalSettingsForm';
-import { mainWindow } from 'common';
 
 
 const MainWindow: React.FC<WindowComponentProps> = function () {
@@ -26,6 +27,10 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
   };
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
 
+  showGlobalSettings.renderer!.useEvent(async () => {
+    setSettingsDialogOpen(true);
+  }, []);
+
   return (
     <React.StrictMode>
       <ContextProvider>
@@ -35,7 +40,7 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
             <NavbarButton
               icon="refresh"
               title="Refresh window"
-              onClick={mainWindow.renderer!.refresh}
+              onClick={() => refreshMainWindow.renderer!.trigger({})}
             />
             <NavbarButton
               icon="settings"

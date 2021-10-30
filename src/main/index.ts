@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { app, BrowserWindow, dialog, protocol, shell } from 'electron';
+import { app, BrowserWindow, dialog, Menu, protocol, shell } from 'electron';
 import log from 'electron-log';
 import type { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 
@@ -24,24 +24,60 @@ import '../repositories/main';
 import '../datasets/main';
 import '../clipboard/main';
 
-import { clearDataAndRestart, ClearOption, mainWindow, openExternalURL, saveFileToFilesystem, selectDirectoryPath } from '../common';
+import { clearDataAndRestart, ClearOption, openExternalURL, refreshMainWindow, saveFileToFilesystem, selectDirectoryPath } from '../common';
 import { chooseFileFromFilesystem, makeRandomID } from '../common';
 
+import { WindowOpenerParams } from '../window/types';
 import { resetStateGlobal } from '../state/manage';
 import { clearPluginData } from '../plugins/main';
 import { clearRepoConfig, clearRepoData } from 'repositories/main/readRepoConfig';
 import { clearIndexes } from '../datasets/main';
+import { refreshByID, open as openWindow } from '../window/main';
+
+import mainMenu from './mainMenu';
 
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
 
-function preventDefault(e: Electron.Event) {
+const MAIN_WINDOW_OPTIONS: WindowOpenerParams = {
+  component: 'mainWindow', // Component location is defined in renderer initialization
+  title: "Paneron",
+  dimensions: {
+    minWidth: 800,
+    minHeight: 600,
+    width: 800,
+    height: 600,
+  },
+  quitAppOnClose: true,
+  menu: mainMenu,
+};
+
+
+const CLEAR_OPTION_ROUTINES: Record<ClearOption, () => Promise<void>> = {
+  'ui-state': async () => {
+    await resetStateGlobal();
+  },
+  'db-indexes': async () => {
+    await clearIndexes();
+  },
+  plugins: async () => {
+    await clearPluginData();
+  },
+  repositories: async () => {
+    await clearRepoConfig();
+    await clearRepoData();
+  },
+};
+
+
+function handleAllWindowsClosed(e: Electron.Event) {
   log.warn("All windows closed (not quitting)");
   e.preventDefault();
 }
 
-async function initMain() {
+
+(async function initMain() {
 
   log.catchErrors({ showDialog: true });
 
@@ -53,14 +89,10 @@ async function initMain() {
   }
 
   // Prevent closing windows from quitting the app during startup
-  app.on('window-all-closed', preventDefault);
+  app.on('window-all-closed', handleAllWindowsClosed);
 
   await app.whenReady();
 
-  //protocol.registerFileProtocol('file', (request, callback) => {
-  //  const pathname = decodeURI(request.url.replace('file:///', ''));
-  //  callback(pathname);
-  //});
   protocol.registerFileProtocol('file', (request, cb) => {
     const components = request.url.replace('file:///', '').split('?', 2);
     if (isDevelopment) {
@@ -164,47 +196,34 @@ async function initMain() {
     return { success: true };
   });
 
+  const { id: windowID } = await openWindow(MAIN_WINDOW_OPTIONS);
+
+  refreshMainWindow.main!.handle(async () => {
+    // Will throw if window is not open
+    // (But then app quits if it’s closed anyway)
+    refreshByID(windowID);
+    return {};
+  });
+
+  if (process.platform === 'darwin') {
+    log.debug("Setting app menu (Mac)");
+    Menu.setApplicationMenu(mainMenu);
+  }
+
   // Prevent closing windows from quitting the app during startup
-  app.off('window-all-closed', preventDefault);
-
-  mainWindow.main!.open();
-
-}
+  app.off('window-all-closed', handleAllWindowsClosed);
 
 
-const CLEAR_OPTION_ROUTINES: Record<ClearOption, () => Promise<void>> = {
-  'ui-state': async () => {
-    await resetStateGlobal();
-  },
-  'db-indexes': async () => {
-    await clearIndexes();
-  },
-  plugins: async () => {
-    await clearPluginData();
-  },
-  repositories: async () => {
-    await clearRepoConfig();
-    await clearRepoData();
-  },
-};
+  // NOTE: This might be useful later, for gradually extending main menu.
+  // let currentMainMenu = mainMenu;
+  // function mutateMainMenu(adjuster: (oldMainMenu: Menu) => Menu) {
+  //   currentMainMenu = adjuster(currentMainMenu);
+  //   if (process.platform === 'darwin') {
+  //     log.debug("Setting app menu (Mac)");
+  //     Menu.setApplicationMenu(currentMainMenu);
+  //   } else {
+  //     setMenuByID(windowID, currentMainMenu)
+  //   }
+  // }
 
-initMain();
-
-
-
-
-// function conformSlashes(path: string): string {
-// 	const isExtendedLengthPath = /^\\\\\?\\/.test(path);
-//   const hasNonAscii = /[^\u0000-\u0080]+/.test(path); // eslint-disable-line no-control-regex
-//   
-//   log.info("Conforming slashes", path);
-// 
-// 	if (isExtendedLengthPath || hasNonAscii) {
-//     log.info("Won’t conform slashes");
-// 		return path;
-//   }
-// 
-//   log.info("Conforming slashes: done", path.replace(/\\/g, '/'));
-// 
-// 	return path.replace(/\\/g, '/');
-// }
+})();

@@ -1,6 +1,6 @@
 import * as path from 'path'
 import { format as formatUrl } from 'url';
-import { BrowserWindow, Menu } from 'electron';
+import { app, BrowserWindow, Menu } from 'electron';
 import log from 'electron-log';
 
 import { WindowOpenerParams, isComponentWindowSource, isExternalWindowSource } from './types';
@@ -9,6 +9,8 @@ import { WindowOpenerParams, isComponentWindowSource, isExternalWindowSource } f
 const isDevelopment = process.env.NODE_ENV !== 'production';
 const isMacOS = process.platform === 'darwin';
 
+
+// TODO: This is pretty inelegant
 
 // Keeps track of windows and ensures (?) they do not get garbage collected
 export let windows: BrowserWindow[] = [];
@@ -23,15 +25,16 @@ let windowsByID: { [id: number]: BrowserWindow } = {};
 let windowsBeingOpened: { [title: string]: Promise<BrowserWindow> } = {};
 
 // Open new window, or focus if one with the same title already exists
-export type WindowOpener = (props: WindowOpenerParams) => Promise<BrowserWindow>;
+export type WindowOpener = (props: WindowOpenerParams & { menu?: Menu }) => Promise<BrowserWindow>;
 export const open: WindowOpener = async (props) => {
 
   const {
     title,
     dimensions, frameless,
-    winParams, menuTemplate, ignoreCache,
+    winParams, ignoreCache,
     showWhileLoading,
-    forceDebug
+    forceDebug, quitAppOnClose,
+    menu,
   } = props;
 
   const _existingWindow = getByTitle(title);
@@ -87,14 +90,15 @@ export const open: WindowOpener = async (props) => {
           throw new Error("window.openWindow() expects either component or url");
         }
 
+        if (quitAppOnClose) {
+          window.on('closed', app.quit);
+        }
+
         windowID = window.id;
 
-        if (!isMacOS) {
-          if (menuTemplate) {
-            window.setMenu(Menu.buildFromTemplate(menuTemplate));
-          } else {
-            window.setMenu(null);
-          }
+        if (menu !== undefined && process.platform !== 'darwin') {
+          log.debug("Setting menu");
+          window.setMenu(menu);
         }
 
         windows.push(window);

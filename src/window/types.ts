@@ -1,4 +1,4 @@
-import type { MenuItemConstructorOptions } from 'electron';
+import type { Menu } from 'electron';
 
 
 export interface WindowComponentProps {
@@ -18,10 +18,13 @@ export interface WindowOptions {
   };
   frameless?: boolean;
   winParams?: any;
-  menuTemplate?: MenuItemConstructorOptions[];
+  menu?: Menu;
   ignoreCache?: boolean;
   showWhileLoading?: boolean;
   forceDebug?: boolean;
+
+  /** Used for main window. */
+  quitAppOnClose?: true;
 }
 export interface ComponentWindowSource {
   component: string;
