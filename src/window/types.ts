@@ -1,4 +1,4 @@
-import { MenuItemConstructorOptions } from 'electron';
+import type { MenuItemConstructorOptions } from 'electron';
 
 
 export interface WindowComponentProps {
