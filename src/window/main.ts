@@ -268,3 +268,12 @@ export function refreshByID(windowID: number) {
     throw new Error("Cannot refresh window: no window with such ID");
   }
 }
+
+export function setMenuByID(windowID: number, menu: Menu) {
+  const window = getByID(windowID);
+  if (window) {
+    window.setMenu(menu);
+  } else {
+    throw new Error("Cannot set window menu: no window with such ID");
+  }
+}
