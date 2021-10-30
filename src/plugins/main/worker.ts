@@ -10,7 +10,7 @@ import * as path from 'path';
 import yaml from 'js-yaml';
 import AsyncLock from 'async-lock';
 
-import { IPluginInfo, PluginManager } from 'live-plugin-manager';
+import { PluginManager } from 'live-plugin-manager';
 
 import { Extension, ExtensionRegistry, InstalledPluginInfo } from 'plugins/types';
 
@@ -63,8 +63,6 @@ export interface Methods {
   removeAll: () => Promise<{ success: true }>
 
   getInstalledVersion: (msg: { name: string }) => Promise<{ installedVersion: string | null }>
-
-  listInstalledPlugins: () => Promise<IPluginInfo[]>
 
   /** Lists plugins for which local directory paths are specified. */
   listLocalPlugins: () => Promise<ExtensionRegistry>
@@ -157,10 +155,6 @@ const methods: WorkerSpec = {
     //    await manager.installFromNpm(name, info.installedVersion || undefined);
     //  }
     //}
-  },
-
-  async listInstalledPlugins() {
-    return manager!.list();
   },
 
   async getInstalledVersion({ name }) {
