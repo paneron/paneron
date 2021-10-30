@@ -443,6 +443,7 @@ addRepository.main!.handle(async ({ gitRemoteURL, branch, username, password, au
 
   const auth = { username, password };
   if (!auth.password) {
+    log.error("Repositories: addRepository: password not supplied, trying to retrieve from OS storage");
     auth.password = (await getAuth(gitRemoteURL, username)).password;
   }
   const { canPush } = await oneOffWorkerTask(w => w.git_describeRemote({ url: gitRemoteURL, auth }));
