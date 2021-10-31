@@ -40,6 +40,7 @@ export const selectDirectoryPath = makeEndpoint.main(
 );
 
 
+/** Opens an external URL using OS native mechanism. */
 export const openExternalURL = makeEndpoint.main(
   'openExternalURL',
   <{ url: string }>_,
@@ -61,12 +62,14 @@ export const makeRandomID = makeEndpoint.main(
 );
 
 
+/** Sent from main thread when global (host app) settings screen is requested via menu. */
 export const showGlobalSettings = makeEndpoint.renderer(
   'showGlobalSettings',
   <EmptyPayload>_,
 );
 
 
+/** Triggered when global (host app) settings screen is requested. */
 export const refreshMainWindow = makeEndpoint.main(
   'refreshMainWindow',
   <EmptyPayload>_,
