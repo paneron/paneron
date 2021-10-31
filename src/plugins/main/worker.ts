@@ -102,7 +102,6 @@ async function readConfig(): Promise<PluginConfigData> {
     let configData: PluginConfigData;
     try {
       const rawData = await fs.readFile(configPath!, { encoding: 'utf-8' });
-      console.debug("Reading plugin config", rawData);
       configData = yaml.load(rawData) as PluginConfigData;
       if (configData && typeof configData !== 'string' && typeof configData !== 'number') {
       } else {
