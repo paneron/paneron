@@ -56,7 +56,7 @@ import './migrations';
 
 
 getDatasetInfo.main!.handle(async ({ workingCopyPath, datasetPath }) => {
-  log.debug("Reading dataset info", workingCopyPath, datasetPath);
+  //log.debug("Reading dataset info", workingCopyPath, datasetPath);
   if (!datasetPath) {
     return { info: null }
   }
