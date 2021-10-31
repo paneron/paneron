@@ -103,7 +103,7 @@ getPluginInfo.main!.handle(async ({ id }) => {
   try {
     extensions = await fetchExtensions();
   } catch (e) {
-    log.error("Unable to fetch Paneron extension index", e);
+    log.error("Plugins: Unable to fetch Paneron extension index", e);
     return { plugin: null };
   }
 
@@ -117,7 +117,7 @@ getPluginInfo.main!.handle(async ({ id }) => {
       return { plugin: { ...ext, installedVersion: null } };
     }
   } else {
-    log.error("Cannot locate extension in Paneron extension index", name);
+    log.error("Plugins: Cannot locate extension in Paneron extension index", name);
     return { plugin: null };
   }
 });
