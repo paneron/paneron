@@ -44,7 +44,7 @@ export async function saveAuth(remote: string, username: string, password: strin
     url = null;
   }
 
-  const service = url?.hostname ? url.hostname : remote;
+  const service = url?.hostname ?? remote;
   try {
     await keytar.setPassword(service, username, password);
   } catch (e) {
