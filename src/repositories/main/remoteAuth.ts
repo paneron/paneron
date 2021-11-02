@@ -3,11 +3,13 @@ import log from 'electron-log';
 
 
 // Auth helpers
-/* Fetches password associated with the hostname of given remote URL
-   (or, if that fails, with full remote URL)
-   and with given username.
+/**
+ * Fetches password associated with the hostname of given remote URL
+ * (if that fails, with full remote URL)
+ * and with given username.
 
-   Returns { username, password }; password can be undefined. */
+ * Returns { username, password }; password may be undefined.
+ */
 export async function getAuth(remote: string, username: string): Promise<{ password: string | undefined; username: string; }> {
   let url: URL | null;
   try {
@@ -32,6 +34,7 @@ export async function getAuth(remote: string, username: string): Promise<{ passw
 }
 
 
+/** Stores password using OS mechanism (via keytar bindings). */
 export async function saveAuth(remote: string, username: string, password: string) {
   let url: URL | null;
   try {
