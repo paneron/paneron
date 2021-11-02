@@ -36,7 +36,7 @@ function ({ repo }) {
   const canUnshare = hasRemote === true && !isBusy;
 
   async function _savePassword() {
-    if (hasRemote && (password ?? '') !== '') {
+    if (hasRemote && (password ?? '').trim() !== '' && (url ?? '').trim() !== '') {
       await savePassword.renderer!.trigger({
         workingCopyPath: repo.workingCopyPath,
         remoteURL: url,
