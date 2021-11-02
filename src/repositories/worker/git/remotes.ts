@@ -20,7 +20,7 @@ const describe: Git.Remotes.Describe = async function ({ url, auth }) {
       url: normalizedURL,
       forPush: true,
       onAuth: () => auth,
-      onAuthFailure: () => ({ cancel: true }),
+      onAuthFailure: () => { canPush = false; return },
     });
     canPush = true;
   } catch (e) {
@@ -34,7 +34,6 @@ const describe: Git.Remotes.Describe = async function ({ url, auth }) {
     symrefs: true,
     protocolVersion: 1,
     onAuth: () => auth,
-    onAuthFailure: () => ({ cancel: true }),
   });
 
   const isBlank = branchRefs.length === 0;
