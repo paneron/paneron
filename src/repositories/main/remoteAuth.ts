@@ -26,7 +26,7 @@ export async function getAuth(remote: string, username: string): Promise<{ passw
       await keytar.getPassword(remote, username) ||
       undefined;
   } catch (e) {
-    log.error("Repositories: Error retrieving password using keytar", remote, username, e);
+    log.warn("Repositories: getAuth: Error retrieving password using keytar", remote, username, e);
     password = undefined;
   }
 
@@ -40,7 +40,7 @@ export async function saveAuth(remote: string, username: string, password: strin
   try {
     url = new URL(remote);
   } catch (e) {
-    log.warn("Repositories: savePassword: Likely malformed Git remote URL", remote);
+    log.warn("Repositories: saveAuth: Likely malformed Git remote URL", remote);
     url = null;
   }
 
@@ -48,7 +48,7 @@ export async function saveAuth(remote: string, username: string, password: strin
   try {
     await keytar.setPassword(service, username, password);
   } catch (e) {
-    log.error("Repositories: Error saving password using keytar", remote, username, e);
+    log.error("Repositories: saveAuth: Error saving password using keytar", remote, username, e);
     throw e;
   }
 }
