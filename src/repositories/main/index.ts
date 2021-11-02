@@ -472,6 +472,10 @@ addRepository.main!.handle(async ({ gitRemoteURL, branch, username, password, au
     createdWorkingPaths: [workDirPath],
   });
 
+  if (password) {
+    await saveAuth(gitRemoteURL, username, password);
+  }
+
   //const workers = await getRepoWorkers(workDirPath);
 
   //await workers.sync.initialize({ workDirPath: workDirPath });
