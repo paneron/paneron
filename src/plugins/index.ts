@@ -2,9 +2,6 @@ import { makeEndpoint, _, EmptyPayload } from '../ipc';
 import { Extension, ExtensionRegistry, InstalledPluginInfo } from './types';
 
 
-// export const NPM_EXTENSION_PREFIX = '@riboseinc/paneron-extension-';
-
-
 export const getPluginManagerProps = makeEndpoint.main(
   'getPluginManagerProps',
   <EmptyPayload>_,
