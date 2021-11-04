@@ -35,23 +35,12 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
     <React.StrictMode>
       <ContextProvider>
         <div css={css`position: absolute; top: 0; right: 0; bottom: 0; left: 0; box-sizing: border-box; overflow: hidden;`}>
-          <Nav
-              css={css`position: absolute; bottom: 0; right: -15px; left: -15px; height: ${NAV_HEIGHT_PX}px; z-index: 2;`}>
-            <NavbarButton
-              icon="refresh"
-              title="Refresh window"
-              onClick={() => refreshMainWindow.renderer!.trigger({})}
-            />
-            <NavbarButton
-              icon="settings"
-              title="Settings"
-              active={settingsDialogOpen}
-              onClick={() => setSettingsDialogOpen(true)}
-            />
-          </Nav>
           <div
               css={css`
-                position: absolute; top: 0; right: 0; left: 0; bottom: ${NAV_HEIGHT_PX}px;
+                position: absolute; right: 0; left: 0;
+                ${globalSettingsContext.settings.mainNavbarPosition === 'bottom'
+                  ? `bottom: ${NAV_HEIGHT_PX}px; top: 0;`
+                  : `top: ${NAV_HEIGHT_PX}px; bottom: 0;`}
                 display: flex;
                 flex-flow: column nowrap;
                 z-index: 1;
@@ -73,6 +62,29 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
               </GlobalSettingsContext.Provider>
             </Dialog>
           </div>
+          <Nav
+              anchor={globalSettingsContext.settings.mainNavbarPosition === 'top' ? 'start' : 'end'}
+              className={globalSettingsContext.settings.mainNavbarPosition === 'bottom' ? Classes.ELEVATION_2 : Classes.ELEVATION_1}
+              css={css`
+                position: absolute;
+                ${globalSettingsContext.settings.mainNavbarPosition === 'bottom'
+                  ? 'bottom: 0'
+                  : 'top: 0'};
+                right: -15px; left: -15px;
+                height: ${NAV_HEIGHT_PX}px;
+                z-index: 2;`}>
+            <NavbarButton
+              icon="refresh"
+              title="Refresh window"
+              onClick={() => refreshMainWindow.renderer!.trigger({})}
+            />
+            <NavbarButton
+              icon="settings"
+              title="Settings"
+              active={settingsDialogOpen}
+              onClick={() => setSettingsDialogOpen(true)}
+            />
+          </Nav>
         </div>
       </ContextProvider>
     </React.StrictMode>

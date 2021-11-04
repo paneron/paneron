@@ -4,7 +4,7 @@
 import styled from '@emotion/styled';
 import { jsx, css } from '@emotion/react';
 import React, { useContext } from 'react';
-import { Classes, Colors, Icon } from '@blueprintjs/core';
+import { Colors, Icon } from '@blueprintjs/core';
 import { describeRepository, repositoryBuffersChanged } from 'repositories/ipc';
 import { getDatasetInfo } from 'datasets/ipc';
 import { Context } from '../context';
@@ -14,6 +14,7 @@ import RepoBreadcrumb from './RepoBreadcrumb';
 
 
 export interface NavProps {
+  anchor: 'end' | 'start'
   className?: string
 }
 
@@ -22,7 +23,7 @@ export interface NavProps {
  * Shows Paneron-wide nav (repository, dataset).
  * Children will be appended after the final entry and intended for additional buttons.
  */
-const Nav: React.FC<NavProps> = function ({ children, className }) {
+const Nav: React.FC<NavProps> = function ({ anchor, children, className }) {
   const { state, dispatch, showMessage } = useContext(Context);
 
   const openedRepoResp = describeRepository.renderer!.useValue(
@@ -68,29 +69,37 @@ const Nav: React.FC<NavProps> = function ({ children, className }) {
       : undefined}
   />);
 
+  if (anchor === 'start') {
+    breadcrumbs = breadcrumbs.reverse();
+  }
+
+  const padding = anchor === 'end' ? '25px' : '15px';
+
   return (
     <div
         css={css`
           display: flex; flex-flow: row nowrap; align-items: stretch;
-          justify-content: flex-end;
+          justify-content: ${anchor === 'end' ? 'flex-end' : 'flex-start'};
           font-size: 80%;
           box-sizing: border-box;
           background: linear-gradient(to bottom, ${Colors.LIGHT_GRAY5}, ${Colors.LIGHT_GRAY3});
           line-height: 0;
           transform: skew(-45deg);
-          padding: 0 25px;
+          padding: 0 ${padding};
           transition: width 1s linear;
         `}
-        className={`${className ?? ''} ${Classes.ELEVATION_2}`}>
+        className={`${className ?? ''}`}>
       {breadcrumbs.map((bc, idx) =>
         <React.Fragment key={idx}>
           {idx !== 0
-            ? <BreadcrumbSeparator icon="chevron-left" iconSize={10} />
+            ? <BreadcrumbSeparator icon={anchor === 'end' ? "chevron-left" : "chevron-right"} iconSize={10} />
             : null}
           {bc}
         </React.Fragment>
       )}
-      {children}
+      <div css={css`${anchor === 'start' ? css`position: absolute; right: ${padding};` : ''}`}>
+        {children}
+      </div>
     </div>
   );
 };

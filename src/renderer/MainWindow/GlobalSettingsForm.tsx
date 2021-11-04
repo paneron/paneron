@@ -117,6 +117,13 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
       </SettingsFormSection>
 
       <SettingsFormSection title="Interface options">
+        <PropertyView label="Main navigation bar position" tooltip="Changes take effect next time a dataset is loaded.">
+          <Select
+            options={[{ value: 'top', label: "Top" }, { value: 'bottom', label: "Bottom" }]}
+            onChange={evt => handleUpdate('mainNavbarPosition', evt.currentTarget.value as 'top' | 'bottom')}
+            value={settings.mainNavbarPosition}
+          />
+        </PropertyView>
         <PropertyView label="Sidebar position" tooltip="Changes take effect next time a dataset is loaded.">
           <Select
             options={[{ value: 'left', label: "Left" }, { value: 'right', label: "Right" }]}
