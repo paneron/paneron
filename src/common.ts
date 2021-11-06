@@ -1,4 +1,5 @@
-import type { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
+import type { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
+
 import type {
   OpenFileDialogProps,
   SelectDirectoryProps,
@@ -29,7 +30,7 @@ export const clearDataAndRestart = makeEndpoint.main(
 export const chooseFileFromFilesystem = makeEndpoint.main(
   'chooseFileFromFilesystem',
   <OpenFileDialogProps>_,
-  <BufferDataset>_,
+  <ObjectDataset>_,
 );
 
 

@@ -2,7 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import { app, BrowserWindow, dialog, Menu, protocol, shell } from 'electron';
 import log from 'electron-log';
-import type { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 
 
 require('events').EventEmitter.defaultMaxListeners = 20;
@@ -35,6 +34,8 @@ import { clearIndexes } from '../datasets/main';
 import { refreshByID, open as openWindow } from '../window/main';
 
 import mainMenu from './mainMenu';
+import { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
+import { findSerDesRuleForPath } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
 
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
@@ -132,7 +133,7 @@ function handleAllWindowsClosed(e: Electron.Event) {
       return {};
     }
 
-    let filedata: BufferDataset = {};
+    let filedata: ObjectDataset = {};
 
     for (const _f of filepaths) {
       const blob = await fs.promises.readFile(_f);
@@ -140,7 +141,8 @@ function handleAllWindowsClosed(e: Electron.Event) {
 
       log.info("Choose file from filesystem: got file", _f, filepath, result);
 
-      filedata[filepath] = blob;
+      const rule = findSerDesRuleForPath(filepath);
+      filedata[filepath] = rule.deserialize({ '/': blob }, {});
     }
 
     return filedata;
