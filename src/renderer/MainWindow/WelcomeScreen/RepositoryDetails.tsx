@@ -4,7 +4,7 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { jsx, css } from '@emotion/react';
 import { Menu, MenuDivider, MenuItem, NonIdealState, Panel, PanelStack2, Spinner } from '@blueprintjs/core';
-import { addDisconnected, describeRepository, Repository, repositoryBuffersChanged } from 'repositories/ipc';
+import { addDisconnected, describeRepository, loadRepository, Repository, repositoryBuffersChanged } from 'repositories/ipc';
 import RepositorySettings from './RepositorySettings';
 import InitializeDataset from './InitializeDataset';
 import DatasetMenuItem from './DatasetMenuItem';
@@ -23,6 +23,16 @@ const RepositoryDetails: React.FC<{ workDir: string; onOpen: (datasetID: string)
       openedRepoResp.refresh();
     }
   }, [workDir]);
+
+  useEffect(() => {
+    // If this repository has remote connected, load repository in order to sync
+    if (repo.gitMeta.remote?.url) {
+      console.debug("Loading repository…", workDir);
+      loadRepository.renderer!.trigger({ workingCopyPath: workDir });
+    } else {
+      console.debug("Not loading repository", repo.gitMeta.remote?.url);
+    }
+  }, [JSON.stringify(repo.gitMeta.remote?.url)]);
 
   const repoSettingsPanel: Panel<RepoSettingsProps> = {
     title: "Settings",

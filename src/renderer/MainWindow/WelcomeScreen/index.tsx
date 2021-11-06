@@ -58,6 +58,7 @@ function ({ onOpenDataset, className }) {
         id="WelcomeScreenNav"
         vertical
         className={`${Classes.ELEVATION_3} ${className ?? ''}`}
+        renderActiveTabPanelOnly
         css={css`
           overflow: hidden;
           border-radius: 5px;
