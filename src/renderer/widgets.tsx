@@ -27,6 +27,3 @@ export const ColorNeutralLink = styled.a`
 
 
 
-//export const Button = (props: React.PropsWithChildren<IButtonProps>) => (
-//  <BPButton css={css`white-space: nowrap;`} {...props} />
-//);
