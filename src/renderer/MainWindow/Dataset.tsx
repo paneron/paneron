@@ -11,7 +11,7 @@ import { DatasetContext } from '@riboseinc/paneron-extension-kit/types';
 import { unloadDataset } from 'datasets/ipc';
 import getDataset from 'datasets/renderer/getDataset';
 import { getContext } from 'datasets/renderer/context';
-import { ErrorBoundary } from '../widgets';
+import ErrorBoundary from '../common/ErrorBoundary';
 import { Context } from './context';
 import { DatasetInfo } from 'datasets/types';
 

@@ -5,7 +5,7 @@ import { Classes, ControlGroup, H5, Icon, InputGroup } from '@blueprintjs/core';
 import { css, jsx } from '@emotion/react';
 import { Extension } from 'plugins/types';
 import React from 'react';
-import { MarkedText } from 'renderer/widgets';
+import MarkedText from 'renderer/common/MarkedText';
 import PluginStatusButton from './PluginStatusButton';
 
 
