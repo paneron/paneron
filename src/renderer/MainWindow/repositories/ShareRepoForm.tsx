@@ -8,6 +8,7 @@ import { getNewRepoDefaults, GitRepository, savePassword, setRemote, unsetRemote
 import { Button } from '../../widgets';
 import GitCredentialsInput from './GitCredentialsInput';
 import { Context } from '../context';
+import ButtonWithPrompt from '../../common/ButtonWithPrompt';
 
 
 export const ShareRepoForm: React.FC<{ repo: GitRepository }> =
@@ -81,46 +82,55 @@ function ({ repo }) {
   return (
     <>
       <ButtonGroup vertical fill css={css`margin-bottom: 5px; height: unset !important;`}>
-        {hasRemote && repo.remote?.writeAccess === true
-          ? <Button small outlined
+      {hasRemote
+        ? <>
+            <ButtonWithPrompt
+                promptIntent="warning"
+                promptMessage={<>
+                  Before turning off relaying changes, make sure you don’t have any outstanding changes.
+                  If you turn off relaying changes (“push”), you will continue to receive others’ changes;
+                  but if you will want to start making changes later, you would have to delete
+                  and re-add this repository.
+                </>}
+                small
+                outlined
+                disabled={isBusy || repo.remote?.writeAccess !== true}
                 onClick={performOperation('turning off push', turnOffPush)}>
-              Stop relaying changes
-            </Button>
-          : null}
+              {repo.remote?.writeAccess ? "Stop relaying changes" : "Your changes are not relayed"}
+            </ButtonWithPrompt>
 
-        {hasRemote
-          ? <Button small outlined
+            <ButtonWithPrompt
+                onClick={performOperation('turning off sync and unsetting remote', unshare)}
+                small
+                outlined
                 disabled={isBusy || !canUnshare}
-                title="Before turning off either relaying changes or sync, make sure you don’t have any outstanding changes \
-                  The only way to re-enable relaying your changes for now is by removing and re-adding the repository anew. \
+                promptIntent="warning"
+                promptMessage={<>
+                  The only way to re-enable sync for now is by removing and re-adding the repository anew.
                   If you turn off sync, you will remain being able to make changes, but those changes will stay on this computer.
-                  Disabling sync will also turn off relaying changes."
-                onClick={performOperation('turning off sync and unsetting remote', unshare)}>
+                </>}>
               Clear remote &amp; stop sync
-            </Button>
-          : <Button small outlined
-                disabled={isBusy || !canShare}
-                title="To start sharing, configure empty repository URL and access credentials below."
-                onClick={performOperation('starting sync with remote', share)}>
-              Connect remote &amp; start sync
-            </Button>}
+            </ButtonWithPrompt>
 
-        {hasRemote
-          ? <Button fill small outlined disabled={isBusy} active={editingPassword} onClick={() => setEditingPassword(true)}>
-              Amend password or access token
-            </Button>
-          : null}
-
-        {hasRemote && editingPassword
-          ? <>
-              <Button small fill outlined disabled={isBusy || password === ''} onClick={performOperation('updating password', _savePassword)}>
-                Save password or token
-              </Button>
-              <Button small fill outlined disabled={isBusy} onClick={() => { setEditingPassword(false); setPassword(''); }}>
-                Don’t save
-              </Button>
-            </>
-          : null}
+            {editingPassword
+              ? <ButtonGroup>
+                  <Button small fill outlined disabled={isBusy || password === ''} onClick={performOperation('updating password', _savePassword)}>
+                    Save secret
+                  </Button>
+                  <Button small fill outlined disabled={isBusy} onClick={() => { setEditingPassword(false); setPassword(''); }}>
+                    Don’t save
+                  </Button>
+                </ButtonGroup>
+              : <Button fill small outlined disabled={isBusy} active={editingPassword} onClick={() => setEditingPassword(true)}>
+                  Amend secret
+                </Button>}
+          </>
+        : <Button small outlined
+              disabled={isBusy || !canShare}
+              title="To start sharing, configure empty repository URL and access credentials below."
+              onClick={performOperation('starting sync with remote', share)}>
+            Connect remote &amp; start sync
+          </Button>}
       </ButtonGroup>
 
       <GitCredentialsInput
