@@ -117,29 +117,29 @@ function ({
       <PropertyView
           label="Secret"
           tooltip={<>
-            The password used by Git server to authenticate. Required for write access.
-            {onEditPassword
-              ? <UL>
-                  <li>
-                    If you have provided it to Paneron before, it might already be stored by your operating system;
-                    {" "}
-                    to verify this you can leave it empty and use Test connection to verify you have write access.
-                  </li>
-                  <li>
-                    Note that for repositories hosted on GitHub you must supply a Personal Access Token
-                    {" "}
-                    rather than your GitHub account’s actual password
-                    {" "}
-                    (see <ColorNeutralLink onClick={handleOpenGitHubPATHelp}>Creating a personal access token</ColorNeutralLink>).
-                  </li>
-                </UL>
-              : null}
+            This token must be provided to Git server to allow Paneron to make changes on your behalf.
+            Correctly provided token is required for write access.
+            Depending on your Git hosting setup, it could be your account password or a Personal Access Token.
+            <UL>
+              <li>
+                If you have provided it to Paneron before, it might already be stored by your operating system;
+                {" "}
+                to verify this you can leave it empty and use Test connection to verify you have write access.
+              </li>
+              <li>
+                Note that for repositories hosted on GitHub you must supply a Personal Access Token
+                {" "}
+                rather than your GitHub account’s actual password
+                {" "}
+                (see <ColorNeutralLink onClick={handleOpenGitHubPATHelp}>Creating a personal access token</ColorNeutralLink>).
+              </li>
+            </UL>
             {" "}
-            Paneron stores your password or PAT using your system’s secret management mechanism, and communicates it only to this remote and only during synchronization.
+            Paneron stores your secret token using your system’s secret management mechanism, and communicates it only to this remote and only during synchronization.
           </>}>
         <TextInput
           value={onEditPassword ? password : '•••••••••'}
-          inputGroupProps={{ type: 'password', placeholder: 'Password or PAT' }}
+          inputGroupProps={{ type: 'password', placeholder: 'Secret token' }}
           onChange={!isBusy && onEditPassword ? (val) => onEditPassword!(val) : undefined} />
       </PropertyView>
       <ClassNames>
