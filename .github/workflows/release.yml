@@ -28,11 +28,26 @@ jobs:
           mkdir -p ~/private_keys/
           echo '${{ secrets.APPLE_API_KEY }}' > ~/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
 
+      - name: Fetch Metanorma (macOS)
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          mkdir -p bin/mac && cd bin/mac && curl -fsSL "https://github.com/metanorma/packed-mn/releases/latest/download/metanorma-darwin-x64.tgz" -O && find . -name \"*.tgz\" -exec tar xzf {} \\; && rm *.tgz
+
+      - name: Fetch Metanorma (Ubuntu)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          mkdir -p bin/linux && cd bin/linux && curl -fsSL "https://github.com/metanorma/packed-mn/releases/latest/download/metanorma-linux-x64.tgz" -O && find . -name \"*.tgz\" -exec tar xzf {} \\; && rm *.tgz
+
+      - name: Fetch Metanorma (Windows)
+        if: startsWith(matrix.os, 'windows')
+        run: |
+          mkdir bin bin/win && cd bin/win && curl.exe -o metanorma.exe "https://github.com/metanorma/packed-mn/releases/latest/download/metanorma-windows-x64.exe"
+
       - name: Build/release Electron app
         uses: samuelmeuli/action-electron-builder@v1
         with:
-          # Compile & fetch bundled binaries before invoking electron-builder
-          build_script_name: "buildci"
+          # Compile before invoking electron-builder
+          build_script_name: "compile"
 
           # GitHub token, automatically provided to the action
           # (No need to define this secret in the repo settings)
