@@ -41,7 +41,7 @@ jobs:
       - name: Fetch Metanorma (Windows)
         if: startsWith(matrix.os, 'windows')
         run: |
-          mkdir bin bin/win && cd bin/win && curl.exe -o metanorma.exe "https://github.com/metanorma/packed-mn/releases/latest/download/metanorma-windows-x64.exe"
+          mkdir bin && mkdir bin/win && cd bin/win && curl.exe -o metanorma.exe "https://github.com/metanorma/packed-mn/releases/latest/download/metanorma-windows-x64.exe"
 
       - name: Build/release Electron app
         uses: samuelmeuli/action-electron-builder@v1
