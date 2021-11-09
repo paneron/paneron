@@ -31,8 +31,8 @@ jobs:
       - name: Build/release Electron app
         uses: samuelmeuli/action-electron-builder@v1
         with:
-          # Run `yarn compile` before `yarn electron-builder --mac`
-          build_script_name: "compile"
+          # Compile & fetch bundled binaries before invoking electron-builder
+          build_script_name: "buildci"
 
           # GitHub token, automatically provided to the action
           # (No need to define this secret in the repo settings)

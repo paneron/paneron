@@ -18,7 +18,9 @@
     "test-mac-e2e": "yarn compile && yarn dist:mac && yarn test",
     "dev": "electron-webpack dev",
     "compile": "electron-webpack",
-    "clean": "rm -rf ./bundle ./dist",
+    "fetch-metanorma": "mkdir bin bin/win bin/mac bin/linux && cd bin && curl -fsSL \"https://github.com/metanorma/packed-mn/releases/latest/download/{metanorma-windows-x64.exe,metanorma-linux-x64.tgz,metanorma-darwin-x64.tgz}\" -O && find . -name \"*.tgz\" -exec tar xzf {} \\; && rm *.tgz && mv metanorma-darwin* mac/metanorma && mv metanorma-linux* linux/metanorma && mv metanorma-win* win/metanorma.exe",
+    "buildci": "yarn compile && yarn fetch-metanorma",
+    "clean": "rm -rf ./bundle ./dist ./bin",
     "dist": "cross-env DEBUG=electron-builder electron-builder",
     "dist:win": "electron-builder -w",
     "dist:mac": "electron-builder -m",
@@ -61,6 +63,22 @@
       "node_modules/source-map-support/**/*",
       "node_modules/buffer-from/**/*",
       "dist/main/*.worker.js*"
+    ],
+    "extraResources": [
+      {
+        "from": "bin/${os}",
+        "to": "bin",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "src/static",
+        "to": "src/static",
+        "filter": [
+          "**/*"
+        ]
+      }
     ],
     "afterPack": "./scripts/after-pack.js",
     "afterSign": "electron-builder-notarize",
