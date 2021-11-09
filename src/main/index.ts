@@ -22,6 +22,7 @@ import '../plugins/main';
 import '../repositories/main';
 import '../datasets/main';
 import '../clipboard/main';
+import '../subprocesses/main';
 
 import { clearDataAndRestart, ClearOption, openExternalURL, refreshMainWindow, saveFileToFilesystem, selectDirectoryPath } from '../common';
 import { chooseFileFromFilesystem, makeRandomID } from '../common';
