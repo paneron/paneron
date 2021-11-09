@@ -13,6 +13,7 @@ import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateRed
 
 import { makeRandomID, chooseFileFromFilesystem, saveFileToFilesystem, openExternalURL } from 'common';
 import { copyObjects, requestCopiedObjects } from 'clipboard/ipc';
+import { describeBundledExecutable, describeSubprocess, execBundled, subprocessEvent } from 'subprocesses';
 
 import { describeRepository } from 'repositories/ipc';
 
@@ -330,5 +331,46 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
           return result.result;
         }
       : undefined,
+
+    invokeMetanorma: async function _invokeMetanorma ({ cliArgs }) {
+      await describeBundledExecutable.renderer!.trigger({ name: METANORMA_BINARY_NAME });
+      const { result: subprocessDescription } = await execBundled.renderer!.trigger({
+        id: METANORMA_SUBPROCESS_TRACKING_ID,
+        opts: {
+          binaryName: METANORMA_BINARY_NAME,
+          cliArgs,
+        }
+      });
+      return subprocessDescription;
+    },
+
+    useMetanormaInvocationStatus: function _useMetanormaInvocationStatus () {
+      //const [desc, updateDesc] = useState<SubprocessDescription | null>(null);
+      const desc = describeSubprocess.renderer!.useValue({ id: METANORMA_SUBPROCESS_TRACKING_ID }, {
+        pid: -1,
+        opts: {
+          binaryName: METANORMA_BINARY_NAME,
+          cliArgs: [],
+        },
+        stdout: '',
+        stderr: '',
+      });
+
+      subprocessEvent.renderer!.useEvent(async (evt) => {
+        if (evt.id !== METANORMA_SUBPROCESS_TRACKING_ID) {
+          return;
+        } else {
+          desc.refresh();
+        }
+      }, [desc.value.pid]);
+
+      return {
+        ...desc,
+        value: desc.value.pid >= 0 ? desc.value : null,
+      }
+    },
   }
 }
+
+const METANORMA_SUBPROCESS_TRACKING_ID = 'metanorma';
+const METANORMA_BINARY_NAME = 'metanorma';
