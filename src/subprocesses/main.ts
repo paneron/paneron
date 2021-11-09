@@ -16,8 +16,7 @@ const SUBPROCESSES: SubprocessRegistry = {};
 
 
 function getPlatformSpecificBundledBinaryPath(binaryName: string): string {
-  const filename = process.platform == 'win32' ? `${binaryName}.exe` : binaryName;
-  return path.join(process.resourcesPath, 'bin', filename);
+  return path.join(process.resourcesPath, 'bin', binaryName);
 }
 
 
