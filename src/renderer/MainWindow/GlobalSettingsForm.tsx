@@ -15,6 +15,7 @@ import DatasetExtension from 'plugins/renderer/DatasetExtensionCard';
 import { Context } from './context';
 import { updateSetting } from './settings';
 import AuthorForm from './repositories/AuthorForm';
+import { describeBundledExecutable } from 'subprocesses';
 
 
 const CLEAR_OPTION_INFO: Record<ClearOption, { label: JSX.Element, description?: JSX.Element, warning?: JSX.Element }> = {
@@ -57,6 +58,9 @@ const SettingsFormSection: React.FC<{ title?: string | JSX.Element }> = function
 export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({ className }) {
   const { settings, refresh: refreshSettings } = useContext(GlobalSettingsContext);
   const { performOperation } = useContext(Context);
+
+  const { value: { fullPath: metanormaExecPath } } =
+    describeBundledExecutable.renderer!.useValue({ name: 'metanorma' }, { fullPath: '' });
 
   const localExtensionQuery = listLocalPlugins.renderer!.useValue({}, {});
   pluginsUpdated.renderer!.useEvent(async () => localExtensionQuery.refresh(), []);
@@ -163,6 +167,15 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
             </div>
           </div>
         )}
+      </SettingsFormSection>
+
+      <SettingsFormSection title="Executables">
+        <PropertyView label="Metanorma">
+          <TextInput
+            inputGroupProps={{ intent: metanormaExecPath.trim() === '' ? 'danger' : undefined }}
+            value={metanormaExecPath || '(not found)'}
+          />
+        </PropertyView>
       </SettingsFormSection>
 
       <SettingsFormSection title="Reset (for troubleshooting)">
