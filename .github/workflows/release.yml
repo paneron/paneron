@@ -31,12 +31,12 @@ jobs:
       - name: Fetch Metanorma (macOS)
         if: startsWith(matrix.os, 'macos')
         run: |
-          mkdir -p bin/mac && cd bin/mac && curl -fsSL "https://github.com/metanorma/packed-mn/releases/latest/download/metanorma-darwin-x64.tgz" -O && find . -name "*.tgz" -exec tar xzf {} \; && rm *.tgz
+          mkdir -p bin/mac && cd bin/mac && curl -fsSL "https://github.com/metanorma/packed-mn/releases/latest/download/metanorma-darwin-x64.tgz" -O && find . -name "*.tgz" -exec tar xzf {} \; && rm *.tgz && mv metanorma-darwin* metanorma
 
       - name: Fetch Metanorma (Ubuntu)
         if: startsWith(matrix.os, 'ubuntu')
         run: |
-          mkdir -p bin/linux && cd bin/linux && curl -fsSL "https://github.com/metanorma/packed-mn/releases/latest/download/metanorma-linux-x64.tgz" -O && find . -name "*.tgz" -exec tar xzf {} \; && rm *.tgz
+          mkdir -p bin/linux && cd bin/linux && curl -fsSL "https://github.com/metanorma/packed-mn/releases/latest/download/metanorma-linux-x64.tgz" -O && find . -name "*.tgz" -exec tar xzf {} \; && rm *.tgz && mv metanorma-linux* metanorma
 
       - name: Fetch Metanorma (Windows)
         if: startsWith(matrix.os, 'windows')
