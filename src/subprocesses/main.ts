@@ -54,7 +54,7 @@ execBundled.main!.handle(async ({ id, opts: { binaryName, cliArgs, useShell } })
 
     SUBPROCESSES[id] = {
       handle: sp,
-      pid: sp.pid,
+      pid: sp.pid ?? -1,
       stdout: '',
       stderr: '',
       opts: {
@@ -68,8 +68,12 @@ execBundled.main!.handle(async ({ id, opts: { binaryName, cliArgs, useShell } })
     sp.stderr.setEncoding('utf8');
 
     sp.once('spawn', () => {
-      SUBPROCESSES[id].pid = sp.pid;
-      resolve(SUBPROCESSES[id]);
+      if (!sp.pid) {
+        reject(`Failed to spawn (no PID in spawn handler)`);
+      } else {
+        SUBPROCESSES[id].pid = sp.pid;
+        resolve(SUBPROCESSES[id]);
+      }
     });
 
     sp.once('error', err => {
