@@ -1,6 +1,4 @@
-import path from 'path';
 import log from 'electron-log';
-import { remote } from 'electron';
 import React from 'react';
 import { PluginManager } from 'live-plugin-manager';
 import { RendererPlugin, DatasetContext } from '@riboseinc/paneron-extension-kit/types';
@@ -14,9 +12,6 @@ import {
 import { describeRepository, loadRepository } from 'repositories/ipc';
 import { DatasetInfo } from '../types';
 import { getDatasetInfo, loadDataset } from '../ipc';
-
-
-export const PLUGINS_PATH = path.join(remote.app.getPath('userData'), 'plugins');
 
 
 export default async function getDataset(workingCopyPath: string, datasetPath?: string): Promise<{
