@@ -220,6 +220,7 @@ async function createWindow(
   const window = new BrowserWindow({
     webPreferences: {
       nodeIntegration: true,
+      contextIsolation: false,
       webSecurity: !debug,
       enableRemoteModule: true,
     },
