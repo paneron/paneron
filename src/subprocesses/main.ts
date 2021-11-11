@@ -78,7 +78,7 @@ execBundled.main!.handle(async ({ id, opts: { binaryName, cliArgs, useShell } })
         reject(`Failed to spawn (no PID in spawn handler)`);
       } else {
         SUBPROCESSES[id].pid = sp.pid;
-        resolve(SUBPROCESSES[id]);
+        resolve(withoutHandle(SUBPROCESSES[id]));
       }
     });
 
@@ -109,8 +109,6 @@ execBundled.main!.handle(async ({ id, opts: { binaryName, cliArgs, useShell } })
       SUBPROCESSES[id].stderr += data;
       notifyRenderer({ stdErr: SUBPROCESSES[id].stderr });
     });
-
-    return withoutHandle(SUBPROCESSES[id]);
 
   });
 });
