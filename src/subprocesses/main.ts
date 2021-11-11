@@ -20,6 +20,12 @@ function getPlatformSpecificBundledBinaryPath(binaryName: string): string {
 }
 
 
+function withoutHandle(sp: SubprocessDescription): SubprocessDescription {
+  const { pid, opts, stdout, stderr, termination } = sp;
+  return { pid, opts, stdout, stderr, termination };
+}
+
+
 describeBundledExecutable.main!.handle(async ({ name }) => {
   const filePath = getPlatformSpecificBundledBinaryPath(name);
   const stat = fs.statSync(filePath);
@@ -113,8 +119,7 @@ execBundled.main!.handle(async ({ id, opts: { binaryName, cliArgs, useShell } })
 describeSubprocess.main!.handle(async ({ id }) => {
   const spawned = SUBPROCESSES[id];
   if (spawned) {
-    const { pid, opts, stdout, stderr, termination } = spawned;
-    return { pid, opts, stdout, stderr, termination };
+    return withoutHandle(spawned);
   } else {
     throw new Error("Unable to find spawned subprocess");
   }
