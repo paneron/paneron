@@ -110,7 +110,7 @@ execBundled.main!.handle(async ({ id, opts: { binaryName, cliArgs, useShell } })
       notifyRenderer({ stdErr: SUBPROCESSES[id].stderr });
     });
 
-    return { pid: SUBPROCESSES[id].pid };
+    return withoutHandle(SUBPROCESSES[id]);
 
   });
 });
