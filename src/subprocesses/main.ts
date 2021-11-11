@@ -113,7 +113,8 @@ execBundled.main!.handle(async ({ id, opts: { binaryName, cliArgs, useShell } })
 describeSubprocess.main!.handle(async ({ id }) => {
   const spawned = SUBPROCESSES[id];
   if (spawned) {
-    return spawned;
+    const { pid, opts, stdout, stderr, termination } = spawned;
+    return { pid, opts, stdout, stderr, termination };
   } else {
     throw new Error("Unable to find spawned subprocess");
   }
