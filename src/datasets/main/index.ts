@@ -9,7 +9,6 @@ import { INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/ind
 import { forceSlug } from 'utils';
 import { checkPathIsOccupied } from 'main/checkPathIsOccupied';
 import { serializeMeta } from 'main/meta-serdes';
-import { requireMainPlugin } from 'plugins/main';
 
 import {
   PaneronRepository,
@@ -51,8 +50,6 @@ import {
   list as _listRecentlyOpenedDatasets,
   record as _recordRecentlyOpenedDataset,
 } from './recent';
-
-import './migrations';
 
 
 getDatasetInfo.main!.handle(async ({ workingCopyPath, datasetPath }) => {
@@ -99,16 +96,6 @@ initializeDataset.main!.handle(async ({ workingCopyPath, meta: datasetMeta, data
     throw new Error("Repository configuration is missing author information");
   }
 
-  const plugin = await requireMainPlugin(
-    datasetMeta.type.id,
-    datasetMeta.type.version);
-
-  const initialMigration = plugin.initialMigration;
-  const initialMigrationResult = await initialMigration({
-    datasetRootPath: path.join(workingCopyPath, datasetPath),
-    onProgress: (msg) => log.debug("Migration progress:", msg),
-  });
-
   // Prepare repo meta update
   const oldRepoMeta = await readPaneronRepoMeta(workingCopyPath);
   const newRepoMeta: PaneronRepository = {
@@ -133,12 +120,10 @@ initializeDataset.main!.handle(async ({ workingCopyPath, meta: datasetMeta, data
   const repos = getLoadedRepository(workingCopyPath).workers.sync;
 
   const datasetMetaPath = path.join(datasetPath, DATASET_FILENAME);
-  const migrationChangeset = initialMigrationResult.bufferChangeset;
 
   const bufferChangeset = {
     [datasetMetaPath]: datasetMetaAddition,
     [PANERON_REPOSITORY_META_FILENAME]: repoMetaChange,
-    ...migrationChangeset,
   };
 
   log.info("datasets: Initializing with buffer changeset", JSON.stringify(bufferChangeset, undefined, 4), datasetPath);
@@ -184,17 +169,6 @@ listRecentlyOpenedDatasets.main!.handle(async () => {
 
 
 loadDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
-  //const dataset = await readDatasetMeta(workingCopyPath, datasetPath);
-  //const plugin = await requireMainPlugin(dataset.type.id);
-
-  //const migration = plugin.getMigration(dataset.type.version);
-  //if (migration) {
-  //  // Having encountered an error while loading the dataset,
-  //  // GUI is expected to query the outstanding migration
-  //  // using another IPC endpoint, and prompt the user to apply it (yet another IPC endpoint).
-  //  throw new Error("Dataset migration is required");
-  //}
-
   await _recordRecentlyOpenedDataset(workingCopyPath, datasetPath);
 
   log.debug("Datasets: Load: Ensuring cache root dir…", INDEX_DB_ROOT);

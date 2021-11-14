@@ -3,9 +3,7 @@ import React from 'react';
 import { PluginManager } from 'live-plugin-manager';
 import { RendererPlugin, DatasetContext } from '@riboseinc/paneron-extension-kit/types';
 import {
-  getPluginInfo,
   getPluginManagerProps,
-  installPlugin,
   listLocalPlugins,
   removePlugin,
 } from 'plugins';
@@ -32,7 +30,7 @@ export default async function getDataset(workingCopyPath: string, datasetPath?: 
 
   let pluginManager: PluginManager;
   let pluginID: string;
-  let pluginVersion: string;
+  let pluginVersion: string | undefined;
 
   // Prepare plugin info and manager
   try {
@@ -70,31 +68,13 @@ export default async function getDataset(workingCopyPath: string, datasetPath?: 
     pluginManager = new PluginManager({ cwd, pluginsPath });
     pluginID = _pluginID;
 
+    // NOTE: We’ll always install latest extension version. Extension should maintain backwards compatibility.
+    // TODO: Take into account dataset schema version and install latest extension version still compatible with specified schema version?
+    // pluginVersion = _datasetInfo.type.version;
+    pluginVersion = undefined;
+
   } catch (e) {
     log.error("Failed to get extension ID or load extension manager", e);
-    throw e;
-  }
-
-  // Check plugin’s installed version
-  try {
-    const pluginInfo = await getPluginInfo.renderer!.trigger({ id: pluginID });
-
-    let _version = pluginInfo.result?.plugin?.installedVersion;
-    if (!_version) {
-      log.warn("Dataset view: Extension is not installed?", workingCopyPath, pluginID, pluginInfo);
-      try {
-        const installationResult = await installPlugin.renderer!.trigger({ id: pluginID });
-        _version = installationResult.result.installedVersion;
-      } catch (e) {
-        log.error("Dataset view: Extension could not be installed on the fly", e);
-        throw new Error("Required extension could not be installed");
-      }
-    }
-
-    pluginVersion = _version;
-
-  } catch (e) {
-    log.error("Dataset view: Failed to get extension info", pluginID, e);
     throw e;
   }
 
@@ -112,7 +92,7 @@ export default async function getDataset(workingCopyPath: string, datasetPath?: 
       await pluginManager.installFromNpm(pluginName, pluginVersion);
     } else {
       const localPath = localPlugins[pluginName].localPath!;
-      log.silly("Dataset view: (Re)installing plugin for renderer (local)...", workingCopyPath, pluginName, pluginVersion, localPath);
+      log.silly("Dataset view: (Re)installing plugin for renderer (local)...", workingCopyPath, pluginName, localPath, pluginVersion);
       await removePlugin.renderer!.trigger({ id: pluginName });
       await pluginManager.installFromPath(localPath);
     }

@@ -10,8 +10,6 @@ import * as path from 'path';
 import yaml from 'js-yaml';
 import AsyncLock from 'async-lock';
 
-import { PluginManager } from 'live-plugin-manager';
-
 import { Extension, ExtensionRegistry, InstalledPluginInfo } from 'plugins/types';
 
 
@@ -31,11 +29,7 @@ const STARTER_PLUGIN_CONFIG: PluginConfigData = {
 
 let pluginConfig: PluginConfigData | null = null;
 
-let manager: PluginManager | null = null;
-
 let configPath: string | null = null;
-
-let pluginPath: string | null = null;
 
 const pluginLock = new AsyncLock();
 
@@ -46,17 +40,12 @@ export interface Methods {
    * Initialize plugin manager and config file.
    * Must be called before anything else on freshly started worker.
    */
-  initialize: (msg: { cwd: string, pluginsPath: string, pluginConfigPath: string }) => Promise<void>
+  initialize: (msg: { pluginsPath: string, pluginConfigPath: string }) => Promise<void>
 
   /**
-   * Install latest version if not installed;
-   * if already installed, do nothing;
-   * if already installed but version recorded in the configuration does not match installed version, update that;
-   * if plugin name is specified in local plugins, use version located in that directory.
-   * 
-   * Returns factually installed version, *which may differ from requested*.
+   * Adds plugin to the list of installed plugins.
    */
-  install: (msg: { name: string, version?: string }) => Promise<{ installedVersion: string }>
+  install: (msg: { name: string, version?: string }) => Promise<{ success: true }>
 
   remove: (msg: { name: string }) => Promise<{ success: true }>
 
@@ -86,7 +75,7 @@ export type WorkerSpec = ModuleMethods & Methods;
 
 
 function assertInitialized() {
-  if (manager === null || configPath === null || pluginPath === null) {
+  if (configPath === null) {
     throw new Error("Plugin worker not initialized");
   }
 }
@@ -134,17 +123,8 @@ async function updateConfig(updater: (data: PluginConfigData) => PluginConfigDat
 
 const methods: WorkerSpec = {
 
-  async initialize({ cwd, pluginsPath, pluginConfigPath }) {
+  async initialize({ pluginsPath, pluginConfigPath }) {
     configPath = pluginConfigPath;
-    pluginPath = pluginsPath;
-
-    manager = new PluginManager({
-      cwd,
-      pluginsPath,
-      lockWait: 10000,
-      npmInstallMode: 'noCache',
-    });
-
     await fs.ensureDir(pluginsPath);
 
     //for (const [name, info] of Object.entries(plugins)) {
@@ -190,8 +170,6 @@ const methods: WorkerSpec = {
       return newData;
     });
 
-    (await manager!.uninstall(pluginName));
-
     return { success: true };
   },
 
@@ -205,19 +183,6 @@ const methods: WorkerSpec = {
   async remove({ name }) {
     await pluginLock.acquire('1', async () => {
       assertInitialized();
-
-      const pluginInfo = manager!.getInfo(name);
-      if (pluginInfo?.location) {
-        console.debug("Want to remove", pluginInfo.location);
-        if (pluginInfo.location.startsWith(pluginPath!)) {
-          fs.removeSync(pluginInfo.location)
-        } else {
-          throw new Error("Can’t remove plugin (plugin path is not a descendant of root plugin path)");
-        }
-      }
-
-      (await manager!.uninstall(name));
-
       await updateConfig((data) => {
         const newData = { ...data };
         delete newData.installedPlugins[name];
@@ -231,9 +196,6 @@ const methods: WorkerSpec = {
   async removeAll() {
     await pluginLock.acquire('1', async () => {
       assertInitialized();
-
-      (await manager!.uninstallAll());
-
       await updateConfig((data) => {
         const newData = { ...data };
         newData.installedPlugins = {};
@@ -244,49 +206,25 @@ const methods: WorkerSpec = {
     return { success: true };
   },
 
+  // TODO: We blindly return requested version. This method should no longer promise to return installed version.
   async install({ name, version }) {
-    const installedVersion: string | undefined = await pluginLock.acquire('1', async () => {
+    await pluginLock.acquire('1', async () => {
       assertInitialized();
-
-      const local = (await readLocalPlugins())[name];
-
-      let installedVersion: string | undefined = undefined;
-
-      if (version === undefined) {
-        const foundVersion = manager!.getInfo(name)?.version;
-        if (foundVersion) {
-          installedVersion = foundVersion;
-        } 
-      }
-      if (installedVersion === undefined) {
-        if (!local?.localPath) {
-          await manager!.installFromNpm(name);
-        } else {
-          await manager!.installFromPath(local.localPath);
-        }
-        installedVersion = manager!.getInfo(name)?.version;
-      }
 
       await updateConfig((data) => {
         const newData = { ...data };
-
-        if (installedVersion === undefined) {
-          delete newData.installedPlugins[name];
-        } else if (installedVersion !== newData.installedPlugins[name]?.installedVersion) {
-          newData.installedPlugins[name] = { installedVersion };
-        }
-
+        newData.installedPlugins[name] = { installedVersion: version ?? null };
         return newData;
       });
 
-      return installedVersion;
+      return version;
     });
 
-    if (!installedVersion) {
-      throw new Error("Failed to install");
-    }
+    //if (!installedVersion) {
+    //  throw new Error("Failed to install");
+    //}
 
-    return { installedVersion };
+    return { success: true };
   },
 
 };

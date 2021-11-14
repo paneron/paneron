@@ -47,16 +47,15 @@ listAvailablePlugins.main!.handle(async () => {
 installPlugin.main!.handle(async ({ id, version: versionToInstall }) => {
   const name = id;
 
-  let version: string;
   try {
-    version = await _installPlugin(name, versionToInstall);
+    await _installPlugin(name, versionToInstall);
   } finally {
     await pluginsUpdated.main!.trigger({
       changedIDs: [id],
     });
   }
 
-  return { installed: true, installedVersion: version };
+  return { installed: true };
 });
 
 
@@ -154,22 +153,22 @@ listLocalPlugins.main!.handle(async () => {
 
 // (Un)installation helpers
 
-async function _installPlugin(name: string, versionToInstall?: string): Promise<string> {
-  let version: string;
+async function _installPlugin(name: string, versionToInstall?: string): Promise<void> {
   const w = await worker;
   const localPlugins = await w.listLocalPlugins();
   const localPlugin = localPlugins[name];
 
-  version = (await w.install({ name, version: versionToInstall })).installedVersion;
+  (await w.install({ name, version: versionToInstall }));
+
   if (!localPlugin?.localPath) {
     log.debug("Plugins: installing...", name);
-    await (await pluginManager).install(name, version);
+    await (await pluginManager).install(name);
   } else {
     log.debug("Plugins: installing (local)...", name, localPlugin.localPath);
     await (await pluginManager).installFromPath(localPlugin.localPath);
   }
 
-  return version;
+  return;
 }
 
 
@@ -203,10 +202,10 @@ export async function requireMainPlugin(name: string, version?: string): Promise
   if (!_runtimePluginInstanceCache[cacheKey]) {
     log.debug("Plugins: Require main plugin: Instance not cached");
 
-    let { installedVersion } = await (await worker).getInstalledVersion({ name });
+    const { installedVersion } = await (await worker).getInstalledVersion({ name });
     if (!installedVersion) {
       log.warn("Plugins: Requiring main plugin that is not installed", name, version);
-      installedVersion = await _installPlugin(name, version);
+      await _installPlugin(name, version);
       if (!installedVersion) {
         log.error("Plugins: Requiring main plugin that is not installed, and could not be installed on demand", name, version);
         throw new Error("Extension is not installed");
@@ -218,7 +217,7 @@ export async function requireMainPlugin(name: string, version?: string): Promise
     if (version !== undefined && installedVersion !== version) {
       log.warn("Plugins: Requiring main plugin: Requested version is different from installed, reinstalling", name, version);
       await _removePlugin(name);
-      installedVersion = await _installPlugin(name, version);
+      await _installPlugin(name, version);
       //throw new Error("Installed extension version is different from requested");
     }
 
@@ -326,7 +325,6 @@ export const worker: Promise<Thread & WorkerMethods> = new Promise((resolve, rej
     log.debug("Plugins: Initializing worker", CWD, PLUGINS_PATH, PLUGIN_CONFIG_PATH);
 
     worker.initialize({
-      cwd: CWD,
       pluginsPath: PLUGINS_PATH,
       pluginConfigPath: PLUGIN_CONFIG_PATH,
     }).

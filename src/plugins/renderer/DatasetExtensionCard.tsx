@@ -6,7 +6,6 @@ import { css, jsx } from '@emotion/react';
 import React from 'react';
 import MarkedText from 'renderer/common/MarkedText';
 import { Extension } from 'plugins/types';
-import PluginStatusButton from './PluginStatusButton';
 
 
 export interface DatasetExtensionCardProps {
@@ -41,7 +40,6 @@ function ({ extension, full, searchString }) {
       {full && extension?.npm.name
         ? <>
             <ControlGroup css={css`margin-bottom: 1rem;`} vertical fill>
-              <PluginStatusButton id={extension.npm.name} />
               <InputGroup title="Extension’s NPM package ID" fill disabled value={extension.npm.name} />
             </ControlGroup>
           </>
