@@ -98,15 +98,23 @@ getPluginInfo.main!.handle(async ({ id }) => {
 
   const w = await worker;
 
-  let extensions: Record<string, Extension>;
-  try {
-    extensions = await fetchExtensions();
-  } catch (e) {
-    log.error("Plugins: Unable to fetch Paneron extension index", e);
-    return { plugin: null };
+  const localPlugins = await (await worker).listLocalPlugins();
+
+  let ext: Extension | undefined;
+
+  const localPlugin = localPlugins[id];
+  if (localPlugin) {
+    ext = localPlugin;
+  } else {
+    try {
+      const extensions = await fetchExtensions();
+      ext = extensions[name];
+    } catch (e) {
+      log.error("Plugins: Unable to fetch Paneron extension index", e);
+      return { plugin: null };
+  }
   }
 
-  const ext = extensions[name];
   if (ext) {
     try {
       const { installedVersion } = await w.getInstalledVersion({ name });
