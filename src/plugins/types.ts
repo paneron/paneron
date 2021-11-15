@@ -1,6 +1,7 @@
 export interface InstalledPluginInfo extends Extension {
   installedVersion: string | null
   installationInProgress?: true
+  isLocal?: true
 }
 
 

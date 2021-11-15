@@ -116,12 +116,13 @@ getPluginInfo.main!.handle(async ({ id }) => {
   }
 
   if (ext) {
+    const isLocal = localPlugin !== undefined ? true : undefined;
     try {
       const { installedVersion } = await w.getInstalledVersion({ name });
-      return { plugin: { ...ext, installedVersion } };
+      return { plugin: { ...ext, installedVersion, isLocal } };
     } catch (e) {
       log.error("Unable to fetch information about installed extension version", name);
-      return { plugin: { ...ext, installedVersion: null } };
+      return { plugin: { ...ext, installedVersion: null, isLocal } };
     }
   } else {
     log.error("Plugins: Cannot locate extension in Paneron extension index", name);
