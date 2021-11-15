@@ -10,10 +10,7 @@ import path from 'path';
 import compareDesc from 'date-fns/compareDesc';
 import parseJSON from 'date-fns/parseJSON';
 
-import { PluginManager } from 'live-plugin-manager';
-
 import { spawn, Worker, Thread } from 'threads';
-import { MainPlugin } from '@riboseinc/paneron-extension-kit/types';
 import {
   getPluginInfo, getPluginManagerProps,
   installPlugin, listAvailablePlugins,
@@ -164,93 +161,15 @@ listLocalPlugins.main!.handle(async () => {
 
 async function _installPlugin(name: string, versionToInstall?: string): Promise<void> {
   const w = await worker;
-  const localPlugins = await w.listLocalPlugins();
-  const localPlugin = localPlugins[name];
-
   (await w.install({ name, version: versionToInstall }));
-
-  if (!localPlugin?.localPath) {
-    log.debug("Plugins: installing...", name);
-    await (await pluginManager).install(name);
-  } else {
-    log.debug("Plugins: installing (local)...", name, localPlugin.localPath);
-    await (await pluginManager).installFromPath(localPlugin.localPath);
-  }
-
   return;
 }
 
 
 async function _removePlugin(name: string): Promise<true> {
   (await (await worker).remove({ name }));
-
-  await (await pluginManager).uninstall(name);
-
-  //delete _runtimePluginInstanceCache[name];
-
   return true;
 }
-
-
-
-// Requiring plugins in main thread
-
-const _runtimePluginInstanceCache: Record<string, MainPlugin> = {};
-
-function _getPluginCacheKey(name: string, version?: string) {
-  const cacheKey = `${name}@${version ?? ''}`;
-  return cacheKey;
-}
-
-const _appVersion = process.env.NODE_ENV === 'development'
-  ? process.env.npm_package_version!
-  : app.getVersion();
-
-export async function requireMainPlugin(name: string, version?: string): Promise<MainPlugin> {
-  const cacheKey = _getPluginCacheKey(name, version);
-  if (!_runtimePluginInstanceCache[cacheKey]) {
-    log.debug("Plugins: Require main plugin: Instance not cached");
-
-    const { installedVersion } = await (await worker).getInstalledVersion({ name });
-    if (!installedVersion) {
-      log.warn("Plugins: Requiring main plugin that is not installed", name, version);
-      await _installPlugin(name, version);
-      if (!installedVersion) {
-        log.error("Plugins: Requiring main plugin that is not installed, and could not be installed on demand", name, version);
-        throw new Error("Extension is not installed");
-      } else {
-        log.info("Plugins: Installed main plugin on demand", name, version);
-      }
-    }
-
-    if (version !== undefined && installedVersion !== version) {
-      log.warn("Plugins: Requiring main plugin: Requested version is different from installed, reinstalling", name, version);
-      await _removePlugin(name);
-      await _installPlugin(name, version);
-      //throw new Error("Installed extension version is different from requested");
-    }
-
-    // TODO: Cache each plugin instance at runtime
-    const plugin: MainPlugin = await (await pluginManager).require(name).default;
-    log.silly("Plugins: Required main plugin", name, version, plugin);
-
-    if (!plugin.isCompatible(_appVersion)) {
-      log.error(
-        "Plugins: Extension version is not compatible with host application version",
-        `${name}@${version || '??'}`,
-        _appVersion);
-      throw new Error("Extension version is not compatible with host application version");
-    }
-
-    _runtimePluginInstanceCache[cacheKey] = plugin;
-
-  } else {
-    log.debug("Plugins: Require main plugin: Got cached instance");
-  }
-
-  return _runtimePluginInstanceCache[cacheKey];
-}
-
 
 
 // Plugin manager
@@ -269,14 +188,6 @@ export async function clearPluginData() {
   fs.rmdirSync(PLUGINS_PATH, { recursive: true });
   fs.removeSync(PLUGIN_CONFIG_PATH);
 }
-
-export const pluginManager: Promise<PluginManager> = new Promise((resolve, _) => {
-  resolve(new PluginManager({
-    cwd: CWD,
-    pluginsPath: PLUGINS_PATH,
-    npmInstallMode: 'useCache',
-  }));
-});
 
 clearLockfile();
 app.on('quit', clearLockfile);
