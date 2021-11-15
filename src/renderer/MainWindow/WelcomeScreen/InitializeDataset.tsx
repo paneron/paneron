@@ -6,13 +6,12 @@ import { jsx, css } from '@emotion/react';
 import React, { useContext, useState } from 'react';
 import { Card, Button, Colors, InputGroup, Classes } from '@blueprintjs/core';
 import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
-import { describeRepository, repositoriesChanged, Repository } from 'repositories/ipc';
-import { Context } from '../context';
-import DatasetExtension, { DatasetExtensionCardProps } from 'plugins/renderer/DatasetExtensionCard';
-import { Extension } from 'plugins/types';
 import { listAvailablePlugins } from 'plugins';
-import { loadRepository } from 'repositories/ipc';
+import { Extension } from 'plugins/types';
+import DatasetExtension, { DatasetExtensionCardProps } from 'plugins/renderer/DatasetExtensionCard';
+import { loadRepository, describeRepository, repositoriesChanged, Repository } from 'repositories/ipc';
 import { initializeDataset, proposeDatasetPath } from 'datasets/ipc';
+import { Context } from '../context';
 
 
 const InitializeDataset: React.FC<{ workDir: string; repoInfo?: Repository; className?: string; }> = function ({ workDir, repoInfo, className }) {
