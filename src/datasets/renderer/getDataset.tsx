@@ -4,6 +4,7 @@ import { PluginManager } from 'live-plugin-manager';
 import { RendererPlugin, DatasetContext } from '@riboseinc/paneron-extension-kit/types';
 import {
   getPluginManagerProps,
+  installPlugin,
   listLocalPlugins,
   removePlugin,
 } from 'plugins';
@@ -89,12 +90,15 @@ export default async function getDataset(workingCopyPath: string, datasetPath?: 
     const { result: localPlugins } = await listLocalPlugins.renderer!.trigger({});
     if (!localPlugins[pluginName]?.localPath) {
       log.silly("Dataset view: Installing plugin for renderer...", workingCopyPath, pluginName, pluginVersion);
-      await pluginManager.installFromNpm(pluginName, pluginVersion);
+      const { version } = await pluginManager.installFromNpm(pluginName, pluginVersion);
+      await installPlugin.renderer!.trigger({ id: pluginName, version });
     } else {
       const localPath = localPlugins[pluginName].localPath!;
+      const version = localPlugins[pluginName].npm.version;
       log.silly("Dataset view: (Re)installing plugin for renderer (local)...", workingCopyPath, pluginName, localPath, pluginVersion);
       await removePlugin.renderer!.trigger({ id: pluginName });
       await pluginManager.installFromPath(localPath);
+      await installPlugin.renderer!.trigger({ id: pluginName, version });
     }
 
     // pluginPath = pluginManager.getInfo(pluginName)?.location;
