@@ -296,10 +296,10 @@ export async function fetchExtensions(): Promise<ExtensionRegistry> {
     log.error("Plugins: Unable to fetch published extensions", e);
     publishedExtensions = {};
   }
-  const devExtensions = await (await worker).listLocalPlugins();
+  const localExtensions = await (await worker).listLocalPlugins();
   return {
     ...publishedExtensions,
-    ...devExtensions,
+    ...localExtensions,
   };
 }
 
