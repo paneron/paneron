@@ -112,7 +112,7 @@ getPluginInfo.main!.handle(async ({ id }) => {
     } catch (e) {
       log.error("Plugins: Unable to fetch Paneron extension index", e);
       return { plugin: null };
-  }
+    }
   }
 
   if (ext) {
