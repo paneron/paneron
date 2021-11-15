@@ -125,7 +125,7 @@ getPluginInfo.main!.handle(async ({ id }) => {
       return { plugin: { ...ext, installedVersion: null, isLocal } };
     }
   } else {
-    log.error("Plugins: Cannot locate extension in Paneron extension index", name);
+    log.error("Plugins: Cannot locate extension (not local, not in Paneron extension index)", name);
     return { plugin: null };
   }
 });
