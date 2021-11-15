@@ -11,11 +11,11 @@ export const getPluginManagerProps = makeEndpoint.main(
 
 // Querying
 
-export const listInstalledPlugins = makeEndpoint.main(
-  'listInstalledPlugins',
-  <EmptyPayload>_,
-  <{ objects: InstalledPluginInfo[] }>_,
-);
+// export const listInstalledPlugins = makeEndpoint.main(
+//   'listInstalledPlugins',
+//   <EmptyPayload>_,
+//   <{ objects: InstalledPluginInfo[] }>_,
+// );
 
 
 export const listAvailablePlugins = makeEndpoint.main(
