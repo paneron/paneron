@@ -93,7 +93,10 @@ execBundled.main!.handle(async ({ id, opts: { binaryName, cliArgs, useShell } })
     });
 
     sp.once('close', (code, signal) => {
-      if (SUBPROCESSES[id].termination?.error === null) {
+      // NOTE: If we have recorded an error event, which is followed by close event,
+      // we will keep termination reflecting the error event.
+      // TODO: Refactor this to handle errors more gracefully, and separately from closure perhaps.
+      if (!SUBPROCESSES[id].termination?.error) {
         const termination = { code, signal, error: null };
         notifyRenderer({ termination });
         SUBPROCESSES[id].termination = termination;
