@@ -98,7 +98,7 @@ getPluginInfo.main!.handle(async ({ id }) => {
 
   const w = await worker;
 
-  const localPlugins = await (await worker).listLocalPlugins();
+  const localPlugins = await w.listLocalPlugins();
 
   let ext: Extension | undefined;
 
