@@ -20,6 +20,13 @@ export const CLEAR_OPTIONS = [
 export type ClearOption = typeof CLEAR_OPTIONS[number];
 
 
+export const getAppVersion = makeEndpoint.main(
+  'getAppVersion',
+  <EmptyPayload>_,
+  <{ version: string }>_,
+);
+
+
 export const clearDataAndRestart = makeEndpoint.main(
   'clearDataAndRestart',
   <{ options: Record<ClearOption, boolean> }>_,

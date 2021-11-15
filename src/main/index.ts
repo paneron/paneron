@@ -24,7 +24,7 @@ import '../datasets/main';
 import '../clipboard/main';
 import '../subprocesses/main';
 
-import { clearDataAndRestart, ClearOption, openExternalURL, refreshMainWindow, saveFileToFilesystem, selectDirectoryPath } from '../common';
+import { clearDataAndRestart, ClearOption, getAppVersion, openExternalURL, refreshMainWindow, saveFileToFilesystem, selectDirectoryPath } from '../common';
 import { chooseFileFromFilesystem, makeRandomID } from '../common';
 
 import { WindowOpenerParams } from '../window/types';
@@ -106,6 +106,10 @@ function handleAllWindowsClosed(e: Electron.Event) {
 
 
   // Shared IPC
+
+  getAppVersion.main!.handle(async () => {
+    return { version: app.getVersion() };
+  });
 
   makeRandomID.main!.handle(async () => {
     return { id: makeUUIDv4() };

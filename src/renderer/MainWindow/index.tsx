@@ -7,7 +7,7 @@ import { Button, ButtonProps, Classes, Colors, Dialog, NonIdealState } from '@bl
 import { GlobalSettingsContext } from '@riboseinc/paneron-extension-kit/SettingsContext';
 import { INITIAL_GLOBAL_SETTINGS } from '@riboseinc/paneron-extension-kit/settings';
 
-import { refreshMainWindow, showGlobalSettings } from 'common';
+import { getAppVersion, refreshMainWindow, showGlobalSettings } from 'common';
 import { WindowComponentProps } from 'window/types';
 
 import { useSettings } from './settings';
@@ -26,6 +26,7 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
     refresh: globalSettings.refresh,
   };
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
+  const { value: { version: appVersion } } = getAppVersion.renderer!.useValue({}, { version: 'N/A' });
 
   showGlobalSettings.renderer!.useEvent(async () => {
     setSettingsDialogOpen(true);
@@ -73,6 +74,11 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
                 right: -15px; left: -15px;
                 height: ${NAV_HEIGHT_PX}px;
                 z-index: 2;`}>
+            <NavbarButton
+              title="Host application version"
+              text={`v${appVersion}`}
+              disabled
+            />
             <NavbarButton
               icon="refresh"
               title="Refresh window"
