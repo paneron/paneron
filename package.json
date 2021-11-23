@@ -18,7 +18,6 @@
     "test-mac-e2e": "yarn compile && yarn dist:mac && yarn test",
     "dev": "electron-webpack dev",
     "compile": "electron-webpack",
-    "fetch-metanorma-all": "mkdir bin bin/win bin/mac bin/linux && cd bin && curl -fsSL \"https://github.com/metanorma/packed-mn/releases/latest/download/{metanorma-windows-x64.exe,metanorma-linux-x64.tgz,metanorma-darwin-x64.tgz}\" -O && find . -name \"*.tgz\" -exec tar xzf {} \\; && rm *.tgz && mv metanorma-darwin* mac/metanorma && mv metanorma-linux* linux/metanorma && mv metanorma-win* win/metanorma.exe",
     "clean": "rm -rf ./bundle ./dist ./bin",
     "dist": "cross-env DEBUG=electron-builder electron-builder",
     "dist:win": "electron-builder -w",
