@@ -90,15 +90,6 @@ export namespace Repositories {
 
   export namespace Data {
 
-    /**
-     * Takes commit hash before and after a change.
-     * 
-     * Infers which buffer paths changed,
-     * infers which object paths in which datasets are affected,
-     * reindexes objects as appropriate,
-     * and sends IPC events to let Paneron & extension windows
-     * refresh shown data.
-     */
     export type ResolveChanges = (msg: GitOperationParams & {
       rootPath: string
       oidBefore: string
@@ -107,36 +98,21 @@ export namespace Repositories {
       changedBuffers: [path: string, changeStatus: ChangeStatus][]
     }>
 
-    /**
-     * Given a list of commit hashes,
-     * walks back history and returns one that was created most recently.
-     */
     export type ChooseMostRecentCommit = (msg: GitOperationParams & {
       candidates: string[]
     }) => Promise<{ commitHash: string }>
 
-    /** Returns the hash of the latest commit in the repository. */
     export type GetCurrentCommit = (msg: GitOperationParams) =>
       Promise<{ commitHash: string }>
 
-    /**
-     * Given a list of buffer paths,
-     * returns a map of buffer paths to buffers or null.
-     */
     export type GetBufferDataset = (msg: GitOperationParams & {
       paths: string[]
     }) => Promise<BufferDataset>
 
-    /**
-     * Given a path, returns a map of descendant buffer paths
-     * to buffers.
-     */
     export type ReadBuffers = (msg: GitOperationParams & {
       rootPath: string
     }) => Promise<Record<string, Uint8Array>>
 
-    /** Given a path, returns a map of descendant buffer paths
-       to buffers. */
     export type ReadBuffersAtVersion = (msg: GitOperationParams & {
       rootPath: string
       commitHash: string
@@ -170,7 +146,6 @@ export default interface WorkerMethods {
   /**
    * Initialize worker: give it Git repo’s working directory path,
    * and get an observable for monitoring repository status in return.
-   * 
    */
   initialize: (msg: { workDirPath: string }) => Observable<RepoStatus>
 
@@ -200,13 +175,50 @@ export default interface WorkerMethods {
 
   // Working with raw unstructured data (internal)
 
+  /** Returns the hash of the latest commit in the repository. */
   repo_getCurrentCommit: Repositories.Data.GetCurrentCommit
+
+  /**
+   * Given a list of commit hashes,
+   * walks back history and returns one that was created most recently.
+   */
   repo_chooseMostRecentCommit: Repositories.Data.ChooseMostRecentCommit
+
+  /**
+   * Given a list of buffer paths,
+   * returns a map of buffer paths to buffers or null.
+   */
   repo_getBufferDataset: Repositories.Data.GetBufferDataset
+
+  /**
+   * Given a path, returns a map of descendant buffer paths
+   * to buffers.
+   */
   repo_readBuffers: Repositories.Data.ReadBuffers
+
+  /**
+   * Given a path, returns a map of descendant buffer paths
+   * to buffers.
+   */
   repo_readBuffersAtVersion: Repositories.Data.ReadBuffersAtVersion
+
+  /** Updates buffers in repository. */
   repo_updateBuffers: Repositories.Data.UpdateBuffers
+
+  /** Deletes repository subtree. Fast, but doesn’t validate data. */
   repo_deleteTree: Repositories.Data.DeleteTree
+
+  /** Moves repository subtree to another location. Fast, but doesn’t validate data. */
   repo_moveTree: Repositories.Data.MoveTree
+
+  /**
+   * Takes commit hash before and after a change.
+   * 
+   * Infers which buffer paths changed,
+   * infers which object paths in which datasets are affected,
+   * reindexes objects as appropriate,
+   * and sends IPC events to let Paneron & extension windows
+   * refresh shown data.
+   */
   repo_resolveChanges: Repositories.Data.ResolveChanges
 }
