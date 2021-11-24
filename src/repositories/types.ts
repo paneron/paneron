@@ -127,7 +127,7 @@ export interface GitAuthor {
 }
 
 
-// Worker messages
+// Worker operation parameters (“worker messages”).
 
 export interface GitOperationParams {
   workDir: string

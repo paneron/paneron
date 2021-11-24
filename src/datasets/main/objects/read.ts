@@ -9,7 +9,12 @@ import { API as Datasets } from '../../types';
 import { getDefaultIndex, normalizeDatasetDir } from '../loadedDatasets';
 
 
-/** Do not read too many objects at once. May be slow. */
+
+/**
+ * Reads multiple objects from filesystem (cold).
+ * 
+ * Do not read too many objects at once. May be slow.
+ */
 export const getObjectDataset: Datasets.Data.GetObjectDataset = async function ({
   workDir,
   datasetDir,
@@ -36,7 +41,7 @@ export const getObjectDataset: Datasets.Data.GetObjectDataset = async function (
 
 
 /**
- * Reads structured object data.
+ * Reads structured object data from default index.
  * Object must be loaded into default dataset index first.
  */
 export async function readObject(
