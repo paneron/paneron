@@ -1,3 +1,5 @@
+import fs from 'fs-extra';
+import path from 'path';
 import log from 'electron-log';
 import React from 'react';
 import { PluginManager } from 'live-plugin-manager';
@@ -99,9 +101,32 @@ export default async function getDataset(workingCopyPath: string, datasetPath?: 
       const version = localPlugins[pluginName].npm.version;
 
       log.silly("Dataset view: (Re)installing plugin for renderer (local)...", workingCopyPath, pluginName, localPath, pluginVersion);
+
+      const pluginLocation = (
+        pluginManager.getInfo(pluginName)?.location ??
+        path.join(
+          pluginManager.options.pluginsPath,
+          pluginName.split(path.posix.sep).join(path.sep)));
+
+      // Clean up the plugin in filesystem
+      log.debug("Dataset view: Removing plugin from FS", pluginLocation);
+      if (pluginLocation) {
+        if (pluginLocation.startsWith(pluginManager.options.pluginsPath)) {
+          try {
+            fs.removeSync(pluginLocation);
+          } catch (e) {
+            log.debug("Dataset view: Removing plugin from FS: error", e);
+          }
+        } else {
+          throw new Error("Can’t remove plugin (plugin path is not a descendant of root plugin path)");
+        }
+      }
+
+      await pluginManager.uninstall(pluginName);
       await removePlugin.renderer!.trigger({ id: pluginName });
-      await pluginManager.installFromPath(localPath);
+
       await installPlugin.renderer!.trigger({ id: pluginName, version });
+      await pluginManager.installFromPath(localPath);
     }
 
     // pluginPath = pluginManager.getInfo(pluginName)?.location;
