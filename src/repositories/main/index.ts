@@ -381,13 +381,16 @@ updatePaneronRepository.main!.handle(async ({ workingCopyPath, info }) => {
   if (!info.title) {
     throw new Error("Proposed Paneron repository meta is missing title");
   }
+
   const existingMeta = await readPaneronRepoMeta(workingCopyPath);
   const { author } = await readRepoConfig(workingCopyPath);
+
   if (!author) {
     throw new Error("Repository configuration is missing author information");
   }
-  const repo = getLoadedRepository(workingCopyPath);
-  const w = repo.workers.sync;
+
+  const w = getLoadedRepository(workingCopyPath).workers.sync;
+
   const { newCommitHash } = await w.repo_updateBuffers({
     workDir: workingCopyPath,
     commitMessage: "Change repository title",
@@ -402,12 +405,15 @@ updatePaneronRepository.main!.handle(async ({ workingCopyPath, info }) => {
       }
     },
   });
+
   if (!newCommitHash) {
     throw new Error("Updating Paneron repository meta failed to return commit hash");
   }
+
   await repositoriesChanged.main!.trigger({
     changedWorkingPaths: [workingCopyPath],
   });
+
   return { success: true };
 });
 
@@ -446,6 +452,7 @@ addRepository.main!.handle(async ({ gitRemoteURL, branch, username, password, au
     log.error("Repositories: addRepository: password not supplied, trying to retrieve from OS storage");
     auth.password = (await getAuth(gitRemoteURL, username)).password;
   }
+
   const { canPush } = await oneOffWorkerTask(w => w.git_describeRemote({ url: gitRemoteURL, auth }));
 
   await updateRepositories((data) => {
@@ -500,9 +507,11 @@ addDisconnected.main!.handle(async ({ gitRemoteURL, branch, username, password }
   if (fs.existsSync(workDirPath) || ((await readRepositories())).workingCopies[workDirPath] !== undefined) {
     throw new Error("Could not generate a valid non-occupied repository path inside given container.");
   }
+
   if (branch === undefined || branch.trim() === '') {
     throw new Error("Main branch name is not specified.");
   }
+
   const auth = { username, password };
   if (!auth.password) {
     auth.password = (await getAuth(gitRemoteURL, username)).password;
@@ -516,19 +525,23 @@ addDisconnected.main!.handle(async ({ gitRemoteURL, branch, username, password }
       auth,
       branch,
     });
+
     await workers.sync.git_deleteOrigin({
       workDir: workDirPath,
     });
+
     await updateRepositories((data) => {
       const newData = { ...data };
       newData.workingCopies[workDirPath] = { mainBranch: branch };
       return newData;
     });
+
     repositoriesChanged.main!.trigger({
       changedWorkingPaths: [],
       deletedWorkingPaths: [],
       createdWorkingPaths: [workDirPath],
     });
+
     return { workDir: workDirPath, success: true };
 
   } catch (e) {
@@ -686,9 +699,7 @@ getBufferDataset.main!.handle(async ({ workingCopyPath, paths }) => {
     return {};
   }
 
-  const repo = getLoadedRepository(workingCopyPath);
-
-  const w = repo.workers.reader;
+  const w = getLoadedRepository(workingCopyPath).workers.reader;
 
   return await w.repo_getBufferDataset({
     workDir: workingCopyPath,
@@ -709,8 +720,7 @@ updateBuffers.main!.handle(async ({
     throw new Error("Author information is missing in repository config");
   }
 
-  const repo = getLoadedRepository(workingCopyPath);
-  const w = repo.workers.sync;
+  const w = getLoadedRepository(workingCopyPath).workers.sync;
 
   const pathChanges = changesetToPathChanges(bufferChangeset);
 
