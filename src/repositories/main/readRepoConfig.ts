@@ -1,4 +1,6 @@
-// Reading & updating Paneorn repository configuration
+/**
+ * Reading & updating Paneron user’s repository configuration.
+ */
 
 import path from 'path';
 import fs from 'fs-extra';
