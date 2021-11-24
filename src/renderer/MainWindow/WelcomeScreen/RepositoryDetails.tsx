@@ -27,10 +27,10 @@ const RepositoryDetails: React.FC<{ workDir: string; onOpen: (datasetID: string)
   useEffect(() => {
     // If this repository has remote connected, load repository in order to sync
     if (repo.gitMeta.remote?.url) {
-      console.debug("Loading repository…", workDir);
+      console.debug("Loading repository to sync with remote", workDir, repo.gitMeta.remote?.url);
       loadRepository.renderer!.trigger({ workingCopyPath: workDir });
     } else {
-      console.debug("Not loading repository", repo.gitMeta.remote?.url);
+      console.debug("Not loading repository (no remote connected?)", workDir, repo.gitMeta.remote?.url);
     }
   }, [JSON.stringify(repo.gitMeta.remote?.url)]);
 
