@@ -2,21 +2,19 @@ import path from 'path';
 import * as R from 'ramda';
 import log from 'electron-log';
 import { useEffect, useState } from 'react';
+
 import { DatasetContext, RendererPlugin } from '@riboseinc/paneron-extension-kit/types';
 import { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
 import { IndexStatus, INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
 import { INITIAL_GLOBAL_SETTINGS } from '@riboseinc/paneron-extension-kit/settings';
 import { BaseAction, PersistentStateReducerHook } from '@riboseinc/paneron-extension-kit/usePersistentStateReducer';
-
 import useTimeTravelingPersistentStateReducer, { TimeTravelingPersistentStateReducerHook } from '@riboseinc/paneron-extension-kit/useTimeTravelingPersistentStateReducer';
-import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
 
+import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
 import { makeRandomID, chooseFileFromFilesystem, saveFileToFilesystem, openExternalURL } from 'common';
 import { copyObjects, requestCopiedObjects } from 'clipboard/ipc';
 import { describeBundledExecutable, describeSubprocess, execBundled, subprocessEvent } from 'subprocesses';
-
 import { describeRepository } from 'repositories/ipc';
-
 import { updateSetting, useSettings } from 'renderer/MainWindow/settings';
 
 import { DatasetInfo } from '../types';

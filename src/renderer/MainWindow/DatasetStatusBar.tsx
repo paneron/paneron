@@ -27,7 +27,7 @@ export const DatasetStatusBar: React.FC<Record<never, never>> = React.memo(funct
 
   const status = indexStatus ?? indexDescResp.value.status;
 
-  const progressValue = Math.floor(100 / (status.progress?.total || 100) * (status.progress?.loaded || 1)) / 100
+  const progressValue = Math.floor(100 / (status.progress?.total || 100) * (status.progress?.loaded || 1)) / 100;
 
   return (
     status.progress
@@ -48,6 +48,9 @@ export const DatasetStatusBar: React.FC<Record<never, never>> = React.memo(funct
   );
 });
 
-const initialStatus: IndexStatus = { objectCount: 0, progress: { phase: 'initializing', total: 0, loaded: 0 } };
+const initialStatus: IndexStatus = {
+  objectCount: 0,
+  progress: { phase: 'initializing', total: 0, loaded: 0 },
+};
 
 export default DatasetStatusBar;

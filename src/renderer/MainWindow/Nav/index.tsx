@@ -5,8 +5,10 @@ import styled from '@emotion/styled';
 import { jsx, css } from '@emotion/react';
 import React, { useContext } from 'react';
 import { Colors, Icon } from '@blueprintjs/core';
+
 import { describeRepository, repositoryBuffersChanged } from 'repositories/ipc';
 import { getDatasetInfo } from 'datasets/ipc';
+
 import { Context } from '../context';
 import Breadcrumb from './Breadcrumb';
 import DatasetBreadcrumb from './DatasetBreadcrumb';

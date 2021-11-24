@@ -16,8 +16,7 @@ function ({ workDir, datasetID, showRepoInfo, onClick }) {
     { info: null });
 
   const dsInfo = dsDescResp.value.info;
-  //const isLoading = dsDescResp.isUpdating;
-  //const notFound = !isLoading && !dsInfo;
+
   const pluginDescResp = getPluginInfo.renderer!.useValue(
     { id: dsInfo?.type.id ?? '' },
     { plugin: null });
@@ -29,9 +28,10 @@ function ({ workDir, datasetID, showRepoInfo, onClick }) {
     : !pluginInfo?.iconURL
       ? <Icon icon="heart-broken" />
       : <Icon
-        icon={<img className={Classes.ICON}
-          css={css`height: ${IconSize.STANDARD}px; width: ${IconSize.STANDARD}px`}
-          src={pluginInfo?.iconURL} />} />;
+          icon={<img className={Classes.ICON}
+            css={css`height: ${IconSize.STANDARD}px; width: ${IconSize.STANDARD}px`}
+            src={pluginInfo?.iconURL} />}
+        />;
 
   return (
     <MenuItem

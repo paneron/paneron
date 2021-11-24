@@ -70,6 +70,7 @@ const unload: Datasets.Lifecycle.Unload = async function ({
   const normalizedDatasetDir = normalizeDatasetDir(datasetDir);
   try {
     const ds = getLoadedDataset(workDir, normalizedDatasetDir);
+
     for (const [idxID, { dbHandle, sortedDBHandle }] of Object.entries(ds.indexes)) {
       try {
         await dbHandle.close();
@@ -90,6 +91,7 @@ const unload: Datasets.Lifecycle.Unload = async function ({
   }
   delete datasets[workDir]?.[datasetDir];
   log.info("Datasets: Unloaded", workDir, datasetDir)
+
 }
 
 
@@ -225,6 +227,7 @@ const locatePositionInFilteredIndex: Datasets.Indexes.LocatePositionInFilteredIn
     workDir,
     normalizedDatasetDir,
     indexID) as Datasets.Util.FilteredIndex;
+
   const db = idx.sortedDBHandle;
 
   for await (const data of db.createReadStream()) {
@@ -331,15 +334,6 @@ async function _writeDefaultIndex(
 
 // Utility functions
 
-// function changedPathsToPathChanges(
-//   changedPaths: [path: string, change: ChangeStatus][]
-// ): PathChanges {
-//   const pathChanges: PathChanges = changedPaths.
-//     map(([path, change]) => ({ [path]: change })).
-//     reduce((prev, curr) => ({ ...prev, ...curr }));
-//   return pathChanges;
-// }
-
 export function changesetToPathChanges(
   changeset: Changeset<any>,
 ): PathChanges {
@@ -357,9 +351,15 @@ export function changesetToPathChanges(
   }
   return changes;
 }
+// function changedPathsToPathChanges(
+//   changedPaths: [path: string, change: ChangeStatus][]
+// ): PathChanges {
+//   const pathChanges: PathChanges = changedPaths.
+//     map(([path, change]) => ({ [path]: change })).
+//     reduce((prev, curr) => ({ ...prev, ...curr }));
+//   return pathChanges;
+// }
 
-
-// Below, datasetDir is expected to be normalized (no leading slash).
 
 /** Strips leading and trailing slashes from dataset directory. */
 export function normalizeDatasetDir(datasetDir: string) {
@@ -519,14 +519,17 @@ async function fillInFilteredIndex(
 
     if (defaultIndex.completionPromise) {
       log.debug("Datasets: fillInFilteredIndex: Awaiting default index progress to finish...");
+
       await defaultIndex.completionPromise;
+
+      log.debug("Datasets: fillInFilteredIndex: Awaiting default index progress to finish: Done");
+
       //await new Promise<void>((resolve, reject) => {
       //  defaultIndex.statusSubject.subscribe(
       //    (val) => { if (val.progress === undefined) { resolve() } },
       //    (err) => reject(err),
       //    () => reject("Default index status stream completed without progress having finished"));
       //});
-      log.debug("Datasets: fillInFilteredIndex: Awaiting default index progress to finish: Done");
     } else {
       log.debug("Datasets: fillInFilteredIndex: Default index is ready beforehand");
     }
@@ -669,6 +672,7 @@ async function initFilteredIndex(
   // The alternative (possibly a faster one) could be:
   // await fs.remove(dbPath);
   // await fs.remove(sortedDBPath);
+
   await idx.dbHandle.clear();
   await idx.sortedDBHandle.clear();
 

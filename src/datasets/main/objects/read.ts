@@ -1,7 +1,9 @@
 import path from 'path';
 import log from 'electron-log';
+
 import type { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
 import { findSerDesRuleForPath } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
+
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
 import { API as Datasets } from '../../types';
 import { getDefaultIndex, normalizeDatasetDir } from '../loadedDatasets';

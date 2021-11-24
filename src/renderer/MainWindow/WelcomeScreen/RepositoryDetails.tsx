@@ -11,7 +11,8 @@ import DatasetMenuItem from './DatasetMenuItem';
 import { Context } from '../context';
 
 
-const RepositoryDetails: React.FC<{ workDir: string; onOpen: (datasetID: string) => void; }> = function ({ workDir, onOpen }) {
+const RepositoryDetails: React.FC<{ workDir: string; onOpen: (datasetID: string) => void; }> =
+function ({ workDir, onOpen }) {
   const openedRepoResp = describeRepository.renderer!.useValue(
     { workingCopyPath: workDir },
     { info: { gitMeta: { workingCopyPath: workDir, mainBranch: '' } } });
@@ -172,14 +173,19 @@ const RepoMenu: React.FC<RepoMenuProps> = function ({ repo, onOpenDataset, onOpe
           icon="add"
           onClick={onCreateDataset}
           disabled={!onCreateDataset} />
+
         <MenuDivider />
+
         {settingsMenuItem}
         {sharingMenu}
+
       </Menu>
     );
   } else {
     return <>
-      <NonIdealState icon="heart-broken" description="This does not appear to be a Paneron repository." />
+      <NonIdealState
+        icon="heart-broken"
+        description="This does not appear to be a Paneron repository." />
       <Menu>
         {settingsMenuItem}
       </Menu>

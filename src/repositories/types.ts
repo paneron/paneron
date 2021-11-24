@@ -55,10 +55,12 @@ export interface NewRepositoryDefaults {
 interface CreationStatus {
   operation: 'creating'
 }
+
 /** During start up */
 interface InitStatus {
   operation: 'initializing'
 }
+
 interface LocalChecksStatus {
   operation: 'checking-local-changes'
 }

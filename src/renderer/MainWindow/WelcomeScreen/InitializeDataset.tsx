@@ -2,10 +2,10 @@
 /** @jsxFrag React.Fragment */
 
 import { jsx, css } from '@emotion/react';
-
 import React, { useContext, useState } from 'react';
 import { Card, Button, Colors, InputGroup, Classes } from '@blueprintjs/core';
 import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
+
 import { listAvailablePlugins } from 'plugins';
 import { Extension } from 'plugins/types';
 import DatasetExtension, { DatasetExtensionCardProps } from 'plugins/renderer/DatasetExtensionCard';

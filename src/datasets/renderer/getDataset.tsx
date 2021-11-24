@@ -88,13 +88,16 @@ export default async function getDataset(workingCopyPath: string, datasetPath?: 
     // NOTE: This requires `nodeIntegration` to be true on Electron’s window.
     // Ideally, we want to get rid of that.
     const { result: localPlugins } = await listLocalPlugins.renderer!.trigger({});
+
     if (!localPlugins[pluginName]?.localPath) {
       log.silly("Dataset view: Installing plugin for renderer...", workingCopyPath, pluginName, pluginVersion);
       const { version } = await pluginManager.installFromNpm(pluginName, pluginVersion);
       await installPlugin.renderer!.trigger({ id: pluginName, version });
+
     } else {
       const localPath = localPlugins[pluginName].localPath!;
       const version = localPlugins[pluginName].npm.version;
+
       log.silly("Dataset view: (Re)installing plugin for renderer (local)...", workingCopyPath, pluginName, localPath, pluginVersion);
       await removePlugin.renderer!.trigger({ id: pluginName });
       await pluginManager.installFromPath(localPath);
