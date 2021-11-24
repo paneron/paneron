@@ -37,7 +37,7 @@ export interface ContextGetterProps {
   nodeModulesPath: string
   writeAccess: boolean
   workingCopyPath: string
-  datasetPath: string
+  datasetID: string
   datasetInfo: DatasetInfo
   getObjectView: RendererPlugin["getObjectView"]
 }
@@ -52,14 +52,14 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
     nodeModulesPath,
     writeAccess,
     workingCopyPath,
-    datasetPath,
+    datasetID,
     datasetInfo,
     getObjectView,
   } = opts;
 
   const datasetParams = {
     workingCopyPath,
-    datasetPath,
+    datasetID,
   };
 
   function usePersistentDatasetStateReducer<S, A extends BaseAction>
@@ -68,7 +68,7 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
       // opts[0] is the storage key in the list of positional parameters.
       // Extension code should specify locally scoped key,
       // and this takes care of additionally scoping it by repository and dataset.
-      `${workingCopyPath}/${datasetPath}/${opts[0]}`,
+      `${workingCopyPath}/${datasetID}/${opts[0]}`,
 
       opts[1], opts[2],
 
@@ -85,7 +85,7 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
       // opts[2] is the storage key in the list of positional parameters.
       // Extension code should specify locally scoped key,
       // and this takes care of additionally scoping it by repository and dataset.
-      `${workingCopyPath}/${datasetPath}/${opts[2]}`,
+      `${workingCopyPath}/${datasetID}/${opts[2]}`,
 
       opts[3], opts[4],
 
@@ -94,7 +94,7 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
     return useTimeTravelingPersistentStateReducer(...effectiveOpts);
   }
 
-  const EXT_SETTINGS_SCOPE = `${workingCopyPath}-${datasetPath}`;
+  const EXT_SETTINGS_SCOPE = `${workingCopyPath}-${datasetID}`;
 
   return {
     title: datasetInfo.title,
@@ -137,7 +137,7 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
     copyObjects: async (dataset) => {
       await copyObjects.renderer!.trigger({
         workDir: workingCopyPath,
-        datasetDir: datasetPath,
+        datasetDir: datasetID,
         objects: dataset,
       });
     },
@@ -162,11 +162,11 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
         ...opts,
       }, { data: {} });
 
-      objectsChanged.renderer!.useEvent(async ({ workingCopyPath, datasetPath, objects }) => {
-        if (workingCopyPath === datasetParams.workingCopyPath && datasetPath === datasetParams.datasetPath && (objects === undefined || R.intersection(Object.keys(objects), opts.objectPaths).length > 0)) {
+      objectsChanged.renderer!.useEvent(async ({ workingCopyPath, datasetID: datasetPath, objects }) => {
+        if (workingCopyPath === datasetParams.workingCopyPath && datasetPath === datasetParams.datasetID && (objects === undefined || R.intersection(Object.keys(objects), opts.objectPaths).length > 0)) {
           result.refresh();
         }
-      }, [workingCopyPath, datasetPath, JSON.stringify(opts.objectPaths)]);
+      }, [workingCopyPath, datasetID, JSON.stringify(opts.objectPaths)]);
 
       return result;
     },
@@ -197,13 +197,13 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
       indexStatusChanged.renderer!.useEvent(async (evt) => {
         if (
           workingCopyPath === evt.workingCopyPath &&
-          datasetPath === evt.datasetPath &&
+          datasetID === evt.datasetID &&
           indexID === evt.indexID
         ) {
           setStatus(evt.status);
           //result.refresh();
         }
-      }, [workingCopyPath, datasetPath, indexID]);
+      }, [workingCopyPath, datasetID, indexID]);
 
       return {
         ...result,
@@ -220,8 +220,8 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
         ...opts,
       }, { indexID: undefined });
 
-      filteredIndexUpdated.renderer!.useEvent(async ({ workingCopyPath, datasetPath, indexID }) => {
-        if (resp.value.indexID === indexID && workingCopyPath === datasetParams.workingCopyPath && datasetPath === datasetParams.datasetPath) {
+      filteredIndexUpdated.renderer!.useEvent(async ({ workingCopyPath, datasetID: datasetPath, indexID }) => {
+        if (resp.value.indexID === indexID && workingCopyPath === datasetParams.workingCopyPath && datasetPath === datasetParams.datasetID) {
           resp.refresh();
         }
       }, [opts.queryExpression]);
@@ -235,8 +235,8 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
         ...opts,
       }, { objectPath: '' });
 
-      filteredIndexUpdated.renderer!.useEvent(async ({ workingCopyPath, datasetPath, indexID }) => {
-        if (opts.indexID === indexID && workingCopyPath === datasetParams.workingCopyPath && datasetPath === datasetParams.datasetPath) {
+      filteredIndexUpdated.renderer!.useEvent(async ({ workingCopyPath, datasetID: datasetPath, indexID }) => {
+        if (opts.indexID === indexID && workingCopyPath === datasetParams.workingCopyPath && datasetPath === datasetParams.datasetID) {
           resp.refresh();
         }
       }, [opts.indexID, opts.position]);
@@ -284,7 +284,7 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
       path.join(nodeModulesPath, moduleName),
 
     makeAbsolutePath: relativeDatasetPath =>
-      path.join(workingCopyPath, datasetPath || '', relativeDatasetPath),
+      path.join(workingCopyPath, datasetID || '', relativeDatasetPath),
 
     requestFileFromFilesystem:  async function  _requestFileFromFilesystem (opts, callback?: (data: ObjectDataset) => void) {
       const resp = await chooseFileFromFilesystem.renderer!.trigger(opts);

@@ -2,13 +2,14 @@
 /** @jsxFrag React.Fragment */
 
 import { jsx } from '@emotion/react';
-
 import React, { useContext, useState } from 'react';
 import { Button } from '@blueprintjs/core';
 import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import PanelSeparator from '@riboseinc/paneron-extension-kit/widgets/panels/PanelSeparator';
+
 import ShareRepoForm from 'renderer/MainWindow/repositories/ShareRepoForm';
-import { deleteRepository, describeRepository, repositoriesChanged, Repository, setAuthorInfo } from 'repositories/ipc';
+import { deleteRepository, describeRepository, repositoriesChanged, setAuthorInfo } from 'repositories/ipc';
+import { Repository } from 'repositories/types';
 import { GitAuthor } from 'repositories/types';
 import { Context } from '../context';
 import AuthorForm from '../repositories/AuthorForm';

@@ -11,7 +11,8 @@ import PropertyView, { TextInput, Select } from '@riboseinc/paneron-extension-ki
 import PanelSeparator from '@riboseinc/paneron-extension-kit/widgets/panels/PanelSeparator';
 
 import { clearDataAndRestart, ClearOption, CLEAR_OPTIONS, selectDirectoryPath } from 'common';
-import { getNewRepoDefaults, NewRepositoryDefaults, setNewRepoDefaults } from 'repositories/ipc';
+import { getNewRepoDefaults, setNewRepoDefaults } from 'repositories/ipc';
+import { NewRepositoryDefaults } from 'repositories/types';
 import { listLocalPlugins, pluginsUpdated, removeLocalPluginPath, specifyLocalPluginPath } from 'plugins';
 import DatasetExtension from 'plugins/renderer/DatasetExtensionCard';
 

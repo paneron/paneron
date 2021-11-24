@@ -3,7 +3,7 @@ import { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/ty
 import { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
 
 import { EmptyPayload, makeEndpoint, _ } from '../ipc';
-import { DatasetInfo, DatasetType, MigrationSequenceOutcome, RecentlyOpenedDataset } from './types';
+import { DatasetInfo, DatasetType, RecentlyOpenedDataset } from './types';
 
 
 /** List dataset types, provided by extensions, available for dataset initialization */
@@ -23,12 +23,7 @@ export const getDatasetInfo = makeEndpoint.main(
   'getDatasetInfo',
   <{
     workingCopyPath: string
-
-    /**
-     * Undefined datasetPath means dataset is at repository root,
-     * which is actually no longer supported.
-     */
-    datasetPath?: string
+    datasetID: string
   }>_,
   <{ info: DatasetInfo | null }>_
 );
@@ -39,7 +34,10 @@ export const getDatasetInfo = makeEndpoint.main(
  */
 export const proposeDatasetPath = makeEndpoint.main(
   'proposeDatasetPath',
-  <{ workingCopyPath: string, datasetPath?: string /* Can be undefined, meaning dataset is at repository root */}>_,
+  <{
+    workingCopyPath: string
+    datasetPath: string
+  }>_,
   <{ path?: string }>_,
 );
 
@@ -48,8 +46,8 @@ export const initializeDataset = makeEndpoint.main(
   'initializeDataset',
   <{
     workingCopyPath: string
+    datasetPath: string
     meta: DatasetInfo
-    datasetPath?: string // Can be undefined, meaning dataset is at repository root
   }>_,
   <{ info: DatasetInfo }>_,
 );
@@ -60,19 +58,19 @@ export const initializeDataset = makeEndpoint.main(
  */
 export const loadDataset = makeEndpoint.main(
   'loadDataset',
-  <{ workingCopyPath: string, datasetPath: string }>_,
+  <{ workingCopyPath: string, datasetID: string }>_,
   <{ success: true }>_,
 );
 
 export const unloadDataset = makeEndpoint.main(
   'unloadDataset',
-  <{ workingCopyPath: string, datasetPath: string }>_,
+  <{ workingCopyPath: string, datasetID: string }>_,
   <{ success: true }>_,
 );
 
 export const deleteDataset = makeEndpoint.main(
   'deleteDataset',
-  <{ workingCopyPath: string, datasetPath: string }>_,
+  <{ workingCopyPath: string, datasetID: string }>_,
   <{ success: true }>_,
 );
 
@@ -81,31 +79,31 @@ export const deleteDataset = makeEndpoint.main(
 
 export const getOrCreateFilteredIndex = makeEndpoint.main(
   'datasets_getOrCreateFilteredIndex',
-  <{ workingCopyPath: string, datasetPath: string, queryExpression: string, keyExpression?: string }>_,
+  <{ workingCopyPath: string, datasetID: string, queryExpression: string, keyExpression?: string }>_,
   <{ indexID: string | undefined }>_,
 );
 
 export const describeIndex = makeEndpoint.main(
   'datasets_describeIndex',
-  <{ workingCopyPath: string, datasetPath: string, indexID?: string }>_,
+  <{ workingCopyPath: string, datasetID: string, indexID?: string }>_,
   <{ status: IndexStatus }>_,
 );
 
 export const getFilteredObject = makeEndpoint.main(
   'datasets_getFilteredObject',
-  <{ workingCopyPath: string, datasetPath: string, indexID: string, position: number }>_,
+  <{ workingCopyPath: string, datasetID: string, indexID: string, position: number }>_,
   <{ objectPath: string }>_,
 );
 
 export const locateFilteredIndexPosition = makeEndpoint.main(
   'datasets_locateFilteredIndexPosition',
-  <{ workingCopyPath: string, datasetPath: string, indexID: string, objectPath: string }>_,
+  <{ workingCopyPath: string, datasetID: string, indexID: string, objectPath: string }>_,
   <{ position: number | null }>_,
 );
 
 export const getObjectDataset = makeEndpoint.main(
   'datasets_getObjectDataset',
-  <{ workingCopyPath: string, datasetPath: string, objectPaths: string[] }>_,
+  <{ workingCopyPath: string, datasetID: string, objectPaths: string[] }>_,
   <{ data: ObjectDataset }>_,
 );
 
@@ -113,7 +111,7 @@ export const updateObjects = makeEndpoint.main(
   'datasets_updateObjects',
   <{
     workingCopyPath: string
-    datasetPath: string
+    datasetID: string
     commitMessage: string
     objectChangeset: ObjectChangeset
     _dangerouslySkipValidation?: true
@@ -125,7 +123,7 @@ export const updateSubtree = makeEndpoint.main(
   'datasets_updateSubtree',
   <{
     workingCopyPath: string
-    datasetPath: string
+    datasetID: string
     commitMessage: string
     subtreeRoot: string // dataset-relative
     newSubtreeRoot: string | null // if null, deletes subtree
@@ -138,35 +136,36 @@ export const updateSubtree = makeEndpoint.main(
 
 export const objectsChanged = makeEndpoint.renderer(
   'dataset_objectsChanged',
-  <{ workingCopyPath: string, datasetPath: string, objects?: Record<string, ChangeStatus | true> }>_,
+  <{ workingCopyPath: string, datasetID: string, objects?: Record<string, ChangeStatus | true> }>_,
 );
 
 export const filteredIndexUpdated = makeEndpoint.renderer(
   'dataset_indexContentsChanged',
-  <{ workingCopyPath: string, datasetPath: string, indexID: string }>_,
+  <{ workingCopyPath: string, datasetID: string, indexID: string }>_,
 );
 
 export const indexStatusChanged = makeEndpoint.renderer(
   'dataset_indexStatusChanged',
-  <{ workingCopyPath: string, datasetPath: string, indexID?: string, status: IndexStatus }>_,
+  <{ workingCopyPath: string, datasetID: string, indexID?: string, status: IndexStatus }>_,
 );
 
 
 // Migrations
+// This is part of the obsolete “main” thread extension API.
 
-export const getOutstandingMigration = makeEndpoint.main(
-  'getOutstandingMigration',
-  <{ workingCopyPath: string, datasetPath: string }>_,
-  <{ migration?: { versionSpec: string } }>_,
-);
-
-export const applyOutstandingMigrations = makeEndpoint.main(
-  'applyOutstandingMigrations',
-  <{ workingCopyPath: string, datasetPath: string }>_,
-  <{ outcome: MigrationSequenceOutcome }>_,
-);
-
-export const reportMigrationStatus = makeEndpoint.renderer(
-  'reportMigrationStatus',
-  <{ datasetVersion: string, currentMigrationVersionSpec?: string, operation: string, progress?: number }>_,
-)
+// export const getOutstandingMigration = makeEndpoint.main(
+//   'getOutstandingMigration',
+//   <{ workingCopyPath: string, datasetPath: string }>_,
+//   <{ migration?: { versionSpec: string } }>_,
+// );
+// 
+// export const applyOutstandingMigrations = makeEndpoint.main(
+//   'applyOutstandingMigrations',
+//   <{ workingCopyPath: string, datasetPath: string }>_,
+//   <{ outcome: MigrationSequenceOutcome }>_,
+// );
+// 
+// export const reportMigrationStatus = makeEndpoint.renderer(
+//   'reportMigrationStatus',
+//   <{ datasetVersion: string, currentMigrationVersionSpec?: string, operation: string, progress?: number }>_,
+// )

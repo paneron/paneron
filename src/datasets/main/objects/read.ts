@@ -5,9 +5,10 @@ import type { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objec
 import { findSerDesRuleForPath } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
 
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
-import { API as Datasets } from '../../types';
-import { getDefaultIndex, normalizeDatasetDir } from '../loadedDatasets';
+import { getDatasetRoot } from 'repositories/main/meta';
 
+import type { API as Datasets } from '../../types';
+import { getDefaultIndex } from '../loadedDatasets';
 
 
 /**
@@ -17,10 +18,10 @@ import { getDefaultIndex, normalizeDatasetDir } from '../loadedDatasets';
  */
 export const getObjectDataset: Datasets.Data.GetObjectDataset = async function ({
   workDir,
-  datasetDir,
+  datasetID,
   objectPaths,
 }) {
-  const datasetDirNormalized = normalizeDatasetDir(datasetDir);
+  const datasetRoot = getDatasetRoot('', datasetID);
 
   //console.debug("Worker: Repositories: getObjectDataset: Reading…", objectPaths)
 
@@ -29,7 +30,7 @@ export const getObjectDataset: Datasets.Data.GetObjectDataset = async function (
       return {
         [objectPath]: await readObjectCold(
           workDir,
-          path.join(datasetDirNormalized, objectPath)),
+          path.join(datasetRoot, objectPath)),
       };
     }) ?? []
   )).reduce((prev, curr) => ({ ...prev, ...curr }), {});
@@ -47,13 +48,11 @@ export const getObjectDataset: Datasets.Data.GetObjectDataset = async function (
 export async function readObject(
   objectPath: string,
   workDir: string,
-  datasetDir: string,
+  datasetID: string,
 ): Promise<Record<string, any> | null> {
-  const normalizedDatasetDir = normalizeDatasetDir(datasetDir);
-
   const idx: Datasets.Util.DefaultIndex = await getDefaultIndex(
     workDir,
-    normalizedDatasetDir);
+    datasetID);
 
   let result: Record<string, any> | false;
   try {
@@ -67,7 +66,7 @@ export async function readObject(
   }
 
   if (result === false) {
-    console.warn("Object had not yet been indexed", datasetDir, objectPath);
+    console.warn("Object had not yet been indexed", datasetID, objectPath);
     throw new Error("Object had not yet been indexed");
   }
 
@@ -144,23 +143,27 @@ export async function readObjectCold(
  */ 
 export async function readObjectVersions
 <L extends number, C extends string[] & { length: L }>
-(workDir: string, datasetDir: string, objectPath: string, commitHashes: C):
+(workDir: string, datasetID: string, objectPath: string, commitHashes: C):
 Promise<(Record<string, any> | null)[] & { length: L }> {
-  const { workers: { sync } } = getLoadedRepository(workDir)
+  const { workers: { sync } } = getLoadedRepository(workDir);
+
+  const datasetRoot = getDatasetRoot('', datasetID);
+
   const rule = findSerDesRuleForPath(objectPath);
 
   const bufferDatasets = await Promise.all(commitHashes.map(oid =>
-    sync.repo_readBuffersAtVersion({ workDir, rootPath: path.join(datasetDir, objectPath), commitHash: oid })
+    sync.repo_readBuffersAtVersion({ workDir, rootPath: path.join(datasetRoot, objectPath), commitHash: oid })
   )) as Record<string, Uint8Array>[] & { length: L };
-  //const bufDs1 = await sync.repo_readBuffersAtVersion({ workDir, rootPath: path.join(datasetDir, objectPath), commitHash: oidIndex! });
-  //const bufDs2 = await sync.repo_readBuffersAtVersion({ workDir, rootPath: path.join(datasetDir, objectPath), commitHash: oidCurrent });
+
+  //const bufDs1 = await sync.repo_readBuffersAtVersion({ workDir, rootPath: path.join(datasetRoot, objectPath), commitHash: oidIndex! });
+  //const bufDs2 = await sync.repo_readBuffersAtVersion({ workDir, rootPath: path.join(datasetRoot, objectPath), commitHash: oidCurrent });
 
   const objectDatasets = bufferDatasets.map(bufDs => {
     if (Object.keys(bufDs).length > 0) {
       try {
         return rule.deserialize(bufDs, {});
       } catch (e) {
-        log.error("Datasets: readObjectVersions(): Error deserializing version for object", workDir, datasetDir, objectPath, e);
+        log.error("Datasets: readObjectVersions(): Error deserializing version for object", workDir, datasetRoot, objectPath, e);
         throw e;
       }
     } else {
@@ -171,7 +174,7 @@ Promise<(Record<string, any> | null)[] & { length: L }> {
   //const objDs2: Record<string, any> | null = Object.keys(bufDs2).length > 0 ? rule.deserialize(bufDs2, {}) : null;
 
   if (objectDatasets.filter(ds => ds !== null).length < 1) {
-    log.error("Datasets: updateIndexesIfNeeded: Unable to read any object version", path.join(datasetDir, objectPath), commitHashes);
+    log.error("Datasets: updateIndexesIfNeeded: Unable to read any object version", path.join(datasetRoot, objectPath), commitHashes);
     throw new Error("Unable to read any object version");
   }
 

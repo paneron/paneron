@@ -11,23 +11,21 @@ import { checkPathIsOccupied } from 'main/checkPathIsOccupied';
 import { serializeMeta } from 'main/meta-serdes';
 
 import {
-  PaneronRepository,
-  PANERON_REPOSITORY_META_FILENAME,
-
-  // TODO: Define a more specific datasets changed event
+  // TODO: Define a more specific datasets changed event?
   repositoriesChanged,
   repositoryBuffersChanged,
 } from 'repositories/ipc';
-import { readPaneronRepoMeta, readRepoConfig, DATASET_FILENAME, readDatasetMeta } from 'repositories/main/readRepoConfig';
+
+import { PaneronRepository } from 'repositories/types';
+
+import { readRepoConfig } from 'repositories/main/readRepoConfig';
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
-
-import loadedDatasets from './loadedDatasets';
-import { getObjectDataset as getDataset } from './objects/read';
-
 import {
-  updateObjects as _updateObjects,
-  updateTree as _updateTree,
-} from './objects/update';
+  readPaneronRepoMeta,
+  PANERON_REPOSITORY_META_FILENAME,
+  DATASET_FILENAME,
+  readDatasetMeta,
+} from 'repositories/main/meta';
 
 import {
   deleteDataset,
@@ -46,19 +44,23 @@ import {
   updateSubtree,
 } from '../ipc';
 
+import loadedDatasets from './loadedDatasets';
+import { getObjectDataset as getDataset } from './objects/read';
+
+import {
+  updateObjects as _updateObjects,
+  updateTree as _updateTree,
+} from './objects/update';
+
 import {
   list as _listRecentlyOpenedDatasets,
   record as _recordRecentlyOpenedDataset,
 } from './recent';
 
 
-getDatasetInfo.main!.handle(async ({ workingCopyPath, datasetPath }) => {
-  //log.debug("Reading dataset info", workingCopyPath, datasetPath);
-  if (!datasetPath) {
-    return { info: null }
-  }
+getDatasetInfo.main!.handle(async ({ workingCopyPath, datasetID }) => {
   try {
-    return { info: await readDatasetMeta(workingCopyPath, datasetPath) };
+    return { info: await readDatasetMeta(workingCopyPath, datasetID) };
   } catch (e) {
     log.error("Error reading dataset meta", e);
     return { info: null };
@@ -67,18 +69,19 @@ getDatasetInfo.main!.handle(async ({ workingCopyPath, datasetPath }) => {
 
 
 proposeDatasetPath.main!.handle(async ({ workingCopyPath, datasetPath }) => {
-  if (!datasetPath) {
-    throw new Error("Single-dataset repositories are not currently supported.");
+  if (!datasetPath.trim || !datasetPath.trim()) {
+    throw new Error("Missing dataset path.");
   }
 
   const dir = forceSlug(datasetPath);
   const fullPath = path.join(workingCopyPath, dir);
 
   // For check to succeed, the path must not exist at all.
-  const isOccupied = await checkPathIsOccupied(fullPath);
 
   // TODO: We can accept a pre-existing empty directory as new dataset location,
   // but would have to validate it’s absolutely empty.
+  const isOccupied = checkPathIsOccupied(fullPath);
+
   if (isOccupied) {
     return { path: undefined };
   } else {
@@ -88,8 +91,8 @@ proposeDatasetPath.main!.handle(async ({ workingCopyPath, datasetPath }) => {
 
 
 initializeDataset.main!.handle(async ({ workingCopyPath, meta: datasetMeta, datasetPath }) => {
-  if (!datasetPath) {
-    throw new Error("Single-dataset repositories are not currently supported");
+  if (!datasetPath.trim || !datasetPath.trim()) {
+    throw new Error("Invalid or missing dataset path");
   }
 
   const { author } = await readRepoConfig(workingCopyPath);
@@ -99,11 +102,16 @@ initializeDataset.main!.handle(async ({ workingCopyPath, meta: datasetMeta, data
 
   // Prepare repo meta update
   const oldRepoMeta = await readPaneronRepoMeta(workingCopyPath);
+
+  if (oldRepoMeta.dataset || oldRepoMeta.datasets === undefined) {
+    throw new Error("This repository does not support multiple repositories");
+  }
+
   const newRepoMeta: PaneronRepository = {
     ...oldRepoMeta,
     dataset: undefined,
     datasets: {
-      ...(oldRepoMeta.datasets || {}),
+      ...oldRepoMeta.datasets,
       [datasetPath]: true,
     },
   };
@@ -169,8 +177,8 @@ listRecentlyOpenedDatasets.main!.handle(async () => {
 });
 
 
-loadDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
-  await _recordRecentlyOpenedDataset(workingCopyPath, datasetPath);
+loadDataset.main!.handle(async ({ workingCopyPath, datasetID }) => {
+  await _recordRecentlyOpenedDataset(workingCopyPath, datasetID);
 
   log.debug("Datasets: Load: Ensuring cache root dir…", INDEX_DB_ROOT);
 
@@ -181,7 +189,7 @@ loadDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
 
   log.debug("Datasets: Load: Loading dataset…");
 
-  await loadedDatasets.load({ workDir: workingCopyPath, datasetDir: datasetPath, cacheRoot: INDEX_DB_ROOT });
+  await loadedDatasets.load({ workDir: workingCopyPath, datasetID, cacheRoot: INDEX_DB_ROOT });
 
   log.debug("Datasets: Load: Done");
 
@@ -196,20 +204,20 @@ loadDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
 });
 
 
-unloadDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
+unloadDataset.main!.handle(async ({ workingCopyPath, datasetID }) => {
   //const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
-  log.debug("Unloading dataset", workingCopyPath, datasetPath);
-  await loadedDatasets.unload({ workDir: workingCopyPath, datasetDir: datasetPath });
+  log.debug("Unloading dataset", workingCopyPath, datasetID);
+  await loadedDatasets.unload({ workDir: workingCopyPath, datasetID });
   return { success: true };
 });
 
 
-getOrCreateFilteredIndex.main!.handle(async ({ workingCopyPath, datasetPath, queryExpression, keyExpression }) => {
+getOrCreateFilteredIndex.main!.handle(async ({ workingCopyPath, datasetID, queryExpression, keyExpression }) => {
   //const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
 
   const { indexID } = await loadedDatasets.getOrCreateFilteredIndex({
     workDir: workingCopyPath,
-    datasetDir: datasetPath,
+    datasetID,
     queryExpression,
     keyExpression,
   });
@@ -226,12 +234,12 @@ getOrCreateFilteredIndex.main!.handle(async ({ workingCopyPath, datasetPath, que
 });
 
 
-describeIndex.main!.handle(async ({ workingCopyPath, datasetPath, indexID }) => {
+describeIndex.main!.handle(async ({ workingCopyPath, datasetID, indexID }) => {
   if (indexID !== '') {
     //const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
     return await loadedDatasets.describeIndex({
       workDir: workingCopyPath,
-      datasetDir: datasetPath,
+      datasetID,
       indexID,
     });
   } else {
@@ -240,25 +248,25 @@ describeIndex.main!.handle(async ({ workingCopyPath, datasetPath, indexID }) => 
 });
 
 
-getObjectDataset.main!.handle(async ({ workingCopyPath, datasetPath, objectPaths }) => {
+getObjectDataset.main!.handle(async ({ workingCopyPath, datasetID, objectPaths }) => {
   //const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
   const data = await getDataset({
     workDir: workingCopyPath,
-    datasetDir: datasetPath,
+    datasetID,
     objectPaths,
   });
   return { data };
 });
 
 
-getFilteredObject.main!.handle(async ({ workingCopyPath, datasetPath, indexID, position }) => {
+getFilteredObject.main!.handle(async ({ workingCopyPath, datasetID, indexID, position }) => {
   if (!indexID) {
     return { objectPath: '' };
   } else {
     //const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
     const { objectPath } = await loadedDatasets.getFilteredObject({
       workDir: workingCopyPath,
-      datasetDir: datasetPath,
+      datasetID,
       indexID,
       position,
     });
@@ -267,14 +275,14 @@ getFilteredObject.main!.handle(async ({ workingCopyPath, datasetPath, indexID, p
 });
 
 
-locateFilteredIndexPosition.main!.handle(async ({ workingCopyPath, datasetPath, indexID, objectPath }) => {
+locateFilteredIndexPosition.main!.handle(async ({ workingCopyPath, datasetID, indexID, objectPath }) => {
   if (!indexID || !objectPath) {
     return { position: null };
   } else {
     try {
       return await loadedDatasets.locatePositionInFilteredIndex({
         workDir: workingCopyPath,
-        datasetDir: datasetPath,
+        datasetID,
         indexID,
         objectPath,
       });
@@ -286,7 +294,7 @@ locateFilteredIndexPosition.main!.handle(async ({ workingCopyPath, datasetPath, 
 });
 
 
-updateObjects.main!.handle(async ({ workingCopyPath, datasetPath, objectChangeset, commitMessage, _dangerouslySkipValidation }) => {
+updateObjects.main!.handle(async ({ workingCopyPath, datasetID: datasetPath, objectChangeset, commitMessage, _dangerouslySkipValidation }) => {
   const { author } = await readRepoConfig(workingCopyPath);
   if (!author) {
     throw new Error("Repository configuration is missing author information");
@@ -294,7 +302,7 @@ updateObjects.main!.handle(async ({ workingCopyPath, datasetPath, objectChangese
   // TODO: Save a version
   return await _updateObjects({
     workDir: workingCopyPath,
-    datasetDir: datasetPath,
+    datasetID: datasetPath,
     objectChangeset,
     commitMessage,
     _dangerouslySkipValidation,
@@ -303,14 +311,14 @@ updateObjects.main!.handle(async ({ workingCopyPath, datasetPath, objectChangese
 });
 
 
-updateSubtree.main!.handle(async ({ workingCopyPath, datasetPath, commitMessage, subtreeRoot, newSubtreeRoot }) => {
+updateSubtree.main!.handle(async ({ workingCopyPath, datasetID: datasetPath, commitMessage, subtreeRoot, newSubtreeRoot }) => {
   const { author } = await readRepoConfig(workingCopyPath);
   if (!author) {
     throw new Error("Repository configuration is missing author information");
   }
   return await _updateTree({
     workDir: workingCopyPath,
-    datasetDir: datasetPath,
+    datasetID: datasetPath,
     commitMessage,
     author,
     oldSubtreePath: subtreeRoot,
@@ -319,7 +327,7 @@ updateSubtree.main!.handle(async ({ workingCopyPath, datasetPath, commitMessage,
 });
 
 
-deleteDataset.main!.handle(async ({ workingCopyPath, datasetPath }) => {
+deleteDataset.main!.handle(async ({ workingCopyPath, datasetID: datasetPath }) => {
   const w = getLoadedRepository(workingCopyPath).workers.sync;
 
   const { author } = await readRepoConfig(workingCopyPath);

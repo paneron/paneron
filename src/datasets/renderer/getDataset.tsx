@@ -15,7 +15,7 @@ import { DatasetInfo } from '../types';
 import { getDatasetInfo, loadDataset } from '../ipc';
 
 
-export default async function getDataset(workingCopyPath: string, datasetPath?: string): Promise<{
+export default async function getDataset(workingCopyPath: string, datasetID: string): Promise<{
   writeAccess: boolean;
   dataset: DatasetInfo;
   MainView: React.FC<DatasetContext & { className?: string }>;
@@ -40,7 +40,7 @@ export default async function getDataset(workingCopyPath: string, datasetPath?: 
     await loadRepository.renderer!.trigger({ workingCopyPath });
     const [repoInfo, datasetInfo, pluginManagerProps] = await Promise.all([
       describeRepository.renderer!.trigger({ workingCopyPath }),
-      getDatasetInfo.renderer!.trigger({ workingCopyPath, datasetPath }),
+      getDatasetInfo.renderer!.trigger({ workingCopyPath, datasetID }),
       getPluginManagerProps.renderer!.trigger({}),
     ]);
 
@@ -153,7 +153,7 @@ export default async function getDataset(workingCopyPath: string, datasetPath?: 
     const plugin = await pluginPromise;
 
     if (!plugin.mainView) {
-      log.error("Dataset view: Not provided by plugin", pluginName, pluginVersion);
+      log.error("Dataset view: Not provided by plugin", pluginName, pluginVersion, plugin.mainView);
       throw new Error("Error requesting main dataset view from Paneron extension");
     }
 
@@ -164,7 +164,7 @@ export default async function getDataset(workingCopyPath: string, datasetPath?: 
     log.silly("Dataset view: Loading dataset…");
     const dataset = (await loadDataset.renderer!.trigger({
       workingCopyPath,
-      datasetPath: datasetPath!,
+      datasetID,
     })).result;
     if (!dataset || !dataset.success) {
       throw new Error("Unable to load dataset");

@@ -20,7 +20,7 @@ export const DatasetBreadcrumb: React.FC<{
 
   const indexDescResp = describeIndex.renderer!.useValue({
     workingCopyPath: workDir,
-    datasetPath: datasetID,
+    datasetID: datasetID,
   }, { status: initialDefaultDatasetIndexStatus });
 
   const pluginInfoResp = getPluginInfo.renderer!.useValue(
@@ -33,8 +33,8 @@ export const DatasetBreadcrumb: React.FC<{
     pluginInfoResp.refresh();
   }, [datasetInfo.type.id]);
 
-  indexStatusChanged.renderer!.useEvent(async ({ workingCopyPath, datasetPath, indexID, status }) => {
-    if (workingCopyPath === workDir && datasetPath === datasetID && indexID === undefined) {
+  indexStatusChanged.renderer!.useEvent(async ({ workingCopyPath, datasetID: dsID, indexID, status }) => {
+    if (workingCopyPath === workDir && dsID === datasetID && indexID === undefined) {
       setIndexStatus(status);
     }
   }, [workDir, datasetID]);

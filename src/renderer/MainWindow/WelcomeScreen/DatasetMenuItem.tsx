@@ -12,7 +12,7 @@ import { describeRepository } from 'repositories/ipc';
 const DatasetMenuItem: React.FC<{ workDir: string; datasetID: string; showRepoInfo?: true; onClick?: () => void; }> =
 function ({ workDir, datasetID, showRepoInfo, onClick }) {
   const dsDescResp = getDatasetInfo.renderer!.useValue(
-    { workingCopyPath: workDir, datasetPath: datasetID },
+    { workingCopyPath: workDir, datasetID },
     { info: null });
 
   const dsInfo = dsDescResp.value.info;

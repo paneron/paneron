@@ -15,7 +15,6 @@ import {
   getDefaultWorkingDirectoryContainer,
   getNewRepoDefaults, setNewRepoDefaults,
   describeRepository, savePassword, setRemote,
-  PANERON_REPOSITORY_META_FILENAME,
   queryGitRemote,
   unsetRemote,
   setAuthorInfo,
@@ -27,9 +26,12 @@ import {
   addDisconnected,
 } from '../ipc';
 
+import { PANERON_REPOSITORY_META_FILENAME } from "./meta";
+
 import { makeUUIDv4 } from 'utils';
 
 import loadedDatasets, { changesetToPathChanges } from '../../datasets/main/loadedDatasets';
+
 import { PaneronRepository, GitRemote, Repository } from '../types';
 
 import { getRepoWorkers, oneOffWorkerTask } from './workerManager';
@@ -44,11 +46,12 @@ import {
 import {
   updateRepositories,
   readRepositories,
-  readPaneronRepoMeta,
   readRepoConfig,
   getNewRepoDefaults as getDefaults,
   setNewRepoDefaults as setDefaults,
 } from './readRepoConfig';
+
+import { readPaneronRepoMeta } from './meta';
 
 import { saveAuth, getAuth } from './remoteAuth';
 

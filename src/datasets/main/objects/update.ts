@@ -3,29 +3,31 @@ import path from 'path';
 import { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
 import { ObjectChangeset, ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
-import { normalizeDatasetDir, updateDatasetIndexesIfNeeded } from '../loadedDatasets';
+import { updateDatasetIndexesIfNeeded } from '../loadedDatasets';
 import { toBufferChangeset } from '../buffer-dataset-conversion';
 import { API as Datasets } from '../../types';
 import { diffObjectDatasets } from './equality';
 import { readObjectCold } from './read';
+import { getDatasetRoot } from 'repositories/main/meta';
 
 
 export const updateObjects: Datasets.Data.UpdateObjects =
 async function ({
   workDir,
-  datasetDir,
+  datasetID,
   objectChangeset,
   author,
   commitMessage,
   _dangerouslySkipValidation,
 }) {
-  const datasetDirNormalized = normalizeDatasetDir(datasetDir);
   const { workers: { sync } } = getLoadedRepository(workDir);
+
+  const datasetRoot = getDatasetRoot('', datasetID);
 
   if (_dangerouslySkipValidation !== true) {
     const conflict = await findFirstConflictingObjectPath(
       workDir,
-      datasetDirNormalized,
+      datasetID,
       objectChangeset);
 
     if (conflict) {
@@ -34,7 +36,7 @@ async function ({
     }
   }
 
-  const bufferChangeset = toBufferChangeset(objectChangeset, datasetDir);
+  const bufferChangeset = toBufferChangeset(objectChangeset, datasetRoot);
 
   //console.debug("updateObjects: got changeset", JSON.stringify(objectChangeset), bufferChangeset);
 
@@ -45,11 +47,11 @@ async function ({
     bufferChangeset,
   });
 
-  updateDatasetIndexesIfNeeded(workDir, datasetDirNormalized);
+  updateDatasetIndexesIfNeeded(workDir, datasetID);
 
-  //const idx = getLoadedDataset(workDir, datasetDir).indexes.default as Datasets.Util.DefaultIndex;
-  //await getDefaultIndex(workDir, datasetDirNormalized);
-  //await fillInDefaultIndex(workDir, datasetDir, idx, true);
+  //const idx = getLoadedDataset(workDir, datasetID).indexes.default as Datasets.Util.DefaultIndex;
+  //await getDefaultIndex(workDir, datasetID);
+  //await fillInDefaultIndex(workDir, datasetID, idx, true);
 
   return result;
 }
@@ -58,14 +60,15 @@ async function ({
 export const updateTree: Datasets.Data.UpdateTree =
 async function ({
   workDir,
-  datasetDir,
+  datasetID,
   author,
   commitMessage,
   oldSubtreePath,
   newSubtreePath,
 }) {
-  const datasetDirNormalized = normalizeDatasetDir(datasetDir);
   const { workers: { sync } } = getLoadedRepository(workDir);
+
+  const datasetRoot = getDatasetRoot('', datasetID);
 
   let result: CommitOutcome;
 
@@ -74,19 +77,19 @@ async function ({
       workDir,
       author,
       commitMessage,
-      oldTreeRoot: path.posix.join(datasetDirNormalized, oldSubtreePath),
-      newTreeRoot: path.posix.join(datasetDirNormalized, newSubtreePath),
+      oldTreeRoot: path.posix.join(datasetRoot, oldSubtreePath),
+      newTreeRoot: path.posix.join(datasetRoot, newSubtreePath),
     });
   } else {
     result = await sync.repo_deleteTree({
       workDir,
       author,
       commitMessage,
-      treeRoot: path.posix.join(datasetDir, oldSubtreePath),
+      treeRoot: path.posix.join(datasetID, oldSubtreePath),
     });
   }
 
-  updateDatasetIndexesIfNeeded(workDir, datasetDirNormalized);
+  updateDatasetIndexesIfNeeded(workDir, datasetID);
 
   return result;
 }
@@ -94,7 +97,7 @@ async function ({
 
 async function findFirstConflictingObjectPath(
   workDir: string,
-  datasetDir: string,
+  datasetID: string,
   objectChangeset: ObjectChangeset,
 ): Promise<[ bufferPath: string, changeStatus: ChangeStatus ] | null> {
 
@@ -104,11 +107,13 @@ async function findFirstConflictingObjectPath(
 
   const paths = Object.keys(referenceObjectDataset);
 
+  const datasetRoot = getDatasetRoot('', datasetID);
+
   async function readObjects(p: string):
   Promise<[ Record<string, any> | null, Record<string, any> | null ]> {
     return [
       referenceObjectDataset[p],
-      await readObjectCold(workDir, path.join(datasetDir, p)),
+      await readObjectCold(workDir, path.join(datasetRoot, p)),
     ];
   }
 

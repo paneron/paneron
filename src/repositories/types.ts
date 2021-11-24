@@ -3,6 +3,10 @@ import type { BufferChangeset } from '@riboseinc/paneron-extension-kit/types/buf
 import type { ObjectChangeset } from '@riboseinc/paneron-extension-kit/types/objects';
 
 
+/** Used to signify the special case of dataset occupying the root of the repo. */
+export const SOLE_DATASET_ID = '@';
+
+
 // Repository info
 
 export type PaneronRepository = {
@@ -134,7 +138,7 @@ export interface GitOperationParams {
 }
 
 export interface DatasetOperationParams extends GitOperationParams {
-  datasetDir: string
+  datasetID: string
 }
 
 export interface AuthoringGitOperationParams extends GitOperationParams {

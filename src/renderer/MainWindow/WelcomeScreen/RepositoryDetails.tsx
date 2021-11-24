@@ -4,7 +4,8 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { jsx, css } from '@emotion/react';
 import { Menu, MenuDivider, MenuItem, NonIdealState, Panel, PanelStack2, Spinner } from '@blueprintjs/core';
-import { addDisconnected, describeRepository, loadRepository, Repository, repositoryBuffersChanged } from 'repositories/ipc';
+import { addDisconnected, describeRepository, loadRepository, repositoryBuffersChanged } from 'repositories/ipc';
+import { Repository, SOLE_DATASET_ID } from 'repositories/types';
 import RepositorySettings from './RepositorySettings';
 import InitializeDataset from './InitializeDataset';
 import DatasetMenuItem from './DatasetMenuItem';
@@ -74,13 +75,15 @@ function ({ workDir, onOpen }) {
     [Panel<RepoMenuProps>, Panel<RepoSettingsProps>]
   >([repoMenuPanel]);
 
-  const handleOpenPanel = useCallback((newPanel: Panel<CreateDatasetProps | RepoSettingsProps>) => setPanelStack(stack => {
-    if (stack.length === 1) {
-      return [...stack, newPanel];
-    } else {
-      return stack;
-    }
-  }), []);
+  const handleOpenPanel = useCallback(
+    (newPanel: Panel<CreateDatasetProps | RepoSettingsProps>) => setPanelStack(stack => {
+      if (stack.length === 1) {
+        return [...stack, newPanel];
+      } else {
+        return stack;
+      }
+    }),
+    []);
 
   const handleClosePanel = useCallback(() => {
     setPanelStack(stack => [stack[0]]);
@@ -158,16 +161,25 @@ const RepoMenu: React.FC<RepoMenuProps> = function ({ repo, onOpenDataset, onOpe
       disabled={!onOpenSettings} />
   );
 
-  if (repo.paneronMeta) {
-    const datasetIDs = Object.keys(repo.paneronMeta?.datasets ?? {});
+  if (repo.paneronMeta && (repo.paneronMeta.datasets || repo.paneronMeta.dataset)) {
+
+    const datasetIDs = repo.paneronMeta.datasets
+      ? Object.keys(repo.paneronMeta.datasets)
+      : [SOLE_DATASET_ID];
+
     return (
       <Menu>
         <MenuDivider title="Datasets" />
-        {datasetIDs.map(dsID => <DatasetMenuItem
-          key={dsID}
-          workDir={workDir}
-          datasetID={dsID}
-          onClick={onOpenDataset ? () => onOpenDataset!(dsID) : undefined} />)}
+
+        {datasetIDs.map(dsID =>
+          <DatasetMenuItem
+            key={dsID}
+            workDir={workDir}
+            datasetID={dsID}
+            onClick={onOpenDataset ? () => onOpenDataset!(dsID) : undefined}
+          />
+        )}
+
         <MenuItem
           text="Create new dataset"
           icon="add"

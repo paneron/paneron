@@ -1,4 +1,8 @@
+import { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
+import { BufferChangeset, BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
+
 import { EmptyPayload, makeEndpoint, _ } from '../ipc';
+
 import {
   GitAuthor,
   NewRepositoryDefaults,
@@ -8,12 +12,6 @@ import {
   GitRepository,
   RepositoryListQuery,
 } from './types';
-import { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
-import { BufferChangeset, BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
-export * from './types';
-
-
-export const PANERON_REPOSITORY_META_FILENAME = 'paneron.yaml';
 
 
 export const getNewRepoDefaults = makeEndpoint.main(

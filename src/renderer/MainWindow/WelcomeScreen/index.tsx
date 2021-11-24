@@ -7,7 +7,10 @@ import { Helmet } from 'react-helmet';
 import { Button, Classes, Colors, Icon, IconName, InputGroup, Tab, Tabs } from '@blueprintjs/core';
 
 import useDebounce from '@riboseinc/paneron-extension-kit/useDebounce';
-import { createRepository, GitAuthor, Repository } from 'repositories/ipc';
+
+import { createRepository } from 'repositories/ipc';
+import type { GitAuthor, Repository } from 'repositories/types';
+
 import useRepositoryList from '../useRepositoryList';
 import { Context } from '../context';
 import RepositoryDetails from './RepositoryDetails';

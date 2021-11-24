@@ -41,7 +41,7 @@ const Nav: React.FC<NavProps> = function ({ anchor, children, className }) {
   }, [state.selectedRepoWorkDir]);
 
   const openedDataset = getDatasetInfo.renderer!.useValue(
-    { workingCopyPath: state.selectedRepoWorkDir ?? '', datasetPath: state.selectedDatasetID ?? '' },
+    { workingCopyPath: state.selectedRepoWorkDir ?? '', datasetID: state.selectedDatasetID ?? '' },
     { info: null }).value.info;
 
   let breadcrumbs: JSX.Element[] = [];

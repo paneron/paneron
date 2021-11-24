@@ -6,7 +6,10 @@ import React, { useContext, useState } from 'react';
 import { Button } from '@blueprintjs/core';
 import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import PanelSeparator from '@riboseinc/paneron-extension-kit/widgets/panels/PanelSeparator';
-import { addRepository, loadRepository, getNewRepoDefaults, GitAuthor } from 'repositories/ipc';
+
+import { addRepository, loadRepository, getNewRepoDefaults } from 'repositories/ipc';
+import { GitAuthor } from 'repositories/types';
+
 import { Context } from '../context';
 import GitCredentialsInput from '../repositories/GitCredentialsInput';
 import AuthorForm from '../repositories/AuthorForm';

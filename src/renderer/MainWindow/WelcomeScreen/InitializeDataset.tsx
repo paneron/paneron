@@ -9,7 +9,8 @@ import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widget
 import { listAvailablePlugins } from 'plugins';
 import { Extension } from 'plugins/types';
 import DatasetExtension, { DatasetExtensionCardProps } from 'plugins/renderer/DatasetExtensionCard';
-import { loadRepository, describeRepository, repositoriesChanged, Repository } from 'repositories/ipc';
+import { loadRepository, describeRepository, repositoriesChanged } from 'repositories/ipc';
+import { Repository } from 'repositories/types';
 import { initializeDataset, proposeDatasetPath } from 'datasets/ipc';
 import { Context } from '../context';
 

@@ -103,7 +103,7 @@ function ({ className }) {
       if (selectedRepoWorkDir && selectedDatasetID) {
         unloadDataset.renderer!.trigger({
           workingCopyPath: selectedRepoWorkDir,
-          datasetPath: selectedDatasetID,
+          datasetID: selectedDatasetID,
         });
       }
     }
@@ -113,7 +113,7 @@ function ({ className }) {
     ? { ...getContext({
         writeAccess: dsProps.writeAccess,
         workingCopyPath: selectedRepoWorkDir,
-        datasetPath: selectedDatasetID,
+        datasetID: selectedDatasetID,
         nodeModulesPath: NODE_MODULES_PATH,
         datasetInfo: dsProps.dataset,
         getObjectView: () => () => <></>,

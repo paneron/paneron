@@ -7,7 +7,10 @@ import { throttle } from 'throttle-debounce';
 import React, { useEffect, useState } from 'react';
 import { jsx } from '@emotion/react';
 import { IToastProps } from '@blueprintjs/core';
-import { loadRepository, Repository, repositoryStatusChanged, RepoStatus } from 'repositories/ipc';
+
+import { loadRepository, repositoryStatusChanged } from 'repositories/ipc';
+import { Repository, RepoStatus } from 'repositories/types';
+
 import { Breadcrumb, BreadcrumbProps } from './Breadcrumb';
 
 

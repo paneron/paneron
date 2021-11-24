@@ -16,11 +16,11 @@ export const DatasetStatusBar: React.FC<Record<never, never>> = React.memo(funct
 
   const indexDescResp = describeIndex.renderer!.useValue({
     workingCopyPath: selectedRepoWorkDir ?? '',
-    datasetPath: selectedDatasetID ?? '',
+    datasetID: selectedDatasetID ?? '',
   }, { status: initialStatus });
 
-  indexStatusChanged.renderer!.useEvent(async ({ workingCopyPath, datasetPath, indexID, status }) => {
-    if (workingCopyPath === selectedRepoWorkDir && datasetPath === selectedDatasetID && indexID === undefined) {
+  indexStatusChanged.renderer!.useEvent(async ({ workingCopyPath, datasetID: dsID, indexID, status }) => {
+    if (workingCopyPath === selectedRepoWorkDir && dsID === selectedDatasetID && indexID === undefined) {
       setIndexStatus(status);
     }
   }, [selectedRepoWorkDir, selectedDatasetID]);
