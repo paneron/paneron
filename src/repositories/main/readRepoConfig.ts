@@ -16,14 +16,18 @@ import { GitRepository, NewRepositoryDefaults, PaneronRepository } from '../type
 import { spawnWorker, terminateWorker } from './workerManager';
 
 
+
+/** File name that keeps Paneron user’s repository configuration at runtime. */
 const REPO_LIST_FILENAME = 'repositories.yaml';
 
+/** Absolute path to Paneron user’s repository configuration at runtime. */
 const REPO_LIST_PATH = path.join(app.getPath('userData'), REPO_LIST_FILENAME);
 
 const readerWorker = spawnWorker();
 app.on('quit', async () => await terminateWorker(await readerWorker));
 
 
+/** Paneron user’s repository configuration. */
 interface RepoListSpec {
   defaults?: NewRepositoryDefaults;
   workingCopies: {
@@ -36,6 +40,8 @@ const FileAccessLock = new AsyncLock();
 export async function clearRepoConfig() {
   await fs.remove(REPO_LIST_PATH);
 }
+
+/** Clears repository working directory data (for real, irreversible). */
 export async function clearRepoData() {
   const workingCopyPaths = Object.keys((await readRepositories()).workingCopies);
   for (const wcPath of workingCopyPaths) {
@@ -47,6 +53,8 @@ export async function clearRepoData() {
   }
 }
 
+
+/** Reads configuration for a single repository. */
 export async function readRepoConfig(workingCopyPath: string): Promise<GitRepository> {
   const cfg: GitRepository | undefined = {
     workingCopyPath,
@@ -60,6 +68,8 @@ export async function readRepoConfig(workingCopyPath: string): Promise<GitReposi
   }
 }
 
+
+/** Reads Paneron user’s repositories. */
 export async function readRepositories(): Promise<RepoListSpec> {
   await fs.ensureFile(REPO_LIST_PATH);
   try {
@@ -76,6 +86,11 @@ export async function readRepositories(): Promise<RepoListSpec> {
   }
 }
 
+
+/**
+ * Updates Paneron user’s repositories.
+ * Takes a function that gets the old configuration, and returns a new one.
+ */
 export async function updateRepositories(updater: (data: RepoListSpec) => RepoListSpec) {
   await FileAccessLock.acquire('1', async () => {
     let data: RepoListSpec;
