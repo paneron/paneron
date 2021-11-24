@@ -175,12 +175,22 @@ export interface ObjectDataRequestMessage extends GitOperationParams {
 export interface BufferCommitRequestMessage extends AuthoringGitOperationParams {
   bufferChangeset: BufferChangeset
   commitMessage: string
+
+  /**
+   * Makes Paneron not strictly check that preexisting values
+   * match `oldValue`s in given changeset.
+   */
   _dangerouslySkipValidation?: true
 }
 
 export interface CommitRequestMessage extends AuthoringGitOperationParams, DatasetOperationParams {
   objectChangeset: ObjectChangeset
   commitMessage: string
+
+  /**
+   * Makes Paneron not strictly check that preexisting values
+   * match `oldValue`s in given changeset.
+   */
   _dangerouslySkipValidation?: true
 }
 
