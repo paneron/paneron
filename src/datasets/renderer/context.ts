@@ -283,8 +283,13 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
     getRuntimeNodeModulePath: moduleName =>
       path.join(nodeModulesPath, moduleName),
 
-    makeAbsolutePath: relativeDatasetPath =>
-      path.join(workingCopyPath, datasetID || '', relativeDatasetPath),
+    makeAbsolutePath: relativeDatasetPath => {
+      if (datasetID === SOLE_DATASET_ID) {
+        return path.join(workingCopyPath, relativeDatasetPath);
+      } else {
+        return path.join(workingCopyPath, datasetID, relativeDatasetPath);
+      }
+    },
 
     requestFileFromFilesystem:  async function  _requestFileFromFilesystem (opts, callback?: (data: ObjectDataset) => void) {
       const resp = await chooseFileFromFilesystem.renderer!.trigger(opts);
