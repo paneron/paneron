@@ -35,8 +35,6 @@ const gitLock = new AsyncLock({ timeout: 60000, maxPending: 100 });
 require('events').EventEmitter.defaultMaxListeners = 20;
 
 
-// TODO: Split methods into sub-modules?
-
 // TODO: Validate that `msg.workDir` is a descendant of a safe directory
 // under user’s home?
 
@@ -182,20 +180,8 @@ const methods: WorkerSpec = {
   git_pull: lockingRepoOperationWithStatusReporter(sync.pull),
   git_push: lockingRepoOperationWithStatusReporter(sync.push),
 
-  //async pull(msg) {
-  //  const { workDir } = msg;
 
-  //  const changedBuffers:
-  //  Record<string, ChangeStatus> | null =
-  //    await gitLock.acquire(workDir, async () => {
-  //      return await sync.pull(msg, getRepoStatusUpdater(workDir));
-  //    });
-
-  //  return { success: true, changedBuffers };
-  //},
-
-
-  // Working with structured data
+  // Buffer management
 
   repo_getCurrentCommit: commits.getCurrentCommit,
   repo_chooseMostRecentCommit: commits.chooseMostRecentCommit,
@@ -210,90 +196,6 @@ const methods: WorkerSpec = {
   repo_resolveChanges: lockingRepoOperation(resolveChanges),
 
   git_workDir_discardUncommittedChanges: lockingRepoOperation(workDir.discardUncommitted),
-
-
-  // TBD: migration
-
-  // async changeObjects(msg) {
-  //   const { workDir, objectChangeset, author, commitMessage, _dangerouslySkipValidation } = msg;
-
-  //   const onNewStatus = getRepoStatusUpdater(workDir);
-
-  //   // Isomorphic Git doesn’t like leading slashes in filepath parameter
-  //   // TODO: Should probably catch inconsistent use of slashes earlier and fail loudly?
-  //   const objectPaths = Object.keys(writeObjectContents).map(stripLeadingSlash);
-  //   const changeset = Object.entries(writeObjectContents).
-  //   map(([path, data]) => ({ [stripLeadingSlash(path)]: data })).
-  //   reduce((p, c) => ({ ...p, ...c }), {});
-
-  //   if (objectPaths.length < 1) {
-  //     throw new Error("Nothing to commit");
-  //   }
-  //   if ((author.email || '').trim() === '' || (author.name || '').trim() === '') {
-  //     throw new Error("Missing author information");
-  //   }
-  //   if ((commitMessage || '').trim() === '') {
-  //     throw new Error("Missing commit message");
-  //   }
-  //   if (Object.values(changeset).find(val => val.encoding !== 'utf-8' && val.encoding !== undefined) !== undefined) {
-  //     throw new Error("Supplied encoding is not supported");
-  //   }
-
-  //   const result: CommitOutcome = await gitLock.acquire(workDir, async () => {
-  //     onNewStatus({
-  //       busy: {
-  //         operation: 'committing',
-  //       },
-  //     });
-
-  //     const dataRequest = objectPaths.
-  //     map(p => ({ [p]: !changeset[p].encoding ? 'binary' : changeset[p].encoding } as ObjectDataRequest)).
-  //     reduce((prev, curr) => ({ ...prev, ...curr }));
-
-  //     let firstCommit = false;
-  //     try {
-  //       await git.resolveRef({ fs, dir: workDir, ref: 'HEAD' });
-  //       firstCommit = false;
-  //     } catch (e) {
-  //       if (e.name === 'NotFoundError') {
-  //         // Presume the first commit is being created.
-  //         firstCommit = true;
-  //       } else {
-  //         throw e;
-  //       }
-  //     } finally {
-  //       onNewStatus({
-  //         status: 'ready',
-  //       });
-  //     }
-  //     let conflicts: Record<string, true>;
-  //     if (!firstCommit) {
-  //       try {
-  //         const oldData = await lockFree_readBufferData(workDir, dataRequest);
-  //         conflicts = findConflicts(changeset, oldData, !_dangerouslySkipValidation);
-  //       } catch (e) {
-  //         throw e;
-  //       } finally {
-  //         onNewStatus({
-  //           status: 'ready',
-  //         });
-  //       }
-  //     } else {
-  //       conflicts = {};
-  //     }
-  //     if (Object.keys(conflicts).length > 0) {
-  //       return { newCommitHash: undefined, conflicts };
-  //     }
-
-  //     // Write objects
-  //     const newCommitHash: string = await makeChanges(
-  //       { ...msg, writeObjectContents: changeset },
-  //       getRepoStatusUpdater(msg.workDir));
-  //     return { newCommitHash, conflicts };
-  //   });
-
-  //   return result;
-  // },
 
 }
 
