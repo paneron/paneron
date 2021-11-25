@@ -7,23 +7,12 @@ import { listDescendantPaths, listDescendantPathsAtVersion } from './list';
 import { Repositories } from '../types';
 
 
-export const getBufferDataset: Repositories.Data.GetBufferDataset = async function ({
-  workDir,
-  paths,
-}) {
-  //console.debug("Reading buffers at paths", workDir, paths);
-  const bufferDataset: BufferDataset = paths.map((bufferPath) => {
-    return {
-      [bufferPath]: readBuffer(path.join(workDir, bufferPath)),
-    };
-  }).reduce((prev, curr) => ({ ...prev, ...curr }), {});
-
-  return bufferDataset;
-}
-
-
-/* Given a root path, returns a BufferDataset containing data under that path.
-   Paths in buffer dataset will be slash-prepended and relative to root path. */
+/**
+ * Given a root path, returns a BufferDataset with buffers under that path.
+ * Paths in buffer dataset will be slash-prepended and relative to root path.
+ * If there’s no descendants (e.g., rootPath is a file),
+ * buffer dataset will contain a sole key '/' mapping to the buffer.
+ */
 export async function readBuffers(
   rootPath: string,
 ): Promise<Record<string, Uint8Array>> {
@@ -38,8 +27,10 @@ export async function readBuffers(
 }
 
 
-/* Given a root path, returns a BufferDataset containing data under that path.
-   Paths in buffer dataset will be slash-prepended and relative to root path. */
+/**
+ * Given a root path, returns a BufferDataset containing data under that path.
+ * Paths in buffer dataset will be slash-prepended and relative to root path.
+ */
 export async function readBuffersAtVersion(
   workDir: string,
   rootPath: string,
@@ -64,7 +55,7 @@ export async function readBuffersAtVersion(
 }
 
 
-/* Reads buffer data for specified paths, optionally at specified Git commit. */
+/** Reads buffer data for specified paths, optionally at specified Git commit. */
 export async function readBuffers2(
   workDir: string,
   bufferPaths: string[],
@@ -87,11 +78,32 @@ export async function readBuffers2(
 }
 
 
-/* Returns blob at given path, or null if it doesn’t exist.
-   Blob may have uncommitted changes.
+/**
+ * Given a list of buffer paths, returns a BufferDataset.
+ * readBuffers() should be preferred instead.
+ */
+export const getBufferDataset: Repositories.Data.GetBufferDataset = async function ({
+  workDir,
+  paths,
+}) {
+  //console.debug("Reading buffers at paths", workDir, paths);
+  const bufferDataset: BufferDataset = paths.map((bufferPath) => {
+    return {
+      [bufferPath]: readBuffer(path.join(workDir, bufferPath)),
+    };
+  }).reduce((prev, curr) => ({ ...prev, ...curr }), {});
 
-   Buffer is considered nonexistent if ENOENT is received,
-   other errors are thrown. */
+  return bufferDataset;
+}
+
+
+/** 
+ * Returns blob at given path, or null if it doesn’t exist.
+ * Blob may have uncommitted changes.
+ * 
+ * Buffer is considered nonexistent if ENOENT is received,
+ * other errors are thrown.
+ */
 export function readBuffer(fullPath: string): Uint8Array | null {
   try {
     return fs.readFileSync(fullPath);
@@ -105,12 +117,14 @@ export function readBuffer(fullPath: string): Uint8Array | null {
 }
 
 
-/* Retrieves state of blob at given path as of given commit hash using Git.
-
-   Buffer is considered nonexistent if Isomorphic Git returns NotFoundError,
-   other errors are thrown.
-
-   NOTE: This function is somewhat slow. */
+/**
+ * Retrieves state of blob at given path as of given commit hash using Git.
+ * 
+ * Buffer is considered nonexistent if Isomorphic Git returns NotFoundError,
+ * other errors are thrown.
+ * 
+ * NOTE: This function is somewhat slow.
+ */
 export async function readBufferAtVersion(
   path: string,
   commitHash: string,
