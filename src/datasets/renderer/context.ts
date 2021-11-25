@@ -14,6 +14,7 @@ import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateRed
 import { makeRandomID, chooseFileFromFilesystem, saveFileToFilesystem, openExternalURL } from 'common';
 import { copyObjects, requestCopiedObjects } from 'clipboard/ipc';
 import { describeBundledExecutable, describeSubprocess, execBundled, subprocessEvent } from 'subprocesses';
+import { SOLE_DATASET_ID } from 'repositories/types';
 import { describeRepository } from 'repositories/ipc';
 import { updateSetting, useSettings } from 'renderer/MainWindow/settings';
 
@@ -162,8 +163,8 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
         ...opts,
       }, { data: {} });
 
-      objectsChanged.renderer!.useEvent(async ({ workingCopyPath, datasetID: datasetPath, objects }) => {
-        if (workingCopyPath === datasetParams.workingCopyPath && datasetPath === datasetParams.datasetID && (objects === undefined || R.intersection(Object.keys(objects), opts.objectPaths).length > 0)) {
+      objectsChanged.renderer!.useEvent(async ({ workingCopyPath, datasetID, objects }) => {
+        if (workingCopyPath === datasetParams.workingCopyPath && datasetID === datasetParams.datasetID && (objects === undefined || R.intersection(Object.keys(objects), opts.objectPaths).length > 0)) {
           result.refresh();
         }
       }, [workingCopyPath, datasetID, JSON.stringify(opts.objectPaths)]);
@@ -220,8 +221,8 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
         ...opts,
       }, { indexID: undefined });
 
-      filteredIndexUpdated.renderer!.useEvent(async ({ workingCopyPath, datasetID: datasetPath, indexID }) => {
-        if (resp.value.indexID === indexID && workingCopyPath === datasetParams.workingCopyPath && datasetPath === datasetParams.datasetID) {
+      filteredIndexUpdated.renderer!.useEvent(async ({ workingCopyPath, datasetID, indexID }) => {
+        if (resp.value.indexID === indexID && workingCopyPath === datasetParams.workingCopyPath && datasetID === datasetParams.datasetID) {
           resp.refresh();
         }
       }, [opts.queryExpression]);
@@ -235,8 +236,8 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
         ...opts,
       }, { objectPath: '' });
 
-      filteredIndexUpdated.renderer!.useEvent(async ({ workingCopyPath, datasetID: datasetPath, indexID }) => {
-        if (opts.indexID === indexID && workingCopyPath === datasetParams.workingCopyPath && datasetPath === datasetParams.datasetID) {
+      filteredIndexUpdated.renderer!.useEvent(async ({ workingCopyPath, datasetID, indexID }) => {
+        if (opts.indexID === indexID && workingCopyPath === datasetParams.workingCopyPath && datasetID === datasetParams.datasetID) {
           resp.refresh();
         }
       }, [opts.indexID, opts.position]);
