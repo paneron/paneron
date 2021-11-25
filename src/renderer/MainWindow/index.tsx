@@ -35,7 +35,7 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
   return (
     <React.StrictMode>
       <ContextProvider>
-        <div css={css`position: absolute; top: 0; right: 0; bottom: 0; left: 0; box-sizing: border-box; overflow: hidden;`}>
+        <div css={css`position: absolute; inset: 0; box-sizing: border-box; overflow: hidden;`}>
           <div
               css={css`
                 position: absolute; right: 0; left: 0;
