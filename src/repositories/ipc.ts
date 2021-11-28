@@ -186,8 +186,8 @@ export const repositoriesChanged = makeEndpoint.renderer(
   <{ changedWorkingPaths?: string[], createdWorkingPaths?: string[], deletedWorkingPaths?: string[] }>_,
 );
 
-export const repositoryStatusChanged = makeEndpoint.renderer(
-  'repositoryStatusChanged',
+export const loadedRepositoryStatusChanged = makeEndpoint.renderer(
+  'loadedRepositoryStatusChanged',
   <{ workingCopyPath: string, status: RepoStatus }>_,
 );
 

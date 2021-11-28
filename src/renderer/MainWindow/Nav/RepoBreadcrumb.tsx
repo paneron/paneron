@@ -43,7 +43,7 @@ export const RepoBreadcrumb: React.FC<{
 
   const throttledSetStatus = throttle(10, setStatus, false);
 
-  repositoryStatusChanged.renderer!.useEvent(async ({ workingCopyPath, status }) => {
+  loadedRepositoryStatusChanged.renderer!.useEvent(async ({ workingCopyPath, status }) => {
     if (workingCopyPath === workDir) {
       throttledSetStatus(status);
     }

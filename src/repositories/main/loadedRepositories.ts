@@ -6,7 +6,7 @@ import log from 'electron-log';
 import { PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
 
 import { GitRepository, RepoStatus } from '../types';
-import { repositoryBuffersChanged, repositoryStatusChanged } from '../ipc';
+import { repositoryBuffersChanged, loadedRepositoryStatusChanged } from '../ipc';
 
 import { getRepoWorkers, RepoWorkers, terminateRepoWorkers } from './workerManager';
 import { readRepoConfig } from './readRepoConfig';
@@ -91,7 +91,7 @@ export async function loadRepository(workingCopyPath: string): Promise<RepoStatu
         JSON.stringify(loadedRepositories[workingCopyPath].latestStatus) !==
         JSON.stringify(status));
       if (statusChanged) {
-        await repositoryStatusChanged.main!.trigger({
+        await loadedRepositoryStatusChanged.main!.trigger({
           workingCopyPath,
           status,
         });
