@@ -642,7 +642,7 @@ deleteRepository.main!.handle(async ({ workingCopyPath }) => {
   await oneOffWorkerTask(w => w.git_delete({
     workDir: workingCopyPath,
 
-    // TODO: Make it so that this flag has to be passed all the way from calling code?
+    // TODO: Make it so that yesReallyDestroyLocalWorkingCopy flag must be passed all the way from GUI
     yesReallyDestroyLocalWorkingCopy: true,
   }));
 
