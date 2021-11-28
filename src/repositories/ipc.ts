@@ -72,7 +72,9 @@ export const loadRepository = makeEndpoint.main(
   <RepoStatus>_,
 );
 
-/** Only works on already loaded repositories. */
+/**
+ * Returns repository info, including Git and Paneron metadata
+ */
 export const describeRepository = makeEndpoint.main(
   'getRepository',
   <{ workingCopyPath: string }>_,
