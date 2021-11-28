@@ -80,33 +80,6 @@ getDefaultWorkingDirectoryContainer.main!.handle(async () => {
 });
 
 
-//selectWorkingDirectoryContainer.main!.handle(async ({ _default }) => {
-//  let directory: string;
-//  let result: Electron.OpenDialogReturnValue;
-//
-//  try {
-//    result = await dialog.showOpenDialog({
-//      title: "Choose where to store your new register",
-//      buttonLabel: "Select directory",
-//      message: "Choose where to store your new register",
-//      defaultPath: _default,
-//      properties: [ 'openDirectory', 'createDirectory' ],
-//    })
-//  } catch (e) {
-//    log.error("Repositories: Dialog to obtain working copy container directory from user errored");
-//    return { path: _default };
-//  }
-//
-//  if ((result.filePaths || []).length > 0) {
-//    directory = result.filePaths[0];
-//  } else {
-//    directory = _default;
-//  }
-//
-//  return { path: directory };
-//});
-
-
 loadRepository.main!.handle(async ({ workingCopyPath }) => {
   if (workingCopyPath) {
     const status = await loadRepo(workingCopyPath);
@@ -677,26 +650,6 @@ savePassword.main!.handle(async ({ workingCopyPath, remoteURL, username, passwor
 // Manipulating data
 
 
-// listObjectPaths.main!.handle(async ({ workingCopyPath, query }) => {
-//   return await cache.listPaths({ workingCopyPath, query });
-// });
-// 
-// 
-// listAllObjectPathsWithSyncStatus.main!.handle(async ({ workingCopyPath }) => {
-//   // TODO: Rename to just list all paths; implement proper sync status checker for subsets of files.
-// 
-//   const paths = await cache.listPaths({ workingCopyPath });
-// 
-//   const result: Record<string, FileChangeType> =
-//     paths.map(p => ({ [`/${p}`]: 'unchanged' as const })).reduce((p, c) => ({ ...p, ...c }), {});
-// 
-//   //const result = await w.listAllObjectPathsWithSyncStatus({ workDir: workingCopyPath });
-//   log.info("Got sync status", JSON.stringify(result));
-// 
-//   return result;
-// });
-
-
 getBufferDataset.main!.handle(async ({ workingCopyPath, paths }) => {
   if (paths.length < 1) {
     return {};
@@ -739,53 +692,23 @@ updateBuffers.main!.handle(async ({
 });
 
 
-// commitChanges.main!.handle(async ({ workingCopyPath, commitMessage, changeset, ignoreConflicts }) => {
-//   const w = await worker;
-//   const repoCfg = await readRepoConfig(workingCopyPath);
+
+
+// listObjectPaths.main!.handle(async ({ workingCopyPath, query }) => {
+//   return await cache.listPaths({ workingCopyPath, query });
+// });
 // 
-//   if (!repoCfg.author) {
-//     throw new Error("Author information is missing in repository config");
-//   }
 // 
-//   // Update Git repository
-//   let outcome: CommitOutcome;
-//   try {
-//     outcome = await w.repo_updateBuffers({
-//       workDir: workingCopyPath,
-//       commitMessage,
-//       bufferChangeset: changeset,
-//       author: repoCfg.author,
-//       _dangerouslySkipValidation: ignoreConflicts,
-//     });
-//   } catch (e) {
-//     log.error("Repositories: Failed to change objects", workingCopyPath, Object.keys(changeset), commitMessage, e);
-//     throw e;
-//   }
+// listAllObjectPathsWithSyncStatus.main!.handle(async ({ workingCopyPath }) => {
+//   // TODO: Rename to just list all paths; implement proper sync status checker for subsets of files.
 // 
-//   // Check outcome for conflicts
-//   if (Object.keys(outcome.conflicts || {}).length > 0) {
-//     if (!ignoreConflicts) {
-//       log.error("Repositories: Conflicts while changing objects", outcome.conflicts);
-//       throw new Error("Conflicts while changing objects");
-//     } else {
-//       log.warn("Repositories: Ignoring conflicts while changing objects", outcome.conflicts);
-//     }
-//   }
+//   const paths = await cache.listPaths({ workingCopyPath });
 // 
-//   // Update cache
-//   await cache.applyChangeset({ workingCopyPath, changeset });
+//   const result: Record<string, FileChangeType> =
+//     paths.map(p => ({ [`/${p}`]: 'unchanged' as const })).reduce((p, c) => ({ ...p, ...c }), {});
 // 
-//   // Send signals
-//   if (outcome.newCommitHash) {
-//     await repositoryContentsChanged.main!.trigger({
-//       workingCopyPath,
-//       objects: Object.keys(changeset).
-//         map(path => ({ [path]: true as const })).
-//         reduce((p, c) => ({ ...p, ...c }), {}),
-//     });
-//   } else {
-//     log.warn("Repositories: Commit did not return commit hash");
-//   }
+//   //const result = await w.listAllObjectPathsWithSyncStatus({ workDir: workingCopyPath });
+//   log.info("Got sync status", JSON.stringify(result));
 // 
-//   return outcome;
+//   return result;
 // });
