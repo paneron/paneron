@@ -14,6 +14,9 @@ import { Repository, RepoStatus } from 'repositories/types';
 import { Breadcrumb, BreadcrumbProps } from './Breadcrumb';
 
 
+const initialStatus: RepoStatus = { busy: { operation: 'initializing' } };
+
+
 export const RepoBreadcrumb: React.FC<{
   workDir: string
   repoInfo: Repository
@@ -94,8 +97,6 @@ export const RepoBreadcrumb: React.FC<{
     />
   );
 };
-
-const initialStatus: RepoStatus = { busy: { operation: 'initializing' } };
 
 
 export default RepoBreadcrumb;
