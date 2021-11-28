@@ -9,7 +9,7 @@ import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widget
 import { listAvailablePlugins } from 'plugins';
 import { Extension } from 'plugins/types';
 import DatasetExtension, { DatasetExtensionCardProps } from 'plugins/renderer/DatasetExtensionCard';
-import { loadRepository, describeRepository, repositoriesChanged } from 'repositories/ipc';
+import { loadRepository } from 'repositories/ipc';
 import { Repository } from 'repositories/types';
 import { initializeDataset, proposeDatasetPath } from 'datasets/ipc';
 import { Context } from '../context';
@@ -22,16 +22,6 @@ const InitializeDataset: React.FC<{ workDir: string; repoInfo?: Repository; clas
 
   const [datasetID, setDatasetID] = useState<string>('');
   const [title, setTitle] = useState<string>('');
-
-  const openedRepoResp = describeRepository.renderer!.useValue(
-    { workingCopyPath: workDir },
-    { info: { gitMeta: { workingCopyPath: workDir, mainBranch: '' } } });
-
-  repositoriesChanged.renderer!.useEvent(async ({ changedWorkingPaths }) => {
-    if ((changedWorkingPaths ?? []).indexOf(workDir) >= 0) {
-      openedRepoResp.refresh();
-    }
-  }, [workDir]);
 
   const checkResult = proposeDatasetPath.renderer!.useValue({
     workingCopyPath: workDir,
