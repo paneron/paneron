@@ -26,7 +26,7 @@ import {
   addDisconnected,
 } from '../ipc';
 
-import { PANERON_REPOSITORY_META_FILENAME } from "./meta";
+import { PANERON_REPOSITORY_META_FILENAME } from './meta';
 
 import { makeUUIDv4 } from 'utils';
 
