@@ -474,6 +474,10 @@ addRepository.main!.handle(async ({ gitRemoteURL, branch, username, password, au
     return newData;
   });
 
+  if (password) {
+    await saveAuth(gitRemoteURL, username, password);
+  }
+
   await loadRepo(workDirPath);
 
   repositoriesChanged.main!.trigger({
@@ -481,10 +485,6 @@ addRepository.main!.handle(async ({ gitRemoteURL, branch, username, password, au
     deletedWorkingPaths: [],
     createdWorkingPaths: [workDirPath],
   });
-
-  if (password) {
-    await saveAuth(gitRemoteURL, username, password);
-  }
 
   //const workers = await getRepoWorkers(workDirPath);
 
