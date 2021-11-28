@@ -8,7 +8,7 @@ import React, { useEffect, useState } from 'react';
 import { jsx } from '@emotion/react';
 import { IToastProps } from '@blueprintjs/core';
 
-import { loadRepository, repositoryStatusChanged } from 'repositories/ipc';
+import { loadRepository, loadedRepositoryStatusChanged } from 'repositories/ipc';
 import { Repository, RepoStatus } from 'repositories/types';
 
 import { Breadcrumb, BreadcrumbProps } from './Breadcrumb';
