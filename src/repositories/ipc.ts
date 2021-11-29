@@ -180,6 +180,16 @@ export const updateBuffers = makeEndpoint.main(
   <CommitOutcome>_,
 );
 
+/**
+ * Given repo-relative buffer path, resolves absolute path at HEAD;
+ * if it’s an LFS pointer returns internal path to LFS blob.
+ */
+export const getAbsoluteBufferPath = makeEndpoint.main(
+  'getBufferPath',
+  <{ workingCopyPath: string, bufferPath: string }>_,
+  <{ absolutePath: string }>_,
+);
+
 
 // Events
 

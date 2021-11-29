@@ -692,6 +692,21 @@ updateBuffers.main!.handle(async ({
 });
 
 
+// getAbsoluteBufferPath.main!.handle(async ({ workingCopyPath, bufferPath }) => {
+//   const w = getLoadedRepository(workingCopyPath).workers.reader;
+//   const bufferDataset = await w.repo_readBuffers({
+//     workDir: workingCopyPath,
+//     rootPath: bufferPath,
+//   });
+//   const buff = Buffer.from(bufferDataset[path.posix.sep]);
+//   if (pointsToLFS(buff)) {
+//     const ptr = readPointer({ dir: workingCopyPath, content: buff });
+//     await fs.access(ptr.objectPath);
+//     return { absolutePath: path.join(workingCopyPath, ptr.objectPath) };
+//   } else {
+//     return { absolutePath: path.join(workingCopyPath, bufferPath) };
+//   }
+// });
 
 
 // listObjectPaths.main!.handle(async ({ workingCopyPath, query }) => {
