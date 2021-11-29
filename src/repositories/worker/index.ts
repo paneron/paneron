@@ -2,7 +2,7 @@
 // For some reason it fails to obtain the paths
 // required for file transport.
 
-// TODO: Make electron-log work somehow
+// TODO: Check whether electron-log is broken as of active versions, if yes fix it somehow
 
 import path from 'path';
 import { expose } from 'threads/worker';
