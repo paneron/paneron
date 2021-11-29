@@ -296,6 +296,19 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
       return resolvePath(relativeDatasetPath);
     },
 
+    // TODO: Support LFS with absolute paths.
+    // useAbsolutePath: async (relativeDatasetPath) => {
+    //   const { result } = await getAbsoluteBufferPath.renderer!.trigger({
+    //     workingCopyPath,
+    //     bufferPath: resolvePath(relativeDatasetPath),
+    //   });
+    //   if (result) {
+    //     return result.absolutePath;
+    //   } else {
+    //     throw new Error("Unable to resolve absolute path");
+    //   }
+    // },
+
     requestFileFromFilesystem:  async function  _requestFileFromFilesystem (opts, callback?: (data: ObjectDataset) => void) {
       const resp = await chooseFileFromFilesystem.renderer!.trigger(opts);
       log.info("Requested file from filesystem", opts, resp);
