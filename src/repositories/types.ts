@@ -101,7 +101,7 @@ type RepoOperationStatus =
   | CommitStatus;
 
 export type RepoStatus = {
-  status: 'ahead' | 'behind' | 'diverged' | 'ready' | 'invalid-working-copy'
+  status: 'ahead' | 'behind' | 'diverged' | 'ready' | 'invalid-working-copy' | 'unloaded'
   busy?: undefined
 } | {
   busy: RepoOperationStatus
