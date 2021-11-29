@@ -178,17 +178,6 @@ const describeIndex: ReturnsPromise<Datasets.Indexes.Describe> = async function 
 }
 
 
-//const streamIndexStatus: WorkerMethods["ds_index_streamStatus"] = function ({
-//  workDir,
-//  datasetDir,
-//  indexID,
-//}) {
-//  const normalizedDatasetDir = normalizeDatasetDir(datasetDir);
-//  const idx = getIndex(workDir, normalizedDatasetDir, indexID);
-//  return Observable.from(idx.statusSubject);
-//}
-
-
 const getFilteredObject: Datasets.Indexes.GetFilteredObject = async function ({
   workDir,
   datasetID,
