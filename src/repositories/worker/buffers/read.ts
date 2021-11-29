@@ -98,7 +98,11 @@ export const getBufferDataset: Repositories.Data.GetBufferDataset = async functi
 }
 
 
-/** 
+/**
+ * 
+ * NOTE: This isn’t a Git-specific function,
+ * it works with filesystem directly.
+ * 
  * Returns blob at given path, or null if it doesn’t exist.
  * Blob may have uncommitted changes.
  * 
