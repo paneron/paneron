@@ -786,29 +786,6 @@ function getDefaultIndexStatusReporter(workingCopyPath: string, datasetID: strin
 }
 
 
-// Commit hash signifies which version of the repository the index in question was built against.
-// If, upon any index access, its has doesn’t match the current HEAD commit hash as reported by Git,
-// indexes are updated.
-// This also happens each time a new commit was added to the repository.
-// Upon index update, frontend is notified.
-//
-// Index updates happen as follows:
-//
-// 1) file paths changed between current Git HEAD commit and commit stored in index DB are calculated
-// 2) for each changed path, depending on type of change,
-//    a record in default index is added/deleted/replaced with deserialized object data
-// 3) at the same time, if object data for that path matches any filtered index’s predicate,
-//    filtered index’s keyed DB is updated in the same way
-// 4) affected filtered indexes’ sorted DBs are rebuilt from their respective keyed DBs
-//
-// Once index is being rebuilt, further rebuilds are skipped until the update is complete.
-//
-// TODO: Should concurrent index updates be skipped or queued?
-// On one hand
-//
-// Below are low-level utilities for retrieving/setting commit hashes
-// from/in default index’s DBs and filtered index’s keyed DBs.
-
 const INDEX_META_MARKER_DB_KEY: string = '**meta';
 
 /** Fetch or update index metadata. */
