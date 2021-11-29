@@ -78,8 +78,8 @@ proposeDatasetPath.main!.handle(async ({ workingCopyPath, datasetPath }) => {
 
   // For check to succeed, the path must not exist at all.
 
-  // TODO: We can accept a pre-existing empty directory as new dataset location,
-  // but would have to validate it’s absolutely empty.
+  // TODO: Accept a pre-existing empty directory as new dataset location?
+  // We would have to validate it’s absolutely empty.
   const isOccupied = checkPathIsOccupied(fullPath);
 
   if (isOccupied) {
