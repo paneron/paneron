@@ -112,11 +112,11 @@ export namespace Repositories {
     export type ReadBuffers = (msg: GitOperationParams & {
       rootPath: string
 
-      /** Remote URL is used for resolving LFS pointers. */
-      remoteURL?: string
-
-      /** Auth data is used for resolving LFS pointers. */
-      auth?: GitAuthentication
+      /** Parameters for resolving LFS. If undefined, do not resolve LFS pointers. */
+      resolveLFS?: {
+        url: string
+        auth: { username: string, password: string }
+      }
     }) => Promise<Record<string, Uint8Array>>
 
     export type ReadBuffersAtVersion = (msg: GitOperationParams & {

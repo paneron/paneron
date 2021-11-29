@@ -7,7 +7,6 @@ import { downloadBlobFromPointer, readPointer } from '@riboseinc/isogit-lfs';
 import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 
 import { stripLeadingSlash, stripTrailingSlash } from '../../../utils';
-import { GitAuthentication } from '../../types';
 import { Repositories } from '../types';
 import { listDescendantPaths, listDescendantPathsAtVersion } from './list';
 
@@ -22,37 +21,32 @@ import { listDescendantPaths, listDescendantPathsAtVersion } from './list';
  * buffer dataset will contain a sole key '/' mapping to the buffer.
  *
  * If any of the objects read are LFS pointers,
- * this function will attempt to retrieve LFS data.
+ * this function will attempt to retrieve LFS data if `resolveLFS` is provided.
  */
 export async function readBuffers(
   workDir: string,
   rootPath: string,
-  remoteURL?: string,
-  auth?: GitAuthentication,
+  resolveLFS?: { url: string, auth: { username: string, password: string } },
 ): Promise<Record<string, Uint8Array>> {
   const buffers: Record<string, Uint8Array> = {};
   const absoluteRootPath = path.join(workDir, rootPath);
+
   for await (const relativeBufferPath of listDescendantPaths(absoluteRootPath)) {
     const bPath = path.join(absoluteRootPath, stripLeadingSlash(relativeBufferPath));
     const bufferData = readBuffer(bPath);
+
     if (bufferData !== null) {
-      const buf = Buffer.from(bufferData);
-      if (pointsToLFS(buf)) {
-        if (remoteURL) {
-          const lfsPointer = readPointer({ dir: workDir, content: buf });
-          const headers = auth?.password
-            ? {
-                "Authorization": `Basic ${Buffer.from(`${auth.username}:${auth.password}`).toString('base64')}`,
-              }
-            : {};
-          buffers[relativeBufferPath] = await downloadBlobFromPointer({
-            url: remoteURL,
-            headers,
-            http,
-          }, lfsPointer);
-        } else {
-          throw new Error("Unable to read buffers: LFS pointer found, but remote URL was not provided");
-        }
+      if (resolveLFS !== undefined && pointsToLFS(Buffer.from(bufferData))) {
+        const lfsPointer = readPointer({
+          dir: workDir,
+          content: Buffer.from(bufferData),
+        });
+        buffers[relativeBufferPath] = await downloadBlobFromPointer({
+          url: resolveLFS.url,
+          auth: resolveLFS.auth,
+          http,
+        }, lfsPointer);
+
       } else {
         buffers[relativeBufferPath] = bufferData;
       }
