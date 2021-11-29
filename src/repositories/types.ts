@@ -113,7 +113,6 @@ export type RepoStatusUpdater = (newStatus: RepoStatus) => void;
 
 
 // Git-related types used by worker
-// TODO: Consolidate Git-related types
 
 /** Authentication as expected by Isomorphic Git */
 export interface GitAuthentication {
@@ -163,9 +162,11 @@ export interface CloneRequestMessage extends RemoteGitOperationParams {
 export interface PullRequestMessage extends RemoteGitOperationParams, AuthoringGitOperationParams {}
 export interface PushRequestMessage extends RemoteGitOperationParams {
   // Passing this parameter implies rejected push should not be treated as error.
-  // TODO: Get rid of this either when Isomorphic Git stops rejecting push when nothing to push,
-  // or when we start checking server refs before attempting push.
   _presumeRejectedPushMeansNothingToPush?: true
+
+  // TODO: Get rid of `_presumeRejectedPushMeansNothingToPush`.
+  // (Either when Isomorphic Git stops rejecting push when nothing to push,
+  // or when we start checking server refs before attempting push.)
 }
 
 export interface FetchRequestMessage extends RemoteGitOperationParams {}
