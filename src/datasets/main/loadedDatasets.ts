@@ -386,7 +386,7 @@ export function getLoadedDataset(
 
 // Indexes
 
-/** Writes default index from scratch. */
+/** Writes default index from scratch, by listing & reading objects from filesystem. */
 export async function fillInDefaultIndex(
   workDir: string,
   datasetID: string,
@@ -506,7 +506,7 @@ export async function fillInDefaultIndex(
 }
 
 
-/** Fills in filtered index from scratch. */
+/** Fills in filtered index from scratch, by reading from default index. */
 async function fillInFilteredIndex(
   defaultIndex: Datasets.Util.DefaultIndex,
   filteredIndex: Datasets.Util.FilteredIndex,
@@ -758,7 +758,7 @@ export async function getDefaultIndex(
 
 
 // Index status reporters.
-// TODO: Make index status reporters async?
+// TODO: Make dataset index status reporters async?
 
 function getFilteredIndexStatusReporter(workingCopyPath: string, datasetID: string, indexID: string) {
   const { indexes } = getLoadedDataset(workingCopyPath, datasetID);
@@ -849,16 +849,31 @@ async function indexMeta(
 }
 
 
-/* TODO: implement. Call periodically to prevent filtered indexes from accumulating. */
+// TODO: implement `pruneUnusedFilteredIndexes()`, call it periodically to prevent filtered indexes from accumulating.
 // async function pruneUnusedFilteredIndexes(ds: Datasets.Util.LoadedDataset) {
 // }
 
 
-/** Updates default index and any affected filtered indexes. Notifies the UI. */
+/**
+ * Updates default index and any affected filtered indexes. Notifies the UI.
+ *
+ * Index updates happen as follows:
+ *
+ * 1) file paths changed between current Git HEAD commit and commit stored in index DB are calculated
+ * 2) for each changed path, depending on type of change,
+ *    a record in default index is added/deleted/replaced with deserialized object data
+ * 3) at the same time, if object data for that path matches any filtered index’s predicate,
+ *    filtered index’s keyed DB is updated in the same way
+ * 4) affected filtered indexes’ sorted DBs are rebuilt from their respective keyed DBs
+ *
+ * Once index is being rebuilt, further rebuilds are skipped until the update is complete.
+ */
 export async function updateDatasetIndexesIfNeeded(
   workDir: string,
   datasetID: string,
 ) {
+  // TODO: Should concurrent index updates be skipped or queued?
+
   const ds = getLoadedDataset(workDir, datasetID);
   const affectedFilteredIndexes: { [idxID: string]: { idx: Datasets.Util.FilteredIndex, newObjectCount: number } } = {};
   const changes: Record<string, true | ChangeStatus> = {};
