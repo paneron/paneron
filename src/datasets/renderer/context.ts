@@ -97,6 +97,14 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
 
   const EXT_SETTINGS_SCOPE = `${workingCopyPath}-${datasetID}`;
 
+  function resolvePath(datasetRelativePath: string) {
+    if (datasetID === SOLE_DATASET_ID) {
+      return path.join(workingCopyPath, datasetRelativePath);
+    } else {
+      return path.join(workingCopyPath, datasetID, datasetRelativePath);
+    }
+  }
+
   return {
     title: datasetInfo.title,
 
@@ -285,11 +293,7 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
       path.join(nodeModulesPath, moduleName),
 
     makeAbsolutePath: relativeDatasetPath => {
-      if (datasetID === SOLE_DATASET_ID) {
-        return path.join(workingCopyPath, relativeDatasetPath);
-      } else {
-        return path.join(workingCopyPath, datasetID, relativeDatasetPath);
-      }
+      return resolvePath(relativeDatasetPath);
     },
 
     requestFileFromFilesystem:  async function  _requestFileFromFilesystem (opts, callback?: (data: ObjectDataset) => void) {
