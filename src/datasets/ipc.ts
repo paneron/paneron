@@ -101,6 +101,10 @@ export const locateFilteredIndexPosition = makeEndpoint.main(
   <{ position: number | null }>_,
 );
 
+/**
+ * Reads object data for given object paths in given repository & dataset.
+ * Uses cold storage (not default index).
+ */
 export const getObjectDataset = makeEndpoint.main(
   'datasets_getObjectDataset',
   <{ workingCopyPath: string, datasetID: string, objectPaths: string[] }>_,
