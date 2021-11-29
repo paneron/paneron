@@ -295,7 +295,7 @@ locateFilteredIndexPosition.main!.handle(async ({ workingCopyPath, datasetID, in
 });
 
 
-updateObjects.main!.handle(async ({ workingCopyPath, datasetID: datasetPath, objectChangeset, commitMessage, _dangerouslySkipValidation }) => {
+updateObjects.main!.handle(async ({ workingCopyPath, datasetID, objectChangeset, commitMessage, _dangerouslySkipValidation }) => {
   const { author } = await readRepoConfig(workingCopyPath);
   if (!author) {
     throw new Error("Repository configuration is missing author information");
@@ -303,7 +303,7 @@ updateObjects.main!.handle(async ({ workingCopyPath, datasetID: datasetPath, obj
   // TODO: Save a version
   return await _updateObjects({
     workDir: workingCopyPath,
-    datasetID: datasetPath,
+    datasetID,
     objectChangeset,
     commitMessage,
     _dangerouslySkipValidation,
@@ -312,14 +312,14 @@ updateObjects.main!.handle(async ({ workingCopyPath, datasetID: datasetPath, obj
 });
 
 
-updateSubtree.main!.handle(async ({ workingCopyPath, datasetID: datasetPath, commitMessage, subtreeRoot, newSubtreeRoot }) => {
+updateSubtree.main!.handle(async ({ workingCopyPath, datasetID, commitMessage, subtreeRoot, newSubtreeRoot }) => {
   const { author } = await readRepoConfig(workingCopyPath);
   if (!author) {
     throw new Error("Repository configuration is missing author information");
   }
   return await _updateTree({
     workDir: workingCopyPath,
-    datasetID: datasetPath,
+    datasetID,
     commitMessage,
     author,
     oldSubtreePath: subtreeRoot,
@@ -328,7 +328,7 @@ updateSubtree.main!.handle(async ({ workingCopyPath, datasetID: datasetPath, com
 });
 
 
-deleteDataset.main!.handle(async ({ workingCopyPath, datasetID: datasetPath }) => {
+deleteDataset.main!.handle(async ({ workingCopyPath, datasetID }) => {
   const w = getLoadedRepository(workingCopyPath).workers.sync;
 
   const { author } = await readRepoConfig(workingCopyPath);
@@ -337,19 +337,19 @@ deleteDataset.main!.handle(async ({ workingCopyPath, datasetID: datasetPath }) =
   }
 
   const repoMeta = await readPaneronRepoMeta(workingCopyPath);
-  if (!repoMeta.datasets?.[datasetPath]) {
+  if (!repoMeta.datasets?.[datasetID]) {
     throw new Error("Dataset is not found in Paneron repository meta");
   }
 
   // To ensure we are deleting a Paneron dataset
-  await readDatasetMeta(workingCopyPath, datasetPath);
+  await readDatasetMeta(workingCopyPath, datasetID);
 
   // Delete dataset tree
   const deletionResult = await w.repo_deleteTree({
     workDir: workingCopyPath,
-    commitMessage: `Delete dataset at ${datasetPath}`,
+    commitMessage: `Delete dataset at ${datasetID}`,
     author,
-    treeRoot: datasetPath,
+    treeRoot: datasetID,
   });
 
   if (!deletionResult.newCommitHash) {
@@ -358,10 +358,10 @@ deleteDataset.main!.handle(async ({ workingCopyPath, datasetID: datasetPath }) =
 
   // Update repo meta
   const oldMetaBuffer = serializeMeta(repoMeta);
-  delete repoMeta.datasets[datasetPath];
+  delete repoMeta.datasets[datasetID];
   const newMetaBuffer = serializeMeta(repoMeta);
 
-  const datasetMetaPath = path.join(datasetPath, DATASET_FILENAME);
+  const datasetMetaPath = path.join(datasetID, DATASET_FILENAME);
 
   const repoMetaUpdateResult = await w.repo_updateBuffers({
     workDir: workingCopyPath,
