@@ -30,6 +30,11 @@ const loadedRepositories: {
 const MAX_LOADED_REPOSITORIES: number = 1;
 
 
+
+/**
+ * Returns loaded repository structure only if it’s already loaded.
+ * If not loaded, throws an error and does not cause the repository to load.
+ */
 export function getLoadedRepository(workDir: string) {
   if (loadedRepositories[workDir]) {
     return loadedRepositories[workDir];
@@ -39,6 +44,14 @@ export function getLoadedRepository(workDir: string) {
 }
 
 
+/**
+ * Loads a repository, unless it’s already loaded.
+ * Loading a repo causes it to sync in background.
+ * Unloading can be monitored via loadedRepositoryStatusChanged event.
+ *
+ * @param workingCopyPath path to Git working directory
+ * @returns RepoStatus
+ */
 export async function loadRepository(workingCopyPath: string): Promise<RepoStatus> {
   if (loadedRepositories[workingCopyPath]) {
     log.debug("Repositories: Load: Already loaded", workingCopyPath, loadedRepositories[workingCopyPath]?.latestStatus);
