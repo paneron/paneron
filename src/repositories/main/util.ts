@@ -3,6 +3,10 @@ import type { Object } from '@riboseinc/paneron-extension-kit/types/objects';
 import { stripTrailingSlash } from '../../utils';
 
 
+/**
+ * Returns normalized HTTPS-style repository URL
+ * with .git suffix and no trailing slash.
+ */
 export function normalizeURL(repoURL: string): string {
   const slashNormalized = stripTrailingSlash(repoURL);
   const suffixNormalized = slashNormalized.endsWith('.git')
