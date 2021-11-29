@@ -206,9 +206,12 @@ function handleAllWindowsClosed(e: Electron.Event) {
   const { id: windowID } = await openWindow(MAIN_WINDOW_OPTIONS);
 
   refreshMainWindow.main!.handle(async () => {
-    // Will throw if window is not open
+    await CLEAR_OPTION_ROUTINES['db-indexes']();
+
+    // This will throw if window is not open
     // (But then app quits if it’s closed anyway)
     refreshByID(windowID);
+
     return {};
   });
 
