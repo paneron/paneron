@@ -123,6 +123,7 @@ export namespace API {
      */
     export type GetObjectDataset = (msg: DatasetOperationParams & {
       objectPaths: string[]
+      resolveLFS?: true
     }) => Promise<ObjectDataset>
 
     /**
