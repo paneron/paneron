@@ -111,6 +111,12 @@ export namespace Repositories {
 
     export type ReadBuffers = (msg: GitOperationParams & {
       rootPath: string
+
+      /** Remote URL is used for resolving LFS pointers. */
+      remoteURL?: string
+
+      /** Auth data is used for resolving LFS pointers. */
+      auth?: GitAuthentication
     }) => Promise<Record<string, Uint8Array>>
 
     export type ReadBuffersAtVersion = (msg: GitOperationParams & {
@@ -191,8 +197,8 @@ export default interface WorkerMethods {
   repo_getBufferDataset: Repositories.Data.GetBufferDataset
 
   /**
-   * Given a path, returns a map of descendant buffer paths
-   * to buffers.
+   * Given a work dir and a rootPath, returns a map of descendant buffer paths
+   * to buffer blobs. Resolves LFS pointers, in which case may take a while.
    */
   repo_readBuffers: Repositories.Data.ReadBuffers
 

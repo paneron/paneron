@@ -4,7 +4,6 @@
 
 // TODO: Check whether electron-log is broken as of active versions, if yes fix it somehow
 
-import path from 'path';
 import { expose } from 'threads/worker';
 import { Observable, Subject } from 'threads/observable';
 import { ModuleMethods } from 'threads/dist/types/master';
@@ -187,8 +186,8 @@ const methods: WorkerSpec = {
   repo_getCurrentCommit: commits.getCurrentCommit,
   repo_chooseMostRecentCommit: commits.chooseMostRecentCommit,
   repo_updateBuffers: lockingRepoOperationWithStatusReporter(updateBuffers),
-  repo_readBuffers: ({ workDir, rootPath }) =>
-    readBuffers(path.join(workDir, rootPath)),
+  repo_readBuffers: ({ workDir, rootPath, remoteURL, auth }) =>
+    readBuffers(workDir, rootPath, remoteURL, auth),
   repo_readBuffersAtVersion: ({ workDir, rootPath, commitHash }) =>
     readBuffersAtVersion(workDir, rootPath, commitHash),
   repo_getBufferDataset: getBufferDataset,

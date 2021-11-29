@@ -7,6 +7,11 @@ import { findSerDesRuleForPath } from '@riboseinc/paneron-extension-kit/object-s
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
 import { getDatasetRoot } from 'repositories/main/meta';
 
+import { readRepoConfig } from 'repositories/main/readRepoConfig';
+import { getAuth } from 'repositories/main/remoteAuth';
+import { GitAuthentication } from 'repositories/types';
+import { normalizeURL } from 'repositories/main/util';
+
 import type { API as Datasets } from '../../types';
 import { getDefaultIndex } from '../loadedDatasets';
 
@@ -101,10 +106,23 @@ export async function readObjectCold(
   rootPath: string,
 ): Promise<Record<string, any> | null> {
   const { workers: { reader } } = getLoadedRepository(workDir);
+  const { remote } = await readRepoConfig(workDir);
+
+  // TODO: refactor: Avoid retrieving auth & remote URL in readObjectCold()
+  let auth: GitAuthentication | undefined;
+  let remoteURL: string | undefined;
+  if (remote) {
+    const { username, url } = remote;
+    remoteURL = normalizeURL(url);
+    auth = await getAuth(url, username);
+  } else {
+    remoteURL = undefined;
+    auth = undefined;
+  }
 
   let bufferDataset: Record<string, Uint8Array>;
   try {
-    bufferDataset = await reader.repo_readBuffers({ workDir, rootPath });
+    bufferDataset = await reader.repo_readBuffers({ workDir, rootPath, auth, remoteURL });
   } catch (e) {
     // Check if it’s actually a nonexistent file error
     const repr = (e as any)?.toString?.() ?? '';

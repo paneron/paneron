@@ -1,26 +1,61 @@
 import path from 'path';
 import fs from 'fs';
 import git from 'isomorphic-git';
+import http from 'isomorphic-git/http/node';
+import { pointsToLFS } from '@riboseinc/isogit-lfs/util';
+import { downloadBlobFromPointer, readPointer } from '@riboseinc/isogit-lfs';
 import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
+
 import { stripLeadingSlash, stripTrailingSlash } from '../../../utils';
-import { listDescendantPaths, listDescendantPathsAtVersion } from './list';
+import { GitAuthentication } from '../../types';
 import { Repositories } from '../types';
+import { listDescendantPaths, listDescendantPathsAtVersion } from './list';
 
 
 /**
- * Given a root path, returns a BufferDataset with buffers under that path.
+ * Given a work dir and a rootPath relative to it,
+ * returns a BufferDataset with buffers under the root path.
+ *
  * Paths in buffer dataset will be slash-prepended and relative to root path.
+ *
  * If there’s no descendants (e.g., rootPath is a file),
  * buffer dataset will contain a sole key '/' mapping to the buffer.
+ *
+ * If any of the objects read are LFS pointers,
+ * this function will attempt to retrieve LFS data.
  */
 export async function readBuffers(
+  workDir: string,
   rootPath: string,
+  remoteURL?: string,
+  auth?: GitAuthentication,
 ): Promise<Record<string, Uint8Array>> {
   const buffers: Record<string, Uint8Array> = {};
-  for await (const relativeBufferPath of listDescendantPaths(rootPath)) {
-    const bufferData = readBuffer(path.join(rootPath, stripLeadingSlash(relativeBufferPath)));
-    if (bufferData) {
-      buffers[relativeBufferPath] = bufferData;
+  const absoluteRootPath = path.join(workDir, rootPath);
+  for await (const relativeBufferPath of listDescendantPaths(absoluteRootPath)) {
+    const bPath = path.join(absoluteRootPath, stripLeadingSlash(relativeBufferPath));
+    const bufferData = readBuffer(bPath);
+    if (bufferData !== null) {
+      const buf = Buffer.from(bufferData);
+      if (pointsToLFS(buf)) {
+        if (remoteURL) {
+          const lfsPointer = readPointer({ dir: workDir, content: buf });
+          const headers = auth?.password
+            ? {
+                "Authorization": `Basic ${Buffer.from(`${auth.username}:${auth.password}`).toString('base64')}`,
+              }
+            : {};
+          buffers[relativeBufferPath] = await downloadBlobFromPointer({
+            url: remoteURL,
+            headers,
+            http,
+          }, lfsPointer);
+        } else {
+          throw new Error("Unable to read buffers: LFS pointer found, but remote URL was not provided");
+        }
+      } else {
+        buffers[relativeBufferPath] = bufferData;
+      }
     }
   }
   return buffers;
