@@ -29,6 +29,7 @@ const loadedRepositories: {
 
 const MAX_LOADED_REPOSITORIES: number = 1;
 
+const INITIAL_STATUS: RepoStatus = { busy: { operation: 'initializing' } };
 
 
 /**
@@ -54,8 +55,11 @@ export function getLoadedRepository(workDir: string) {
  */
 export async function loadRepository(workingCopyPath: string): Promise<RepoStatus> {
   if (loadedRepositories[workingCopyPath]) {
-    log.debug("Repositories: Load: Already loaded", workingCopyPath, loadedRepositories[workingCopyPath]?.latestStatus);
-    return loadedRepositories[workingCopyPath]?.latestStatus || { status: 'ready' };
+    log.silly(
+      "Repositories: Load: Already loaded",
+      workingCopyPath,
+      loadedRepositories[workingCopyPath].latestStatus);
+    return loadedRepositories[workingCopyPath].latestStatus ?? { status: 'ready' };
   }
 
   const loadedSorted = Object.entries(loadedRepositories).
@@ -149,9 +153,18 @@ export async function loadRepository(workingCopyPath: string): Promise<RepoStatu
 
   if (workDirPathExists && !workDirIsValid) {
     log.warn("Repositories: Working copy in filesystem is invalid (not a Git repo?)", workingCopyPath);
-    return { busy: { operation: 'initializing' } };
+    await loadedRepositoryStatusChanged.main!.trigger({
+      workingCopyPath,
+      status: { busy: { operation: 'initializing' } },
+    });
+    return INITIAL_STATUS;
+
   } else {
     log.debug("Repositories: Load: Finishing", workingCopyPath);
+    await loadedRepositoryStatusChanged.main!.trigger({
+      workingCopyPath,
+      status: { status: 'ready' },
+    });
     return { status: 'ready' };
   }
 }
@@ -222,6 +235,7 @@ function syncRepoRepeatedly(
         repoCfg = await readRepoConfig(workingCopyPath);
         if (!repoCfg.author && repoCfg.remote) {
           repoSyncLog('error', "Configuration is missing author info required for remote sync");
+          return await unloadRepository(workingCopyPath);
         }
       } catch (e) {
         repoSyncLog('error', "Configuration cannot be read");

@@ -21,7 +21,7 @@ function ({ workDir, repoInfo, className }) {
 
   const openedRepoResp = describeRepository.renderer!.useValue(
     { workingCopyPath: workDir },
-    { info: { gitMeta: { workingCopyPath: workDir, mainBranch: '' } } });
+    { info: { gitMeta: { workingCopyPath: workDir, mainBranch: '' } }, isLoaded: false });
 
   repositoriesChanged.renderer!.useEvent(async ({ changedWorkingPaths }) => {
     if ((changedWorkingPaths ?? []).indexOf(workDir) >= 0) {

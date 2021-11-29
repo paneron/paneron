@@ -1,10 +1,9 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 
-import log from 'electron-log';
 import { throttle } from 'throttle-debounce';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { jsx } from '@emotion/react';
 import { IToastProps } from '@blueprintjs/core';
 
@@ -20,29 +19,20 @@ const initialStatus: RepoStatus = { busy: { operation: 'initializing' } };
 export const RepoBreadcrumb: React.FC<{
   workDir: string
   repoInfo: Repository
+  isLoaded: boolean
   onNavigate?: () => void
   onClose?: () => void
   onMessage: (opts: IToastProps) => void
-}> = function ({ workDir, repoInfo, onNavigate, onClose, onMessage }) {
-  useEffect(() => {
-    (async () => {
-      try {
-        const result = await loadRepository.renderer!.trigger({ workingCopyPath: workDir });
-        const status = result.result;
-        if (status) {
-          setStatus(status);
-        } else {
-          log.warn("Loading repository: loadRepository() returned undefined status");
-        }
-        log.info("Loaded repository", result.result);
-      } catch (e) {
-        onMessage({ intent: 'danger', icon: 'error', message: "Error loading repository" });
-        log.error("Error loading repository", e);
-      }
-    })();
-  }, []);
+}> = function ({ workDir, repoInfo, isLoaded: _isLoaded, onNavigate, onClose, onMessage }) {
+  const repoStatus = loadRepository.renderer!.useValue({
+    workingCopyPath: workDir,
+  }, initialStatus);
 
-  const [status, setStatus] = useState<RepoStatus>(initialStatus);
+  const [_status, setStatus] = useState<RepoStatus | null>(null);
+
+  const status = _status ?? repoStatus.value;
+
+  const isLoaded = _status ? _status.status !== 'unloaded' : _isLoaded;
 
   const throttledSetStatus = throttle(10, setStatus, false);
 
@@ -84,11 +74,11 @@ export const RepoBreadcrumb: React.FC<{
         repoInfo.gitMeta.workingCopyPath.slice(
           repoInfo.gitMeta.workingCopyPath.length - 20,
           repoInfo.gitMeta.workingCopyPath.length)}
-      icon={{ type: 'blueprint', iconName: "git-repo" }}
+      icon={{ type: 'blueprint', iconName: isLoaded ? 'git-repo' : 'offline' }}
       onClose={onClose}
       onNavigate={onNavigate}
       status={<>
-        {status.status ? <div>Status: {status.status}</div> : null}
+        <div>{isLoaded ? "Loaded" : "Not loaded"} — status: {status.status ?? "N/A"}</div>
         <div>Working copy: <code>{repoInfo.gitMeta.workingCopyPath}</code></div>
         <div>Branch: <code>{repoInfo.gitMeta.mainBranch}</code></div>
       </>}

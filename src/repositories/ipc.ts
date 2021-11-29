@@ -74,11 +74,12 @@ export const loadRepository = makeEndpoint.main(
 
 /**
  * Returns repository info, including Git and Paneron metadata
+ * as well as whether it’s currently loaded (synchronizing).
  */
 export const describeRepository = makeEndpoint.main(
   'getRepository',
   <{ workingCopyPath: string }>_,
-  <{ info: Repository }>_,
+  <{ info: Repository, isLoaded: boolean }>_,
 );
 
 export const deleteRepository = makeEndpoint.main(

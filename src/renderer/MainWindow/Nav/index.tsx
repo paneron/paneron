@@ -28,11 +28,17 @@ export interface NavProps {
 const Nav: React.FC<NavProps> = function ({ anchor, children, className }) {
   const { state, dispatch, showMessage } = useContext(Context);
 
-  const openedRepoResp = describeRepository.renderer!.useValue(
-    { workingCopyPath: state.selectedRepoWorkDir ?? '' },
-    { info: { gitMeta: { workingCopyPath: state.selectedRepoWorkDir ?? '', mainBranch: '' } } });
-
-  const openedRepo = openedRepoResp.value.info;
+  const openedRepoResp = describeRepository.renderer!.useValue({
+    workingCopyPath: state.selectedRepoWorkDir ?? ''
+  }, {
+    info: {
+      gitMeta: {
+        workingCopyPath: state.selectedRepoWorkDir ?? '',
+        mainBranch: '',
+      }
+    },
+    isLoaded: false,
+  });
 
   repositoryBuffersChanged.renderer!.useEvent(async ({ workingCopyPath }) => {
     if (workingCopyPath === state.selectedRepoWorkDir) {
@@ -55,9 +61,10 @@ const Nav: React.FC<NavProps> = function ({ anchor, children, className }) {
     />);
   }
 
-  if (openedRepo && state.view !== 'welcome-screen') {
+  if (state.view !== 'welcome-screen') {
     breadcrumbs.push(<RepoBreadcrumb
-      repoInfo={openedRepo}
+      repoInfo={openedRepoResp.value.info}
+      isLoaded={openedRepoResp.value.isLoaded}
       workDir={state.selectedRepoWorkDir}
       onMessage={showMessage}
     />);

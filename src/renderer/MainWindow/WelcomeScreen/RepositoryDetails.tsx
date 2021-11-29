@@ -16,7 +16,7 @@ const RepositoryDetails: React.FC<{ workDir: string; onOpen: (datasetID: string)
 function ({ workDir, onOpen }) {
   const openedRepoResp = describeRepository.renderer!.useValue(
     { workingCopyPath: workDir },
-    { info: { gitMeta: { workingCopyPath: workDir, mainBranch: '' } } });
+    { info: { gitMeta: { workingCopyPath: workDir, mainBranch: '' } }, isLoaded: false });
 
   const repo = openedRepoResp.value.info;
 

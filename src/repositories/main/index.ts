@@ -319,17 +319,20 @@ listRepositories.main!.handle(async ({ query: { matchesText, sortBy } }) => {
 });
 
 
-describeGitRepository.main!.handle(async ({ workingCopyPath }) => {
-  let isLoaded: boolean;
+function isRepositoryLoaded(workingCopyPath: string): boolean {
   try {
     getLoadedRepository(workingCopyPath);
-    isLoaded = true;
+    return true;
   } catch (e) {
-    isLoaded = false;
+    return false;
   }
+}
+
+
+describeGitRepository.main!.handle(async ({ workingCopyPath }) => {
   return {
     info: await readRepoConfig(workingCopyPath),
-    isLoaded,
+    isLoaded: isRepositoryLoaded(workingCopyPath),
   };
 });
 
@@ -349,6 +352,7 @@ describeRepository.main!.handle(async ({ workingCopyPath }) => {
       gitMeta: gitRepo,
       paneronMeta: paneronRepo,
     },
+    isLoaded: isRepositoryLoaded(workingCopyPath),
   };
 });
 

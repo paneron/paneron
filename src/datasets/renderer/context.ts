@@ -133,7 +133,7 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
     useRemoteUsername: () => {
       const resp = describeRepository.renderer!.useValue(
         { workingCopyPath },
-        { info: { gitMeta: { workingCopyPath, mainBranch: '' } } },
+        { info: { gitMeta: { workingCopyPath, mainBranch: '' } }, isLoaded: false },
       );
       const username = resp.value.info.gitMeta.remote?.username;
       const value = username ? { username } : {};
