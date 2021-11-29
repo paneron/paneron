@@ -193,13 +193,6 @@ loadDataset.main!.handle(async ({ workingCopyPath, datasetID }) => {
 
   log.debug("Datasets: Load: Done");
 
-  // TODO: Build custom indexes, if any, here
-  // const dbDirName = crypto.createHash('sha1').
-  //   update(`${path.join(workingCopyPath, datasetPath)}\n${yaml.dump(dataset, { noRefs: true })}`).
-  //   digest('hex');
-  // const dbPath = path.join(app.getPath('userData'), dbDirName);
-  // await plugin.buildIndexes(workingCopyPath, datasetPath, dbDirName);
-
   return { success: true };
 });
 
