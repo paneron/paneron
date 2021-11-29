@@ -16,7 +16,10 @@ import { getDefaultIndex } from '../loadedDatasets';
 
 
 /**
- * Reads multiple objects from filesystem (cold).
+ * Reads multiple objects from filesystem (not from default index, i.e. cold).
+ *
+ * Uses object specs to build objects from buffers.
+ * Returns structured data of objects matching given paths.
  * 
  * Do not read too many objects at once. May be slow, especially with `resolveLFS`.
  */
@@ -83,8 +86,10 @@ export async function readObject(
 /**
  * Given a root path to an object, reads raw buffer data from filesystem
  * (and optionally LFS).
+ *
+ * Deserializes it into JS structure
  * according to ser/des rule provided by Paneron core.
- * 
+ *
  * @param workDir repository working directory
  * @param rootPath object path, relative to working directory root
  * @returns Record<string, any> | null
