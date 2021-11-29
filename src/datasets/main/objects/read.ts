@@ -80,19 +80,6 @@ export async function readObject(
 }
 
 
-// /* Given a generator of object paths, yields objects.
-//    Each object is created using the provided makeObject. */
-// export async function* readObjectsCold(
-//   objectPaths: AsyncGenerator<string>,
-//   makeObject: (fromBuffers: Record<string, Uint8Array>) => Record<string, any>,
-// ): AsyncGenerator<Record<string, any>> {
-//   for await (const objectPath of objectPaths) {
-//     const buffers = await readBuffers(objectPath);
-//     yield makeObject(buffers);
-//   }
-// }
-
-
 /**
  * Given a root path to an object, reads raw buffer data from filesystem
  * (and optionally LFS).
