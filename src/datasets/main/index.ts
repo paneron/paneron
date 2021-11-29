@@ -248,12 +248,13 @@ describeIndex.main!.handle(async ({ workingCopyPath, datasetID, indexID }) => {
 });
 
 
-getObjectDataset.main!.handle(async ({ workingCopyPath, datasetID, objectPaths }) => {
+getObjectDataset.main!.handle(async ({ workingCopyPath, datasetID, objectPaths, resolveLFS }) => {
   //const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
   const data = await getDataset({
     workDir: workingCopyPath,
     datasetID,
     objectPaths,
+    resolveLFS,
   });
   return { data };
 });

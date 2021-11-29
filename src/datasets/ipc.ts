@@ -107,7 +107,12 @@ export const locateFilteredIndexPosition = makeEndpoint.main(
  */
 export const getObjectDataset = makeEndpoint.main(
   'datasets_getObjectDataset',
-  <{ workingCopyPath: string, datasetID: string, objectPaths: string[] }>_,
+  <{
+    workingCopyPath: string
+    datasetID: string
+    objectPaths: string[]
+    resolveLFS?: true,
+  }>_,
   <{ data: ObjectDataset }>_,
 );
 

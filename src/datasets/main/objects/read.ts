@@ -9,7 +9,6 @@ import { getDatasetRoot } from 'repositories/main/meta';
 
 import { readRepoConfig } from 'repositories/main/readRepoConfig';
 import { getAuth } from 'repositories/main/remoteAuth';
-import { GitAuthentication } from 'repositories/types';
 import { normalizeURL } from 'repositories/main/util';
 
 import type { API as Datasets } from '../../types';
@@ -19,12 +18,13 @@ import { getDefaultIndex } from '../loadedDatasets';
 /**
  * Reads multiple objects from filesystem (cold).
  * 
- * Do not read too many objects at once. May be slow.
+ * Do not read too many objects at once. May be slow, especially with `resolveLFS`.
  */
 export const getObjectDataset: Datasets.Data.GetObjectDataset = async function ({
   workDir,
   datasetID,
   objectPaths,
+  resolveLFS,
 }) {
   const datasetRoot = getDatasetRoot('', datasetID);
 
@@ -35,7 +35,8 @@ export const getObjectDataset: Datasets.Data.GetObjectDataset = async function (
       return {
         [objectPath]: await readObjectCold(
           workDir,
-          path.join(datasetRoot, objectPath)),
+          path.join(datasetRoot, objectPath),
+          resolveLFS),
       };
     }) ?? []
   )).reduce((prev, curr) => ({ ...prev, ...curr }), {});
@@ -93,8 +94,8 @@ export async function readObject(
 
 
 /**
- * Given a root path to an object, reads data from filesystem
- * and deserializes it into memory structure
+ * Given a root path to an object, reads raw buffer data from filesystem
+ * (and optionally LFS).
  * according to ser/des rule provided by Paneron core.
  * 
  * @param workDir repository working directory
@@ -104,25 +105,37 @@ export async function readObject(
 export async function readObjectCold(
   workDir: string,
   rootPath: string,
+
+  /** Whether or not to try to download blobs corresponding to LFS pointers. */
+  resolveLFS?: true,
 ): Promise<Record<string, any> | null> {
   const { workers: { reader } } = getLoadedRepository(workDir);
-  const { remote } = await readRepoConfig(workDir);
 
-  // TODO: refactor: Avoid retrieving auth & remote URL in readObjectCold()
-  let auth: GitAuthentication | undefined;
-  let remoteURL: string | undefined;
-  if (remote) {
-    const { username, url } = remote;
-    remoteURL = normalizeURL(url);
-    auth = await getAuth(url, username);
-  } else {
-    remoteURL = undefined;
-    auth = undefined;
+  // TODO: refactor: avoid retrieving remote URL & auth data in readObjectCold()?
+  let lfsResolutionOptions:
+  { auth: { username: string, password: string }, url: string } | undefined =
+  undefined;
+  if (resolveLFS) {
+    const { remote } = await readRepoConfig(workDir);
+    if (remote) {
+      const { username, url } = remote;
+      const { password } = await getAuth(url, username);
+      if (password !== undefined) {
+        lfsResolutionOptions = {
+          url: normalizeURL(url),
+          auth: { username, password },
+        };
+      }
+    }
   }
 
   let bufferDataset: Record<string, Uint8Array>;
   try {
-    bufferDataset = await reader.repo_readBuffers({ workDir, rootPath, auth, remoteURL });
+    bufferDataset = await reader.repo_readBuffers({
+      workDir,
+      rootPath,
+      resolveLFS: lfsResolutionOptions,
+    });
   } catch (e) {
     // Check if it’s actually a nonexistent file error
     const repr = (e as any)?.toString?.() ?? '';
