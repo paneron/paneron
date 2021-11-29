@@ -300,7 +300,7 @@ updateObjects.main!.handle(async ({ workingCopyPath, datasetID, objectChangeset,
   if (!author) {
     throw new Error("Repository configuration is missing author information");
   }
-  // TODO: Save a version
+  // TODO: Save new version in `updateObjects()` additionally, using some filesystem-based mechanism?
   return await _updateObjects({
     workDir: workingCopyPath,
     datasetID,
