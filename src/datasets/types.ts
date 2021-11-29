@@ -117,10 +117,6 @@ export namespace API {
     export type CountObjects =
       (msg: DatasetOperationParams) => Promise<{ objectCount: number }>
 
-    /**
-     * Returns structured data of objects matching given paths.
-     * Uses object specs to build objects from buffers.
-     */
     export type GetObjectDataset = (msg: DatasetOperationParams & {
       objectPaths: string[]
       resolveLFS?: true
