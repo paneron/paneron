@@ -181,7 +181,8 @@ const methods: WorkerSpec = {
   git_push: lockingRepoOperationWithStatusReporter(sync.push),
 
 
-  // Buffer management
+  // Buffer management.
+  // TODO: Rename buffers to blobs? They are referred to as “buffers”, but actually we operate on Uint8Array here.
 
   repo_getCurrentCommit: commits.getCurrentCommit,
   repo_chooseMostRecentCommit: commits.chooseMostRecentCommit,
