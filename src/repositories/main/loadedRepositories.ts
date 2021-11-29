@@ -164,6 +164,11 @@ export async function unloadRepository(workingCopyPath: string) {
   timeout ? clearTimeout(timeout) : void 0;
   delete loadedRepositories[workingCopyPath];
   await terminateRepoWorkers(workingCopyPath);
+
+  await loadedRepositoryStatusChanged.main!.trigger({
+    workingCopyPath,
+    status: { status: 'unloaded' },
+  });
 }
 
 
