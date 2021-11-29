@@ -55,27 +55,28 @@ export async function readBuffersAtVersion(
 }
 
 
-/** Reads buffer data for specified paths, optionally at specified Git commit. */
-export async function readBuffers2(
-  workDir: string,
-  bufferPaths: string[],
-  atCommitHash?: string,
-): Promise<BufferDataset> {
-  const normalizedPaths = bufferPaths.map(stripLeadingSlash);
-
-  let reader: (path: string) => Promise<null | Uint8Array> | null | Uint8Array;
-  if (atCommitHash === undefined) {
-    reader = (p) => readBuffer(path.join(workDir, p));
-  } else {
-    reader = (p) => readBufferAtVersion(p, atCommitHash, workDir);
-  }
-
-  return (await Promise.all(normalizedPaths.map(async ([path]) => {
-    return {
-      [path]: await reader(path),
-    };
-  }))).reduce((prev, curr) => ({ ...prev, ...curr }), {});
-}
+// Older implementation combined readBuffers & readBuffersAtVersion:
+// /** Reads buffer data for specified paths, optionally at specified Git commit. */
+// export async function readBuffers2(
+//   workDir: string,
+//   bufferPaths: string[],
+//   atCommitHash?: string,
+// ): Promise<BufferDataset> {
+//   const normalizedPaths = bufferPaths.map(stripLeadingSlash);
+// 
+//   let reader: (path: string) => Promise<null | Uint8Array> | null | Uint8Array;
+//   if (atCommitHash === undefined) {
+//     reader = (p) => readBuffer(path.join(workDir, p));
+//   } else {
+//     reader = (p) => readBufferAtVersion(p, atCommitHash, workDir);
+//   }
+// 
+//   return (await Promise.all(normalizedPaths.map(async ([path]) => {
+//     return {
+//       [path]: await reader(path),
+//     };
+//   }))).reduce((prev, curr) => ({ ...prev, ...curr }), {});
+// }
 
 
 /**
