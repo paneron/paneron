@@ -22,8 +22,11 @@ import { SOLE_DATASET_ID } from 'repositories/types';
 import { getDatasetRoot } from 'repositories/main/meta';
 
 
-// We’ll just keep track of loaded datasets right here in memory.
-// { datasetID: { objectPath: { field1: value1, ... }}}
+/**
+ * Keeps track of loaded datasets here in memory.
+ * 
+ *     { datasetID: { objectPath: { field1: value1, ... }}}
+ */
 const datasets: {
   [workDir: string]: {
     [datasetID: string]: Datasets.Util.LoadedDataset
