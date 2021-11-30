@@ -181,6 +181,8 @@ function handleAllWindowsClosed(e: Electron.Event) {
       });
 
     if (result.filePath) {
+      // TODO: `saveFileToFilesystem()`: Check that location selected by the user is outside app/system files
+      // and is writeable.
       await fs.promises.writeFile(result.filePath, bufferData);
       return { success: true, savedToFileAtPath: result.filePath };
     } else {
