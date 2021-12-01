@@ -1,5 +1,5 @@
 import type { DiffStatus } from '@riboseinc/paneron-extension-kit/types/changes';
-import { diffDatasets } from '../../../repositories/main/util';
+import { diffDatasets } from '../../util';
 
 
 /* Yields paths to buffers that differ between dataset1 and dataset2,

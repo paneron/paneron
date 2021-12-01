@@ -1,6 +1,7 @@
 import type { DiffStatus } from '@riboseinc/paneron-extension-kit/types/changes';
 import type { Object } from '@riboseinc/paneron-extension-kit/types/objects';
-import { stripTrailingSlash } from '../../utils';
+
+import { stripTrailingSlash } from '../utils';
 
 
 /**

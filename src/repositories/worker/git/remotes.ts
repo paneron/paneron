@@ -1,7 +1,7 @@
 import fs from 'fs';
 import git, { ServerRef } from 'isomorphic-git';
 import http from 'isomorphic-git/http/node';
-import { normalizeURL } from '../../../repositories/main/util';
+import { normalizeURL } from '../../util';
 import { Git } from '../types';
 
 

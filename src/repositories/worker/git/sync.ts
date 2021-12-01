@@ -13,7 +13,7 @@ import {
   RepoStatusUpdater,
 } from 'repositories/types';
 import { checkPathIsOccupied } from '../../../main/checkPathIsOccupied';
-import { normalizeURL } from '../../main/util';
+import { normalizeURL } from '../../util';
 import { Git, WithStatusUpdater } from '../types';
 
 
