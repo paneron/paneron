@@ -130,6 +130,18 @@ export interface GitAuthor {
 }
 
 
+export interface LFSParams {
+  /**
+   * Base repository URL.
+   * Individual LFS endpoints will be expected under it per LFS spec.
+   */
+  url: string
+
+  /** Basic auth credentials. */
+  auth: { username: string, password: string }
+}
+
+
 // Worker operation parameters (“worker messages”).
 
 export interface GitOperationParams {

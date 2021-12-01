@@ -9,6 +9,7 @@ import type {
   GitAuthentication,
   GitOperationParams,
   InitRequestMessage,
+  LFSParams,
   PullRequestMessage,
   PushRequestMessage,
   RepoStatus,
@@ -113,10 +114,7 @@ export namespace Repositories {
       rootPath: string
 
       /** Parameters for resolving LFS. If undefined, do not resolve LFS pointers. */
-      resolveLFS?: {
-        url: string
-        auth: { username: string, password: string }
-      }
+      resolveLFS?: LFSParams
     }) => Promise<Record<string, Uint8Array>>
 
     export type ReadBuffersAtVersion = (msg: GitOperationParams & {
