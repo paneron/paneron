@@ -9,7 +9,6 @@ import { getDatasetRoot } from 'repositories/main/meta';
 
 import { readRepoConfig } from 'repositories/main/readRepoConfig';
 import { getAuth } from 'repositories/main/remoteAuth';
-import { normalizeURL } from 'repositories/main/util';
 
 import type { API as Datasets } from '../../types';
 import { getDefaultIndex } from '../loadedDatasets';
@@ -114,7 +113,7 @@ export async function readObjectCold(
       const { password } = await getAuth(url, username);
       if (password !== undefined) {
         lfsResolutionOptions = {
-          url: normalizeURL(url),
+          url,
           auth: { username, password },
         };
       }

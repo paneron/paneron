@@ -7,6 +7,7 @@ import { downloadBlobFromPointer, readPointer } from '@riboseinc/isogit-lfs';
 import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 
 import { stripLeadingSlash, stripTrailingSlash } from '../../../utils';
+import { normalizeURL } from '../../util';
 import { Repositories } from '../types';
 import { listDescendantPaths, listDescendantPathsAtVersion } from './list';
 
@@ -42,7 +43,7 @@ export async function readBuffers(
           content: Buffer.from(bufferData),
         });
         buffers[relativeBufferPath] = await downloadBlobFromPointer({
-          url: resolveLFS.url,
+          url: normalizeURL(resolveLFS.url),
           auth: resolveLFS.auth,
           http,
         }, lfsPointer);
