@@ -5,7 +5,7 @@ import { BufferChangeset } from '@riboseinc/paneron-extension-kit/types/buffers'
 import { CommitOutcome, PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
 import { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
 import { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
-import { CommitRequestMessage, DatasetOperationParams, GitOperationParams, TreeUpdateCommitRequestMessage } from 'repositories/types';
+import { AuthoringGitOperationParams, CommitRequestMessage, DatasetOperationParams, GitOperationParams, TreeUpdateCommitRequestMessage } from 'repositories/types';
 
 
 export type ReturnsPromise<F extends (...opts: any[]) => any> =
@@ -145,6 +145,22 @@ export namespace API {
      */
     export type UpdateTree =
       (msg: TreeUpdateCommitRequestMessage) => Promise<CommitOutcome>
+
+    /**
+     * This proxies a call to repository manager,
+     * requesting to add new buffers from specified filesystem paths.
+     *
+     * This skips the logical object layer of abstraction,
+     * does not do any consistency checks and can ruin data integrity if not used carefully.
+     */
+    export type UpdateObjectsExternal =
+      (msg: AuthoringGitOperationParams & DatasetOperationParams & {
+        absoluteFilepaths: string[]
+        targetPath: string
+        replaceTarget?: true
+        offloadToLFS?: true
+        commitMessage: string
+      }) => Promise<CommitOutcome>
   }
 
   export namespace Util {

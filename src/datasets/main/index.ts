@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { ensureDir } from 'fs-extra';
 import path from 'path';
-import { app } from 'electron';
+import { app, BrowserWindow, dialog, OpenDialogOptions } from 'electron';
 import log from 'electron-log';
 import { BufferChange } from '@riboseinc/paneron-extension-kit/types/buffers';
 import { INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
@@ -42,12 +42,14 @@ import {
   updateObjects,
   listRecentlyOpenedDatasets,
   updateSubtree,
+  addFromFilesystem,
 } from '../ipc';
 
 import loadedDatasets from './loadedDatasets';
 import { getObjectDataset as getDataset } from './objects/read';
 
 import {
+  addExternal,
   updateObjects as _updateObjects,
   updateTree as _updateTree,
 } from './objects/update';
@@ -318,6 +320,52 @@ updateSubtree.main!.handle(async ({ workingCopyPath, datasetID, commitMessage, s
     oldSubtreePath: subtreeRoot,
     newSubtreePath: newSubtreeRoot,
   });
+});
+
+
+addFromFilesystem.main!.handle(async ({ workingCopyPath, datasetID, commitMessage, dialogOpts, targetPath, opts }) => {
+  const window = BrowserWindow.getFocusedWindow();
+  if (window === null) { throw new Error("Unable to choose file(s): no focused window detected"); }
+
+  const { author } = await readRepoConfig(workingCopyPath);
+  if (!author) {
+    throw new Error("Repository configuration is missing author information");
+  }
+
+  const allowMultiple = opts.replaceTarget !== true && dialogOpts.allowMultiple;
+
+  const properties: OpenDialogOptions["properties"] = [
+    'openFile',
+  ]
+  if (allowMultiple) {
+    properties.push('multiSelections');
+  }
+
+  const result = await dialog.showOpenDialog(window, {
+    properties,
+  });
+
+  const filepaths = (result.filePaths || []);
+
+  if (!allowMultiple && filepaths.length > 1) {
+    throw new Error("More than one file was selected");
+  }
+  if (filepaths.length < 1) {
+    return { commitOutcome: null };
+  }
+
+  const commitOutcome = await addExternal({
+    workDir: workingCopyPath,
+    datasetID,
+    offloadToLFS: opts.offloadToLFS,
+    commitMessage,
+    absoluteFilepaths: filepaths,
+    targetPath,
+    replaceTarget: opts.replaceTarget,
+    author,
+  });
+
+  return { commitOutcome };
 });
 
 

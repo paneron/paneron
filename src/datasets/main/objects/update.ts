@@ -8,6 +8,8 @@ import { toBufferChangeset } from '../buffer-dataset-conversion';
 import { API as Datasets } from '../../types';
 import { diffObjectDatasets } from './equality';
 import { readObjectCold } from './read';
+import { readLFSParams } from 'repositories/main/readRepoConfig';
+import { LFSParams } from 'repositories/types';
 
 
 export const updateObjects: Datasets.Data.UpdateObjects =
@@ -93,6 +95,55 @@ async function ({
   return result;
 }
 
+
+export const addExternal: Datasets.Data.UpdateObjectsExternal =
+async function ({
+  workDir,
+  datasetID,
+  commitMessage,
+  author,
+  absoluteFilepaths,
+  targetPath,
+  replaceTarget,
+  offloadToLFS,
+}) {
+  const datasetRoot = getDatasetRoot('', datasetID);
+  const pathMap: Record<string, string> = {};
+
+  if (absoluteFilepaths.length > 0) {
+    if (replaceTarget) {
+      const bufferPath = path.join(datasetRoot, targetPath);
+      pathMap[absoluteFilepaths[0]] = bufferPath;
+    } else {
+      for (const fp of absoluteFilepaths) {
+        const fn = path.basename(fp);
+        const bufferPath = path.join(datasetRoot, targetPath, fn);
+        pathMap[fp] = bufferPath;
+      }
+    }
+  } else {
+    throw new Error("No absolute paths were given");
+  }
+
+  const { workers: { sync } } = getLoadedRepository(workDir);
+
+  let lfsParams: LFSParams | undefined = undefined;
+  if (offloadToLFS) {
+    lfsParams = await readLFSParams(workDir);
+  }
+
+  const result = await sync.repo_addExternalBuffers({
+    workDir,
+    commitMessage,
+    author,
+    paths: pathMap,
+    offloadToLFS: lfsParams,
+  });
+
+  updateDatasetIndexesIfNeeded(workDir, datasetID);
+
+  return result;
+}
 
 
 /**

@@ -175,6 +175,7 @@
     "ts-loader": "8.0.4"
   },
   "dependencies": {
+    "@aws-crypto/sha256-universal": "^2.0.0",
     "@blueprintjs/core": "^3.49.1",
     "@blueprintjs/datetime": "^3.23.7",
     "@blueprintjs/icons": "^3.29.0",
@@ -184,10 +185,10 @@
     "@emotion/styled": "^11.3.0",
     "@react-three/drei": "^7.22.6",
     "@react-three/fiber": "^7.0.19",
-    "@riboseinc/isogit-lfs": "0.1.5",
+    "@riboseinc/isogit-lfs": "0.1.6",
     "@riboseinc/paneron-extension-glossarist": "^1.0.0-dev34",
-    "@riboseinc/paneron-extension-kit": "2.0.0-alpha23",
     "@riboseinc/paneron-registry-kit": "2.0.0-alpha5",
+    "@riboseinc/paneron-extension-kit": "2.0.0-alpha24",
     "@riboseinc/reprose": "1.0.0-alpha11",
     "@types/mark.js": "^8.11.5",
     "asciidoctor": "^2.2.5",

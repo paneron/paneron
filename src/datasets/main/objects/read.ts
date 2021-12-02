@@ -2,16 +2,16 @@ import path from 'path';
 import log from 'electron-log';
 
 import type { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
-import { findSerDesRuleForPath } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
+import { findSerDesRuleForBuffers } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
 
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
 import { getDatasetRoot } from 'repositories/main/meta';
 
-import { readRepoConfig } from 'repositories/main/readRepoConfig';
-import { getAuth } from 'repositories/main/remoteAuth';
+import { readLFSParams } from 'repositories/main/readRepoConfig';
 
 import type { API as Datasets } from '../../types';
 import { getDefaultIndex } from '../loadedDatasets';
+import { LFSParams } from 'repositories/types';
 
 
 /**
@@ -102,22 +102,9 @@ export async function readObjectCold(
 ): Promise<Record<string, any> | null> {
   const { workers: { reader } } = getLoadedRepository(workDir);
 
-  // TODO: refactor: avoid retrieving remote URL & auth data in readObjectCold()?
-  let lfsResolutionOptions:
-  { auth: { username: string, password: string }, url: string } | undefined =
-  undefined;
+  let lfsResolutionOptions: LFSParams | undefined = undefined;
   if (resolveLFS) {
-    const { remote } = await readRepoConfig(workDir);
-    if (remote) {
-      const { username, url } = remote;
-      const { password } = await getAuth(url, username);
-      if (password !== undefined) {
-        lfsResolutionOptions = {
-          url,
-          auth: { username, password },
-        };
-      }
-    }
+    lfsResolutionOptions = await readLFSParams(workDir);
   }
 
   let bufferDataset: Record<string, Uint8Array>;
@@ -143,7 +130,7 @@ export async function readObjectCold(
     return null;
   }
 
-  const rule = findSerDesRuleForPath(rootPath);
+  const rule = findSerDesRuleForBuffers(rootPath, bufferDataset);
   try {
     return rule.deserialize(bufferDataset, {});
   } catch (e) {
@@ -162,16 +149,18 @@ export async function readObjectCold(
  * The last argument is an array of commit hashes, and return value is an array of the same length.
  * Any element of the array can be either deserialized data of the object at that commit hash,
  * or null; however, if *all* values in the array are null, the error is raised.
+ * 
+ * NOTE: Does not resolve LFS yet.
  */ 
 export async function readObjectVersions
 <L extends number, C extends string[] & { length: L }>
 (workDir: string, datasetID: string, objectPath: string, commitHashes: C):
 Promise<(Record<string, any> | null)[] & { length: L }> {
+  // TODO: Support resolving LFS in `readObjectVersions()`.
+
   const { workers: { sync } } = getLoadedRepository(workDir);
 
   const datasetRoot = getDatasetRoot('', datasetID);
-
-  const rule = findSerDesRuleForPath(objectPath);
 
   const bufferDatasets = await Promise.all(commitHashes.map(oid =>
     sync.repo_readBuffersAtVersion({ workDir, rootPath: path.join(datasetRoot, objectPath), commitHash: oid })
@@ -180,10 +169,11 @@ Promise<(Record<string, any> | null)[] & { length: L }> {
   //const bufDs1 = await sync.repo_readBuffersAtVersion({ workDir, rootPath: path.join(datasetRoot, objectPath), commitHash: oidIndex! });
   //const bufDs2 = await sync.repo_readBuffersAtVersion({ workDir, rootPath: path.join(datasetRoot, objectPath), commitHash: oidCurrent });
 
-  const objectDatasets = bufferDatasets.map(bufDs => {
-    if (Object.keys(bufDs).length > 0) {
+  const objectDatasets = bufferDatasets.map(buffers => {
+    if (Object.keys(buffers).length > 0) {
+      const rule = findSerDesRuleForBuffers(objectPath, buffers);
       try {
-        return rule.deserialize(bufDs, {});
+        return rule.deserialize(buffers, {});
       } catch (e) {
         log.error("Datasets: readObjectVersions(): Error deserializing version for object", workDir, datasetRoot, objectPath, e);
         throw e;

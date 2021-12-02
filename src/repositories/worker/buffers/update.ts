@@ -1,8 +1,15 @@
-import { ensureFile, removeSync, remove, move } from 'fs-extra';
 import fs from 'fs';
 import path from 'path';
+import { ensureFile, removeSync, remove, move } from 'fs-extra';
 import git from 'isomorphic-git';
+import http from 'isomorphic-git/http/node';
+
+import { BufferChangeset } from '@riboseinc/paneron-extension-kit/types/buffers';
+import { formatPointerInfo } from '@riboseinc/isogit-lfs/pointers';
+import uploadBlob from '@riboseinc/isogit-lfs/upload';
+
 import { stripLeadingSlash } from 'utils';
+import { normalizeURL } from '../../util';
 //import { BufferChangeset } from '@riboseinc/paneron-extension-kit/types/buffers';
 //import { AuthoringGitOperationParams, RepoStatusUpdater } from 'repositories/types';
 import { Repositories } from '../types';
@@ -105,6 +112,61 @@ export const updateBuffers: Repositories.Data.UpdateBuffersWithStatusReporter = 
   }
 
   return { newCommitHash };
+}
+
+
+export const addExternalBuffers: Repositories.Data.AddExternalBuffersWithStatusReporter = async function ({
+  workDir,
+  paths,
+  commitMessage,
+  author,
+  offloadToLFS,
+}, updateStatus) {
+  const totalPaths = Object.keys(paths).length;
+
+  if (totalPaths < 1) {
+    throw new Error("No paths to add were given");
+  }
+
+  const bufferChangeset: BufferChangeset = {};
+
+
+  for (const [idx, [fp, bufferPath]] of Object.entries(paths).entries()) {
+    const bufferData = await fs.promises.readFile(fp);
+
+    if (offloadToLFS) {
+      updateStatus({
+        busy: {
+          operation: 'uploading to LFS',
+          progress: {
+            phase: bufferPath,
+            total: totalPaths,
+            loaded: idx,
+          },
+        },
+      });
+      const pointerInfo = await uploadBlob({
+        url: normalizeURL(offloadToLFS.url),
+        auth: offloadToLFS.auth,
+        http,
+      }, bufferData);
+      const pointerBuffer = formatPointerInfo(pointerInfo);
+      bufferChangeset[bufferPath] = {
+        newValue: pointerBuffer,
+      };
+    } else {
+      bufferChangeset[bufferPath] = {
+        newValue: bufferData,
+      };
+    }
+  }
+
+  return await updateBuffers({
+    workDir,
+    author,
+    bufferChangeset,
+    commitMessage,
+  }, updateStatus);
 }
 
 

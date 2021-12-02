@@ -1,7 +1,7 @@
 import path from 'path';
 import { ObjectChangeset } from '@riboseinc/paneron-extension-kit/types/objects';
 import { BufferChange, BufferChangeset, BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
-import { findSerDesRuleForPath } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
+import { findSerDesRuleForObject } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
 import { stripTrailingSlash } from 'utils';
 
 
@@ -26,18 +26,31 @@ export function toBufferChangeset(
   const buffers: BufferChangeset = {};
 
   for (const [objectPath, change] of Object.entries(objectChangeset)) {
-    const rule = findSerDesRuleForPath(objectPath);
+    let oldObjectBuffersRelative: BufferDataset;
+    let newObjectBuffersRelative: BufferDataset;
+
+    if (change.newValue !== null) {
+      const rule = findSerDesRuleForObject(objectPath, change.newValue);
+      newObjectBuffersRelative = rule.serialize(change.newValue, {});
+    } else {
+      newObjectBuffersRelative = { [path.posix.sep]: null };
+    }
 
     // When conflict check is disabled
     // (_dangerouslySkipValidation in updateObjects),
     // `oldValue`s will be undefined.
     // However, we can actually ignore them, because the only caller
     // (updateObjects) does not actually use them.
-    const oldObjectBuffersRelative =
-      change.oldValue !== undefined
-        ? rule.serialize(change.oldValue, {})
-        : {};
-    const newObjectBuffersRelative = rule.serialize(change.newValue, {});
+    if (change.oldValue !== undefined) {
+      if (change.oldValue !== null) {
+        const rule = findSerDesRuleForObject(objectPath, change.oldValue);
+        oldObjectBuffersRelative = rule.serialize(change.oldValue, {});
+      } else {
+        oldObjectBuffersRelative = { [path.posix.sep]: null };
+      }
+    } else {
+      oldObjectBuffersRelative = {};
+    }
 
     const bufferChanges = mergeBufferDatasetsIntoChangeset(
       oldObjectBuffersRelative,
@@ -69,7 +82,7 @@ function mergeBufferDatasetsIntoChangeset(
       // NOTE: Something may be fishy about null values here.
       // Generally, null values mean absence of an object,
       // while undefined means ommitted value (e.g., to disable oldValue comparison).
-      oldValue: oldDataset[p] ?? null,
+      oldValue: oldDataset[p] ?? undefined,
       newValue: newDataset[p] ?? null,
     };
     changeset[stripTrailingSlash(path.join(datasetPath, objectPath, p))] = change;

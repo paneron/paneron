@@ -20,7 +20,7 @@ import {
 import WorkerMethods from './types';
 
 import { getBufferDataset, readBuffers, readBuffersAtVersion } from './buffers/read';
-import { deleteTree, moveTree, updateBuffers } from './buffers/update';
+import { deleteTree, moveTree, updateBuffers, addExternalBuffers } from './buffers/update';
 import { resolveChanges } from './buffers/list';
 import commits from './git/commits';
 import remotes from './git/remotes';
@@ -186,6 +186,7 @@ const methods: WorkerSpec = {
   repo_getCurrentCommit: commits.getCurrentCommit,
   repo_chooseMostRecentCommit: commits.chooseMostRecentCommit,
   repo_updateBuffers: lockingRepoOperationWithStatusReporter(updateBuffers),
+  repo_addExternalBuffers: lockingRepoOperationWithStatusReporter(addExternalBuffers),
   repo_readBuffers: ({ workDir, rootPath, resolveLFS }) =>
     readBuffers(workDir, rootPath, resolveLFS),
   repo_readBuffersAtVersion: ({ workDir, rootPath, commitHash }) =>

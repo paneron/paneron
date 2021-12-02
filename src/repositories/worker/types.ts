@@ -129,6 +129,23 @@ export namespace Repositories {
     export type UpdateBuffersWithStatusReporter =
       WithStatusUpdater<UpdateBuffers>
 
+    export type AddExternalBuffers = (msg: AuthoringGitOperationParams & {
+      commitMessage: string
+
+      /** Map of external paths to repo-relative paths. */
+      paths: Record<string, string>
+
+      /**
+       * Parameters for accessing LFS if offload is required.
+       * If provided, all objects will be stored as LFS pointers,
+       * with actual data uploaded to LFS before commit takes place.
+       */
+      offloadToLFS?: LFSParams
+    }) => Promise<CommitOutcome>
+
+    export type AddExternalBuffersWithStatusReporter =
+      WithStatusUpdater<AddExternalBuffers>
+
     export type DeleteTree = (msg: AuthoringGitOperationParams & {
       treeRoot: string
       commitMessage: string
@@ -196,7 +213,9 @@ export default interface WorkerMethods {
 
   /**
    * Given a work dir and a rootPath, returns a map of descendant buffer paths
-   * to buffer blobs. Resolves LFS pointers, in which case may take a while.
+   * to buffer blobs.
+   *
+   * Optionally resolves LFS pointers, in which case may take a while.
    */
   repo_readBuffers: Repositories.Data.ReadBuffers
 
@@ -208,6 +227,16 @@ export default interface WorkerMethods {
 
   /** Updates buffers in repository. */
   repo_updateBuffers: Repositories.Data.UpdateBuffers
+
+  /**
+   * Creates buffers using specified files from filesystem.
+   *
+   * Overwrites existing buffers, if any.
+   *
+   * If any of specified absolute file paths does not exist in filesystem,
+   * throws an error.
+   */
+  repo_addExternalBuffers: Repositories.Data.AddExternalBuffers
 
   /** Deletes repository subtree. Fast, but doesn’t validate data. */
   repo_deleteTree: Repositories.Data.DeleteTree

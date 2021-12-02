@@ -10,7 +10,9 @@ import log from 'electron-log';
 
 import yaml from '@riboseinc/paneron-extension-kit/object-specs/yaml';
 
-import { GitRepository, NewRepositoryDefaults } from '../types';
+import { GitRepository, LFSParams, NewRepositoryDefaults } from '../types';
+import { getAuth } from './remoteAuth';
+import { RemoteNotConfiguredError } from 'repositories/errors';
 
 
 /** File name that keeps Paneron user’s repository configuration at runtime. */
@@ -99,6 +101,26 @@ export async function updateRepositories(updater: (data: RepoListSpec) => RepoLi
 
     await fs.writeFile(REPO_LIST_PATH, newRawData, { encoding: 'utf-8' });
   });
+}
+
+
+/** Based on repository config, returns LFS params. */
+export async function readLFSParams(workDir: string): Promise<LFSParams> {
+  const { remote } = await readRepoConfig(workDir);
+  if (remote) {
+    const { username, url } = remote;
+    const { password } = await getAuth(url, username);
+    if (password !== undefined) {
+      return {
+        url,
+        auth: { username, password },
+      };
+    } else {
+      throw new Error("Remote password not provided, but required to collect LFS params")
+    }
+  } else {
+    throw new RemoteNotConfiguredError();
+  }
 }
 
 

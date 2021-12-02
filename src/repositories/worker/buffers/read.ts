@@ -21,8 +21,13 @@ import { listDescendantPaths, listDescendantPathsAtVersion } from './list';
  * If there’s no descendants (e.g., rootPath is a file),
  * buffer dataset will contain a sole key '/' mapping to the buffer.
  *
+ * Object paths referencing nonexistent objects
+ * will not have null values, but will be silently omitted.
+ * (Returned dataset can be a completely empty object.)
+ *
  * If any of the objects read are LFS pointers,
- * this function will attempt to retrieve LFS data if `resolveLFS` is provided.
+ * this function will attempt to retrieve LFS data if `resolveLFS` is provided,
+ * returning unresolved pointer if download fails.
  */
 export async function readBuffers(
   workDir: string,
@@ -37,16 +42,22 @@ export async function readBuffers(
     const bufferData = readBuffer(bPath);
 
     if (bufferData !== null) {
+      // TODO: Refactor LFS fetch: implement batch in `resolveLFSPointersInBufferDataset()`
+      // and reuse it in `readBuffersAtVersion()`? Depends on batch support in isogit-lfs.
       if (resolveLFS !== undefined && pointsToLFS(Buffer.from(bufferData))) {
         const lfsPointer = readPointer({
           dir: workDir,
           content: Buffer.from(bufferData),
         });
-        buffers[relativeBufferPath] = await downloadBlobFromPointer({
-          url: normalizeURL(resolveLFS.url),
-          auth: resolveLFS.auth,
-          http,
-        }, lfsPointer);
+        try {
+          buffers[relativeBufferPath] = await downloadBlobFromPointer({
+            url: normalizeURL(resolveLFS.url),
+            auth: resolveLFS.auth,
+            http,
+          }, lfsPointer);
+        } catch (e) {
+          buffers[relativeBufferPath] = bufferData;
+        }
 
       } else {
         buffers[relativeBufferPath] = bufferData;
@@ -60,12 +71,16 @@ export async function readBuffers(
 /**
  * Given a root path, returns a BufferDataset containing data under that path.
  * Paths in buffer dataset will be slash-prepended and relative to root path.
+ *
+ * NOTE: Does not support LFS yet.
  */
 export async function readBuffersAtVersion(
   workDir: string,
   rootPath: string,
   atCommitHash: string,
 ): Promise<Record<string, Uint8Array>> {
+  // TODO: Support LFS in `readBuffersAtVersion()`?
+
   const buffers: Record<string, Uint8Array> = {};
   const bufferPathsRelativeToRoot = await listDescendantPathsAtVersion(
     rootPath,

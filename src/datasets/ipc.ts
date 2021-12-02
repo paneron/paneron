@@ -4,6 +4,7 @@ import { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
 
 import { EmptyPayload, makeEndpoint, _ } from '../ipc';
 import { DatasetInfo, DatasetType, RecentlyOpenedDataset } from './types';
+import { OpenFileDialogProps } from '@riboseinc/paneron-extension-kit/types/dialogs';
 
 
 /** List dataset types, provided by extensions, available for dataset initialization */
@@ -138,6 +139,19 @@ export const updateSubtree = makeEndpoint.main(
     newSubtreeRoot: string | null // if null, deletes subtree
   }>_,
   <CommitOutcome>_,
+);
+
+export const addFromFilesystem = makeEndpoint.main(
+  'datasets_addFromFilesystem',
+  <{
+    workingCopyPath: string
+    datasetID: string
+    dialogOpts: OpenFileDialogProps
+    commitMessage: string
+    targetPath: string
+    opts: { replaceTarget?: true, offloadToLFS?: true }
+  }>_,
+  <{ commitOutcome: CommitOutcome | null }>_,
 );
 
 

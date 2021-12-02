@@ -21,6 +21,7 @@ import { updateSetting, useSettings } from 'renderer/MainWindow/settings';
 import { DatasetInfo } from '../types';
 
 import {
+  addFromFilesystem,
   describeIndex,
   filteredIndexUpdated,
   getFilteredObject,
@@ -320,6 +321,17 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
 
     writeFileToFilesystem: async function _writeFileToFilesystem (opts) {
       const { result } = await saveFileToFilesystem.renderer!.trigger(opts);
+      return result;
+    },
+
+    addFromFilesystem: async function _addFromFilesystem (dialogOpts, commitMessage, targetPath, opts) {
+      const { result } = await addFromFilesystem.renderer!.trigger({
+        ...datasetParams,
+        dialogOpts,
+        commitMessage,
+        targetPath,
+        opts,
+      });
       return result;
     },
 

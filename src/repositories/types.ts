@@ -81,6 +81,9 @@ export interface RemoteOpStatus {
   networkError?: true
   progress?: Progress
 }
+interface LFSUploadStatus extends RemoteOpStatus {
+  operation: 'uploading to LFS'
+}
 interface PullStatus extends RemoteOpStatus {
   operation: 'pulling'
 }
@@ -98,7 +101,8 @@ type RepoOperationStatus =
   | PullStatus
   | PushStatus
   | LocalChecksStatus
-  | CommitStatus;
+  | CommitStatus
+  | LFSUploadStatus;
 
 export type RepoStatus = {
   status: 'ahead' | 'behind' | 'diverged' | 'ready' | 'invalid-working-copy' | 'unloaded'
