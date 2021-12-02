@@ -1,8 +1,9 @@
+/** Storing & retrieving credentials for Git server authentication. */
+
 import keytar from 'keytar';
 import log from 'electron-log';
 
 
-// Auth helpers
 /**
  * Fetches password associated with the hostname of given remote URL
  * (if that fails, with full remote URL)

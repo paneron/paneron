@@ -208,7 +208,7 @@ export interface CommitRequestMessage extends AuthoringGitOperationParams, Datas
 
   /**
    * Makes Paneron not strictly check that preexisting values
-   * match `oldValue`s in given changeset.
+   * match `oldValue`s in given changeset. Allows `oldValue`s to be undefined.
    */
   _dangerouslySkipValidation?: true
 }

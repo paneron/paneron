@@ -117,8 +117,14 @@ export namespace API {
     export type CountObjects =
       (msg: DatasetOperationParams) => Promise<{ objectCount: number }>
 
+    /** Returns a deserialized object dataset given dataset-relative object paths. */
     export type GetObjectDataset = (msg: DatasetOperationParams & {
       objectPaths: string[]
+
+      /**
+       * Attempt to resolve LFS pointers.
+       * Does not guarantee all pointers will be resolved.
+       */
       resolveLFS?: true
     }) => Promise<ObjectDataset>
 
