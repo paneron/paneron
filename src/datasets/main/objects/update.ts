@@ -1,4 +1,3 @@
-import * as R from 'ramda';
 import path from 'path';
 import { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
 import { ObjectChangeset, ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
@@ -101,9 +100,11 @@ async function findFirstConflictingObjectPath(
   objectChangeset: ObjectChangeset,
 ): Promise<[ bufferPath: string, changeStatus: ChangeStatus ] | null> {
 
-  const referenceObjectDataset = R.map<ObjectChangeset, ObjectDataset>(
-    change => change.oldValue,
-    objectChangeset);
+  const referenceObjectDataset: ObjectDataset = Object.fromEntries(
+    Object.
+      entries(objectChangeset).
+      map(([path, change]) => [path, change.oldValue as Record<string, any> | null])
+  );
 
   const paths = Object.keys(referenceObjectDataset);
 
