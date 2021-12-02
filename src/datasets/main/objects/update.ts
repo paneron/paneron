@@ -100,6 +100,10 @@ async function findFirstConflictingObjectPath(
   objectChangeset: ObjectChangeset,
 ): Promise<[ bufferPath: string, changeStatus: ChangeStatus ] | null> {
 
+  if (Object.values(objectChangeset).find(change => change.oldValue === undefined)) {
+    throw new Error("Undefined oldValue encountered when checking for conflicts");
+  }
+
   const referenceObjectDataset: ObjectDataset = Object.fromEntries(
     Object.
       entries(objectChangeset).
