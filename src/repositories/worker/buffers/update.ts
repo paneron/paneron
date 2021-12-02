@@ -2,6 +2,7 @@ import { ensureFile, removeSync, remove, move } from 'fs-extra';
 import fs from 'fs';
 import path from 'path';
 import git from 'isomorphic-git';
+import { stripLeadingSlash } from 'utils';
 //import { BufferChangeset } from '@riboseinc/paneron-extension-kit/types/buffers';
 //import { AuthoringGitOperationParams, RepoStatusUpdater } from 'repositories/types';
 import { Repositories } from '../types';
@@ -46,18 +47,19 @@ export const updateBuffers: Repositories.Data.UpdateBuffersWithStatusReporter = 
 
     // TODO: Make sure checkout in catch() block resets staged files as well!
     for (const [path, contents] of Object.entries(changeset)) {
+      const normalizedPath = stripLeadingSlash(path);
       const { newValue } = contents;
       if (newValue !== null) {
         await git.add({
           fs,
           dir: opts.workDir,
-          filepath: path,
+          filepath: normalizedPath,
         });
       } else {
         await git.remove({
           fs,
           dir: opts.workDir,
-          filepath: path,
+          filepath: normalizedPath,
         });
       }
     }
@@ -79,7 +81,7 @@ export const updateBuffers: Repositories.Data.UpdateBuffersWithStatusReporter = 
       fs,
       dir: opts.workDir,
       force: true,
-      filepaths: bufferPaths,
+      filepaths: bufferPaths.map(stripLeadingSlash),
     });
     updateStatus({
       status: 'ready',
@@ -117,9 +119,12 @@ export const moveTree: Repositories.Data.MoveTree = async function ({
   // and workDir is not a Git repository.
   await git.resolveRef({ fs, dir: workDir, ref: 'HEAD' });
 
+  const oldTreeRootNormalized = stripLeadingSlash(oldTreeRoot);
+  const newTreeRootNormalized = stripLeadingSlash(newTreeRoot);
+
   try {
-    const oldFullPath = path.join(workDir, oldTreeRoot);
-    const newFullPath = path.join(workDir, newTreeRoot);
+    const oldFullPath = path.join(workDir, oldTreeRootNormalized);
+    const newFullPath = path.join(workDir, newTreeRootNormalized);
 
     await move(oldFullPath, newFullPath, { overwrite: false });
 
@@ -127,8 +132,8 @@ export const moveTree: Repositories.Data.MoveTree = async function ({
 
     const deletedPaths = (await git.statusMatrix({ fs, dir: workDir })).
       filter(row => row[WORKDIR] === 0).
-      filter(row => row[FILE].startsWith(`${oldTreeRoot}/`)).
-      map(row => row[FILE]);
+      map(row => stripLeadingSlash(row[FILE])).
+      filter(fp => fp.startsWith(`${oldTreeRootNormalized}/`));
 
     for (const dp of deletedPaths) {
       await git.remove({ fs, dir: workDir, filepath: dp });
@@ -136,8 +141,8 @@ export const moveTree: Repositories.Data.MoveTree = async function ({
 
     const addedPaths = (await git.statusMatrix({ fs, dir: workDir })).
       filter(row => row[WORKDIR] === 2).
-      filter(row => row[FILE].startsWith(`${newTreeRoot}/`)).
-      map(row => row[FILE]);
+      map(row => stripLeadingSlash(row[FILE])).
+      filter(fp => fp.startsWith(`${newTreeRootNormalized}/`));
 
     for (const ap of addedPaths) {
       await git.add({ fs, dir: workDir, filepath: ap });
@@ -148,7 +153,7 @@ export const moveTree: Repositories.Data.MoveTree = async function ({
       fs,
       dir: workDir,
       force: true,
-      filepaths: [oldTreeRoot, newTreeRoot],
+      filepaths: [oldTreeRootNormalized, newTreeRootNormalized],
     });
     throw e;
   }
@@ -174,16 +179,18 @@ export const deleteTree: Repositories.Data.DeleteTree = async function ({
   // and workDir is not a Git repository.
   await git.resolveRef({ fs, dir: workDir, ref: 'HEAD' });
 
+  const treeRootNormalized = stripLeadingSlash(treeRoot);
+
   try {
-    const fullPath = path.join(workDir, treeRoot);
+    const fullPath = path.join(workDir, treeRootNormalized);
 
     await remove(fullPath);
 
     const WORKDIR = 2, FILE = 0;
     const deletedPaths = (await git.statusMatrix({ fs, dir: workDir })).
       filter(row => row[WORKDIR] === 0).
-      filter(row => row[FILE].startsWith(`${treeRoot}/`)).
-      map(row => row[FILE]);
+      map(row => stripLeadingSlash(row[FILE])).
+      filter(fp => fp.startsWith(`${treeRootNormalized}/`));
 
     for (const dp of deletedPaths) {
       await git.remove({ fs, dir: workDir, filepath: dp });
@@ -193,7 +200,7 @@ export const deleteTree: Repositories.Data.DeleteTree = async function ({
       fs,
       dir: workDir,
       force: true,
-      filepaths: [treeRoot],
+      filepaths: [treeRootNormalized],
     });
     throw e;
   }
