@@ -141,7 +141,9 @@ export namespace API {
     /**
      * This proxies a call to repository manager,
      * requesting to delete or move an entire subtree.
-     * Does not do any consistency checks and can ruin data integrity if not used carefully.
+     *
+     * This skips the logical object layer of abstraction,
+     * does not do any consistency checks and can ruin data integrity if not used carefully.
      */
     export type UpdateTree =
       (msg: TreeUpdateCommitRequestMessage) => Promise<CommitOutcome>
