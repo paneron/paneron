@@ -74,7 +74,8 @@ export function getDatasetRoot(workDirPath: string, datasetID: string) {
     ? datasetID
     : '';
 
-  return path.join(workDirPath, datasetDir);
+  const result = path.join(workDirPath, datasetDir);
+  return (result !== '.' ? result : '/');
 }
 
 
