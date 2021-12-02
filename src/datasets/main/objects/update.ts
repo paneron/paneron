@@ -94,6 +94,14 @@ async function ({
 }
 
 
+
+/**
+ * Does consistency check against `oldValue`s in object changeset.
+ *
+ * Returns a 2-tuple describing the first encountered object for which
+ * deserialized fresh contents in cold storage differ from the old value,
+ * or null.
+ */
 async function findFirstConflictingObjectPath(
   workDir: string,
   datasetID: string,
