@@ -110,7 +110,7 @@ function getRepoStatusUpdater(workDir: string) {
     if (repositoryStatus === null) {
       throw new Error("Repository is not initialized");
     }
-    console.debug("repo status updater: reporting status", workDir, newStatus)
+    //console.debug("repo status updater: reporting status", workDir, newStatus)
     repositoryStatus.statusSubject.next(newStatus);
   }
 
