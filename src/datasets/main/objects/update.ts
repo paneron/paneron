@@ -85,7 +85,7 @@ async function ({
       workDir,
       author,
       commitMessage,
-      treeRoot: path.posix.join(datasetID, oldSubtreePath),
+      treeRoot: path.posix.join(datasetRoot, oldSubtreePath),
     });
   }
 
