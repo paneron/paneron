@@ -254,7 +254,7 @@
     "@types/mocha": "^8.2.2",
     "@types/mousetrap": "^1.6.3",
     "@types/node": "^16.11.7",
-    "@types/ramda": "^0.27.35",
+    "@types/ramda": "^0.27.58",
     "@types/react": "^16.9.11",
     "@types/react-dom": "^16.9.4",
     "@types/react-helmet": "^6.1.0",
