@@ -895,7 +895,7 @@ export async function updateDatasetIndexesIfNeeded(
 
   const defaultIndexStatusReporter = getDefaultIndexStatusReporter(workDir, datasetID);
 
-  log.debug("updateDatasetIndexesIfNeeded: Operating on filtered indexes", filteredIndexes.map(([, idx]) => idx.predicate));
+  //log.debug("updateDatasetIndexesIfNeeded: Operating on filtered indexes", filteredIndexes.map(([, idx]) => idx.predicate));
 
   const completionPromise = (async () => {
 
