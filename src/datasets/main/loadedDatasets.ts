@@ -910,7 +910,7 @@ export async function updateDatasetIndexesIfNeeded(
       oidAfter: oidCurrent,
     });
 
-    log.debug("updateDatasetIndexesIfNeeded: Updating default index");
+    log.debug("updateDatasetIndexesIfNeeded: Processing object paths & updating indexes");
 
     let newDefaultIndexObjectCount = defaultIndexMeta.objectCount;
 
