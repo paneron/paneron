@@ -958,7 +958,10 @@ export async function updateDatasetIndexesIfNeeded(
           pathAffectsFilteredIndexes[idxID] = {
             idx,
           };
+          // Check if we already marked this index as affected
+          // while processing a previous object path…
           if (!affectedFilteredIndexes[idxID]) {
+            // If not, we get existing meta pointer.
             const meta = await indexMeta(idx);
             if (meta) {
               // Notify frontend that the index is being updated.
@@ -972,10 +975,16 @@ export async function updateDatasetIndexesIfNeeded(
                   total: 1, 
                 },
               } });
+              // Keep track of affected indexes and their object counts here.
               affectedFilteredIndexes[idxID] = {
                 idx,
                 newObjectCount: meta.objectCount,
               };
+            } else {
+              log.warn("Datasets: updateDatasetIndexesIfNeeded: Filtered index is missing metadata");
+              // Currently, we just skip updating an index without meta,
+              // but we could either fill it in from scratch (asynchronously)
+              // or delete it and have the front-end recreate it.
             }
           }
         }
