@@ -912,6 +912,15 @@ export async function updateDatasetIndexesIfNeeded(
 
     log.debug("updateDatasetIndexesIfNeeded: Processing object paths & updating indexes");
 
+    defaultIndexStatusReporter({
+      objectCount: defaultIndex.status.objectCount,
+      progress: {
+        phase: 'indexing',
+        total: defaultIndex.status.objectCount,
+        loaded: 0,
+      },
+    });
+
     let newDefaultIndexObjectCount = defaultIndexMeta.objectCount;
 
     let idx: number = 0;
