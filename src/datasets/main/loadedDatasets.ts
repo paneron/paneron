@@ -952,6 +952,17 @@ export async function updateDatasetIndexesIfNeeded(
           if (!affectedFilteredIndexes[idxID]) {
             const meta = await indexMeta(idx);
             if (meta) {
+              // Notify frontend that the index is being updated.
+              indexStatusChanged.main!.trigger({ workingCopyPath: workDir, datasetID, indexID: idxID, status: {
+                objectCount: meta.objectCount,
+                progress: {
+                  phase: 'counting',
+                  // These are placeholders,
+                  // this code doesn’t estimate progress yet:
+                  loaded: 0,
+                  total: 1, 
+                },
+              } });
               affectedFilteredIndexes[idxID] = {
                 idx,
                 newObjectCount: meta.objectCount,
