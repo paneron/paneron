@@ -71,7 +71,7 @@ export function getRepoWorkers(workDir: string): Promise<RepoWorkers> {
           spawnWorker(),
         ]).then(([ sync, reader ]) => {
           sync.initialize({ workDirPath: workDir });
-          reader.initialize({ workDirPath: workDir});
+          reader.initialize({ workDirPath: workDir });
           resolve({ sync, reader });
         }).catch(reject);
       });
