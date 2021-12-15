@@ -170,7 +170,12 @@ export async function loadRepository(workingCopyPath: string): Promise<RepoStatu
 }
 
 
-/* Cancels repo status subscription, clears update timeout, and removes status. */
+/**
+ * Unload effectively cancels repo status subscription,
+ * clears update timeout, terminates workers, and sends an unloaded event.
+ *
+ * Has no effect if is not loaded.
+ */
 export async function unloadRepository(workingCopyPath: string) {
   loadedRepositories[workingCopyPath]?.statusStream?.unsubscribe();
   const timeout = loadedRepositories[workingCopyPath]?.nextSyncTimeout;
