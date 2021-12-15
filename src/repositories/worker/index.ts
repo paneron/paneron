@@ -146,7 +146,7 @@ const methods: WorkerSpec = {
 
     if (repositoryStatus?.workDirPath === workDirPath) {
       // Already initialized?
-      console.warn("Repository already initialized", workDirPath);
+      console.warn("Worker: Repository already initialized", workDirPath);
 
     } else {
       const defaultStatus: RepoStatus = {
