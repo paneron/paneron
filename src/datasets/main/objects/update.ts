@@ -3,13 +3,13 @@ import { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/ty
 import { ObjectChangeset, ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
 import { getDatasetRoot } from 'repositories/main/meta';
+import { readLFSParams } from 'repositories/main/readRepoConfig';
+import { LFSParams } from 'repositories/types';
 import { updateDatasetIndexesIfNeeded } from '../loadedDatasets';
 import { toBufferChangeset } from '../buffer-dataset-conversion';
 import { API as Datasets } from '../../types';
 import { diffObjectDatasets } from './equality';
 import { readObjectCold } from './read';
-import { readLFSParams } from 'repositories/main/readRepoConfig';
-import { LFSParams } from 'repositories/types';
 
 
 export const updateObjects: Datasets.Data.UpdateObjects =
