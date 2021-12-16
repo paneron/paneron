@@ -144,7 +144,6 @@ export const getBufferDataset: Repositories.Data.GetBufferDataset = async functi
 
 
 /**
- * 
  * NOTE: This isn’t a Git-specific function,
  * it works with filesystem directly.
  * 
