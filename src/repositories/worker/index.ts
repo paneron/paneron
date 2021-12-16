@@ -187,11 +187,9 @@ const methods: WorkerSpec = {
   repo_chooseMostRecentCommit: commits.chooseMostRecentCommit,
   repo_updateBuffers: lockingRepoOperationWithStatusReporter(updateBuffers),
   repo_addExternalBuffers: lockingRepoOperationWithStatusReporter(addExternalBuffers),
-  repo_readBuffers: ({ workDir, rootPath, resolveLFS }) =>
-    readBuffers(workDir, rootPath, resolveLFS),
-  repo_readBuffersAtVersion: ({ workDir, rootPath, commitHash }) =>
-    readBuffersAtVersion(workDir, rootPath, commitHash),
-  repo_getBufferDataset: getBufferDataset,
+  repo_readBuffers: repoOperation(readBuffers),
+  repo_readBuffersAtVersion: repoOperation(readBuffersAtVersion),
+  repo_getBufferDataset: repoOperation(getBufferDataset),
   repo_deleteTree: lockingRepoOperation(deleteTree),
   repo_moveTree: lockingRepoOperation(moveTree),
   repo_resolveChanges: lockingRepoOperation(resolveChanges),

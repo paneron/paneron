@@ -29,11 +29,11 @@ import { listDescendantPaths, listDescendantPathsAtVersion } from './list';
  * this function will attempt to retrieve LFS data if `resolveLFS` is provided,
  * returning unresolved pointer if download fails.
  */
-export async function readBuffers(
-  workDir: string,
-  rootPath: string,
-  resolveLFS?: { url: string, auth: { username: string, password: string } },
-): Promise<Record<string, Uint8Array>> {
+export const readBuffers: Repositories.Data.ReadBuffers = async function ({
+  workDir,
+  rootPath,
+  resolveLFS,
+}): Promise<Record<string, Uint8Array>> {
   const buffers: Record<string, Uint8Array> = {};
   const absoluteRootPath = path.join(workDir, rootPath);
 
@@ -74,23 +74,23 @@ export async function readBuffers(
  *
  * NOTE: Does not support LFS yet.
  */
-export async function readBuffersAtVersion(
-  workDir: string,
-  rootPath: string,
-  atCommitHash: string,
-): Promise<Record<string, Uint8Array>> {
+export const readBuffersAtVersion: Repositories.Data.ReadBuffersAtVersion = async function ({
+  workDir,
+  rootPath,
+  commitHash,
+}): Promise<Record<string, Uint8Array>> {
   // TODO: Support LFS in `readBuffersAtVersion()`?
 
   const buffers: Record<string, Uint8Array> = {};
   const bufferPathsRelativeToRoot = await listDescendantPathsAtVersion(
     rootPath,
     workDir,
-    atCommitHash);
+    commitHash);
   for (const [relativeBufferPath, _] of bufferPathsRelativeToRoot) {
     const bufferPath = path.join(rootPath, relativeBufferPath);
     const bufferData: Uint8Array | null = await readBufferAtVersion(
       bufferPath,
-      atCommitHash,
+      commitHash,
       workDir);
     if (bufferData) {
       buffers[relativeBufferPath] = bufferData;
