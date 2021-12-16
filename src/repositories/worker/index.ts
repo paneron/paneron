@@ -174,7 +174,7 @@ const methods: WorkerSpec = {
   git_deleteOrigin: repoOperation(remotes.deleteOrigin),
 
   git_init: lockingRepoOperation(workDir.init, { failIfBusy: true }),
-  git_delete: workDir.delete,
+  git_delete: lockingRepoOperation(workDir.delete),
 
   git_clone: lockingRepoOperationWithStatusReporter(sync.clone, { timeout: 120000 }),
   git_pull: lockingRepoOperationWithStatusReporter(sync.pull),
