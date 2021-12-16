@@ -246,12 +246,8 @@ export default interface WorkerMethods {
 
   /**
    * Takes commit hash before and after a change.
-   * 
-   * Infers which buffer paths changed,
-   * infers which object paths in which datasets are affected,
-   * reindexes objects as appropriate,
-   * and sends IPC events to let Paneron & extension windows
-   * refresh shown data.
+   * Walks through repository tree and checks which buffer paths changed.
+   * Returns those.
    */
   repo_resolveChanges: Repositories.Data.ResolveChanges
 }
