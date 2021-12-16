@@ -273,7 +273,6 @@ export default {
   //streamIndexStatus,
   getFilteredObject,
   locatePositionInFilteredIndex,
-  resolveDatasetChanges,
 };
 
 
