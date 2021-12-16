@@ -154,7 +154,7 @@ export const getBufferDataset: Repositories.Data.GetBufferDataset = async functi
  * Buffer is considered nonexistent if ENOENT is received,
  * other errors are thrown.
  */
-export function readBuffer(fullPath: string): Uint8Array | null {
+function readBuffer(fullPath: string): Uint8Array | null {
   try {
     return fs.readFileSync(fullPath);
   } catch (e) {
@@ -175,7 +175,7 @@ export function readBuffer(fullPath: string): Uint8Array | null {
  * 
  * NOTE: This function is somewhat slow.
  */
-export async function readBufferAtVersion(
+async function readBufferAtVersion(
   path: string,
   commitHash: string,
   workDir: string,
