@@ -7,7 +7,7 @@ import { BufferChange } from '@riboseinc/paneron-extension-kit/types/buffers';
 import { INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
 
 import { forceSlug } from 'utils';
-import { checkPathIsOccupied } from 'main/checkPathIsOccupied';
+import { checkPathIsOccupied } from 'main/fs-utils';
 import { serializeMeta } from 'main/meta-serdes';
 
 import {

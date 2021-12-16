@@ -7,6 +7,7 @@ import { downloadBlobFromPointer, readPointer } from '@riboseinc/isogit-lfs';
 import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 
 import { stripLeadingSlash, stripTrailingSlash } from '../../../utils';
+import { readBuffer } from '../../../main/fs-utils';
 import { normalizeURL } from '../../util';
 import { Repositories } from '../types';
 import { listDescendantPaths, listDescendantPathsAtVersion } from './list';
@@ -28,6 +29,9 @@ import { listDescendantPaths, listDescendantPathsAtVersion } from './list';
  * If any of the objects read are LFS pointers,
  * this function will attempt to retrieve LFS data if `resolveLFS` is provided,
  * returning unresolved pointer if download fails.
+ *
+ * NOTE: Buffers are read from working directory file tree,
+ * and may contain uncommitted changes.
  */
 export const readBuffers: Repositories.Data.ReadBuffers = async function ({
   workDir,
@@ -140,29 +144,6 @@ export const getBufferDataset: Repositories.Data.GetBufferDataset = async functi
   }).reduce((prev, curr) => ({ ...prev, ...curr }), {});
 
   return bufferDataset;
-}
-
-
-/**
- * NOTE: This isn’t a Git-specific function,
- * it works with filesystem directly.
- * 
- * Returns blob at given path, or null if it doesn’t exist.
- * Blob may have uncommitted changes.
- * 
- * Buffer is considered nonexistent if ENOENT is received,
- * other errors are thrown.
- */
-function readBuffer(fullPath: string): Uint8Array | null {
-  try {
-    return fs.readFileSync(fullPath);
-  } catch (e) {
-    if ((e as any).code === 'ENOENT') {
-      return null;
-    } else {
-      throw e;
-    }
-  }
 }
 
 
