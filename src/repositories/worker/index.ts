@@ -67,6 +67,7 @@ function lockingRepoOperation<I extends GitOperationParams, O>(
     if (lockOpts?.failIfBusy === true && gitLock.isBusy('1')) {
       throw new Error("Lock is busy");
     }
+    // TODO: No need for locking within single-threaded Node worker code
     return await gitLock.acquire('1', async () => {
       return await func(args);
     }, { timeout: lockOpts?.timeout });
