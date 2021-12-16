@@ -30,18 +30,18 @@ export interface RepoWorkers {
 
 /** Terminates both workers for a repository. */
 export async function terminateRepoWorkers(workDir: string) {
-  const repoPromise = WORKERS[workDir];
   log.debug("Repositories: Terminating workers for repo", workDir);
 
+  const repoPromise = WORKERS[workDir];
   if (repoPromise) {
     delete WORKERS[workDir];
-
-    const repo = await repoPromise;
-
-    await terminateWorker(repo.sync);
-    await terminateWorker(repo.reader);
-
-    log.debug("Repositories: Terminating workers for repo: Done", workDir);
+    try {
+      const repo = await repoPromise;
+      await terminateWorker(repo.sync);
+      await terminateWorker(repo.reader);
+    } finally {
+      log.debug("Repositories: Terminating workers for repo: Done", workDir);
+    }
   } else {
     log.debug("Repositories: Terminating workers for repo: Nothing to be done", workDir);
   }
