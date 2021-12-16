@@ -69,7 +69,7 @@ export async function loadRepository(workingCopyPath: string): Promise<RepoStatu
     await unloadRepository(workDir);
   }
 
-  log.debug("Repositories: Load: Reading config", workingCopyPath);
+  log.silly("Repositories: Load: Reading config", workingCopyPath);
 
   let repoCfg: GitRepository;
   try {
@@ -79,7 +79,7 @@ export async function loadRepository(workingCopyPath: string): Promise<RepoStatu
     return { status: 'invalid-working-copy' };
   }
 
-  log.debug("Repositories: Load: Validating working directory path", workingCopyPath);
+  log.silly("Repositories: Load: Validating working directory path", workingCopyPath);
 
   let workDirPathExists: boolean;
   let workDirPathIsWorkable: boolean;
@@ -91,7 +91,7 @@ export async function loadRepository(workingCopyPath: string): Promise<RepoStatu
       log.error("Repositories: Configuration for working copy exists, but working copy directory is missing and no remote is specified.", workingCopyPath);
       return { status: 'invalid-working-copy' };
     } else {
-      log.warn("Repositories: Configuration for working copy exists, but working copy directory is missing. Will attempt to clone again.", workingCopyPath);
+      log.debug("Repositories: Configuration for working copy exists, but working copy directory is missing. Will attempt to clone again.", workingCopyPath);
       workDirPathExists = false;
       workDirPathIsWorkable = true;
     }
@@ -119,11 +119,11 @@ export async function loadRepository(workingCopyPath: string): Promise<RepoStatu
     }
   }
 
-  log.debug("Repositories: Load: Spawning workers", workingCopyPath);
+  log.silly("Repositories: Load: Spawning workers", workingCopyPath);
 
   const workers = await getRepoWorkers(workingCopyPath);
 
-  log.debug("Repositories: Load: Initializing read worker", workingCopyPath);
+  log.silly("Repositories: Load: Subscribing to status updates", workingCopyPath);
 
   const statusStream = workers.sync.streamStatus().subscribe(reportStatus);
 
@@ -133,13 +133,13 @@ export async function loadRepository(workingCopyPath: string): Promise<RepoStatu
     loadTime: new Date(),
   };
 
-  log.debug("Repositories: Load: Kicking off sync", workingCopyPath);
+  log.silly("Repositories: Load: Kicking off sync", workingCopyPath);
 
   syncRepoRepeatedly(workingCopyPath, undefined, workers);
 
   app.on('quit', () => { unloadRepository(workingCopyPath); });
 
-  log.debug("Repositories: Load: Validating working directory", workingCopyPath);
+  log.silly("Repositories: Load: Validating working directory", workingCopyPath);
 
   const workDirIsValid = await workers.sync.git_workDir_validate({
     workDir: workingCopyPath,
@@ -154,7 +154,7 @@ export async function loadRepository(workingCopyPath: string): Promise<RepoStatu
     return INITIAL_STATUS;
 
   } else {
-    log.debug("Repositories: Load: Finishing", workingCopyPath);
+    log.silly("Repositories: Load: Finishing", workingCopyPath);
     await loadedRepositoryStatusChanged.main!.trigger({
       workingCopyPath,
       status: { status: 'ready' },
