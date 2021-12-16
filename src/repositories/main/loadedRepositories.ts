@@ -103,16 +103,16 @@ export async function loadRepository(workingCopyPath: string): Promise<RepoStatu
   }
 
   async function reportStatus(status: RepoStatus) {
+    const statusChanged = (
+      JSON.stringify(loadedRepositories[workingCopyPath]?.latestStatus ?? {}) !==
+      JSON.stringify(status));
+    if (statusChanged) {
+      await loadedRepositoryStatusChanged.main!.trigger({
+        workingCopyPath,
+        status,
+      });
+    }
     if (loadedRepositories[workingCopyPath]) {
-      const statusChanged = (
-        JSON.stringify(loadedRepositories[workingCopyPath].latestStatus) !==
-        JSON.stringify(status));
-      if (statusChanged) {
-        await loadedRepositoryStatusChanged.main!.trigger({
-          workingCopyPath,
-          status,
-        });
-      }
       loadedRepositories[workingCopyPath].latestStatus = status;
     } else {
       statusStream.unsubscribe();
