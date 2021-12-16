@@ -14,24 +14,21 @@ const WORKERS: { [workDir: string]: Promise<RepoWorkers> } = {};
 /**
  * IMPORTANT: Currently, two instances of the same worker are created,
  * and care should be taken to use each the right way.
- * 
- * Reader worker is used in stateless lock-free mode, e.g. when raw buffers need to be read.
- * Only that subset of methods should be used.
- * 
- * Sync worker is used to load datasets and access logical objects,
- * and perform sync (push and pull). This is the one used in endpoints exposed to extensions.
- * 
- * This separation is so that data can be read even if expensive sync operation is ongoing
- * (such as pulling a large repository, or dataset object indexing).
- * 
- * This is not a pretty solution.
  */
 export interface RepoWorkers {
-  reader: Thread & WorkerMethods
+  /**
+   * Sync worker can mutate repository (pull, push, commit changes).
+   */
   sync: Thread & WorkerMethods
+
+  /**
+   * Reader worker should not mutate data, just read buffers.
+   */
+  reader: Thread & WorkerMethods
 }
 
 
+/** Terminates both workers for a repository. */
 export async function terminateRepoWorkers(workDir: string) {
   const repoPromise = WORKERS[workDir];
   log.debug("Repositories: Terminating workers for repo", workDir);
@@ -92,7 +89,7 @@ app.on('quit', terminateAllWorkers);
 
 /**
  * Spawns a repository worker.
- * IMPORTANT: It’s caller’s responsibility to keep track of and terminate workers spawned this way.
+ * IMPORTANT: It’s caller’s responsibility to initialize, keep track of and terminate workers spawned this way.
  * For termination, use `terminateWorker()`.
  */
 export async function spawnWorker(): Promise<Thread & WorkerMethods> {
@@ -128,6 +125,10 @@ export async function terminateWorker(worker: Thread & WorkerMethods) {
 }
 
 
+/**
+ * Runs a one-off task on a repo worker, and kills the worker.
+ * Does not open a repo.
+ */
 export async function oneOffWorkerTask<Result = any>
 (task: (worker: Thread & WorkerMethods) => Promise<Result>) {
   const worker = await spawnWorker();
