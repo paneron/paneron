@@ -171,11 +171,14 @@ export async function loadRepository(workingCopyPath: string): Promise<RepoStatu
  * Has no effect if is not loaded.
  */
 export async function unloadRepository(workingCopyPath: string) {
-  loadedRepositories[workingCopyPath]?.statusStream?.unsubscribe();
-  const timeout = loadedRepositories[workingCopyPath]?.nextSyncTimeout;
-  timeout ? clearTimeout(timeout) : void 0;
-  delete loadedRepositories[workingCopyPath];
   await terminateRepoWorkers(workingCopyPath);
+
+  if (loadedRepositories[workingCopyPath]) {
+    loadedRepositories[workingCopyPath].statusStream?.unsubscribe();
+    const timeout = loadedRepositories[workingCopyPath].nextSyncTimeout;
+    timeout ? clearTimeout(timeout) : void 0;
+    delete loadedRepositories[workingCopyPath];
+  }
 
   await loadedRepositoryStatusChanged.main!.trigger({
     workingCopyPath,
