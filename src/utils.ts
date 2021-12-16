@@ -1,4 +1,32 @@
+import type { Changeset, PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
 import crypto from 'crypto';
+
+export function changesetToPathChanges(
+  changeset: Changeset<any>,
+): PathChanges {
+  const changes: PathChanges = {};
+  for (const [path, change] of Object.entries(changeset)) {
+    if (change.newValue === null && change.oldValue === null) {
+      throw new Error("Encountered a non-change in a changeset");
+    } else if (change.newValue === null && change.oldValue !== null) {
+      changes[path] = 'removed';
+    } else if (change.newValue !== null && change.oldValue === null) {
+      changes[path] = 'added';
+    } else if (change.newValue !== change.oldValue) {
+      changes[path] = 'modified';
+    }
+  }
+  return changes;
+}
+
+// function changedPathsToPathChanges(
+//   changedPaths: [path: string, change: ChangeStatus][]
+// ): PathChanges {
+//   const pathChanges: PathChanges = changedPaths.
+//     map(([path, change]) => ({ [path]: change })).
+//     reduce((prev, curr) => ({ ...prev, ...curr }));
+//   return pathChanges;
+// }
 
 
 export function forceSlug(val: string): string {

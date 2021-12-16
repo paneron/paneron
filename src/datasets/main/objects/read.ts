@@ -110,7 +110,6 @@ export async function readObjectCold(
   let bufferDataset: Record<string, Uint8Array>;
   try {
     bufferDataset = await reader.repo_readBuffers({
-      workDir,
       rootPath,
       resolveLFS: lfsResolutionOptions,
     });
@@ -163,7 +162,7 @@ Promise<(Record<string, any> | null)[] & { length: L }> {
   const datasetRoot = getDatasetRoot('', datasetID);
 
   const bufferDatasets = await Promise.all(commitHashes.map(oid =>
-    sync.repo_readBuffersAtVersion({ workDir, rootPath: path.join(datasetRoot, objectPath), commitHash: oid })
+    sync.repo_readBuffersAtVersion({ rootPath: path.join(datasetRoot, objectPath), commitHash: oid })
   )) as Record<string, Uint8Array>[] & { length: L };
 
   //const bufDs1 = await sync.repo_readBuffersAtVersion({ workDir, rootPath: path.join(datasetRoot, objectPath), commitHash: oidIndex! });

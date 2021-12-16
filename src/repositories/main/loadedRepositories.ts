@@ -115,7 +115,7 @@ export async function loadRepository(workingCopyPath: string): Promise<RepoStatu
       }
       loadedRepositories[workingCopyPath].latestStatus = status;
     } else {
-      streamSubscription.unsubscribe();
+      statusStream.unsubscribe();
     }
   }
 
@@ -125,17 +125,11 @@ export async function loadRepository(workingCopyPath: string): Promise<RepoStatu
 
   log.debug("Repositories: Load: Initializing read worker", workingCopyPath);
 
-  workers.reader.initialize({ workDirPath: workingCopyPath });
-
-  log.debug("Repositories: Load: Initializing sync worker & subscribing to status updates", workingCopyPath);
-
-  const streamSubscription = workers.sync.
-    initialize({ workDirPath: workingCopyPath }).
-    subscribe(reportStatus);
+  const statusStream = workers.sync.streamStatus().subscribe(reportStatus);
 
   loadedRepositories[workingCopyPath] = {
     workers,
-    statusStream: streamSubscription,
+    statusStream,
     loadTime: new Date(),
   };
 

@@ -8,7 +8,7 @@ import { expose } from 'threads/worker';
 import { Observable, Subject } from 'threads/observable';
 import { ModuleMethods } from 'threads/dist/types/master';
 
-import AsyncLock from 'async-lock';
+import { Mutex, withTimeout } from 'async-mutex';
 import { throttle } from 'throttle-debounce';
 
 import {
@@ -17,7 +17,7 @@ import {
   RepoStatusUpdater,
 } from '../types';
 
-import WorkerMethods from './types';
+import WorkerMethods, { RepoUpdate } from './types';
 
 import { getBufferDataset, readBuffers, readBuffersAtVersion } from './buffers/read';
 import { deleteTree, moveTree, updateBuffers, addExternalBuffers } from './buffers/update';
@@ -28,49 +28,72 @@ import sync from './git/sync';
 import workDir from './git/work-dir';
 
 
-const gitLock = new AsyncLock({ timeout: 60000, maxPending: 100 });
+const repoWriteLock = new Mutex();
 
 
 require('events').EventEmitter.defaultMaxListeners = 20;
 
 
-// TODO: Validate that `msg.workDir` is a descendant of a safe directory
-// under user’s home?
-
-
 type RepoOperation<I extends GitOperationParams, O> =
   (opts: I) => Promise<O>;
 
-type ExposedRepoOperation<I extends GitOperationParams, O> =
+/**
+ * Operation on an opened local repository.
+ * Does not allow “workDir” in input parameters.
+ */
+type OpenedRepoOperation<I extends GitOperationParams, O> =
   (opts: Omit<I, 'workDir'>) => Promise<O>;
 
-function repoOperation<I extends GitOperationParams, O>(
+function openedRepoOperation<I extends GitOperationParams, O>(
   func: RepoOperation<I, O>
-): ExposedRepoOperation<I, O> {
-  return async function (args: Omit<I, 'workDir'>) {
-    if (repositoryStatus === null) {
-      throw new Error("Repository is not initialized with a working directory");
+): OpenedRepoOperation<I, O> {
+  return async function (args) {
+    if (openedRepository === null) {
+      throw new Error("Repository is not opened");
+    } else {
+      const params = {
+        ...args,
+        // TODO: Validate that `workDir` is a descendant of a safe directory under user’s home
+        workDir: openedRepository.workDirPath,
+      } as I;
+      return await func(params);
     }
-    const params = {
-      ...args,
-      workDir: repositoryStatus.workDirPath,
-    } as I;
-    return await func(params);
   };
 }
 
+/**
+ * Some repository operations cannot run in parallel.
+ * This includes writing new commits, for example.
+ *
+ * Even though we have a single worker per working directory,
+ * async event loop in worker can result in multiple write operations
+ * running simultaneously.
+ *
+ * This wrapper ensures that wrapped function is run within a lock.
+ *
+ * It is caller’s responsibility to run only one worker
+ * that performs mutating operations per repository.
+ */
 function lockingRepoOperation<I extends GitOperationParams, O>(
   func: RepoOperation<I, O>,
-  lockOpts?: { failIfBusy?: boolean, timeout?: number },
-): ExposedRepoOperation<I, O> {
-  return repoOperation(async (args) => {
-    if (lockOpts?.failIfBusy === true && gitLock.isBusy('1')) {
-      throw new Error("Lock is busy");
+  lockOpts?: {
+    failIfBusy?: boolean
+
+    /** If lock is busy, how long can we wait before starting the operation. */
+    timeout?: number
+  },
+): OpenedRepoOperation<I, O> {
+  return openedRepoOperation(async (args) => {
+    if (lockOpts?.failIfBusy === true && repoWriteLock.isLocked()) {
+      throw new Error("Working directory is locked by another Git operation");
     }
-    // TODO: No need for locking within single-threaded Node worker code
-    return await gitLock.acquire('1', async () => {
+    const timeout = lockOpts?.timeout;
+    const lock = timeout
+      ? withTimeout(repoWriteLock, timeout)
+      : repoWriteLock;
+    return await lock.runExclusive(async () => {
       return await func(args);
-    }, { timeout: lockOpts?.timeout });
+    });
   });
 }
 
@@ -81,13 +104,13 @@ type RepoOperationWithStatusReporter<I extends GitOperationParams, O> =
 function lockingRepoOperationWithStatusReporter<I extends GitOperationParams, O>(
   func: RepoOperationWithStatusReporter<I, O>,
   lockOpts?: { failIfBusy?: boolean, timeout?: number },
-): ExposedRepoOperation<I, O> {
+): OpenedRepoOperation<I, O> {
   return lockingRepoOperation(async (args) => {
-    if (repositoryStatus === null) {
+    if (openedRepository === null) {
       throw new Error("Repository is not initialized");
     }
     console.debug("Got repository lock");
-    return await func(args, getRepoStatusUpdater(repositoryStatus.workDirPath));
+    return await func(args, getRepoStatusUpdater());
   }, lockOpts);
 }
 
@@ -98,84 +121,96 @@ export type WorkerSpec = ModuleMethods & WorkerMethods;
 
 // Repositories
 
-interface RepositoryStatus {
+let openedRepository: {
   workDirPath: string
   statusSubject: Subject<RepoStatus>
+  updateSubject: Subject<RepoUpdate>
   latestStatus: RepoStatus
-}
+} | null = null;
 
-let repositoryStatus: RepositoryStatus | null = null;
-
-function getRepoStatusUpdater(workDir: string) {
+function getRepoStatusUpdater() {
   function updater(newStatus: RepoStatus) {
-    if (repositoryStatus === null) {
+    if (openedRepository === null) {
       throw new Error("Repository is not initialized");
     }
     //console.debug("repo status updater: reporting status", workDir, newStatus)
-    repositoryStatus.statusSubject.next(newStatus);
+    openedRepository.statusSubject.next(newStatus);
   }
 
   const updaterDebounced = throttle(100, false, updater);
 
   return (newStatus: RepoStatus) => {
-    if (repositoryStatus === null) {
+    if (openedRepository === null) {
       throw new Error("Repository is not initialized");
     }
 
-    repositoryStatus.latestStatus = newStatus;
+    openedRepository.latestStatus = newStatus;
 
-    if (newStatus.busy && repositoryStatus?.latestStatus?.busy) {
-      return updaterDebounced(newStatus);
+    if (newStatus.busy && openedRepository.latestStatus?.busy) {
+      // To avoid excess communication, debounce repeated updates
+      // with “busy” status (meaning an operation is in progress).
+      updaterDebounced(newStatus);
     } else {
+      // Otherwise, revoke debouncer and update immediately.
       updaterDebounced.cancel();
-      return updater(newStatus);
+      updater(newStatus);
     }
   };
 }
 
 
+// Main API
+
 const methods: WorkerSpec = {
 
   async destroy() {
-    repositoryStatus?.statusSubject.complete();
+    openedRepository?.statusSubject.complete();
   },
 
-  initialize({ workDirPath }) {
-    if (repositoryStatus !== null && repositoryStatus.workDirPath !== workDirPath) {
+  async openLocalRepo(workDirPath) {
+    if (openedRepository !== null && openedRepository.workDirPath !== workDirPath) {
       throw new Error("Repository already initialized with a different working directory path");
-    }
-
-    if (repositoryStatus?.workDirPath === workDirPath) {
-      // Already initialized?
+    } else if (openedRepository?.workDirPath === workDirPath) {
+      // Already opened?
       console.warn("Worker: Repository already initialized", workDirPath);
-
     } else {
       const defaultStatus: RepoStatus = {
         status: 'ready', // TODO: Should say “initializing”, probably
       };
-      repositoryStatus = {
+      openedRepository = {
         workDirPath,
         statusSubject: new Subject<RepoStatus>(),
+        updateSubject: new Subject<RepoUpdate>(),
         latestStatus: defaultStatus,
       };
-      repositoryStatus.statusSubject.next(defaultStatus);
+      openedRepository.statusSubject.next(defaultStatus);
     }
+  },
 
-    return Observable.from(repositoryStatus.statusSubject);
+  streamStatus() {
+    if (openedRepository === null) {
+      throw new Error("Repository is not initialized");
+    }
+    return Observable.from(openedRepository.statusSubject);
+  },
+
+  streamChanges() {
+    if (openedRepository === null) {
+      throw new Error("Repository is not initialized");
+    }
+    return Observable.from(openedRepository.updateSubject);
   },
 
 
   // Git features
 
   git_workDir_validate: workDir.validate,
-
+  git_delete: workDir.delete,
   git_describeRemote: remotes.describe,
-  git_addOrigin: repoOperation(remotes.addOrigin),
-  git_deleteOrigin: repoOperation(remotes.deleteOrigin),
 
   git_init: lockingRepoOperation(workDir.init, { failIfBusy: true }),
-  git_delete: lockingRepoOperation(workDir.delete),
-
+  git_addOrigin: openedRepoOperation(remotes.addOrigin),
+  git_deleteOrigin: openedRepoOperation(remotes.deleteOrigin),
   git_clone: lockingRepoOperationWithStatusReporter(sync.clone, { timeout: 120000 }),
   git_pull: lockingRepoOperationWithStatusReporter(sync.pull),
   git_push: lockingRepoOperationWithStatusReporter(sync.push),
@@ -184,13 +219,13 @@ const methods: WorkerSpec = {
   // Buffer management.
   // TODO: Rename buffers to blobs? They are referred to as “buffers”, but actually we operate on Uint8Array here.
 
-  repo_getCurrentCommit: commits.getCurrentCommit,
-  repo_chooseMostRecentCommit: commits.chooseMostRecentCommit,
+  repo_getCurrentCommit: openedRepoOperation(commits.getCurrentCommit),
+  repo_chooseMostRecentCommit: openedRepoOperation(commits.chooseMostRecentCommit),
   repo_updateBuffers: lockingRepoOperationWithStatusReporter(updateBuffers),
   repo_addExternalBuffers: lockingRepoOperationWithStatusReporter(addExternalBuffers),
-  repo_readBuffers: repoOperation(readBuffers),
-  repo_readBuffersAtVersion: repoOperation(readBuffersAtVersion),
-  repo_getBufferDataset: repoOperation(getBufferDataset),
+  repo_readBuffers: openedRepoOperation(readBuffers),
+  repo_readBuffersAtVersion: openedRepoOperation(readBuffersAtVersion),
+  repo_getBufferDataset: openedRepoOperation(getBufferDataset),
   repo_deleteTree: lockingRepoOperation(deleteTree),
   repo_moveTree: lockingRepoOperation(moveTree),
   repo_resolveChanges: lockingRepoOperation(resolveChanges),
@@ -198,6 +233,5 @@ const methods: WorkerSpec = {
   git_workDir_discardUncommittedChanges: lockingRepoOperation(workDir.discardUncommitted),
 
 }
-
 
 expose(methods);

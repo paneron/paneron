@@ -28,9 +28,9 @@ import {
 
 import { PANERON_REPOSITORY_META_FILENAME } from './meta';
 
-import { makeUUIDv4 } from 'utils';
+import loadedDatasets from '../../datasets/main/loadedDatasets';
 
-import loadedDatasets, { changesetToPathChanges } from '../../datasets/main/loadedDatasets';
+import { changesetToPathChanges, makeUUIDv4 } from 'utils';
 
 import { PaneronRepository, GitRemote, Repository } from '../types';
 
@@ -372,7 +372,6 @@ updatePaneronRepository.main!.handle(async ({ workingCopyPath, info }) => {
   const w = getLoadedRepository(workingCopyPath).workers.sync;
 
   const { newCommitHash } = await w.repo_updateBuffers({
-    workDir: workingCopyPath,
     commitMessage: "Change repository title",
     author,
     bufferChangeset: {
@@ -574,7 +573,6 @@ createRepository.main!.handle(async ({ title, author, mainBranchName: branch }) 
   log.debug("Repositories: Writing Paneron meta", workDirPath);
 
   const { newCommitHash, conflicts } = await w.repo_updateBuffers({
-    workDir: workDirPath,
     commitMessage: "Initial commit",
     author,
     // _dangerouslySkipValidation: true, // Have to, since we cannot validate data
@@ -662,7 +660,6 @@ getBufferDataset.main!.handle(async ({ workingCopyPath, paths }) => {
   const w = getLoadedRepository(workingCopyPath).workers.reader;
 
   return await w.repo_getBufferDataset({
-    workDir: workingCopyPath,
     paths,
   });
 });
@@ -687,7 +684,6 @@ updateBuffers.main!.handle(async ({
   await reportBufferChanges(workingCopyPath, pathChanges);
 
   return await w.repo_updateBuffers({
-    workDir: workingCopyPath,
     author: repoCfg.author,
     commitMessage,
     bufferChangeset,

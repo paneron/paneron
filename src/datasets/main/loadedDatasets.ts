@@ -9,7 +9,7 @@ import { CodecOptions } from 'level-codec';
 import { throttle } from 'throttle-debounce';
 
 import { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
-import { Changeset, ChangeStatus, PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
+import { ChangeStatus } from '@riboseinc/paneron-extension-kit/types/changes';
 
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
 import { listDescendantPaths } from 'repositories/worker/buffers/list';
@@ -247,7 +247,6 @@ const resolveDatasetChanges: (opts: {
   // Find which buffers were added/removed/modified
   const { changedBuffers } = await sync.repo_resolveChanges({
     rootPath: datasetRoot,
-    workDir,
     oidBefore,
     oidAfter,
   });
@@ -322,32 +321,6 @@ async function _writeDefaultIndex(
 
 
 // Utility functions
-
-export function changesetToPathChanges(
-  changeset: Changeset<any>,
-): PathChanges {
-  const changes: PathChanges = {};
-  for (const [path, change] of Object.entries(changeset)) {
-    if (change.newValue === null && change.oldValue === null) {
-      throw new Error("Encountered a non-change in a changeset");
-    } else if (change.newValue === null && change.oldValue !== null) {
-      changes[path] = 'removed';
-    } else if (change.newValue !== null && change.oldValue === null) {
-      changes[path] = 'added';
-    } else if (change.newValue !== change.oldValue) {
-      changes[path] = 'modified';
-    }
-  }
-  return changes;
-}
-// function changedPathsToPathChanges(
-//   changedPaths: [path: string, change: ChangeStatus][]
-// ): PathChanges {
-//   const pathChanges: PathChanges = changedPaths.
-//     map(([path, change]) => ({ [path]: change })).
-//     reduce((prev, curr) => ({ ...prev, ...curr }));
-//   return pathChanges;
-// }
 
 
 /** Strips leading and trailing slashes from dataset directory. */

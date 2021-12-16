@@ -140,7 +140,6 @@ initializeDataset.main!.handle(async ({ workingCopyPath, meta: datasetMeta, data
   log.info("datasets: Initializing with buffer changeset", JSON.stringify(bufferChangeset, undefined, 4), datasetPath);
 
   const { newCommitHash } = await repos.repo_updateBuffers({
-    workDir: workingCopyPath,
     commitMessage: `Initialize dataset at ${datasetPath}`,
     author,
     bufferChangeset,
@@ -387,7 +386,6 @@ deleteDataset.main!.handle(async ({ workingCopyPath, datasetID }) => {
 
   // Delete dataset tree
   const deletionResult = await w.repo_deleteTree({
-    workDir: workingCopyPath,
     commitMessage: `Delete dataset at ${datasetID}`,
     author,
     treeRoot: datasetID,
@@ -405,7 +403,6 @@ deleteDataset.main!.handle(async ({ workingCopyPath, datasetID }) => {
   const datasetMetaPath = path.join(datasetID, DATASET_FILENAME);
 
   const repoMetaUpdateResult = await w.repo_updateBuffers({
-    workDir: workingCopyPath,
     commitMessage: "Record dataset deletion",
     author,
     bufferChangeset: {

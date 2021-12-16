@@ -70,9 +70,12 @@ export function getRepoWorkers(workDir: string): Promise<RepoWorkers> {
           spawnWorker(),
           spawnWorker(),
         ]).then(([ sync, reader ]) => {
-          sync.initialize({ workDirPath: workDir });
-          reader.initialize({ workDirPath: workDir });
-          resolve({ sync, reader });
+          Promise.all([
+            sync.openLocalRepo(workDir, 'rw'),
+            reader.openLocalRepo(workDir, 'r'),
+          ]).then(() => {
+            resolve({ sync, reader })
+          }).catch(reject);
         }).catch(reject);
       });
     });

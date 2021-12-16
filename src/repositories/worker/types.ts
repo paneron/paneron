@@ -1,5 +1,5 @@
 import type { Observable } from 'threads/observable';
-import type { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
+import type { ChangeStatus, CommitOutcome, PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
 import type { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 import type {
   AuthoringGitOperationParams,
@@ -17,9 +17,20 @@ import type {
 } from 'repositories/types';
 
 
-export type ExposedGitRepoOperation<F extends (opts: any) => any> =
+/**
+ * Operation on an opened local repository.
+ * Same function as F, but omits “workDir” from first parameter.
+ * 
+ * See `openLocalRepo` function for details.
+ *
+ * (The convention is that all worker methods take first argument
+ * as an object containing required parameters, often including “workDir”.)
+ */
+type OpenedRepoOperation<F extends (opts: any) => any> =
   (opts: Omit<Parameters<F>[0], 'workDir'>) =>
     ReturnType<F>
+// TODO: Check in `OpenedRepoOperation` that wrapped function takes workDir parameter
+// TODO: Consolidate the two `OpenedRepoOperation` types, they seem to attempt the same in different ways.
 
 
 export type WithStatusUpdater<F extends (opts: any) => any> =
@@ -161,55 +172,97 @@ export namespace Repositories {
 }
 
 
+export interface RepoUpdate {
+  oid: string
+  paths: PathChanges
+}
+
+
 export default interface WorkerMethods {
-  destroy: () => Promise<void>
+
+  // Worker setup and teardown methods
 
   /**
-   * Initialize worker: give it Git repo’s working directory path,
-   * and get an observable for monitoring repository status in return.
+   * “Opening” a local repo (represented by working directory path)
+   * serves two purposes:
+   *
+   * 1. Avoiding subsequently passing workDir to every function that needs it.
+   * 2. Helping ensure at most one worker mutates given Git repository
+   *    (within itself, the worker can use fast in-memory locking).
+   *
+   * The second point is not enforced yet,
+   * but it already provides a good way for signaling caller’s intention
+   * and making it obvious if two code paths use openWorkDir in writeable mode.
+   * (Locking working directory for writes could be implemented in future
+   * if caller’s discipline becomes a concern, e.g. via a lockfile though
+   * that’s less portable to non-Node environments such as Web workers.)
+   *
+   * Working directory assignment is final for worker lifetime.
+   *
+   * Working directory does not need to exist for opening in 'rw' mode.
+   *
+   * If a function requiring working directory to be open is called before
+   * the directory is assigned, it will throw.
    */
-  initialize: (msg: { workDirPath: string }) => Observable<RepoStatus>
+  openLocalRepo: (workDirPath: string, mode: 'r' | 'rw') => Promise<void>
+
+  destroy: () => Promise<void>
 
 
-  // Maybe also getLatestStatus() => Promise<RepoStatus>?
+  // Streams worker work results
+
+  streamStatus: () => Observable<RepoStatus>
+
+  /**
+   * Returns a stream that emits every time
+   * HEAD is updated (e.g., after a pull or a commit).
+   *
+   * Each emitted value indicates new current OID hash
+   * and changed buffers, if any.
+   *
+   * Not yet fully supported.
+   */
+  streamChanges: () => Observable<RepoUpdate>
+
+
+  // Git operations that don’t require opening a repo
+
+  git_workDir_validate: Git.WorkDir.Validate
+  git_delete: Git.WorkDir.Delete
+  git_describeRemote: Git.Remotes.Describe
+
 
   // Git operations
 
-  git_init: ExposedGitRepoOperation<Git.WorkDir.Init>
-  git_delete: Git.WorkDir.Delete
-
-  git_clone: ExposedGitRepoOperation<Git.Sync.Clone>
-
-  git_pull: ExposedGitRepoOperation<Git.Sync.Pull>
-  git_push: ExposedGitRepoOperation<Git.Sync.Push>
-
-  git_describeRemote: Git.Remotes.Describe
-  git_addOrigin: ExposedGitRepoOperation<Git.Remotes.AddOrigin>
-  git_deleteOrigin: ExposedGitRepoOperation<Git.Remotes.DeleteOrigin>
+  git_init: OpenedRepoOperation<Git.WorkDir.Init>
+  git_clone: OpenedRepoOperation<Git.Sync.Clone>
+  git_pull: OpenedRepoOperation<Git.Sync.Pull>
+  git_push: OpenedRepoOperation<Git.Sync.Push>
+  git_addOrigin: OpenedRepoOperation<Git.Remotes.AddOrigin>
+  git_deleteOrigin: OpenedRepoOperation<Git.Remotes.DeleteOrigin>
 
 
   // Housekeeping
 
-  git_workDir_validate: Git.WorkDir.Validate
-  git_workDir_discardUncommittedChanges: ExposedGitRepoOperation<Git.WorkDir.DiscardUncommittedChanges>
+  git_workDir_discardUncommittedChanges: OpenedRepoOperation<Git.WorkDir.DiscardUncommittedChanges>
 
 
   // Working with raw unstructured data (internal)
 
   /** Returns the hash of the latest commit in the repository. */
-  repo_getCurrentCommit: Repositories.Data.GetCurrentCommit
+  repo_getCurrentCommit: OpenedRepoOperation<Repositories.Data.GetCurrentCommit>
 
   /**
    * Given a list of commit hashes,
    * walks back history and returns one that was created most recently.
    */
-  repo_chooseMostRecentCommit: Repositories.Data.ChooseMostRecentCommit
+  repo_chooseMostRecentCommit: OpenedRepoOperation<Repositories.Data.ChooseMostRecentCommit>
 
   /**
    * Given a list of buffer paths,
    * returns a map of buffer paths to buffers or null.
    */
-  repo_getBufferDataset: Repositories.Data.GetBufferDataset
+  repo_getBufferDataset: OpenedRepoOperation<Repositories.Data.GetBufferDataset>
 
   /**
    * Given a work dir and a rootPath, returns a map of descendant buffer paths
@@ -217,16 +270,16 @@ export default interface WorkerMethods {
    *
    * Optionally resolves LFS pointers, in which case may take a while.
    */
-  repo_readBuffers: Repositories.Data.ReadBuffers
+  repo_readBuffers: OpenedRepoOperation<Repositories.Data.ReadBuffers>
 
   /**
    * Given a path, returns a map of descendant buffer paths
    * to buffers.
    */
-  repo_readBuffersAtVersion: Repositories.Data.ReadBuffersAtVersion
+  repo_readBuffersAtVersion: OpenedRepoOperation<Repositories.Data.ReadBuffersAtVersion>
 
   /** Updates buffers in repository. */
-  repo_updateBuffers: Repositories.Data.UpdateBuffers
+  repo_updateBuffers: OpenedRepoOperation<Repositories.Data.UpdateBuffers>
 
   /**
    * Creates buffers using specified files from filesystem.
@@ -236,18 +289,18 @@ export default interface WorkerMethods {
    * If any of specified absolute file paths does not exist in filesystem,
    * throws an error.
    */
-  repo_addExternalBuffers: Repositories.Data.AddExternalBuffers
+  repo_addExternalBuffers: OpenedRepoOperation<Repositories.Data.AddExternalBuffers>
 
   /** Deletes repository subtree. Fast, but doesn’t validate data. */
-  repo_deleteTree: Repositories.Data.DeleteTree
+  repo_deleteTree: OpenedRepoOperation<Repositories.Data.DeleteTree>
 
   /** Moves repository subtree to another location. Fast, but doesn’t validate data. */
-  repo_moveTree: Repositories.Data.MoveTree
+  repo_moveTree: OpenedRepoOperation<Repositories.Data.MoveTree>
 
   /**
    * Takes commit hash before and after a change.
    * Walks through repository tree and checks which buffer paths changed.
    * Returns those.
    */
-  repo_resolveChanges: Repositories.Data.ResolveChanges
+  repo_resolveChanges: OpenedRepoOperation<Repositories.Data.ResolveChanges>
 }

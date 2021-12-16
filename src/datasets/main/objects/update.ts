@@ -42,7 +42,6 @@ async function ({
   //console.debug("updateObjects: got changeset", JSON.stringify(objectChangeset), bufferChangeset);
 
   const result = await sync.repo_updateBuffers({
-    workDir,
     author,
     commitMessage,
     bufferChangeset,
@@ -75,7 +74,6 @@ async function ({
 
   if (newSubtreePath) {
     result = await sync.repo_moveTree({
-      workDir,
       author,
       commitMessage,
       oldTreeRoot: path.posix.join(datasetRoot, oldSubtreePath),
@@ -83,7 +81,6 @@ async function ({
     });
   } else {
     result = await sync.repo_deleteTree({
-      workDir,
       author,
       commitMessage,
       treeRoot: path.posix.join(datasetRoot, oldSubtreePath),
@@ -133,7 +130,6 @@ async function ({
   }
 
   const result = await sync.repo_addExternalBuffers({
-    workDir,
     commitMessage,
     author,
     paths: pathMap,
