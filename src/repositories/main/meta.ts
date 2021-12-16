@@ -4,18 +4,14 @@
 
 import path from 'path';
 import log from 'electron-log';
-import { app } from 'electron';
 import { DatasetInfo } from '../../datasets/types';
 import { deserializeMeta } from '../../main/meta-serdes';
 import { PaneronRepository, SOLE_DATASET_ID } from '../types';
-import { spawnWorker, terminateWorker } from './workerManager';
+import { readBuffer } from 'main/fs-utils';
 
 
 export const PANERON_REPOSITORY_META_FILENAME = 'paneron.yaml';
 export const DATASET_FILENAME = 'panerondataset.yaml';
-
-const readerWorker = spawnWorker();
-app.on('quit', async () => await terminateWorker(await readerWorker));
 
 
 /**
@@ -23,10 +19,7 @@ app.on('quit', async () => await terminateWorker(await readerWorker));
  * read from `PANERON_REPOSITORY_META_FILENAME` directly under `workingCopyPath`.
  */
 export async function readPaneronRepoMeta(workingCopyPath: string): Promise<PaneronRepository> {
-  const meta = (await (await readerWorker).repo_getBufferDataset({
-    workDir: workingCopyPath,
-    paths: [PANERON_REPOSITORY_META_FILENAME],
-  }))[PANERON_REPOSITORY_META_FILENAME];
+  const meta = readBuffer(path.join(workingCopyPath, PANERON_REPOSITORY_META_FILENAME));
 
   if (meta === null) {
     throw new Error("Paneron repository metadata file is not found");
@@ -89,10 +82,7 @@ Promise<DatasetInfo> {
   const datasetRoot = getDatasetRoot('', datasetID);
   const datasetMetaPath = path.join(datasetRoot, DATASET_FILENAME);
 
-  const meta = (await (await readerWorker).repo_getBufferDataset({
-    workDir,
-    paths: [datasetMetaPath],
-  }))[datasetMetaPath];
+  const meta = readBuffer(path.join(workDir, datasetMetaPath));
 
   if (meta === null) {
     log.error("Cannot read dataset metadata", workDir, datasetID, datasetMetaPath);
