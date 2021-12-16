@@ -146,7 +146,7 @@ export async function loadRepository(workingCopyPath: string): Promise<RepoStatu
   });
 
   if (workDirPathExists && !workDirIsValid) {
-    log.warn("Repositories: Working copy in filesystem is invalid (not a Git repo?)", workingCopyPath);
+    log.warn("Repositories: Load: Working copy in filesystem is invalid (not a Git repo?)", workingCopyPath);
     await loadedRepositoryStatusChanged.main!.trigger({
       workingCopyPath,
       status: { busy: { operation: 'initializing' } },
