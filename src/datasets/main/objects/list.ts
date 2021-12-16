@@ -5,7 +5,10 @@ import path from 'path';
 const COMPOSITE_OBJECT_DIRNAME_EXTENSION = '.pan';
 
 
-/* Composite objects are directories with a special extension. Returns slash-prepended path. */
+/**
+ * Composite objects are directories with a special extension. Returns slash-prepended path.
+ * Note: this is to support a provisional feature.
+ */
 function getCompositeObjectPathForBufferPath(bufferPath: string): string | null {
   const parts = bufferPath.split(path.posix.sep);
   const firstCompositePartIndex =
@@ -19,9 +22,12 @@ function getCompositeObjectPathForBufferPath(bufferPath: string): string | null 
 }
 
 
-/* Given a generator of buffer paths, yields strings representing object paths.
-   It may return the same object path more than once, since multiple buffers
-   can be part of a single object. */
+/**
+ * Given a generator of buffer paths, yields strings representing object paths.
+ *
+ * NOTE: May return the same object path more than once, since multiple buffers
+ * can be part of a single object (although that feature isn’t implemented yet).
+ */
 export async function* listObjectPaths(
   bufferPaths: AsyncGenerator<string>,
 ): AsyncGenerator<string> {
