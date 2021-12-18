@@ -50,13 +50,14 @@ export function getDatasetRootAbsolute(absoluteWorkDirPath: string, datasetID: s
  * Repository root can be empty string,
  * in which case the returned path will start with leading slash.
  * 
- * Examples:
- * 
- *     getDatasetRoot('', '') => error
- *     getDatasetRoot('', '@') => '/'
- *     getDatasetRoot('testrepo', '@') => 'testrepo/'
- *     getDatasetRoot('testrepo', 'dataset') => 'testrepo/dataset'
- *     getDatasetRoot('', 'complex/dataset/id') => '/complex/dataset/id'
+ * @example
+ * ```
+ * getDatasetRoot('', '') => error
+ * getDatasetRoot('', '@') => '/'
+ * getDatasetRoot('testrepo', '@') => 'testrepo/'
+ * getDatasetRoot('testrepo', 'dataset') => 'testrepo/dataset'
+ * getDatasetRoot('', 'complex/dataset/id') => '/complex/dataset/id'
+ * ```
  */
 export function getDatasetRoot(workDirPath: string, datasetID: string) {
   if (!datasetID.trim()) {
