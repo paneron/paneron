@@ -4,10 +4,10 @@
 
 import path from 'path';
 import log from 'electron-log';
-import { DatasetInfo } from '../../datasets/types';
-import { deserializeMeta } from '../../main/meta-serdes';
-import { PaneronRepository, SOLE_DATASET_ID } from '../types';
 import { readBuffer } from 'main/fs-utils';
+import { deserializeMeta } from 'main/meta-serdes';
+import { DatasetInfo } from 'datasets/types';
+import { PaneronRepository, SOLE_DATASET_ID } from '../types';
 
 
 export const PANERON_REPOSITORY_META_FILENAME = 'paneron.yaml';
