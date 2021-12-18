@@ -52,11 +52,11 @@ export function getDatasetRootAbsolute(absoluteWorkDirPath: string, datasetID: s
  * 
  * Examples:
  * 
- *     getDatasetID('', '') => error
- *     getDatasetID('', '@') => '/'
- *     getDatasetID('testrepo', '@') => 'testrepo/'
- *     getDatasetID('testrepo', 'dataset') => 'testrepo/dataset'
- *     getDatasetID('', 'complex/dataset/id') => '/complex/dataset/id'
+ *     getDatasetRoot('', '') => error
+ *     getDatasetRoot('', '@') => '/'
+ *     getDatasetRoot('testrepo', '@') => 'testrepo/'
+ *     getDatasetRoot('testrepo', 'dataset') => 'testrepo/dataset'
+ *     getDatasetRoot('', 'complex/dataset/id') => '/complex/dataset/id'
  */
 export function getDatasetRoot(workDirPath: string, datasetID: string) {
   if (!datasetID.trim()) {
