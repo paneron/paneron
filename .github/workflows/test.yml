@@ -39,24 +39,41 @@ jobs:
       matrix:
         # , ubuntu-latest
         os: [macos-latest, windows-latest]
+        node-version: [16]
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
-          node-version: 12
+          node-version: ${{ matrix.node-version }}
 
-      - name: Install project dependencies
-        if: steps.yarn-cache.outputs.cache-hit != 'true'
-        run: yarn
+      - uses: pnpm/action-setup@v2
+        name: Install pnpm
+        id: pnpm-install
+        with:
+          version: 7
+          run_install: false
+
+      # See: https://github.com/pnpm/action-setup#use-cache-to-reduce-installation-time
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v3
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --strict-peer-dependencies
 
       - name: Run tests
-        run: yarn compile
-        # yarn test
-        # In package.json:
-        #   "test": "run-s test:*",
-        #   "test:jest": "jest",
-        #   "test:types": "tsc --noEmit && tsc --project ./website --noEmit",
+        run: pnpm run all:build

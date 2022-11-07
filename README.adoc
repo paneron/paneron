@@ -68,10 +68,12 @@ You’ll need the following installed:
 * Node 16 (installation:
   link:https://github.com/nodesource/distributions/blob/master/README.md#installation-instructions[Ubuntu],
   link:https://nodejs.org/en/download/package-manager/#macos[macOS])
-* Yarn (link:https://classic.yarnpkg.com/en/docs/install/[installation])
+* pnpm (link:https://pnpm.io/installation[installation^])
 * Ubuntu: `libsecret-1-dev` (may or may not be installed by default)
   and some frontend such as `gnome-keyring`.
   (See also `Dockerfile` for how those are installed in a headless setup.)
+* python2: required by electron-builder < 23.0.6
+ (link:https://github.com/electron-userland/electron-builder/issues/6606[See this issue on how to resolve^])
 
 From project root, run `yarn` and then `yarn run dev`.
 
@@ -148,7 +150,7 @@ This helps us catch compilation errors before code reaches CI.
 
 ==== Automated testing
 
-Currently, the test suite works on macOS only (with `yarn test-mac-e2e`),
+Currently, the test suite works on macOS only (with `pnpm run -r test-mac-e2e`),
 and requires the app to be compiled and built first (which makes it very slow to run).
 
 ==== Releasing

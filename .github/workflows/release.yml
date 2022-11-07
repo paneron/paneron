@@ -25,15 +25,16 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
+        node-version: [16]
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Node.js, NPM and Yarn
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: ${{ matrix.node-version }}
 
       - name: Prepare for app notarization (macOS)
         if: startsWith(matrix.os, 'macos')
@@ -60,11 +61,41 @@ jobs:
         run: |
           md bin/win && cd bin/win && curl.exe -L -o metanorma "https://github.com/metanorma/packed-mn/releases/latest/download/metanorma-windows-x64.exe"
 
-      - name: Build/release Electron app
-        uses: samuelmeuli/action-electron-builder@v1
+      - uses: pnpm/action-setup@v2
+        name: Install pnpm
+        id: pnpm-install
         with:
+          version: 7
+          run_install: false
+
+      # See: https://github.com/pnpm/action-setup#use-cache-to-reduce-installation-time
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v3
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --strict-peer-dependencies
+
+      - name: Build/release Electron app
+        uses: njzydark/action-electron-builder-pnpm@v1.1.0-pnpm
+        with:
+          package_manager: "pnpm"
+
           # Compile before invoking electron-builder
-          build_script_name: "compile"
+          build_script_name: "all:build"
+
+          # Run electron-builder inside core module directory
+          app_root: "packages/core"
 
           # GitHub token, automatically provided to the action
           # (No need to define this secret in the repo settings)
