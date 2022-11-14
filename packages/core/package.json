@@ -14,7 +14,8 @@
   "license": "MIT",
   "scripts": {
     "preinstall": "npx only-allow pnpm",
-    "postinstall": "electron-builder install-app-deps",
+    "postinstall": "run-script-os",
+    "postinstall:default": "electron-builder install-app-deps",
     "test-e2e": "env TS_NODE_PROJECT=\"tsconfig.json\" mocha --require esm --require ts-node/register 'test/**/*.ts'",
     "test-mac-e2e": "pnpm run compile && pnpm run dist:mac && pnpm run test",
     "dev": "electron-webpack dev",
