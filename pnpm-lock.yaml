@@ -117,6 +117,7 @@ importers:
       react-window: ^1.8.5
       retry-axios: ^2.4.0
       rough-notation: ^0.5.1
+      run-script-os: ^1.1.6
       semver: ^7.3.2
       source-map-support: ^0.5.19
       spectron: ^15.0.0
@@ -190,6 +191,7 @@ importers:
       react-window: 1.8.5_qioowf5yrfu4hxf5dlvqa3pkta
       retry-axios: 2.4.0_axios@0.21.1
       rough-notation: 0.5.1
+      run-script-os: 1.1.6
       semver: 7.3.5
       source-map-support: 0.5.19
       subleveldown: 5.0.1
@@ -10944,6 +10946,11 @@ packages:
     dependencies:
       aproba: 1.2.0
     dev: true
+
+  /run-script-os/1.1.6:
+    resolution: {integrity: sha512-ql6P2LzhBTTDfzKts+Qo4H94VUKpxKDFz6QxxwaUZN0mwvi7L3lpOI7BqPCq7lgDh3XLl0dpeXwfcVIitlrYrw==}
+    hasBin: true
+    dev: false
 
   /rxjs/6.6.3:
     resolution: {integrity: sha512-trsQc+xYYXZ3urjOiJOuCOa5N3jAZ3eiSpQB5hIT8zGlL2QfnHLJ2r7GMkBGuIausdJN1OneaI6gQlsqNHHmZQ==}
