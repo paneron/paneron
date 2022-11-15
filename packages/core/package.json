@@ -231,6 +231,7 @@
     "react-window": "^1.8.5",
     "retry-axios": "^2.4.0",
     "rough-notation": "^0.5.1",
+    "run-script-os": "^1.1.6",
     "semver": "^7.3.2",
     "source-map-support": "^0.5.19",
     "subleveldown": "^5.0.1",
