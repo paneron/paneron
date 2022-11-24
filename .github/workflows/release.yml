@@ -21,6 +21,9 @@ jobs:
   release:
     runs-on: ${{ matrix.os }}
 
+    env:
+      USE_HARD_LINKS: false
+
     # Platforms to build on/for
     strategy:
       fail-fast: false
