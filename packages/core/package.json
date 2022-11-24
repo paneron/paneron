@@ -81,7 +81,6 @@
         ]
       }
     ],
-    "afterPack": "./scripts/after-pack.js",
     "afterSign": "electron-builder-notarize",
     "mac": {
       "asarUnpack": [
