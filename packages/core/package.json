@@ -146,6 +146,7 @@
       "artifactName": "paneron-desktop-${version}.${ext}"
     },
     "linux": {
+      "executableName": "paneron",
       "target": [
         "snap"
       ],
