@@ -1,10 +1,33 @@
 name: Test
 
 on:
+  workflow_call:
   push:
     tags-ignore:
       - v*
+    paths-ignore:
+      - '/*.sh'
+      - '/.*'
+      - '/_*'
+      - '/vcpkg.txt'
+      - 'docs/**'
+      - '**.adoc'
+      - '**.md'
+      - '**.nix'
+      - 'flake.lock'
+      - '.github/workflows/*.yml'
+      - '!.github/workflows/test.yml'
   pull_request:
+    paths-ignore:
+      - '/*.sh'
+      - '/.*'
+      - '/_*'
+      - '/vcpkg.txt'
+      - 'docs/**'
+      - '**.adoc'
+      - '**.md'
+      - '**.nix'
+      - 'flake.lock'
 
 jobs:
   test:

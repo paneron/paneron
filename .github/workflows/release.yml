@@ -1,7 +1,20 @@
 name: Build/release
 
 on:
-  push
+  workflow_call:
+  push:
+    paths-ignore:
+      - '/*.sh'
+      - '/.*'
+      - '/_*'
+      - '/vcpkg.txt'
+      - 'docs/**'
+      - '**.adoc'
+      - '**.md'
+      - '**.nix'
+      - 'flake.lock'
+      - '.github/workflows/*.yml'
+      - '!.github/workflows/release.yml'
 
 jobs:
   release:
