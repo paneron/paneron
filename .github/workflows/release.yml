@@ -1,6 +1,7 @@
 name: Build/release
 
 on:
+  workflow_dispatch:
   workflow_call:
   push:
     paths-ignore:
