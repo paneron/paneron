@@ -1,0 +1,21 @@
+name: update-website
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  trigger-website-build:
+    name: Trigger website build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Dispatch update-website event
+        run: |
+          curl \
+            -X POST \
+            --fail-with-body \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GH_PANERON_CI_TOKEN }}" \
+            https://api.github.com/repos/paneron/extensions.paneron.org/dispatches \
+            -d '{"event_type":"update-website","client_payload":{}}'
