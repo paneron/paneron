@@ -4,13 +4,18 @@ image:https://img.shields.io/badge/commitizen-friendly-brightgreen.svg[alt="Comm
 
 == Development
 
-=== Loading local extensions
+=== Testing
+
+==== Loading local extensions
 
 Use Paneron settings window to specify directories with built extension packages.
 Paneron will attempt to load versions in those directories
 whenever corresponding extensions are requested.
 
-=== Troubleshooting steps
+This is useful if an extension is not published in the registry because it’s private,
+or if published extension version is outdated (e.g., during testing).
+
+==== Troubleshooting steps
 
 Considering `%APP_DATA%` directory is under, e.g., `$HOME/Library/Application Support/Paneron` under macOS:
 
@@ -18,20 +23,100 @@ Considering `%APP_DATA%` directory is under, e.g., `$HOME/Library/Application Su
 - Delete `%APP_DATA%/index-dbs`: This drops LevelDB-backed dataset indexes
 - Delete `%APP_DATA%/state`: This drops LevelDB-backed app UI state
 
-=== Pre-requisites
+=== Developing in a container
 
-NOTE: Development environment has been tested on macOS Catalina and Ubuntu 18.
+Pre-requisites: Docker (tested with Docker Desktop).
+
+==== Containerized LSP
+
+The provided `tsserver.Dockerfile` has all the dependencies and launches
+TypeScript language server in stdio mode as default command.
+Use your IDE’s host to communicate. Tested with Neovim 0.7.
+
+==== Containerized `yarn run dev`
+
+NOTE: This is not a well-tested flow. Works under macOS Monterey with glitches.
+
+Ensure your host machine has an X11 server running and accepting connections
+from network clients (on macOS, there is an option XQartz preferences
+and you may additionally need to execute `xhost +localhost`).
+
+Use the provided Dockerfile to build and run the image:
+
+[source]
+----
+docker build -t paneron-dev .
+docker run \
+  -e DISPLAY=host.docker.internal:0 \
+  --build-arg "project_path=/paneron" \
+  -v "$(pwd)/runtime-config:/paneron/.config" \
+  --privileged \
+  paneron-dev
+----
+
+The `-v` flag makes it so that the $HOME/.config directory,
+containing among other things Paneron & Electron runtime data on Ubuntu,
+is mounted within your project’s working directory for easier debugging.
+
+=== Developing without a container
+
+NOTE: Development environment has been tested on macOS Monterey and Ubuntu 18.
 
 You’ll need the following installed:
 
 * macOS: Xcode and the accompanying command-line tools
-* Node 15 (installation:
+* Node 16 (installation:
   link:https://github.com/nodesource/distributions/blob/master/README.md#installation-instructions[Ubuntu],
   link:https://nodejs.org/en/download/package-manager/#macos[macOS])
 * Yarn (link:https://classic.yarnpkg.com/en/docs/install/[installation])
 * Ubuntu: `libsecret-1-dev` (may or may not be installed by default)
+  and some frontend such as `gnome-keyring`.
+  (See also `Dockerfile` for how those are installed in a headless setup.)
 
-=== Committing
+From project root, run `yarn` and then `yarn run dev`.
+
+=== Working on bundled libraries
+
+If you are working on RegistryKit or ExtensionKit, you may need to run the app
+with their local versions rather than those installed from NPM.
+
+The convention for now is to 1) place or symlink their compiled versions
+in a special directory under project root:
+
+[source]
+----
+mkdir -p dependencies-local
+# either
+cp -R /path/to/your/registry-kit/dist dependencies-local/registry-kit-dist
+# or
+ln -sf /path/to/your/registry-kit/dist dependencies-local/registry-kit-dist
+----
+
+then 2) replace their package.json entries with relative paths
+(but don’t commit this change):
+
+[source]
+----
+-   "@riboseinc/paneron-registry-kit": "^1.2.3",
++   "@riboseinc/paneron-registry-kit": "file:./dependencies-local/registry-kit-dist",
+----
+
+...then, after you’re done making changes to RegistryKit and corresponding
+changes to Paneron core, 3) release the new version of the library (e.g., RegistryKit)
+and update the package.json record to use that version (instead of the
+local path) *before* you commit your changes to Paneron:
+
+[source]
+----
+-   "@riboseinc/paneron-registry-kit": "file:./dependencies-local/registry-kit-dist",
++   "@riboseinc/paneron-registry-kit": "^1.2.4",
+----
+
+=== Making changes
+
+Here are conventions regarding working with Git, commit messages and release flow.
+
+==== Committing
 
 This repository is set up with AngularJS commit message convention.
 Pre-commit hook will invoke interactive prompt, powered by Commitizen,
@@ -42,7 +127,7 @@ To make sure you follow the convention:
 * Only use ``git commit`` when making commits
 * Don’t use built-in IDE commit prompts, since they may bypass prepare-commit-msg hook
 
-=== Pulling
+==== Pulling
 
 - It is recommended to use “rebase” behavior of pull (make sure to use a fresh version of Git)
   by having this in your global .gitconfig:
@@ -56,23 +141,23 @@ To make sure you follow the convention:
 - When pulling, Commitizen commit prompt may appear even if there is no merge commit to be made.
   You can dismiss it with Ctrl+C.
 
-=== Pushing
+==== Pushing
 
 There is a pre-push Git hook that compiles the app.
 This helps us catch compilation errors before code reaches CI.
 
-=== Testing
+==== Automated testing
 
 Currently, the test suite works on macOS only (with `yarn test-mac-e2e`),
 and requires the app to be compiled and built first (which makes it very slow to run).
 
-=== Releasing
+==== Releasing
 
 CI builds the application automatically,
 and attaches build artifacts to release tag that matches the version in package.json
 if that release is still a draft.
 
-==== Release sequence
+===== Release sequence
 
 When starting the work on a new version:
 

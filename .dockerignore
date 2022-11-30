@@ -1,0 +1,5 @@
+Dockerfile
+*.Dockerfile
+node_modules
+lsp_env.ini
+README.adoc
