@@ -87,6 +87,39 @@ export function getRepoWorkers(workDir: string): Promise<RepoWorkers> {
 app.on('quit', terminateAllWorkers);
 
 
+// interface WorkerManager<WorkerMethods, WorkerOpts extends Record<string, any>> {
+//   /** Spawns worker if necessary. */
+//   get: (opts: WorkerOpts) => Promise<Thread & WorkerMethods>
+// 
+//   killAll: () => Promise<void>
+//   oneOffTask: ()
+// }
+// interface ManagerOpts<WorkerMethods, WorkerOpts extends Record<string, any>> {
+//   /** When worker is spawned, old workers are auto-killed to not exceed this number. */
+//   maxWorkers: number
+//   initialize: (worker: Thread & WorkerMethods, opts: WorkerOpts) => Promise<void>
+//   destroy: (worker: Thread & WorkerMethods, opts: WorkerOpts) => Promise<void>
+// }
+// function getManager<WorkerMethods, WorkerOpts extends Record<string, any>>
+// (workerPath: string, opts: ManagerOpts<WorkerMethods, WorkerOpts>):
+// WorkerManager<WorkerMethods> {
+// }
+// 
+// interface RepoWorkerOpts {
+//   workDirPath: string
+// }
+// function getRepoWorkerManager(): WorkerManager<WorkerMethods> {
+//   const mgr = getManager<WorkerMethods, RepoWorkerOpts>('../worker/index', {
+//     maxWorkers: 1,
+//     initialize: async (w, opts) => { await w.initialize(opts) },
+//     destroy: (w) => w.destroy(),
+//   });
+//   return {
+//     get: 
+//   };
+// }
+
+
 /**
  * Spawns a repository worker.
  * IMPORTANT: It’s caller’s responsibility to initialize, keep track of and terminate workers spawned this way.

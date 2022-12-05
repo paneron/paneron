@@ -205,7 +205,9 @@ export async function fetchExtensions(): Promise<ExtensionRegistry> {
   try {
     publishedExtensions = await fetchPublishedExtensions();
   } catch (e) {
-    log.error("Plugins: Unable to fetch published extensions", e);
+    const err = e as any;
+    const msg = `${err?.message ?? '(no message)'}: ${err?.stack ?? '(no stack)'}`;
+    log.error("Plugins: Unable to fetch published extensions", msg);
     publishedExtensions = {};
   }
   const localExtensions = await (await worker).listLocalPlugins();
