@@ -4,6 +4,7 @@
     "baseUrl": "./src",
     "noEmit": false,
     "noEmitOnError": false,
+    "noImplicitAny": true,
     "lib": [
       "es2019",
       "DOM"
