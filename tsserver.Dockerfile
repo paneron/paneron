@@ -30,13 +30,13 @@ USER paneron
 WORKDIR ${project_path:?}
 
 COPY --chown=paneron:paneron package.json package.json
-COPY --chown=paneron:paneron yarn.lock yarn.lock
+COPY --chown=paneron:paneron pnpm-lock.yaml pnpm-lock.yaml
 # If you work on dependencies, like registry-kit or extension-kit
 # COPY --chown=paneron:paneron dependencies-local dependencies-local
-RUN yarn install
+RUN pnpm install
 
 # RUN npx electron-rebuild
-RUN yarn add typescript-language-server "typescript@4.2.2"
+RUN pnpm i -D typescript-language-server "typescript@4.2.2"
 
 # see https://github.com/electron/electron/issues/17972
 USER root
