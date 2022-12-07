@@ -6,3 +6,5 @@
 /dependencies-local
 /.cache
 /runtime-config
+/.pnpm-debug.log
+/.pnpm-store
