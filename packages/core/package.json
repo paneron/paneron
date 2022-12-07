@@ -177,7 +177,8 @@
   },
   "resolutions": {
     "abstract-leveldown": "6.3.0",
-    "ts-loader": "8.0.4"
+    "ts-loader": "8.0.4",
+    "typescript": "4.4.2"
   },
   "dependencies": {
     "@aws-crypto/sha256-universal": "^2.0.0",
@@ -302,9 +303,9 @@
     "style-loader": "2.0.0",
     "stylelint": "^13.7.2",
     "stylelint-config-standard": "^20.0.0",
-    "threads": "^1.6.3",
+    "threads": "^1.7.0",
     "threads-plugin": "^1.4.0",
-    "ts-loader": "8.0.4",
+    "ts-loader": "^8.0.4",
     "ts-mocha": "^8.0.0",
     "typescript": "^4.4.2",
     "typescript-plugin-css-modules": "^2.2.0",
