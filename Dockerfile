@@ -30,13 +30,12 @@ USER paneron
 WORKDIR ${project_path:?}
 
 COPY --chown=paneron:paneron package.json package.json
-COPY --chown=paneron:paneron yarn.lock yarn.lock
+COPY --chown=paneron:paneron pnpm-lock.yaml pnpm-lock.yaml
 # If you work on dependencies, like registry-kit or extension-kit
 # COPY --chown=paneron:paneron dependencies-local dependencies-local
-RUN yarn install
+RUN pnpm install
 
 RUN npx electron-rebuild
-# RUN yarn add typescript-language-server "typescript@4.2.2"
 
 # see https://github.com/electron/electron/issues/17972
 USER root
@@ -51,4 +50,4 @@ COPY --chown=paneron:paneron . .
 # RUN apt-get update && apt-get install -yq --no-install-suggests --no-install-recommends x11-apps && apt-get clean && rm -rf /var/lib/apt/lists/
 
 USER paneron
-CMD  dbus-run-session -- sh -c "echo 'testpass' | gnome-keyring-daemon --unlock && yarn run dev --no-sandbox"
+CMD  dbus-run-session -- sh -c "echo 'testpass' | gnome-keyring-daemon --unlock && pnpm run dev --no-sandbox"

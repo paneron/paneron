@@ -33,7 +33,7 @@ The provided `tsserver.Dockerfile` has all the dependencies and launches
 TypeScript language server in stdio mode as default command.
 Use your IDE’s host to communicate. Tested with Neovim 0.7.
 
-==== Containerized `yarn run dev`
+==== Containerized `pnpm run dev`
 
 NOTE: This is not a well-tested flow. Works under macOS Monterey with glitches.
 
@@ -75,7 +75,7 @@ You’ll need the following installed:
 * python2: required by electron-builder < 23.0.6
  (link:https://github.com/electron-userland/electron-builder/issues/6606[See this issue on how to resolve^])
 
-From project root, run `yarn` and then `yarn run dev`.
+From project root, run `pnpm i` and then `pnpm run dev`.
 
 === Working on bundled libraries
 

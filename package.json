@@ -18,6 +18,7 @@
     "clean": "pnpm recursive --filter !paneron run clean; pnpm recursive exec -- rm -rf node_modules; rm shrinkwrap.yaml; rm -rf node_modules",
     "all:build": "pnpm recursive --filter !paneron run compile",
     "all:build:dev": "pnpm recursive --filter !paneron run dev",
+    "dev": "pnpm run all:build:dev",
     "all:dist": "pnpm recursive --filter !paneron run dist",
     "all:lint": "pnpm recursive --filter !paneron run lint",
     "all:lint:fix": "pnpm recursive --filter !paneron run lint:fix"
@@ -26,8 +27,7 @@
   "dependencies": {
     "@paneron/core": "workspace:*"
   },
-  "devDependencies": {
-  },
+  "devDependencies": {},
   "eslintConfig": {
     "parser": "@typescript-eslint/parser",
     "plugins": [
