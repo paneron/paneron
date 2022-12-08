@@ -50,8 +50,6 @@ export async function saveAuth(remote: string, username: string, password: strin
     await keytar.setPassword(service, username, password);
   } catch (e) {
     log.error("Repositories: saveAuth: Error saving password using keytar", remote, username, e);
-    // NOTE: we intentionally throw, because inability to save the key is a deal-breaker
-    // (the app will not be able to push/pull in background).
     throw e;
   }
 }
