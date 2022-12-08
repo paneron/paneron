@@ -20,6 +20,8 @@ RUN apt-get update && apt-get install \
 
 RUN apt-get clean && rm -rf /var/lib/apt/lists/
 
+RUN npm install -g pnpm
+
 ARG project_path=/paneron
 
 # Electron doesn’t like to be run as root
@@ -35,12 +37,14 @@ COPY --chown=paneron:paneron pnpm-lock.yaml pnpm-lock.yaml
 # COPY --chown=paneron:paneron dependencies-local dependencies-local
 RUN pnpm install
 
-RUN npx electron-rebuild
+# RUN pnpm --package=@electron/rebuild dlx electron-rebuild -v $(jq -r .devDependencies.electron < package.json)
 
 # see https://github.com/electron/electron/issues/17972
 USER root
-RUN chown root ${project_path:?}/node_modules/electron/dist/chrome-sandbox
-RUN chmod 4755 ${project_path:?}/node_modules/electron/dist/chrome-sandbox
+# RUN pnpm install
+# RUN ls ${project_path:?}/node_modules/
+# RUN chown root ${project_path:?}/node_modules/electron/dist/chrome-sandbox
+# RUN chmod 4755 ${project_path:?}/node_modules/electron/dist/chrome-sandbox
 
 VOLUME ${project_path:?}/node_modules
 VOLUME ${project_path:?}/.config
