@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install \
     libsecret-1-dev \
     gnome-keyring \
     libxshmfence1 libglu1 libgbm-dev \
+    jq \
     -yq --no-install-suggests --no-install-recommends
 
 RUN apt-get clean && rm -rf /var/lib/apt/lists/
