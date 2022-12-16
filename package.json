@@ -110,7 +110,7 @@
   "husky": {
     "hooks": {
       "prepare-commit-msg": "exec < /dev/tty && git cz --hook || true",
-      "pre-push": "pnpm run lint:ts && pnpm run lint:css && pnpm run compile"
+      "pre-push": "pnpm run -r lint:ts && pnpm run -r lint:css && pnpm run -r compile"
     }
   }
 }

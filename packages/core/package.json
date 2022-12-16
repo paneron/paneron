@@ -30,6 +30,8 @@
     "release": "electron-builder --publish always",
     "cdist": "pnpm run compile && electron-builder -mlw",
     "cdist:dir": "pnpm run dist --dir -c.compression=store -c.mac.identity=null",
+    "lint": "pnpm run lint:css && pnpm run lint:ts",
+    "lint:fix": "pnpm run lint:css:fix && pnpm run lint:ts:fix",
     "lint:css": "stylelint --ignore-path ./.gitignore --max-warnings 0 \"**/*.{css,sass,scss}\"",
     "lint:css:fix": "pnpm run lint:css --fix",
     "lint:ts": "eslint --ext .ts,.tsx --ignore-path ./.gitignore --max-warnings 500 \"**/*.{ts,tsx}\"",
