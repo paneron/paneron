@@ -1,4 +1,5 @@
 /bin
+/packages
 /node_modules
 /.npm
 /dist
