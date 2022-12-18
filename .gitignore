@@ -1,6 +1,5 @@
 /bin
-/packages
-/node_modules
+node_modules
 /.npm
 /dist
 /yarn-error.log
