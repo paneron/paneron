@@ -155,14 +155,14 @@ Here are conventions regarding working with Git, commit messages and release flo
 
 - This repository is set up with AngularJS commit message convention
   (or “conventional commit”), please read those.
-
-  ++++
-  <del>
-  Pre-commit hook will invoke interactive prompt, powered by Commitizen,
-  that will ask you for information and put together a commit message for you.
-  </del>
-  ++++
-  There is currently no hook that would validate commit messages.
++
+++++
+<del>
+Pre-commit hook will invoke interactive prompt, powered by Commitizen,
+that will ask you for information and put together a commit message for you.
+</del>
+++++
+There is currently no hook that would validate commit messages.
 
 ==== Pulling
 
