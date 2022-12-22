@@ -38,12 +38,11 @@ COPY --chown=paneron:paneron pnpm-lock.yaml pnpm-lock.yaml
 # COPY --chown=paneron:paneron dependencies-local dependencies-local
 RUN pnpm install
 
-# RUN pnpm --package=@electron/rebuild dlx electron-rebuild -v $(jq -r .devDependencies.electron < package.json)
+RUN pnpm --package=@electron/rebuild dlx electron-rebuild -v $(jq -r .devDependencies.electron < package.json)
+# RUN pnpm i -D typescript-language-server "typescript@4.2.2"
 
 # see https://github.com/electron/electron/issues/17972
 USER root
-# RUN pnpm install
-# RUN ls ${project_path:?}/node_modules/
 # RUN chown root ${project_path:?}/node_modules/electron/dist/chrome-sandbox
 # RUN chmod 4755 ${project_path:?}/node_modules/electron/dist/chrome-sandbox
 
