@@ -143,17 +143,17 @@ Here are conventions regarding working with Git, commit messages and release flo
 
 ==== Committing
 
-- Aim to achieve both of these goals:
+* Aim to achieve both of these goals:
 
-  - Each commit should be as focused on a particular change as possible.
-    (E.g., don’t mix some feature with a fix or stylistic changes
-    or another feature.)
+** Each commit should be as focused on a particular change as possible.
+   (E.g., don’t mix some feature with a fix or stylistic changes
+   or another feature.)
 
-  - Each commit should contain the codebase in a complete, buildable state.
-    (Don’t commit a change that relies on another change
-    that you haven’t committed yet.)
+** Each commit should contain the codebase in a complete, buildable state.
+   (Don’t commit a change that relies on another change
+   that you haven’t committed yet.)
 
-- This repository is set up with AngularJS commit message convention
+* This repository is set up with AngularJS commit message convention
   (or “conventional commit”), please read those.
 +
 ++++
