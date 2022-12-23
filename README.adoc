@@ -242,3 +242,8 @@ and binaries attached to the draft will be outdated.)
   there are no regressions, and features work as intended.)
 . If QA/tests succeeded, change release status from draft to published.
 . Repeat from the top.
+
+==== Managing packages
+
+TBD: describe how to add, rename (?), remove packages
+within the monorepo (see issue #70).
