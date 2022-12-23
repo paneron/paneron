@@ -186,27 +186,59 @@ There’s no pre-push hook that does it for you at the time.
 
 ==== Releasing
 
-CI builds the application automatically,
-and attaches build artifacts to release tag that matches the version in package.json
-if that release is still a draft.
+NOTE: This section mostly concerns the `desktop` package,
+which publishes native application as the artifact. It hadn’t been fully
+updated to account for the monorepo-based flow yet.
 
-===== Release sequence
+===== Overview
+
+* Collaborative work is expected to be done in feature branches.
+
+** A developer is expected to rebase the branch on the main branch
+   frequently to avoid significant divergence.
+
+** Pull requests from feature branches are merged
+   when the work is considered done
+   by rebasing (without squashing) feature branch commits
+   onto the main branch.
+
+* CI builds the application automatically.
+  (Nevertheless, a developer is expected to run full dev flow
+  and build the app without leaving local development environment.)
+
+===== Release flow
 
 When starting the work on a new version:
 
-. Create a release draft on GitHub (tag name should be in the form of “v1.2.3” and release title can be anything).
-. Update version in package.json (package version should be in the form of “1.2.3”).
-. Push your commits as usual.
+. Create a release draft on GitHub
+  (tag name should be in the form of “v1.2.3”; release title can be anything).
+. Update version in package.json
+  (package version should be in the form of “1.2.3”).
 
-After your final push, when you think this version is ready:
+While working on the version:
 
-. Wait until CI run completes, and artifacts for each platform are attached to release draft.
+* Thereafter commits are pushed as usual, feature branches are merged
+  into main periodically when features are considered done, etc.
+
+* On each new commit in the main branch,
+  CI attaches build artifacts to the release tag that exactly matches
+  the version in package.json—but only if that release is marked “draft”
+  on Github.
+
+After the final commit is added to the main branch
+and this version is considered ready for release:
+
+. Wait until CI run completes and make sure the artifacts
+  for each supported platform are attached to the draft release.
 +
-You may check build logs for each platform, looking for “publishing” in Build/release step,
-to make sure all artifacts were indeed uploaded at the end.
-+
-If, for example, version in package.json during push did not match the draft release you want to publish,
-then CI will silently skip attaching updated build artifacts to the draft, and binaries attached to the draft will be outdated.
-. Perform QA/tests against artifacts attached to the draft. (Make sure that the artifacts attached are of correct versions, there are no regressions, and features work as intended.)
+If something’s off, check build logs for each platform
+and search for “publishing” in the “Build/release” step.
+(For example, if the version in package.json during push did not match
+the version of the draft release,
+CI will silently skip attaching updated build artifacts to the draft
+and binaries attached to the draft will be outdated.)
+. Perform the ultimate QA checks against the artifacts attached to the draft.
+  (Make sure that the artifacts attached are of correct versions,
+  there are no regressions, and features work as intended.)
 . If QA/tests succeeded, change release status from draft to published.
 . Repeat from the top.
