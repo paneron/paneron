@@ -9,6 +9,11 @@ toc::[]
 
 == Development
 
+NOTE: At the moment, a migration from `yarn` to a `pnpm`-based monorepo
+is in progress. This also involves splitting of the main `paneron` package
+into three (`core,` `desktop` and `web`). Development process instructions
+are not yet fully updated.
+
 === Testing
 
 NOTE: Use manual testing.
