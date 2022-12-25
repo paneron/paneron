@@ -1,11 +1,6 @@
 = Paneron host application
 
-:toc:
-:toc-placement!:
-
 image:https://img.shields.io/badge/commitizen-friendly-brightgreen.svg[alt="Commitizen friendly",link="http://commitizen.github.io/cz-cli/"] image:https://github.com/paneron/paneron/workflows/Build/release/badge.svg[alt="Build/release"]
-
-toc::[]
 
 == Development
 
