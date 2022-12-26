@@ -162,7 +162,7 @@ When working on the version:
 * Optional: developer starts a feature (or fix) branch
   from an appropriate source/“upstream” branch.
   Generally it’d be the main branch,
-  but it could be a major supported version branch[^versionbranch]
+  but it could be a major supported version branch[0]
 ** Creating a branch is not required for trivial changes such as README updates
    or changes that are otherwise agreed on
 ** If a branch is used, branch creator is expected to regularly rebase it
@@ -173,15 +173,15 @@ When working on the version:
 * QA tests and reviews proposed changes to application behavior
 * When considered suitable, QA merges feature branch into its source branch
   (e.g., main) by rebasing (without squashing) feature branch commits
-  onto the main[^versionbranch] branch
+  onto the main* branch
 
-On each new commit in the main[^versionbranch] branch,
+On each new commit in the main[0] branch,
 CI attaches build artifacts to the release tag that exactly matches
 the version in package.json—but only if that release is marked “draft”
 on Github.
 
 To release a version after the final commit is added
-to the main[^versionbranch] branch, QA:
+to the main< branch, QA:
 
 . Waits until CI run completes and make sure the artifacts
   for each supported platform are attached to the draft release.
@@ -198,13 +198,11 @@ and binaries attached to the draft will be outdated.)
 . If QA/tests succeeded, changes release status from draft to published.
 . Starts the next version.
 
-[^versionbranch]:
-
-    NOTE: This process does not fully cover a situation where
-    a new major version
-    comes out, but the previous version is still supported.
-    In that scenario the process may include major version branches as well.
-    This may require updating GHA workflows.
+[0] This process does not fully cover a situation where
+a new major version
+comes out, but the previous version is still supported.
+In that scenario the process may include major version branches as well.
+This may require updating GHA workflows.
 
 ==== Commit guidelines
 
