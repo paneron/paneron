@@ -52,7 +52,7 @@ From project root run `pnpm install`.
 
 - Development mode: run `pnpm run dev`.
 - Compilation: run `pnpm run compile`.
-- Building an app: run `pnpm run dist`.
+- Building the app: run `pnpm run dist`.
 
 (For less tested development flows that use containers
 for invoking LSP and/or the dev command, see below.)
