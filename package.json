@@ -17,11 +17,15 @@
     "preinstall": "node -e \"!process.env.npm_config_user_agent.startsWith('pnpm/') && !console.log('Use \\`npx pnpm install\\` to install dependencies in this repository\\n') && process.exit(1)\"",
     "clean": "pnpm recursive --filter !paneron run clean; pnpm recursive exec -- rm -rf node_modules; rm shrinkwrap.yaml; rm -rf node_modules",
     "all:build": "pnpm recursive --filter !paneron run compile",
+    "compile": "pnpm run all:build",
     "all:build:dev": "pnpm recursive --filter !paneron run dev",
     "dev": "pnpm run all:build:dev",
     "all:dist": "pnpm recursive --filter !paneron run dist",
+    "dist": "pnpm run all:dist",
     "all:lint": "pnpm recursive --filter !paneron run lint",
-    "all:lint:fix": "pnpm recursive --filter !paneron run lint:fix"
+    "lint": "pnpm run all:lint",
+    "all:lint:fix": "pnpm recursive --filter !paneron run lint:fix",
+    "lint:fix": "pnpm run all:lint:fix"
   },
   "private": true,
   "dependencies": {
