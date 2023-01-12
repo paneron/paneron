@@ -79,7 +79,7 @@ Use your IDE’s host to communicate. Tested with Neovim 0.7.
 NOTE: This is not a well-tested flow. Works under macOS Monterey with glitches.
 
 Ensure your host machine has an X11 server running and accepting connections
-from network clients (on macOS, there is an option XQartz preferences
+from network clients (on macOS, there is an option XQuartz preferences
 and you may additionally need to execute `xhost +localhost`).
 
 Use the provided Dockerfile to build and run the image:
