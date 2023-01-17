@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+. "$(dirname -- "$0")/_/husky.sh"
+
+LOG_LEVEL="${LOG_LEVEL:-1}"
+
+debug() {
+  ! ((LOG_LEVEL >= 2)) || >&2 echo "debug: $*"
+}
+
+log() {
+  ! ((LOG_LEVEL >= 1)) || >&2 echo "log: $*"
+}
+
+if command -v shasum >/dev/null
+then
+  _checksum() {
+    command shasum -a 256 "$@"
+  }
+else
+  _checksum() {
+    command sha256sum "$@"
+  }
+fi
+
+_sum() {
+  local count=0
+  local lines=()
+
+  while IFS= read -r line
+  do
+    ((count += 1))
+    lines+=("$line")
+
+    if (( count >= 50 ))
+    then
+      _checksum "${lines[@]}"
+
+      # reset batch counter
+      lines=()
+      count=0
+    fi
+  done
+
+  _checksum "${lines[@]}"
+}
+
+# Consolidate all the sums
+sum() {
+  _sum | _checksum
+}
+
+list_all_unignored_files() {
+  git status --ignored --untracked-files --short | grep '^?' | cut -d\  -f2-
+  git ls-files \
+    # | ( xargs -d '\n' -- stat -c%n 2>/dev/null  || : )
+
+}
+
+main() {
+  ! ((LOG_LEVEL >= 2)) || >&2 list_all_unignored_files
+
+  local source_cache_file_prefix=.pre-commit-test-cache-
+  local source_cache_file_suffix
+  source_cache_file_suffix=$(list_all_unignored_files | sort -u | sum | command head -c8)
+
+  local source_cache_file="$source_cache_file_prefix$source_cache_file_suffix"
+  debug source_cache_file="$source_cache_file"
+  if [[ -e "${source_cache_file}" ]]
+  then
+    log "cached: Tests passed.  Skipping."
+  else
+    pnpm run test && \
+      rm -f "${source_cache_file_prefix:?Missing prefix}"* && \
+      touch "${source_cache_file}"
+  fi
+}
+
+main "$@"

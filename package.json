@@ -13,7 +13,7 @@
   "homepage": "https://github.com/paneron/paneron",
   "license": "MIT",
   "scripts": {
-    "test": ">&2 echo Warning: Tests TBI.",
+    "test": "concurrently pnpm:lint pnpm:compile",
     "preinstall": "node -e \"!process.env.npm_config_user_agent.startsWith('pnpm/') && !console.log('Use \\`npx pnpm install\\` to install dependencies in this repository\\n') && process.exit(1)\"",
     "clean": "pnpm recursive --filter !paneron run clean; pnpm recursive exec -- rm -rf node_modules; rm shrinkwrap.yaml; rm -rf node_modules",
     "all:build": "pnpm recursive --filter !paneron run compile",
@@ -25,13 +25,13 @@
     "all:lint": "pnpm recursive --filter !paneron run lint",
     "lint": "pnpm run all:lint",
     "all:lint:fix": "pnpm recursive --filter !paneron run lint:fix",
-    "lint:fix": "pnpm run all:lint:fix"
+    "lint:fix": "pnpm run all:lint:fix",
+    "prepare": "husky install"
   },
   "private": true,
   "dependencies": {
     "@paneron/core": "workspace:*"
   },
-  "devDependencies": {},
   "eslintConfig": {
     "parser": "@typescript-eslint/parser",
     "plugins": [
@@ -111,10 +111,11 @@
       "path": "./node_modules/cz-conventional-changelog"
     }
   },
-  "husky": {
-    "hooks": {
-      "prepare-commit-msg": "exec < /dev/tty && git cz --hook || true",
-      "pre-push": "pnpm run -r lint:ts && pnpm run -r lint:css && pnpm run -r compile"
-    }
+  "devDependencies": {
+    "@commitlint/cli": "^17.4.2",
+    "@commitlint/config-conventional": "^17.4.2",
+    "commitizen": "^4.2.6",
+    "concurrently": "^7.6.0",
+    "husky": "^8.0.0"
   }
 }

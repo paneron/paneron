@@ -215,21 +215,21 @@ This may require updating GHA workflows.
     into a separate commit.
 
 ** Each commit should contain the codebase in a complete, buildable state.
-   
+
 *** Try not to commit a change that relies on another change
     that you haven’t committed yet.
 
 *** Compile, lint and test before committing.
 +
-++++
-<del>There is a pre-push Git hook that compiles the app.
-This helps us catch compilation errors before code reaches CI.</del>
-++++
-There’s no pre-push hook that does it for you at the time.
+There is a pre-commit Git hook that compiles the app.
+This helps us catch compilation errors before code reaches CI.
++
+If for any reason you want to skip hooks, `git commit --no-verify` can be used.
 
 *** If you believe it’s useful to push incomplete work,
     you can go ahead if you’re working in a feature branch,
     but explicitly coordinate this if you are pushing into an upstream branch.
+
 
 * This repository is set up with AngularJS commit message convention
   (or “conventional commit”), please read those.
@@ -241,7 +241,8 @@ Pre-commit hook will invoke interactive prompt, powered by Commitizen,
 that will ask you for information and put together a commit message for you.
 </del>
 ++++
-There is currently no Git hook that would validate commit messages.
+There is currently a commit-msg Git hook that validates commit messages with
+`commitlint`.
 
 === Managing the repository
 
