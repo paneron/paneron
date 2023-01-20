@@ -221,10 +221,10 @@ This may require updating GHA workflows.
 
 *** Compile, lint and test before committing.
 +
-There is a pre-commit Git hook that compiles the app.
+There is a pre-push Git hook that compiles the app.
 This helps us catch compilation errors before code reaches CI.
 +
-If for any reason you want to skip hooks, `git commit --no-verify` can be used.
+If for any reason you want to skip hooks, `git push --no-verify` can be used.
 
 *** If you believe it’s useful to push incomplete work,
     you can go ahead if you’re working in a feature branch,
