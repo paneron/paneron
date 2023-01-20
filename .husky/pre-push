@@ -4,11 +4,11 @@
 LOG_LEVEL="${LOG_LEVEL:-1}"
 
 debug() {
-  ! ((LOG_LEVEL >= 2)) || >&2 printf "debug: %b\n" "$*"
+  ! ((LOG_LEVEL >= 2)) || >&2 printf "\e[2mdebug: %b\e[m\n" "$*"
 }
 
 log() {
-  ! ((LOG_LEVEL >= 1)) || >&2 printf "log: %b\n" "$*"
+  ! ((LOG_LEVEL >= 1)) || >&2 printf "\e[1;2mlog: %b\e[m\n" "$*"
 }
 
 if command -v shasum >/dev/null
@@ -60,7 +60,7 @@ filter_extra_ignores() {
   do
     for ignore_pattern in "${extra_ignores[@]}"
     do
-      log "ignore_pattern=$ignore_pattern"
+      debug "ignore_pattern=$ignore_pattern"
       # log "line=$line"
       # shellcheck disable=SC2053
 
@@ -70,7 +70,7 @@ filter_extra_ignores() {
         if [[ "$line" = ${ignore_pattern%/}/* || \
               "$line" = ${ignore_pattern%/} ]]
         then
-          log "line=$line matches ignore_pattern=$ignore_pattern, \e[1;31mbreaking\e[0m."
+          debug "line=$line matches ignore_pattern=$ignore_pattern, \e[1;31mbreaking\e[0m."
           break_for=1
           break
         fi
@@ -82,13 +82,13 @@ filter_extra_ignores() {
               "$line" = ${ignore_pattern%/}/*  || \
               "$line" = ${ignore_pattern%/} ]]
         then
-          log "line=$line matches ignore_pattern=$ignore_pattern, \e[1;31mbreaking\e[0m."
+          debug "line=$line matches ignore_pattern=$ignore_pattern, \e[1;31mbreaking\e[0m."
           break_for=1
           break
         fi
       fi
 
-      log "line=$line does NOT match ignore_pattern=$ignore_pattern, \e[1;32mNOT breaking\e[0m."
+      debug "line=$line does NOT match ignore_pattern=$ignore_pattern, \e[1;32mNOT breaking\e[0m."
     done
 
     if [[ -z "$break_for" ]]
