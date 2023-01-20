@@ -108,13 +108,13 @@
   },
   "config": {
     "commitizen": {
-      "path": "./node_modules/cz-conventional-changelog"
+      "path": "cz-conventional-changelog"
     }
   },
   "devDependencies": {
     "@commitlint/cli": "^17.4.2",
     "@commitlint/config-conventional": "^17.4.2",
-    "commitizen": "^4.2.6",
+    "commitizen": "^4.3.0",
     "concurrently": "^7.6.0",
     "husky": "^8.0.0"
   }

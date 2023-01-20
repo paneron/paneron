@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+. "$(dirname -- "$0")/_/husky.sh"
+
+log() {
+  ! [[ "$DEBUG" = 1 ]] || printf " \e[2;1mlog: \e[22;2m%b\e[0m\n" "$*"
+} >&2
+
+log "Commit message is: ${1:-NO MESSAGE FOUND}"
+
+# Check .git/COMMIT_EDITMSG file to see if there is any non-default-template
+# text.
+# If so, skip running cz.  Otherwise, run cz.
+message="$(< "${1}" awk '{if ($0 ~ /^# Everything below it will be ignored.$/) {exit} else if ($0 !~ /^#/) {print} else {next}}')"
+log "message is '$message'"
+
+if [[ -z "$message" ]]
+then
+  log emptiness, run git cz
+  if exec < /dev/tty
+  then
+    # pnpm --package commitizen dlx cz --hook
+    node_modules/.bin/cz --hook
+  else
+    :
+  fi
+else
+  log has message, proceed to commit
+  ! [[ "$DEBUG" = 1 ]] || cat "$1"
+fi
+
+log -----

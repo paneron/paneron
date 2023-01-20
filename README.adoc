@@ -235,14 +235,11 @@ If for any reason you want to skip hooks, `git push --no-verify` can be used.
   (or “conventional commit”), please read those.
   Detailed descriptions are appreciated.
 +
-++++
-<del>
-Pre-commit hook will invoke interactive prompt, powered by Commitizen,
+`Prepare-commit-msg` hook will invoke interactive prompt, powered by Commitizen,
 that will ask you for information and put together a commit message for you.
-</del>
-++++
-There is currently a commit-msg Git hook that validates commit messages with
-`commitlint`.
++
+There is currently also a `commit-msg` Git hook that validates commit messages
+with `commitlint`.
 
 === Managing the repository
 
