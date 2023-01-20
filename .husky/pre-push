@@ -4,11 +4,11 @@
 LOG_LEVEL="${LOG_LEVEL:-1}"
 
 debug() {
-  ! ((LOG_LEVEL >= 2)) || >&2 echo "debug: $*"
+  ! ((LOG_LEVEL >= 2)) || >&2 printf "debug: %b\n" "$*"
 }
 
 log() {
-  ! ((LOG_LEVEL >= 1)) || >&2 echo "log: $*"
+  ! ((LOG_LEVEL >= 1)) || >&2 printf "log: %b\n" "$*"
 }
 
 if command -v shasum >/dev/null
