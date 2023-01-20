@@ -49,9 +49,61 @@ sum() {
   _sum | _checksum
 }
 
+extra_ignores=(
+  .commitlintrc.js
+  .husky
+)
+
+filter_extra_ignores() {
+  local break_for=
+  while IFS= read -r line
+  do
+    for ignore_pattern in "${extra_ignores[@]}"
+    do
+      log "ignore_pattern=$ignore_pattern"
+      # log "line=$line"
+      # shellcheck disable=SC2053
+
+      # match directory
+      if [[ "$ignore_pattern" = */ ]]
+      then
+        if [[ "$line" = ${ignore_pattern%/}/* || \
+              "$line" = ${ignore_pattern%/} ]]
+        then
+          log "line=$line matches ignore_pattern=$ignore_pattern, \e[1;31mbreaking\e[0m."
+          break_for=1
+          break
+        fi
+
+      # can match both file and directory
+      else
+        if [[ "$line" = **/${ignore_pattern#/} || \
+              "$line" = $ignore_pattern        || \
+              "$line" = ${ignore_pattern%/}/*  || \
+              "$line" = ${ignore_pattern%/} ]]
+        then
+          log "line=$line matches ignore_pattern=$ignore_pattern, \e[1;31mbreaking\e[0m."
+          break_for=1
+          break
+        fi
+      fi
+
+      log "line=$line does NOT match ignore_pattern=$ignore_pattern, \e[1;32mNOT breaking\e[0m."
+    done
+
+    if [[ -z "$break_for" ]]
+    then
+      echo "$line"
+    else
+      break_for=
+    fi
+  done
+}
+
 list_all_unignored_files() {
   git status --ignored --untracked-files --short | grep '^?' | cut -d\  -f2-
   git ls-files \
+    | filter_extra_ignores "${extra_ignores[@]}"
     # | ( xargs -d '\n' -- stat -c%n 2>/dev/null  || : )
 
 }
