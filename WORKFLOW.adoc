@@ -1,0 +1,101 @@
+= Development workflow
+
+== Process steps
+
+The roles and responsibilities are:
+
+- QA: ensures what is released works from users’ perspective
+  (this person could be also a developer, if there is no dedicated QA,
+  but it’s not recommended)
+- Developer: focuses on the codebase
+
+When starting the work on the next version, QA:
+
+. Creates a release draft on GitHub
+  (tag name should be in the form of “v1.2.3”; release title can be anything).
+. Updates version in package.json
+  (package version should be in the form of “1.2.3”).
+
+When working on the version:
+
+* Optional: developer starts a feature (or fix) branch
+  from an appropriate source (upstream) branch.
+  Generally it’d be the main branch,
+  but it could be a major supported version branch footnote:versionbranch[
+NOTE: This process does not fully cover a situation
+where a new major version comes out,
+but the previous version is still supported.
+In that scenario the process may include major version branches as well.
+This may require updating GHA workflows.
+]
+** Creating a branch is not required for trivial changes such as README updates
+   or changes that are otherwise agreed on
+** If a branch is used, branch creator is expected to regularly rebase it
+   to bring in new commits from source branch without a merge commit
+* Developer pushes commits to the chosen branch
+* When done, developer requests feature branch to be merged (using Github PR)
+* Another developer reviews proposed changes to the code
+* QA tests and reviews proposed changes to application behavior
+* When considered suitable, QA merges feature branch into its source branch
+  (e.g., main) by rebasing (without squashing) feature branch commits
+  onto the main footnote:versionbranch[] branch
+
+On each new commit in the main footnote:versionbranch[] branch,
+CI attaches build artifacts to the release tag that exactly matches
+the version in package.json—but only if that release is marked “draft”
+on Github.
+
+To release a version after the final commit is added
+to the main footnote:versionbranch[] branch, QA:
+
+. Waits until CI run completes and make sure the artifacts
+  for each supported platform are attached to the draft release.
++
+If something’s off, check build logs for each platform
+and search for “publishing” under the “Build/release” step.
+(For example, if the version in package.json during push did not match
+the version of the draft release,
+CI will silently skip attaching updated build artifacts to the draft
+and binaries attached to the draft will be outdated.)
+. Performs the ultimate QA checks against the artifacts attached to the draft.
+  (Make sure that the artifacts attached are of correct versions,
+  there are no regressions, and features work as intended.)
+. If QA/tests succeeded, changes release status from draft to published.
+. Starts the next version.
+
+==== Commit guidelines
+
+Absense of merge commits puts emphasis on individual commits that are merged
+into the upstream branch:
+
+* Each commit should be as focused on a particular change as possible.
+
+** E.g., don’t mix some some feature with a fix, or stylistic changes,
+    or another feature. For stylistic cleanups, prefer to batch them
+    into a separate commit.
+
+* Each commit should contain the codebase in a complete, buildable state.
+
+** Try not to commit a change that relies on another change
+    that you haven’t committed yet.
+
+** Compile, lint and test before committing.
++
+There is a pre-push Git hook that compiles the app.
+This helps us catch compilation errors before code reaches CI.
++
+If for any reason you want to skip hooks, `git push --no-verify` can be used.
+
+** If you believe it’s useful to push incomplete work,
+    you can go ahead if you’re working in a feature branch,
+    but explicitly coordinate this if you are pushing into an upstream branch.
+
+* This repository is set up with AngularJS commit message convention
+  (or “conventional commit”), please read those.
+  Detailed descriptions are appreciated.
++
+`Prepare-commit-msg` hook will invoke interactive prompt, powered by Commitizen,
+that will ask you for information and put together a commit message for you.
++
+There is currently also a `commit-msg` Git hook that validates commit messages
+with `commitlint`.
