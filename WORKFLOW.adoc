@@ -22,7 +22,7 @@ When working on the version:
   from an appropriate source (upstream) branch.
   Generally it’d be the main branch,
   but it could be a major supported version branch footnote:versionbranch[
-NOTE: This process does not fully cover a situation
+The documented workflow does not fully cover a situation
 where a new major version comes out,
 but the previous version is still supported.
 In that scenario the process may include major version branches as well.
