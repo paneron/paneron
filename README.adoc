@@ -119,7 +119,7 @@ ln -sf /path/to/your/registry-kit/dist dependencies-local/registry-kit-dist
 then 2) replace their package.json entries with relative paths in the above
 directory (*don’t commit* this change):
 
-[source]
+[source,diff]
 ----
 -   "@riboseinc/paneron-registry-kit": "^1.2.3",
 +   "@riboseinc/paneron-registry-kit": "file:./dependencies-local/registry-kit-dist",
@@ -131,7 +131,7 @@ changes to Paneron core,
 and update the package.json record to use that version (instead of the
 local path) *before* you commit your changes to Paneron:
 
-[source]
+[source,diff]
 ----
 -   "@riboseinc/paneron-registry-kit": "file:./dependencies-local/registry-kit-dist",
 +   "@riboseinc/paneron-registry-kit": "^1.2.4",
