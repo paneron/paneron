@@ -243,6 +243,34 @@ with `commitlint`.
 
 === Managing the repository
 
+==== Adding a global external dependency (`$a`)
+
+This is for dependencies that are more convenient to have at the repo-level
+rather than at the package-level.
+
+. At the top-level directory, run:
++
+[source,console]
+----
+paneron> pnpm i -w $a  # Add -D for devDependencies
+----
+. Commit the resulting changes including top-level `package.json` and
+`pnpm-lock.yaml`.
+
+==== Adding a package-level external dependency (`$a`)
+
+This is for dependencies that apply more at the package-level than at the
+repo-level.
+
+. At the package-level directory, run:
++
+[source,console]
+----
+paneron/packages/my_package> pnpm i $a  # Add -D for devDependencies
+----
+. Commit the resulting changes including package-level `package.json` and
+`pnpm-lock.yaml`.
+
 ==== Adding a sub-package (`$A`)
 
 . Create a PNPM project under the `packages/` directory. Let's call it `$A`.
