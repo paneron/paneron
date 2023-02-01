@@ -243,5 +243,32 @@ with `commitlint`.
 
 === Managing the repository
 
-TBD: describe how to add, rename (?), remove packages
-within the monorepo (see issue #70).
+==== Adding a sub-package (`$A`)
+
+. Create an NPM project under the `packages/` directory. Let's call it `$A`.
+. Edit the sub-package's `package.json`, such that:
+** its `name` is prefixed with `@paneron/`, i.e. `@paneron/$A`;
+** its `scripts` section has the following tasks as appropriate:
+*** `clean`
+*** `compile`
+*** `dev`
+*** `dist`
+*** `lint:fix`
+*** `lint`
+** its `dependencies` section has references to other sub-packages (e.g. `$Z`) in the form of `"@paneron/$Z" : "workspace:*"` as appropriate.
+. Edit the top-level `package.json`, such that its `dependencies` has an entry
+  for `"@paneron/$A" : "workspace:*"`.
+
+==== Renaming a sub-package (`$A` to `$B`)
+
+. Rename the directory `packages/$A` to a new name, let's say `packages/$B`.
+. Edit the sub-package's `package.json`, such that:
+** its `name` contains the new name instead, i.e. `@paneron/$B`;
+. Edit the top-level `package.json`, such that its `dependencies` has renamed
+  the entry for `"@paneron/$A"` to `"@paneron/$B"`.
+
+==== Removing a sub-package (`$A`)
+
+. Remove the directory `packages/$A`.
+. Edit `dependencies` in the top-level `package.json` to remove
+  the entry for `"@paneron/$A"`.
