@@ -310,39 +310,6 @@
     "typescript-plugin-css-modules": "^2.2.0",
     "webpack": "~4.44.2"
   },
-  "eslintConfig": {
-    "parser": "@typescript-eslint/parser",
-    "plugins": [
-      "@emotion"
-    ],
-    "extends": [
-      "plugin:@typescript-eslint/recommended"
-    ],
-    "rules": {
-      "@emotion/jsx-import": "error",
-      "@emotion/no-vanilla": "error",
-      "@emotion/syntax-preference": [
-        1,
-        "string"
-      ],
-      "@typescript-eslint/no-namespace": [
-        1,
-        {
-          "allowDeclarations": true
-        }
-      ],
-      "@typescript-eslint/no-empty-function": 0,
-      "@typescript-eslint/no-inferrable-types": 0,
-      "@typescript-eslint/no-extra-semi": 0,
-      "@typescript-eslint/ban-ts-comment": 1,
-      "@typescript-eslint/ban-types": 1,
-      "@typescript-eslint/no-var-requires": 1,
-      "prefer-const": 1,
-      "no-var": 1,
-      "@typescript-eslint/no-explicit-any": 1,
-      "@typescript-eslint/no-empty-interface": 1
-    }
-  },
   "stylelint": {
     "extends": "stylelint-config-standard",
     "rules": {
