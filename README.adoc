@@ -248,12 +248,20 @@ with `commitlint`.
 This is for dependencies that are more convenient to have at the repo-level
 rather than at the package-level.
 
-. At the top-level directory, run:
+. When in repository root, run:
 +
 [source,console]
 ----
-paneron> pnpm i -w $a  # Add -D for devDependencies
+pnpm add --ignore-workspace-root-check --save-dev $a
 ----
++
+NOTE: This is not typical; see more why runtime workspace-global dependencies
+may not be what you want link:https://stackoverflow.com/a/53558779[in this answer]
+(which is about Yarn, but applies to PNPM workspaces as well).
+Since this option is normally used for development dependencies
+that make sense to share across all packages, the below example also
+supplies the `--save-dev` flag.
+Remove only if you precisely understand what you’re doing.
 . Commit the resulting changes including top-level `package.json` and
 `pnpm-lock.yaml`.
 
@@ -262,12 +270,14 @@ paneron> pnpm i -w $a  # Add -D for devDependencies
 This is for dependencies that apply more at the package-level than at the
 repo-level.
 
-. At the package-level directory, run:
+. In a package-level directory (e.g., `<repo root>/packages/foobar`), run:
 +
 [source,console]
 ----
-paneron/packages/my_package> pnpm i $a  # Add -D for devDependencies
+pnpm add $a
 ----
+NOTE: Don’t forget to pass the `--save-dev` flag to `pnpm add`
+when adding a development dependency not used at runtime.
 . Commit the resulting changes including package-level `package.json` and
 `pnpm-lock.yaml`.
 
