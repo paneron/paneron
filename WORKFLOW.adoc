@@ -97,5 +97,10 @@ If for any reason you want to skip hooks, `git push --no-verify` can be used.
 The `prepare-commit-msg` hook will invoke interactive prompt, powered by Commitizen,
 that will ask you for information and put together a commit message for you.
 +
+NOTE: When entering affected issues, do not start with `#` otherwise
+issue numbers will be treated as a comment. Invalid: `#70`, valid: `re #70`.
++
+NOTE: Using `fix` (e.g., `fix #70`) will force close the referenced issue.
++
 There is currently also a `commit-msg` Git hook that validates commit messages
 with `commitlint`.
