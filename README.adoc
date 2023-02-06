@@ -141,6 +141,8 @@ local path) *before* you commit your changes to Paneron:
 
 Here are conventions regarding working with Git, commit messages and release flow.
 
+NOTE: This section is in the process of being moved into separate `WORKFLOW` doc.
+
 ==== Release process
 
 The roles and responsibilities are:
