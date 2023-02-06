@@ -262,6 +262,10 @@ Since this option is normally used for development dependencies
 that make sense to share across all packages, the below example also
 supplies the `--save-dev` flag.
 Remove only if you precisely understand what you’re doing.
++
+The `--ignore-workspace-root-check` (or just `-w`) flag is used
+because PNPM will warn about adding workspace-global packages
+for the abovementioned reason.
 . Commit the resulting changes including top-level `package.json` and
 `pnpm-lock.yaml`.
 
