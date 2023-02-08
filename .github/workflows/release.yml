@@ -26,6 +26,9 @@ jobs:
       matrix:
         os: [macos-latest, ubuntu-latest]
 
+    env:
+      USE_HARD_LINKS: false
+
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v2
