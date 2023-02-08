@@ -272,7 +272,7 @@
     "cross-env": "^7.0.0",
     "cz-conventional-changelog": "3.3.0",
     "electron": "12.2.2",
-    "electron-builder": "^22.11.7",
+    "electron-builder": "23.6.0",
     "electron-builder-notarize": "^1.1.2",
     "electron-react-devtools": "^0.5.3",
     "electron-webpack": "^2.8.2",
