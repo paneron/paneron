@@ -279,7 +279,7 @@
     "electron-webpack-ts": "^4.0.1",
     "eslint": "^7.13.0",
     "esm": "^3.2.25",
-    "husky": "^4.2.5",
+    "husky": "^4.3.0",
     "keytar": "^6.0.1",
     "mocha": "^8.4.0",
     "native-ext-loader": "^2.3.0",
