@@ -327,12 +327,12 @@ function isPaneronExtensionNPMPackage(data: any): data is PaneronExtensionNPMPac
 
 /**
  * Given directory path, reads package.json and return extension information.
- * 
+ *
  * `latestUpdate` is set to current timestamp.
- * 
+ *
  * Throws if directory does not contain a valid NPM package,
  * or the package does not reference a Paneron extension.
- * 
+ *
  * Throws
  */
 async function getExtensionForLocalDirectory(directoryPath: string): Promise<Extension> {
