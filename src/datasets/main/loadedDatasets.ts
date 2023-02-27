@@ -900,7 +900,14 @@ export async function updateDatasetIndexesIfNeeded(
     // Update default index and infer which filtered indexes are affected
     for await (const objectPath of changedObjectPaths) {
       idx += 1;
-      const pathAffectsFilteredIndexes: { [id: string]: { idx: Datasets.Util.FilteredIndex } } = {};
+      const pathAffectsFilteredIndexes: {
+        [id: string]: {
+          idx: Datasets.Util.FilteredIndex,
+
+          /** If false, then it means the object no longer matches this filtered index. */
+          newVersionMatches: boolean
+        }
+      } = {};
 
       let objv1: Record<string, any> | null;
       let objv2: Record<string, any> | null;
@@ -922,13 +929,16 @@ export async function updateDatasetIndexesIfNeeded(
       // Check all filtered indexes that have not yet been marked as affected
       for (const idxID of filteredIndexIDs) {
         const idx = ds.indexes[idxID] as Datasets.Util.FilteredIndex;
-        // If either object version matches given filtered index’s predicate,
+        // If one or another object version matches given filtered index’s predicate,
         // mark that index as affected and track object count changes.
         // TODO: Notify frontend about filtered index status.
-        if ((objv1 && idx.predicate(objectPath, objv1)) || (objv2 && idx.predicate(objectPath, objv2))) {
+        const oldVersionMatched = (objv1 && idx.predicate(objectPath, objv1)) ? true : false;
+        const newVersionMatches = (objv2 && idx.predicate(objectPath, objv2)) ? true : false;
+        if ((oldVersionMatched || newVersionMatches) && newVersionMatches !== oldVersionMatched) {
           log.debug("Datasets: updateDatasetIndexesIfNeeded: Path affects filtered indexes", objectPath, idxID)
           pathAffectsFilteredIndexes[idxID] = {
             idx,
+            newVersionMatches,
           };
           // Check if we already marked this index as affected
           // while processing a previous object path…
@@ -991,10 +1001,15 @@ export async function updateDatasetIndexesIfNeeded(
 
           // Add new key (or object path) to affected filtered indexes,
           // delete old key (if it’s different) from affected filtered indexes
-          for (const { idx } of Object.values(pathAffectsFilteredIndexes)) {
+          for (const [idxID, { idx, newVersionMatches }] of Object.entries(pathAffectsFilteredIndexes)) {
             const customKey1 = (idx.keyer ? idx.keyer(objv1) : null) ?? objectPath;
             const customKey2 = (idx.keyer ? idx.keyer(objv2) : null) ?? objectPath;
             await idx.dbHandle.put(customKey2, objectPath);
+            if (newVersionMatches) {
+              affectedFilteredIndexes[idxID].newObjectCount += 1;
+            } else {
+              affectedFilteredIndexes[idxID].newObjectCount -= 1;
+            }
             if (customKey2 !== customKey1) {
               try {
                 await idx.dbHandle.del(customKey1);
