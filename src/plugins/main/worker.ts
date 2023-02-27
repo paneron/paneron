@@ -352,7 +352,11 @@ async function getExtensionForLocalDirectory(directoryPath: string): Promise<Ext
           author: pkg.author.name,
           description: pkg.description,
         }
+      } else {
+        console.error("Not a correct extension package");
       }
+    } else {
+       console.error("Not a correct NPM package");
     }
     throw new Error("This directory does not seem to contain a valid Paneron extension package");
   } catch (e) {
