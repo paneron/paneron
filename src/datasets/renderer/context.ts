@@ -173,7 +173,11 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
       }, { data: {} });
 
       objectsChanged.renderer!.useEvent(async ({ workingCopyPath, datasetID, objects }) => {
-        if (workingCopyPath === datasetParams.workingCopyPath && datasetID === datasetParams.datasetID && (objects === undefined || R.intersection(Object.keys(objects), opts.objectPaths).length > 0)) {
+        if (
+          workingCopyPath === datasetParams.workingCopyPath
+          && datasetID === datasetParams.datasetID
+          && (objects === undefined || R.intersection(Object.keys(objects), opts.objectPaths).length > 0)
+        ) {
           result.refresh();
         }
       }, [workingCopyPath, datasetID, JSON.stringify(opts.objectPaths)]);
