@@ -3,7 +3,7 @@
 
 //import log from 'electron-log';
 import { jsx, css } from '@emotion/react';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import MathJax from 'react-mathjax2';
 import { NonIdealState, ProgressBar, Spinner, Toaster } from '@blueprintjs/core';
@@ -39,7 +39,7 @@ function ({ className }) {
   } | null>(null);
 
   const [operationKey, setOperationKey] = useState<string | undefined>(undefined);
-  function performOperation<P extends any[], R>(gerund: string, func: (...opts: P) => Promise<R>) {
+  const performOperation = useCallback(function <P extends any[], R>(gerund: string, func: (...opts: P) => Promise<R>) {
     return async (...opts: P) => {
       const opKey = toaster.show({
         message: <div css={css`display: flex; flex-flow: row nowrap; white-space: nowrap; align-items: center;`}>
@@ -81,7 +81,7 @@ function ({ className }) {
         throw e;
       }
     }
-  }
+  }, [operationKey]);
 
   useEffect(() => {
     performOperation('loading dataset', async () => {
