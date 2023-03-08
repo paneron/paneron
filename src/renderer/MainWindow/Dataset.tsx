@@ -83,22 +83,20 @@ function ({ className }) {
     }
   }
 
-  const loadDataset = performOperation('loading dataset', async () => {
-    setLoading(true);
-    if (selectedRepoWorkDir && selectedDatasetID) {
-      try {
-        setDatasetProperties(await getDataset(selectedRepoWorkDir, selectedDatasetID));
-      } finally {
-        setLoading(false);
-      }
-    } else {
-      setLoading(false);
-      setDatasetProperties(null);
-    }
-  })
-
   useEffect(() => {
-    loadDataset();
+    performOperation('loading dataset', async () => {
+      setLoading(true);
+      if (selectedRepoWorkDir && selectedDatasetID) {
+        try {
+          setDatasetProperties(await getDataset(selectedRepoWorkDir, selectedDatasetID));
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+        setDatasetProperties(null);
+      }
+    })();
     return function cleanup() {
       if (selectedRepoWorkDir && selectedDatasetID) {
         unloadDataset.renderer!.trigger({
