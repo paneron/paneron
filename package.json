@@ -179,7 +179,7 @@
     "@blueprintjs/core": "^3.49.1",
     "@blueprintjs/datetime": "^3.23.7",
     "@blueprintjs/icons": "^3.29.0",
-    "@blueprintjs/popover2": "^0.11.2",
+    "@blueprintjs/popover2": "^0.12.9",
     "@blueprintjs/select": "^3.17.0",
     "@emotion/react": "^11.4.1",
     "@emotion/styled": "^11.3.0",
