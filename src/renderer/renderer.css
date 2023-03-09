@@ -28,41 +28,41 @@ html.platform--win32::before {
   background-color: silver;
 }
 
-.filter-popover .bp3-popover2-content {
+.filter-popover .bp4-popover2-content {
   border-radius: 0;
 }
-.bp3-overlay-backdrop.bp3-popover2-backdrop {
+.bp4-overlay-backdrop.bp4-popover2-backdrop {
   background: rgba(0, 0, 0, .5);
 }
-.bp3-tree-node-caret {
+.bp4-tree-node-caret {
   cursor: default !important;
 }
 
-.bp3-tree-node-content:hover {
+.bp4-tree-node-content:hover {
   background: unset;
 }
 
-.bp3-html-select select {
+.bp4-html-select select {
   cursor: default !important;
 }
 
-.bp3-button {
+.bp4-button {
   cursor: default !important;
 
 }
 
-  .bp3-button:focus {
+  .bp4-button:focus {
     outline: none;
   }
 
-.bp3-tab {
+.bp4-tab {
   cursor: default !important;
 }
 
-.bp3-menu-item {
+.bp4-menu-item {
   cursor: default;
 }
 
-  .bp3-menu-item, .bp3-menu .bp3-menu-item.bp3-disabled {
+  .bp4-menu-item, .bp4-menu .bp4-menu-item.bp4-disabled {
     cursor: default !important;
   }

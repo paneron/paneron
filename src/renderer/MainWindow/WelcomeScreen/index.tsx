@@ -67,13 +67,13 @@ function ({ onOpenDataset, className }) {
           overflow: hidden;
           border-radius: 5px;
 
-          .bp3-tab-list[role=tablist] {
+          .bp4-tab-list[role=tablist] {
             overflow-y: auto;
             padding: 5px;
             width: 200px;
             background: ${Colors.LIGHT_GRAY4};
           }
-          .bp3-tab-panel[role=tabpanel] {
+          .bp4-tab-panel[role=tabpanel] {
             overflow-y: auto;
             padding: 0;
             flex: 1;

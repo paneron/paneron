@@ -8,7 +8,7 @@ import { Button as BPButton } from '@blueprintjs/core';
 export const Button = styled(BPButton)`
   white-space: nowrap;
 
-  .bp3-button-text {
+  .bp4-button-text {
     overflow: hidden;
     text-overflow: ellipsis;
   }

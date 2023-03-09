@@ -162,7 +162,7 @@ function ({
               fill
               outlined
               {...testButtonProps}
-              css={css`.bp3-button-text { overflow: hidden; }`}
+              css={css`.bp4-button-text { overflow: hidden; }`}
             />
           </Popover2>
         )}

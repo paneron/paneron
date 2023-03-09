@@ -3,7 +3,7 @@
 
 import { jsx } from '@emotion/react';
 import React, { useState } from 'react';
-import { Icon, IToastProps, Spinner, Toaster } from '@blueprintjs/core';
+import { IconSize, IToastProps, Spinner, Toaster } from '@blueprintjs/core';
 import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
 import reducer, { initialState, State } from './reducer';
 import { Action } from './actions';
@@ -40,7 +40,7 @@ const ContextProvider: React.FC<Record<never, never>> = function ({ children }) 
       const opKey = toaster.show({
         message: `${gerund}…`,
         intent: 'primary',
-        icon: <Spinner size={Icon.SIZE_STANDARD} />,
+        icon: <Spinner size={IconSize.STANDARD} />,
         timeout: 0,
       });
       setOperationKey(opKey);

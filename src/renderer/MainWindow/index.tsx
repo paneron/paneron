@@ -105,7 +105,7 @@ const NavbarButton: React.FC<ButtonProps & { title?: string }> = function (props
     css={css`
       transform: skew(45deg);
       border-radius: 0;
-      .bp3-icon {
+      .bp4-icon {
         transform: scale(0.7);
       }
     `}
