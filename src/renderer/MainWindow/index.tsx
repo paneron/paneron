@@ -27,12 +27,17 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
   };
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
   const {
+    isUpdating: versionIsUpdating,
     value: { version, isPackaged },
   } = getAppVersion.renderer!.useValue({}, { version: '' });
 
   showGlobalSettings.renderer!.useEvent(async () => {
     setSettingsDialogOpen(true);
   }, []);
+
+  if (versionIsUpdating) {
+    return <Spinner className="initial-spinner" />;
+  }
 
   return (
     <React.StrictMode>
