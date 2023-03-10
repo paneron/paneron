@@ -35,12 +35,14 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
     setSettingsDialogOpen(true);
   }, []);
 
+  const Frag = isPackaged ? React.Fragment : React.StrictMode;
+
   if (versionIsUpdating) {
     return <Spinner className="initial-spinner" />;
   }
 
   return (
-    <React.StrictMode>
+    <Frag>
       <ContextProvider>
         <div css={css`position: absolute; inset: 0; box-sizing: border-box; overflow: hidden;`}>
           <div
@@ -100,7 +102,7 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
           </Nav>
         </div>
       </ContextProvider>
-    </React.StrictMode>
+    </Frag>
   );
 };
 
