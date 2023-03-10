@@ -39,9 +39,9 @@ RUN yarn install
 RUN yarn add typescript-language-server "typescript@4.2.2"
 
 # see https://github.com/electron/electron/issues/17972
-USER root
-RUN chown root ${project_path:?}/node_modules/electron/dist/chrome-sandbox
-RUN chmod 4755 ${project_path:?}/node_modules/electron/dist/chrome-sandbox
+# USER root
+# RUN chown root ${project_path:?}/node_modules/electron/dist/chrome-sandbox
+# RUN chmod 4755 ${project_path:?}/node_modules/electron/dist/chrome-sandbox
 
 VOLUME ${project_path:?}/node_modules
 VOLUME ${project_path:?}/.config
