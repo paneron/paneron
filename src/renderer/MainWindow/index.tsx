@@ -73,8 +73,12 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
             </Dialog>
           </div>
           <Nav
-              anchor={globalSettingsContext.settings.mainNavbarPosition === 'top' ? 'start' : 'end'}
-              className={globalSettingsContext.settings.mainNavbarPosition === 'bottom' ? Classes.ELEVATION_2 : Classes.ELEVATION_1}
+              anchor={globalSettingsContext.settings.mainNavbarPosition === 'top'
+                ? 'start'
+                : 'end'}
+              className={globalSettingsContext.settings.mainNavbarPosition === 'bottom'
+                ? Classes.ELEVATION_2
+                : Classes.ELEVATION_1}
               css={css`
                 position: absolute;
                 ${globalSettingsContext.settings.mainNavbarPosition === 'bottom'
