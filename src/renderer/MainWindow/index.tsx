@@ -3,7 +3,7 @@
 
 import { jsx, css } from '@emotion/react';
 import React, { useContext, useState } from 'react';
-import { Button, ButtonProps, Classes, Colors, Dialog, NonIdealState } from '@blueprintjs/core';
+import { Button, ButtonProps, Classes, Colors, Dialog, Spinner, NonIdealState } from '@blueprintjs/core';
 import { GlobalSettingsContext } from '@riboseinc/paneron-extension-kit/SettingsContext';
 import { INITIAL_GLOBAL_SETTINGS } from '@riboseinc/paneron-extension-kit/settings';
 
@@ -26,7 +26,9 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
     refresh: globalSettings.refresh,
   };
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
-  const { value: { version: appVersion } } = getAppVersion.renderer!.useValue({}, { version: 'N/A' });
+  const {
+    value: { version, isPackaged },
+  } = getAppVersion.renderer!.useValue({}, { version: '' });
 
   showGlobalSettings.renderer!.useEvent(async () => {
     setSettingsDialogOpen(true);
@@ -76,7 +78,7 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
                 z-index: 2;`}>
             <NavbarButton
               title="Host application version"
-              text={`v${appVersion}`}
+              text={isPackaged ? `v${version}` : 'DEV'}
               disabled
             />
             <NavbarButton
