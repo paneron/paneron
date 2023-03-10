@@ -3,7 +3,7 @@
 
 import { jsx } from '@emotion/react';
 import React, { useState } from 'react';
-import { IconSize, IToastProps, Spinner, Toaster } from '@blueprintjs/core';
+import { IconSize, ToastProps, Spinner, Toaster } from '@blueprintjs/core';
 import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
 import reducer, { initialState, State } from './reducer';
 import { Action } from './actions';
@@ -16,7 +16,7 @@ interface ContextSpec {
   state: State
   dispatch: React.Dispatch<Action> 
   stateLoaded: boolean
-  showMessage: (opts: IToastProps) => void
+  showMessage: (opts: ToastProps) => void
   isBusy: boolean
   performOperation: <R>(gerund: string, func: () => Promise<R>) => () => Promise<R>
 }
