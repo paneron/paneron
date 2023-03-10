@@ -109,7 +109,10 @@ function handleAllWindowsClosed(e: Electron.Event) {
   // Shared IPC
 
   getAppVersion.main!.handle(async () => {
-    return { version: app.getVersion() };
+    return {
+      version: app.getVersion(),
+      isPackaged: app.isPackaged,
+    };
   });
 
   makeRandomID.main!.handle(async () => {

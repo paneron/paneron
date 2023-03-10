@@ -23,7 +23,7 @@ export type ClearOption = typeof CLEAR_OPTIONS[number];
 export const getAppVersion = makeEndpoint.main(
   'getAppVersion',
   <EmptyPayload>_,
-  <{ version: string }>_,
+  <{ version: string, isPackaged?: boolean }>_,
 );
 
 
