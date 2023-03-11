@@ -76,13 +76,20 @@ export default {
 
 
 
+/**
+ * Returns the name of the default branch on the remote,
+ * which is taken to be whatever HEAD points to.
+ */
 function getMainBranchName(refs: ServerRef[]): string | undefined {
   console.debug("Locaing HEAD among refs", refs);
   if (refs.length > 0) {
+    // Find the commit pointed to by HEAD
     const headRefOid = refs.find(r => r.ref.toLowerCase() === 'head')?.oid;
     if (headRefOid) {
+      // Find ref that points to the same commit
       const mainBranchRef = refs.find(r => r.ref.startsWith(HEAD_REF_PREFIX) && r.oid === headRefOid);
       if (mainBranchRef) {
+        // Return the ref with prefix stripped
         return mainBranchRef.ref.replace(HEAD_REF_PREFIX, '');
       } else {
         throw new Error("Unable to locate a ref pointing to current HEAD under refs/heads/");
