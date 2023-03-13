@@ -59,6 +59,12 @@ export namespace Git {
 
   export namespace Remotes {
 
+    /**
+     * Describes a remote, including whether it’s blank,
+     * whether given auth credentials can push to it (NOTE: deprecated),
+     * what’s the default/main branch name
+     * and latest commit OID, if any.
+     */
     export type Describe = (msg: {
       url: string
       auth: GitAuthentication
