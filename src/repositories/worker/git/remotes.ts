@@ -13,6 +13,9 @@ const HEAD_REF_PREFIX = 'refs/heads/';
 const describe: Git.Remotes.Describe = async function ({ url, auth }) {
   const normalizedURL = normalizeURL(url);
 
+  // TODO(perf): can use getRemoteInfo() to speed up probably.
+
+  // Check if we can push
   let canPush: boolean;
   try {
     await git.listServerRefs({
@@ -27,6 +30,7 @@ const describe: Git.Remotes.Describe = async function ({ url, auth }) {
     canPush = false;
   }
 
+  // Get basic info
   const branchRefs = await git.listServerRefs({
     http,
     url: normalizedURL,
@@ -37,12 +41,15 @@ const describe: Git.Remotes.Describe = async function ({ url, auth }) {
   });
 
   const isBlank = branchRefs.length === 0;
-  const mainBranchName = getMainBranchName(branchRefs);
+  const mainBranchRef = getMainBranchRef(branchRefs);
+  const mainBranchName = mainBranchRef?.ref.replace(HEAD_REF_PREFIX, '');
+  const currentCommit = mainBranchRef?.oid;
 
   return {
     isBlank,
     canPush,
     mainBranchName,
+    currentCommit,
   };
 };
 
@@ -77,10 +84,10 @@ export default {
 
 
 /**
- * Returns the name of the default branch on the remote,
- * which is taken to be whatever HEAD points to.
+ * Returns the ref corresponding to the default branch on the remote,
+ * which is taken to be whatever HEAD ref points to.
  */
-function getMainBranchName(refs: ServerRef[]): string | undefined {
+function getMainBranchRef(refs: ServerRef[]): ServerRef | undefined {
   console.debug("Locaing HEAD among refs", refs);
   if (refs.length > 0) {
     // Find the commit pointed to by HEAD
@@ -89,8 +96,8 @@ function getMainBranchName(refs: ServerRef[]): string | undefined {
       // Find ref that points to the same commit
       const mainBranchRef = refs.find(r => r.ref.startsWith(HEAD_REF_PREFIX) && r.oid === headRefOid);
       if (mainBranchRef) {
-        // Return the ref with prefix stripped
-        return mainBranchRef.ref.replace(HEAD_REF_PREFIX, '');
+        // Return the ref
+        return mainBranchRef;
       } else {
         throw new Error("Unable to locate a ref pointing to current HEAD under refs/heads/");
       }

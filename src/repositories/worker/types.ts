@@ -62,7 +62,12 @@ export namespace Git {
     export type Describe = (msg: {
       url: string
       auth: GitAuthentication
-    }) => Promise<{ isBlank: boolean, canPush: boolean, mainBranchName?: string }>;
+    }) => Promise<{
+      isBlank: boolean,
+      canPush: boolean,
+      mainBranchName: string | undefined,
+      currentCommit: string | undefined,
+    }>;
 
     // TODO: workDir below is likely redundant?
     // repoOperation decorator provides it for initialized workers.
