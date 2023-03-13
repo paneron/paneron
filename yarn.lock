@@ -1110,7 +1110,7 @@
   resolved "https://registry.yarnpkg.com/@blueprintjs/colors/-/colors-4.1.19.tgz#364d4d5d23ecee48002d6b29c71a8a24af5512ae"
   integrity sha512-x5mDo4Ue9rAdbMHvOm0dNru9MSZqgs9Dd/l/2rgjzottthjsq1XjkiVae6evX4EGNM0I/bZKjTT8ccvqCqn4yw==
 
-"@blueprintjs/core@^4.17.6":
+"@blueprintjs/core@^4.17.6", "@blueprintjs/core@~4.17.6":
   version "4.17.6"
   resolved "https://registry.yarnpkg.com/@blueprintjs/core/-/core-4.17.6.tgz#52117f2b37840d1d73e5010b1aaf4479b8baad9c"
   integrity sha512-hZBIYfOUsgeeKeFeYCW6qcCTOxwA6EJTXJyjTv+QK34245Lms/rW4sKn+t8Z3z/b0AK5cTH0/S3a1umjshDhLA==
@@ -1127,7 +1127,7 @@
     react-transition-group "^4.4.5"
     tslib "~2.3.1"
 
-"@blueprintjs/datetime@^4.4.25":
+"@blueprintjs/datetime@~4.4.25":
   version "4.4.25"
   resolved "https://registry.yarnpkg.com/@blueprintjs/datetime/-/datetime-4.4.25.tgz#bf62a16245625059993e6e31005553c93809474f"
   integrity sha512-2Q818yMKqfUbU53fxh1XmkDLP9DMGDxe7t4LrrdKZBPM/m3qs2pyI5ficwDak1Rr9cHbe7Bq8ICwieCrudBeYw==
@@ -1137,7 +1137,7 @@
     react-day-picker "7.4.9"
     tslib "~2.3.1"
 
-"@blueprintjs/icons@^4.14.3":
+"@blueprintjs/icons@^4.14.3", "@blueprintjs/icons@~4.14.3":
   version "4.14.3"
   resolved "https://registry.yarnpkg.com/@blueprintjs/icons/-/icons-4.14.3.tgz#adbad0d47b94f8c737d9e14b36fe70bf484ce482"
   integrity sha512-2X5VXYCfybcax+tPVFl6WDngdxEk6AS7gflRjI9iuiJvkgjnkYeHBXZGRMhCzZb/B6+cBuMyvvAxmD2WVtlQsg==
@@ -1146,7 +1146,7 @@
     classnames "^2.3.1"
     tslib "~2.3.1"
 
-"@blueprintjs/popover2@^1.13.10":
+"@blueprintjs/popover2@^1.13.10", "@blueprintjs/popover2@~1.13.10":
   version "1.13.10"
   resolved "https://registry.yarnpkg.com/@blueprintjs/popover2/-/popover2-1.13.10.tgz#96c99461d9bb8fd0196f2dea936e2a6b47d12f8a"
   integrity sha512-ohdO3F9MUZXDaBNYFi+xrlhDWl6GWg9/zl8VQTzhk5ny5kuGJsU7cPAeTGNyrXkR8PMRbTWKfFFc/R/H4qUo/g==
@@ -1159,7 +1159,7 @@
     react-popper "^2.3.0"
     tslib "~2.3.1"
 
-"@blueprintjs/select@^4.9.10":
+"@blueprintjs/select@~4.9.10":
   version "4.9.10"
   resolved "https://registry.yarnpkg.com/@blueprintjs/select/-/select-4.9.10.tgz#fcf365a86bbedef7938ebf6af1f655b7a98ae101"
   integrity sha512-LKPgpqZsrClIDbZWM+UcHuQYuLfYPm8hOsNtPRGflKHKgkg16XgihgtXi/vtNpdCPGmOxFiEtsHKmuD775Txvg==
