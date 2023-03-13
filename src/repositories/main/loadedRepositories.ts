@@ -236,7 +236,7 @@ function syncRepoRepeatedly(
       try {
         repoCfg = await readRepoConfig(workingCopyPath);
         if (!repoCfg.author && repoCfg.remote) {
-          repoSyncLog('error', "Configuration is missing author info required for remote sync");
+          repoSyncLog('error', "Configuration is missing author info or remote, required for remote sync");
           return await unloadRepository(workingCopyPath);
         }
       } catch (e) {
@@ -332,7 +332,7 @@ function syncRepoRepeatedly(
 
     } catch (e) {
       repoSyncLog('error', "Sync failed", e);
-      repoSyncLog('debug', "Cooldown before next sync", REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
+      repoSyncLog('debug', "Cooldown before next sync attempt", REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
       if (loadedRepositories[workingCopyPath]) {
         loadedRepositories[workingCopyPath].nextSyncTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
       }
