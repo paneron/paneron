@@ -1,6 +1,6 @@
 import fs from 'fs';
-import git, { ReadCommitResult } from 'isomorphic-git';
-import { Repositories } from '../types';
+import git, { type ReadCommitResult } from 'isomorphic-git';
+import type { Repositories } from '../types';
 
 
 const getCurrentCommit: Repositories.Data.GetCurrentCommit = async function ({ workDir }) {
