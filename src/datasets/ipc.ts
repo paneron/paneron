@@ -78,6 +78,10 @@ export const deleteDataset = makeEndpoint.main(
 
 // Working with data
 
+/**
+ * Creates a filtered index. Returned index ID can be used
+ * to query objects through other endpoints.
+ */
 export const getOrCreateFilteredIndex = makeEndpoint.main(
   'datasets_getOrCreateFilteredIndex',
   <{ workingCopyPath: string, datasetID: string, queryExpression: string, keyExpression?: string }>_,
