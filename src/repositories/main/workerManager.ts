@@ -61,7 +61,7 @@ export function getRepoWorkers(workDir: string): Promise<RepoWorkers> {
     log.debug("Repositories: Workers not spawned yet, spawning now…", workDir);
     WORKERS[workDir] = new Promise((resolve, reject) => {
       terminateAllWorkers().
-      then(() => {
+      finally(() => {
         Promise.all([
           spawnWorker(),
           spawnWorker(),
