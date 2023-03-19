@@ -860,9 +860,7 @@ export async function updateDatasetIndexesIfNeeded(
   }
 
   // A list of all filtered index IDs will be useful soon.
-  // NOTE: This excludes filtered indexes that are being processed.
-  const filteredIndexes = Object.entries(ds.indexes).
-    filter(([id, idx]) => id !== 'default' && !idx.completionPromise);
+  const filteredIndexes = Object.entries(ds.indexes).filter(([id, ]) => id !== 'default');
   const filteredIndexIDs: string[] = filteredIndexes.map(([id, ]) => id);
 
   const defaultIndexStatusReporter = getDefaultIndexStatusReporter(workDir, datasetID);
@@ -1075,6 +1073,11 @@ export async function updateDatasetIndexesIfNeeded(
     return true as const;
 
   })();
+
+  // If any index is already being updated this way, await completion first.
+  await Promise.allSettled(Object.values(ds.indexes).
+    filter(idx => idx.completionPromise ? true : false).
+    map(idx => idx.completionPromise));
 
   defaultIndex.completionPromise = completionPromise;
   for (const idxID of filteredIndexIDs) {
