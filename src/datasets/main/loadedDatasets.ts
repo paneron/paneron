@@ -393,6 +393,10 @@ async function fillInDefaultIndex(
 
   let totalCount: number = 0;
 
+  if (index.completionPromise) {
+    await index.completionPromise;
+  }
+
   index.completionPromise = (async () => {
 
     await indexMeta(index, null);
