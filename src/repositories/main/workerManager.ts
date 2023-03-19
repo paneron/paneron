@@ -112,7 +112,8 @@ export async function spawnWorker(): Promise<Thread & WorkerMethods> {
   });
 }
 
-export async function terminateWorker(worker: Thread & WorkerMethods) {
+
+async function terminateWorker(worker: Thread & WorkerMethods) {
   log.debug("Repositories: Terminating worker");
   try {
     await worker.destroy();
