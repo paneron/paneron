@@ -33,7 +33,7 @@ import { chooseFileFromFilesystem, makeRandomID } from '../common';
 import { WindowOpenerParams } from '../window/types';
 import { resetStateGlobal } from '../state/manage';
 import { clearPluginData } from '../plugins/main';
-import { clearRepoConfig, clearRepoData } from 'repositories/main/readRepoConfig';
+import { clearRepoConfig, clearRepoData } from '../repositories/main/readRepoConfig';
 import { clearIndexes } from '../datasets/main';
 import { refreshByID, open as openWindow } from '../window/main';
 
