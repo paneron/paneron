@@ -39,11 +39,14 @@ import {
   unloadDataset,
   getFilteredObject,
   locateFilteredIndexPosition,
+  mapReduce,
   updateObjects,
   listRecentlyOpenedDatasets,
   updateSubtree,
   addFromFilesystem,
 } from '../ipc';
+
+import { API as Datasets } from '../types';
 
 import loadedDatasets from './loadedDatasets';
 import { getObjectDataset as getDataset } from './objects/read';
@@ -286,6 +289,58 @@ locateFilteredIndexPosition.main!.handle(async ({ workingCopyPath, datasetID, in
       return { position: null };
     }
   }
+});
+
+
+mapReduce.main!.handle(async ({ workingCopyPath, datasetID, chains }) => {
+  const parsedChains: Datasets.Util.MapReduceChain<any>[] = [];
+
+  //log.debug("mapReduce: pre-processing chains", chains);
+
+  for (const [chainID, chain] of Object.entries(chains)) {
+    let map: Datasets.Util.MapFunction;
+    let reduce: Datasets.Util.ReduceFunction | undefined;
+    try {
+      map = new Function('key', 'value', 'emit', chain.mapFunc) as Datasets.Util.MapFunction;
+    } catch (e) {
+      log.error("Unable to parse submitted map function in map-reduce chain", chainID, chain.mapFunc, e);
+      throw new Error("Unable to parse submitted map function");
+    }
+    if (chain.reduceFunc) {
+      try {
+        reduce = new Function('accumulator', 'value', chain.reduceFunc) as Datasets.Util.ReduceFunction;
+      } catch (e) {
+        log.error("Unable to parse submitted map function in map-reduce chain", chainID, chain.mapFunc, e);
+        throw new Error("Unable to parse submitted map function");
+      }
+    } else {
+      reduce = undefined;
+    }
+    parsedChains.push({
+      id: chainID,
+      map,
+      reduce,
+    });
+  }
+
+  //log.debug("mapReduce: processing chains");
+
+  const chainResults = (await Promise.allSettled(parsedChains.map(async (c) =>
+    ({ [c.id]: await loadedDatasets.mapReduce(workingCopyPath, datasetID, c.map, c.reduce) })
+  )))
+
+  const fulfilledResults = chainResults.
+    filter(r => r.status === 'fulfilled').
+    map(r => (r as PromiseFulfilledResult<Record<string, unknown>>).value);
+
+  const result = fulfilledResults.reduce((prev, curr) => ({ ...prev, ...curr }));
+
+  if (fulfilledResults.length != chainResults.length) {
+    log.error("mapReduce failed for certain chains");
+    throw new Error("Dataset mapReduce failed for certain chains");
+  }
+
+  return result;
 });
 
 

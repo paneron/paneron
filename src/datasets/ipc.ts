@@ -106,6 +106,12 @@ export const locateFilteredIndexPosition = makeEndpoint.main(
   <{ position: number | null }>_,
 );
 
+export const mapReduce = makeEndpoint.main(
+  'datasets_mapReduce',
+  <{ workingCopyPath: string, datasetID: string, chains: Record<string, { mapFunc: string, reduceFunc?: string }> }>_,
+  <Record<string, unknown>>_,
+);
+
 /**
  * Reads object data for given object paths in given repository & dataset.
  * Uses cold storage (not default index).

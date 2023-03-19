@@ -264,12 +264,38 @@ const resolveDatasetChanges: (opts: {
 }
 
 
+export async function mapReduce(
+  workDir: string,
+  datasetID: string,
+  map: Datasets.Util.MapFunction,
+  reduce: Datasets.Util.ReduceFunction | undefined
+): Promise<unknown> {
+  const defaultIndex = await getDefaultIndex(workDir, datasetID);
+  const mappedData: unknown[] = [];
+  log.silly("mapReduce: mapping");
+  for await (const data of defaultIndex.dbHandle.createReadStream()) {
+    // TODO: [upstream] NodeJS.ReadableStream is poorly typed.
+    const { key, value } = data as unknown as { key: string, value: Record<string, unknown> };
+    if (key !== INDEX_META_MARKER_DB_KEY) {
+      map(key, value, (val) => mappedData.push(val));
+    }
+  }
+  if (reduce) {
+    log.silly("mapReduce: reducing");
+    return mappedData.reduce((prev, curr) => reduce(prev, curr));
+  } else {
+    return mappedData;
+  }
+}
+
+
 export default {
   load,
   unload,
   unloadAll,
   getOrCreateFilteredIndex,
   describeIndex,
+  mapReduce,
   //streamIndexStatus,
   getFilteredObject,
   locatePositionInFilteredIndex,
