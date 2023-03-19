@@ -57,6 +57,7 @@ async function terminateAllWorkers() {
 }
 
 
+/** Returns repository workers, spawns if necessary. */
 export function getRepoWorkers(workDir: string): Promise<RepoWorkers> {
 
   if (!WORKERS[workDir]) {
