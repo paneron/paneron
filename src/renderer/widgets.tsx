@@ -15,6 +15,7 @@ export const Button = styled(BPButton)`
 `;
 
 
+/** A link with colors forced to inherit. */
 export const ColorNeutralLink = styled.a`
   color: inherit;
   text-decoration: underline;
