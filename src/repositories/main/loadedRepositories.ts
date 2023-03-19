@@ -11,6 +11,7 @@ import { repositoryBuffersChanged, loadedRepositoryStatusChanged } from '../ipc'
 import { getRepoWorkers, RepoWorkers, terminateRepoWorkers } from './workerManager';
 import { readRepoConfig } from './readRepoConfig';
 import { getAuth } from './remoteAuth';
+import { makeSequential } from '../../utils';
 
 
 const loadedRepositories: {
@@ -53,7 +54,7 @@ export function getLoadedRepository(workDir: string) {
  * @param workingCopyPath path to Git working directory
  * @returns RepoStatus
  */
-export async function loadRepository(workingCopyPath: string): Promise<RepoStatus> {
+async function _loadRepository(workingCopyPath: string): Promise<RepoStatus> {
   if (loadedRepositories[workingCopyPath]) {
     log.silly(
       "Repositories: Load: Already loaded",
@@ -166,6 +167,9 @@ export async function loadRepository(workingCopyPath: string): Promise<RepoStatu
     return { status: 'ready' };
   }
 }
+
+
+export const loadRepository = makeSequential(_loadRepository);
 
 
 /**
