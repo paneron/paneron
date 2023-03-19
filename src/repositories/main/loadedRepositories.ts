@@ -296,6 +296,38 @@ function syncRepoRepeatedly(
       return;
     }
 
+    // 1.3. Check that there are no recent commits (less than 30 seconds old).
+    // If there are, reschedule sync a bit later to allow the user to ninja undo.
+    // Undo feature may do a reset which can break if commit is pushed.
+
+    try {
+      const { commitHash } = await w.repo_getCurrentCommit({});
+      const { commit: { committedAt, authoredAt } } = await w.repo_describeCommit({ commitHash });
+      const commitTimestamp = committedAt || authoredAt;
+      if (commitTimestamp) {
+        const nowSeconds = Date.now() / 1000;
+        const secondsElapsed = nowSeconds - commitTimestamp;
+        const WAIT_AFTER_COMMIT_SECONDS = 30;
+        if (secondsElapsed < WAIT_AFTER_COMMIT_SECONDS) {
+          const cooldown = WAIT_AFTER_COMMIT_SECONDS - secondsElapsed;
+          repoSyncLog('info', "Recent commit is too fresh, rescheduling sync in seconds:", cooldown);
+          if (loadedRepositories[workingCopyPath]) {
+            loadedRepositories[workingCopyPath].nextSyncTimeout = setTimeout(_sync, cooldown * 1000);
+            return;
+          }
+        }
+      } else {
+        repoSyncLog(
+          'warn',
+          "Error detecting latest commit timestamp",
+          "neither commit nor author timestamp is present");
+      }
+    } catch (e) {
+      repoSyncLog(
+        'warn',
+        "Error detecting latest commit timestamp",
+        e);
+    }
 
     // 2. Perform actual sync.
     try {
