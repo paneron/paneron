@@ -39,6 +39,7 @@ export function changesetToPathChanges(
   return changes;
 }
 
+
 // function changedPathsToPathChanges(
 //   changedPaths: [path: string, change: ChangeStatus][]
 // ): PathChanges {

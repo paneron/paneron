@@ -56,9 +56,12 @@ async function terminateAllWorkers() {
   log.debug("Repositories: Terminating all repo workers: Done");
 }
 
+
 export function getRepoWorkers(workDir: string): Promise<RepoWorkers> {
+
   if (!WORKERS[workDir]) {
     log.debug("Repositories: Workers not spawned yet, spawning now…", workDir);
+
     WORKERS[workDir] = new Promise((resolve, reject) => {
       terminateAllWorkers().
       finally(() => {
@@ -75,6 +78,7 @@ export function getRepoWorkers(workDir: string): Promise<RepoWorkers> {
         }).catch(reject);
       });
     });
+
   } else {
     log.debug("Repositories: Workers already spawned", workDir);
   }
@@ -88,6 +92,7 @@ app.on('quit', terminateAllWorkers);
 
 /**
  * Spawns a repository worker.
+ *
  * IMPORTANT: It’s caller’s responsibility to initialize, keep track of and terminate workers spawned this way.
  * For termination, use `terminateWorker()`.
  */
