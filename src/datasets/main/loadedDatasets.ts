@@ -359,7 +359,7 @@ export function getLoadedDataset(
 // Indexes
 
 /** Writes default index from scratch, by listing & reading objects from filesystem. */
-export async function fillInDefaultIndex(
+async function fillInDefaultIndex(
   workDir: string,
   datasetID: string,
   index: Datasets.Util.DefaultIndex,
