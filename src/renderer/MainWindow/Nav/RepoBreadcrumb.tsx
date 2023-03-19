@@ -3,7 +3,7 @@
 
 import { throttle } from 'throttle-debounce';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { jsx } from '@emotion/react';
 import { ToastProps } from '@blueprintjs/core';
 
@@ -34,7 +34,7 @@ export const RepoBreadcrumb: React.FC<{
 
   const isLoaded = _status ? _status.status !== 'unloaded' : _isLoaded;
 
-  const throttledSetStatus = throttle(10, setStatus, false);
+  const throttledSetStatus = useMemo(() => throttle(50, setStatus, false), []);
 
   loadedRepositoryStatusChanged.renderer!.useEvent(async ({ workingCopyPath, status }) => {
     if (workingCopyPath === workDir) {
@@ -42,30 +42,34 @@ export const RepoBreadcrumb: React.FC<{
     }
   }, [workDir]);
 
-  let progress: BreadcrumbProps["progress"];
-  let error: true | string | undefined;
-  if (status.busy) {
-    switch (status.busy?.operation) {
+  const [progress, error]: [BreadcrumbProps["progress"], true | string | undefined] =
+  useMemo(() => {
+    let progress: BreadcrumbProps["progress"];
+    let error: true | string | undefined;
+    if (status.busy) {
+      switch (status.busy?.operation) {
 
-      // Only these operations can provide specific progress info
-      case 'pushing':
-      case 'pulling':
-      case 'cloning':
-        progress = status.busy.progress
-          ? { ...status.busy.progress, phase: `${status.busy.operation}: ${status.busy.progress.phase}…` }
-          : { phase: status.busy.operation };
-        error = status.busy.networkError;
-        break;
+        // Only these operations can provide specific progress info
+        case 'pushing':
+        case 'pulling':
+        case 'cloning':
+          progress = status.busy.progress
+            ? { ...status.busy.progress, phase: `${status.busy.operation}: ${status.busy.progress.phase}…` }
+            : { phase: status.busy.operation };
+          error = status.busy.networkError;
+          break;
 
-      // For the rest, show indeterminate progress
-      default:
-        progress = { phase: `Operation: ${status.busy.operation}…` };
-        error = undefined;
+        // For the rest, show indeterminate progress
+        default:
+          progress = { phase: `Operation: ${status.busy.operation}…` };
+          error = undefined;
+      }
+    } else {
+      progress = undefined;
+      error = undefined;
     }
-  } else {
-    progress = undefined;
-    error = undefined;
-  }
+    return [progress, error]
+  }, [JSON.stringify(status.busy ?? {})]);
 
   return (
     <Breadcrumb
