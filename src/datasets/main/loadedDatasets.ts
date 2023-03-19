@@ -835,12 +835,6 @@ export async function updateDatasetIndexesIfNeeded(
 
   const workers = getLoadedRepository(workDir).workers;
 
-  // Do nothing if default index is already being rebuilt.
-  if (defaultIndex.completionPromise) {
-    log.debug("updateDatasetIndexesIfNeeded: Skipping (default index busy)");
-    return;
-  }
-
   log.debug("updateDatasetIndexesIfNeeded: Starting");
 
   // Check current repository commit hash against default index’s stored commit hash.
