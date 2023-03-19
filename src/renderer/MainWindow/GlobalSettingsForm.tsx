@@ -8,6 +8,7 @@ import { Tooltip2 } from '@blueprintjs/popover2';
 
 import { GlobalSettingsContext } from '@riboseinc/paneron-extension-kit/SettingsContext';
 import PropertyView, { TextInput, Select } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
+import HelpTooltip from '@riboseinc/paneron-extension-kit/widgets/HelpTooltip';
 import PanelSeparator from '@riboseinc/paneron-extension-kit/widgets/panels/PanelSeparator';
 
 import { clearDataAndRestart, ClearOption, CLEAR_OPTIONS, selectDirectoryPath } from 'common';
@@ -61,7 +62,7 @@ const SettingsFormSection: React.FC<{ title?: string | JSX.Element }> = function
 
 export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({ className }) {
   const { settings, refresh: refreshSettings } = useContext(GlobalSettingsContext);
-  const { performOperation } = useContext(Context);
+  const { performOperation, isBusy } = useContext(Context);
 
   const { value: { fullPath: metanormaExecPath } } =
     describeBundledExecutable.renderer!.useValue({ name: 'metanorma' }, { fullPath: '' });
@@ -120,22 +121,30 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
 
   return (
     <div className={className}>
-      <SettingsFormSection title="Authoring info &amp; Git repository defaults">
+      <SettingsFormSection title="Authoring info &amp; Git VCS defaults">
         <NewRepositoryDefaults />
       </SettingsFormSection>
 
-      <SettingsFormSection title="Interface options">
-        <PropertyView label="Main navigation bar position" tooltip="Changes take effect next time a dataset is loaded.">
+      <SettingsFormSection title={<>
+        Interface options
+        &nbsp;
+        <HelpTooltip content="Some of these settings may not have effect until next time you open a dataset." />
+      </>}>
+        <PropertyView label="Main navigation bar position">
           <Select
             options={[{ value: 'top', label: "Top" }, { value: 'bottom', label: "Bottom" }]}
-            onChange={evt => handleUpdate('mainNavbarPosition', evt.currentTarget.value as 'top' | 'bottom')}
+            onChange={!isBusy
+              ? (evt => handleUpdate('mainNavbarPosition', evt.currentTarget.value as 'top' | 'bottom'))
+              : undefined}
             value={settings.mainNavbarPosition}
           />
         </PropertyView>
-        <PropertyView label="Sidebar position" tooltip="Changes take effect next time a dataset is loaded.">
+        <PropertyView label="Sidebar position">
           <Select
             options={[{ value: 'left', label: "Left" }, { value: 'right', label: "Right" }]}
-            onChange={evt => handleUpdate('sidebarPosition', evt.currentTarget.value as 'left' | 'right')}
+            onChange={!isBusy
+              ? (evt => handleUpdate('sidebarPosition', evt.currentTarget.value as 'left' | 'right'))
+              : undefined}
             value={settings.sidebarPosition}
           />
         </PropertyView>
@@ -143,10 +152,12 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
 
       <SettingsFormSection title={<>
           Local extensions
+          &nbsp;
+          <HelpTooltip content="Specify local path to an extension, which will force Paneron to use it (even if a publicly released version is available) for any dataset that requires it. The folder you specify must contain a “package.json” file." />
           &ensp;
-          <Tooltip2 content="Specify local path to an extension, which will force Paneron to use it (even if a publicly released version is available) for any dataset that requires it. The folder you specify must contain a “package.json” file.">
-            <Button minimal small intent="primary" icon="add" onClick={handleAddLocalExtension} />
-          </Tooltip2>
+          <Button disabled={isBusy} minimal small icon="add" onClick={handleAddLocalExtension}>
+            Add…
+          </Button>
         </>}>
         {localExtensions.map(({ id, ext }) =>
           <div
@@ -155,13 +166,15 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
             <InputGroup
               fill
               value={ext.localPath}
+              css={css`input { border-radius: 0; }`}
               disabled
               rightElement={
                 <Button
                   small minimal intent="danger"
                   onClick={handleDeleteLocalExtension(id)}
+                  disabled={isBusy}
                   icon="cross"
-                  title="Delete this local extension"
+                  title="Unload this local extension. The folder will remain in place, but Paneron won’t use it anymore"
                   css={css`position: absolute; top: 0; right: 0;`}
                 />
               }
@@ -185,7 +198,7 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
       <SettingsFormSection title="Reset (for troubleshooting)">
         <div css={css`display: flex; flex-flow: column nowrap; align-items: flex-start; margin-bottom: 5px;`}>
           {CLEAR_OPTIONS.map(opt =>
-            <Tooltip2 interactionKind="hover-target" position="bottom" content={<div css={css`width: 70vw`}>
+            <Tooltip2 minimal interactionKind="hover-target" position="bottom" content={<div css={css`width: 70vw`}>
                 <div>{CLEAR_OPTION_INFO[opt].description}</div>
                 {CLEAR_OPTION_INFO[opt].warning
                   ? <div css={css`font-weight: strong`}>{CLEAR_OPTION_INFO[opt].warning}</div>
@@ -195,6 +208,7 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
                 css={css`margin: 0;`}
                 labelElement={<>Clear {CLEAR_OPTION_INFO[opt].label}</>}
                 checked={clearOptionSelection[opt] === true}
+                disabled={isBusy}
                 onChange={(evt) => setClearOptionSelection({ ...clearOptionSelection, [opt]: evt.currentTarget.checked })} />
             </Tooltip2>
           )}
@@ -205,7 +219,7 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
             small
             outlined
             intent={canClear ? 'danger' : undefined}
-            disabled={!canClear}
+            disabled={!canClear || isBusy}
             onClick={handleClear}>
           Clear &amp; restart
         </Button>
@@ -248,7 +262,7 @@ const NewRepositoryDefaults: React.FC<{ className?: string }> = function ({ clas
     <div className={className}>
       <AuthorForm
         author={maybeEditedDefaults.author}
-        onChange={editAuthor}
+        onChange={!isBusy ? editAuthor : undefined}
       />
       <PanelSeparator />
       <PropertyView label="Remote username">
