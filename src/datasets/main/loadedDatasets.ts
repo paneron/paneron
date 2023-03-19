@@ -13,13 +13,13 @@ import { ChangeStatus } from '@riboseinc/paneron-extension-kit/types/changes';
 
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
 import { listDescendantPaths } from 'repositories/worker/buffers/list';
+import { SOLE_DATASET_ID } from 'repositories/types';
+import { getDatasetRoot } from 'repositories/main/meta';
 import { hash, stripLeadingSlash, stripTrailingSlash } from 'utils';
 import { API as Datasets, ReturnsPromise } from '../types';
 import { filteredIndexUpdated, indexStatusChanged, objectsChanged } from '../ipc';
 import { listObjectPaths } from './objects/list';
 import { readObjectCold, readObjectVersions } from './objects/read';
-import { SOLE_DATASET_ID } from 'repositories/types';
-import { getDatasetRoot } from 'repositories/main/meta';
 
 
 /**
