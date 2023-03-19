@@ -1001,16 +1001,19 @@ export async function updateDatasetIndexesIfNeeded(
             const customKey1 = (idx.keyer ? idx.keyer(objv1) : null) ?? objectPath;
             // Key corresponding to version after
             const customKey2 = (idx.keyer ? idx.keyer(objv2) : null) ?? objectPath;
-            await idx.dbHandle.put(customKey2, objectPath);
-            if (newVersionMatches) {
-              affectedFilteredIndexes[idxID].newObjectCount += 1;
-            } else {
-              affectedFilteredIndexes[idxID].newObjectCount -= 1;
-            }
             if (customKey2 !== customKey1) {
               try {
                 await idx.dbHandle.del(customKey1);
               } catch (e) {}
+            }
+            if (newVersionMatches) {
+              await idx.dbHandle.put(customKey2, objectPath);
+              affectedFilteredIndexes[idxID].newObjectCount += 1;
+            } else {
+              try {
+                await idx.dbHandle.del(customKey2);
+              } catch (e) {}
+              affectedFilteredIndexes[idxID].newObjectCount -= 1;
             }
           }
           defaultIndexStatusReporter({
