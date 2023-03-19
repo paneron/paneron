@@ -19,7 +19,7 @@ if (process.platform === 'linux' && process.env.SNAP && process.env.SNAP_USER_CO
 
 import { makeUUIDv4 } from 'utils';
 
-// No-op import to execute initialization code
+// Import to execute initialization code as a side effect
 import '../state/main';
 import '../plugins/main';
 import '../repositories/main';
