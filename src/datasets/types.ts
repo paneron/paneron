@@ -238,7 +238,7 @@ export namespace API {
 
     export type FilteredIndexPredicate = (objPath: string, obj: Record<string, any>) => boolean;
 
-    export type FilteredIndexKeyer = (item: Record<string, any>) => string | null
+    export type FilteredIndexKeyer = (item: Record<string, any>) => string | null;
 
   }
 }
