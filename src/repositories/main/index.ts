@@ -338,6 +338,10 @@ describeGitRepository.main!.handle(async ({ workingCopyPath }) => {
 
 
 describeRepository.main!.handle(async ({ workingCopyPath }) => {
+  if (workingCopyPath.trim() === '') {
+    log.warn("describeRepository: empty working directory path given", workingCopyPath);
+  }
+
   const gitRepo = await readRepoConfig(workingCopyPath);
 
   let paneronRepo: PaneronRepository | undefined;
