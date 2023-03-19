@@ -1,5 +1,10 @@
 /**
- * Reading & updating Paneron user’s repository configuration.
+ * Reading & updating Paneron user’s runtime repository configuration
+ * (not what is stored in repository itself, but what is stored
+ * in Paneron app data).
+ *
+ * TODO: Rename module to “repoConfig” (since it’s not just reading).
+ * TODO: Validate type at runtime using some sane isomorphic library.
  */
 
 import path from 'path';
