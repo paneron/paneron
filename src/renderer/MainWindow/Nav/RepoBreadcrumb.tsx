@@ -5,7 +5,7 @@ import { throttle } from 'throttle-debounce';
 
 import React, { useState } from 'react';
 import { jsx } from '@emotion/react';
-import { IToastProps } from '@blueprintjs/core';
+import { ToastProps } from '@blueprintjs/core';
 
 import { loadRepository, loadedRepositoryStatusChanged } from 'repositories/ipc';
 import { Repository, RepoStatus } from 'repositories/types';
@@ -22,7 +22,7 @@ export const RepoBreadcrumb: React.FC<{
   isLoaded: boolean
   onNavigate?: () => void
   onClose?: () => void
-  onMessage: (opts: IToastProps) => void
+  onMessage: (opts: ToastProps) => void
 }> = function ({ workDir, repoInfo, isLoaded: _isLoaded, onNavigate, onClose, onMessage }) {
   const repoStatus = loadRepository.renderer!.useValue({
     workingCopyPath: workDir,
