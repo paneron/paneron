@@ -899,7 +899,7 @@ export async function updateDatasetIndexesIfNeeded(
         [id: string]: {
           idx: Datasets.Util.FilteredIndex,
 
-          /** If false, then it means the object no longer matches this filtered index. */
+          /** If false, the object does not match this filtered index now (but used to before). */
           newVersionMatches: boolean
         }
       } = {};
