@@ -1079,6 +1079,7 @@ export async function updateDatasetIndexesIfNeeded(
     filter(idx => idx.completionPromise ? true : false).
     map(idx => idx.completionPromise));
 
+  // Assign the promise to avoid rebuilding index in parallel.
   defaultIndex.completionPromise = completionPromise;
   for (const idxID of filteredIndexIDs) {
     ds.indexes[idxID].completionPromise = completionPromise;
