@@ -121,7 +121,7 @@ async function push(opts: PushRequestMessage, updateStatus: RepoStatusUpdater) {
     });
 
   } catch (_e) {
-    //log.error(`C/db/isogit/worker: Error pushing to repository`, e);
+    //console.error(`C/db/isogit/worker: Error pushing to repository`, e);
     const e = _e as any;
     const suppress: boolean =
       (e.code === 'UserCanceledError' && _presumeCanceledErrorMeansAwaitingAuth === true) ||
