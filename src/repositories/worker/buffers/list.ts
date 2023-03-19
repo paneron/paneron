@@ -10,6 +10,9 @@ const { lstat, readdir } = fs.promises;
 
 
 export const resolveChanges: Repositories.Data.ResolveChanges = async ({ workDir, rootPath, oidBefore, oidAfter }) => {
+  if (!(await git.isDescendent({ fs, dir: workDir, oid: oidAfter, ancestor: oidBefore }))) {
+    throw new Error("Comparing commits: oidAfter is not a descendant of oidBefore");
+  }
   return {
     changedBuffers: await listDescendantPathsAtVersion(rootPath, workDir, oidBefore, {
       refToCompare: oidAfter,
