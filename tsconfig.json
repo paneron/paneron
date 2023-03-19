@@ -4,6 +4,7 @@
   "compilerOptions": {
     "baseUrl": "./src",
     "noEmit": false,
+    "strict": true,
     "noEmitOnError": false,
     "lib": [
       "es2019",
