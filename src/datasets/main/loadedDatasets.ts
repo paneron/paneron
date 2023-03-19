@@ -1076,7 +1076,8 @@ export async function updateDatasetIndexesIfNeeded(
 
   })();
 
-  // If any index is already being updated this way, await completion first.
+  // The above process should be fast, but may affect any index…
+  // If any index is busy for whatever reason, await completion first.
   await Promise.allSettled(Object.values(ds.indexes).
     filter(idx => idx.completionPromise ? true : false).
     map(idx => idx.completionPromise));
