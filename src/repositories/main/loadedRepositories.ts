@@ -62,13 +62,6 @@ export async function loadRepository(workingCopyPath: string): Promise<RepoStatu
     return loadedRepositories[workingCopyPath].latestStatus ?? { status: 'ready' };
   }
 
-  const loadedSorted = Object.entries(loadedRepositories).
-    sort((r1, r2) => r1[1].loadTime > r2[1].loadTime ? -1 : 1);
-  for (const [workDir] of loadedSorted.slice(0, MAX_LOADED_REPOSITORIES)) {
-    log.debug("Repositories: Load: Unloading first to free resources", workDir, "for", workingCopyPath);
-    await unloadRepository(workDir);
-  }
-
   log.silly("Repositories: Load: Reading config", workingCopyPath);
 
   let repoCfg: GitRepository;
@@ -132,6 +125,17 @@ export async function loadRepository(workingCopyPath: string): Promise<RepoStatu
     statusStream,
     loadTime: new Date(),
   };
+
+  const loadedSorted = Object.entries(loadedRepositories).
+    sort((r1, r2) => r1[1].loadTime > r2[1].loadTime ? -1 : 1).
+    slice(MAX_LOADED_REPOSITORIES).
+    map(([workDir, ]) => workDir);
+  try {
+    log.debug("Repositories: Load: Unloading excess repositories", loadedSorted);
+    await Promise.allSettled(loadedSorted.map(unloadRepository));
+  } catch (e) {
+    log.error("Repositories: Load: Unloading excess repositories: Error", e);
+  }
 
   log.silly("Repositories: Load: Kicking off sync", workingCopyPath);
 
