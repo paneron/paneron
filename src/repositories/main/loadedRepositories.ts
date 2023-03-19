@@ -14,6 +14,7 @@ import { getAuth } from './remoteAuth';
 import { makeSequential } from '../../utils';
 
 
+/** Holds currently loaded (synchronized) repositories. */
 const loadedRepositories: {
   [workingCopyPath: string]: {
     workers: RepoWorkers;
