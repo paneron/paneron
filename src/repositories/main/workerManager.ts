@@ -58,7 +58,7 @@ async function terminateAllWorkers() {
 
 export function getRepoWorkers(workDir: string): Promise<RepoWorkers> {
   if (!WORKERS[workDir]) {
-    log.debug("Repositories: Workers not spawned yet, spawning now…")
+    log.debug("Repositories: Workers not spawned yet, spawning now…", workDir);
     WORKERS[workDir] = new Promise((resolve, reject) => {
       terminateAllWorkers().
       then(() => {
@@ -76,7 +76,7 @@ export function getRepoWorkers(workDir: string): Promise<RepoWorkers> {
       });
     });
   } else {
-    log.debug("Repositories: Workers already spawned")
+    log.debug("Repositories: Workers already spawned", workDir);
   }
 
   return WORKERS[workDir];
