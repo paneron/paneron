@@ -14,6 +14,7 @@ import type {
   PushRequestMessage,
   RepoStatus,
   RepoStatusUpdater,
+  CommitMeta,
 } from 'repositories/types';
 
 
@@ -128,6 +129,12 @@ export namespace Repositories {
     export type GetCurrentCommit = (msg: GitOperationParams) =>
       Promise<{ commitHash: string }>
 
+
+    /**
+     * Retrieves commit metadata, given commit hash.
+     */
+    export type DescribeCommit = (msg: GitOperationParams & { commitHash: string }) =>
+      Promise<{ commit: CommitMeta }>
     export type GetBufferDataset = (msg: GitOperationParams & {
       paths: string[]
     }) => Promise<BufferDataset>
@@ -262,6 +269,9 @@ export default interface WorkerMethods {
 
   /** Returns the hash of the latest commit in the repository. */
   repo_getCurrentCommit: OpenedRepoOperation<Repositories.Data.GetCurrentCommit>
+
+  /** Return metadata for commit at given hash. */
+  repo_describeCommit: OpenedRepoOperation<Repositories.Data.DescribeCommit>
 
   /**
    * Given a list of commit hashes,

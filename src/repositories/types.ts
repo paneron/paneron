@@ -26,6 +26,27 @@ export interface GitRepository {
   author?: GitAuthor
 }
 
+export interface CommitMeta {
+  hash: string
+
+  message: string
+
+  author?: GitAuthor
+
+  /** UTC Unix timestamp */
+  authoredAt?: number
+
+  committer?: GitAuthor
+
+  /** UTC Unix timestamp */
+  committedAt?: number
+
+  /** Hashes of parent commits */
+  parents: string[]
+
+  signatureVerified?: true
+}
+
 export interface Repository {
   gitMeta: GitRepository
   paneronMeta?: PaneronRepository

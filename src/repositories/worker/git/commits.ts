@@ -1,5 +1,6 @@
 import fs from 'fs';
 import git, { type ReadCommitResult } from 'isomorphic-git';
+import type { CommitMeta } from '../../types';
 import type { Repositories } from '../types';
 
 
@@ -14,6 +15,31 @@ const getCurrentCommit: Repositories.Data.GetCurrentCommit = async function ({ w
 }
 
 
+const describeCommit: Repositories.Data.DescribeCommit = async function ({ workDir, commitHash }) {
+  const { oid, commit } = await git.readCommit({ fs, dir: workDir, oid: commitHash });
+  const commitMeta: CommitMeta = {
+    hash: oid,
+    message: commit.message,
+    parents: commit.parent,
+  }
+  if (commit.committer) {
+    commitMeta.committer = {
+      name: commit.committer.name,
+      email: commit.committer.email,
+    }
+    commitMeta.committedAt = commit.committer.timestamp;
+  }
+  if (commit.author) {
+    commitMeta.author = {
+      name: commit.author.name,
+      email: commit.author.email,
+    }
+    commitMeta.committedAt = commit.author.timestamp;
+  }
+  return {
+    commit: commitMeta,
+  };
+}
 const chooseMostRecentCommit: Repositories.Data.ChooseMostRecentCommit = async function ({ workDir, candidates }) {
   const commits: ReadCommitResult[] = [];
 

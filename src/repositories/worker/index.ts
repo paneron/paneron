@@ -220,6 +220,7 @@ const methods: WorkerSpec = {
   // TODO: Rename buffers to blobs? They are referred to as “buffers”, but actually we operate on Uint8Array here.
 
   repo_getCurrentCommit: openedRepoOperation(commits.getCurrentCommit),
+  repo_describeCommit: openedRepoOperation(commits.describeCommit),
   repo_chooseMostRecentCommit: openedRepoOperation(commits.chooseMostRecentCommit),
   repo_updateBuffers: lockingRepoOperationWithStatusReporter(updateBuffers),
   repo_addExternalBuffers: lockingRepoOperationWithStatusReporter(addExternalBuffers),
