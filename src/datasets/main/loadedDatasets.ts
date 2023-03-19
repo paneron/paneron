@@ -864,7 +864,7 @@ export async function updateDatasetIndexesIfNeeded(
 
   //log.debug("updateDatasetIndexesIfNeeded: Operating on filtered indexes", filteredIndexes.map(([, idx]) => idx.predicate));
 
-  const completionPromise = (async () => {
+  const adjustIndex = (async function _adjustIndex () {
 
     // Otherwise, start the process by figuring out which files have changed between index & repo commits.
 
@@ -1073,8 +1073,7 @@ export async function updateDatasetIndexesIfNeeded(
     }
 
     return true as const;
-
-  })();
+  });
 
   // The above process should be fast, but may affect any index…
   // If any index is busy for whatever reason, await completion first.
@@ -1082,17 +1081,25 @@ export async function updateDatasetIndexesIfNeeded(
     filter(idx => idx.completionPromise ? true : false).
     map(idx => idx.completionPromise));
 
-  // Assign the promise to avoid rebuilding index in parallel.
-  defaultIndex.completionPromise = completionPromise;
-  for (const idxID of filteredIndexIDs) {
-    ds.indexes[idxID].completionPromise = completionPromise;
-  }
+  try {
+    // Start the work
+    const completionPromise = adjustIndex();
 
-  await completionPromise;
+    // Assign completion promise to indicate all indices are busy
+    defaultIndex.completionPromise = completionPromise;
+    for (const idxID of filteredIndexIDs) {
+      ds.indexes[idxID].completionPromise = completionPromise;
+    }
 
-  defaultIndex.completionPromise = undefined;
-  for (const idxID of filteredIndexIDs) {
-    ds.indexes[idxID].completionPromise = undefined;
+    // Await completion
+    await completionPromise;
+
+  } finally {
+    // Clear promises
+    defaultIndex.completionPromise = undefined;
+    for (const idxID of filteredIndexIDs) {
+      ds.indexes[idxID].completionPromise = undefined;
+    }
   }
 
   // Notify frontend
