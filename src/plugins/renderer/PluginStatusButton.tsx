@@ -5,8 +5,8 @@ import { jsx } from '@emotion/react';
 
 import React, { useState } from 'react';
 
-import { getPluginInfo, installPlugin, pluginsUpdated, removePlugin, upgradePlugin } from 'plugins';
 import { Button, InputGroup, Toaster } from '@blueprintjs/core';
+import { getPluginInfo, installPlugin, pluginsUpdated, removePlugin, upgradePlugin } from 'plugins';
 
 
 const toaster = Toaster.create({ position: 'bottom' });
