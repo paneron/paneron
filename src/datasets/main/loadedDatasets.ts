@@ -590,7 +590,7 @@ async function fillInFilteredIndex(
         const objectPath: string = key;
         const objectData: Record<string, any> = value;
 
-        //log.debug("Datasets: fillInFilteredIndex: Checking object", loaded, objectPath);
+        //log.debug("Datasets: fillInFilteredIndex: Checking object", loaded, objectPath, JSON.stringify((objectData || {}).id));
         //await new Promise((resolve) => setTimeout(resolve, 5));
 
         if (predicate(objectPath, objectData) === true) {
@@ -1018,6 +1018,7 @@ export async function updateDatasetIndexesIfNeeded(
             },
           });
         } else { // Object was changed
+          //log.debug("Datasets: updateDatasetsIndexesIfNeeded: Changed object path", objectPath);
           changes[objectPath] = 'modified';
 
           // Add new key (or object path) to affected filtered indexes,
@@ -1052,6 +1053,7 @@ export async function updateDatasetIndexesIfNeeded(
           });
         }
       } else { // Object was likely deleted, or never existed
+        //log.debug("Datasets: updateDatasetsIndexesIfNeeded: Removed object path", objectPath);
         try {
           changes[objectPath] = 'removed';
 
