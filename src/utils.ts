@@ -1,6 +1,26 @@
 import type { Changeset, PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
 import crypto from 'crypto';
 
+
+/**
+ * Returns given async function wrapped in such a way that it will
+ * only execute one at a time,
+ * waiting for previous invocation to complete if it’s ongoing.
+ */
+export function makeSequential
+<T, A extends unknown[]>
+(fn: (...args: A) => Promise<T>): (...args: A) => Promise<T> {
+  let workQueue: Promise<void> = Promise.resolve();
+  return (...args) => {
+    const result = workQueue.then(() => fn(...args));
+    workQueue = result.then(ignore, ignore);
+    return result;
+  };
+}
+const ignore = (_: any) => {};
+
+
+
 export function changesetToPathChanges(
   changeset: Changeset<any>,
 ): PathChanges {
