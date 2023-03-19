@@ -997,7 +997,9 @@ export async function updateDatasetIndexesIfNeeded(
           // Add new key (or object path) to affected filtered indexes,
           // delete old key (if it’s different) from affected filtered indexes
           for (const [idxID, { idx, newVersionMatches }] of Object.entries(pathAffectsFilteredIndexes)) {
+            // Key corresponding to version before
             const customKey1 = (idx.keyer ? idx.keyer(objv1) : null) ?? objectPath;
+            // Key corresponding to version after
             const customKey2 = (idx.keyer ? idx.keyer(objv2) : null) ?? objectPath;
             await idx.dbHandle.put(customKey2, objectPath);
             if (newVersionMatches) {
