@@ -265,8 +265,8 @@ function syncRepoRepeatedly(
       repoSyncLog('debug', "No operation is in progress, proceeding…");
     }
 
-    // 1.2. Check that working copy is OK.
-    // If copy is missing, skip sync during this run and try to re-clone instead.
+    // 1.2. Check that working directory is OK.
+    // If missing, try to re-clone and skip pull/push this time.
     try {
       await fs.stat(workingCopyPath);
     } catch (e) {
