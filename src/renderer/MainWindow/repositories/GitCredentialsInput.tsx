@@ -124,18 +124,22 @@ function ({
               <li>
                 If you have provided it to Paneron before, it might already be stored by your operating system;
                 {" "}
-                to verify this you can leave it empty and use Test connection to verify you have write access.
+                to verify this you can leave it empty and click “Test connection” to verify you have write access.
               </li>
               <li>
-                Note that for repositories hosted on GitHub you must supply a Personal Access Token
+                Note that for repositories hosted on Github you must supply a Personal Access Token
                 {" "}
-                rather than your GitHub account’s actual password
+                rather than your Github account’s actual password
                 {" "}
                 (see <ColorNeutralLink onClick={handleOpenGitHubPATHelp}>Creating a personal access token</ColorNeutralLink>).
               </li>
             </UL>
             {" "}
-            Paneron stores your secret token using your system’s secret management mechanism, and communicates it only to this remote and only during synchronization.
+            Paneron stores your secret token using your operating system’s secret management mechanism,
+            {" "}
+            such as Keychain on macOS,
+            {" "}
+            and communicates it only to this remote and only during synchronization.
           </>}>
         <TextInput
           value={onEditPassword ? password : '•••••••••'}
