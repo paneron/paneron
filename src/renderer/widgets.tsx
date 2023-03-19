@@ -17,11 +17,17 @@ export const Button = styled(BPButton)`
 
 /** A link with colors forced to inherit. */
 export const ColorNeutralLink = styled.a`
-  color: inherit;
+  color: inherit !important;
   text-decoration: underline;
   text-decoration-style: dotted;
+  &:link {
+    color: inherit !important;
+  }
+  &:visited {
+    color: inherit !important;
+  }
   &:hover {
-    color: inherit;
+    color: inherit !important;
     text-decoration-style: solid;
   }
 `;
