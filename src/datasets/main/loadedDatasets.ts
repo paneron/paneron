@@ -398,6 +398,7 @@ async function fillInDefaultIndex(
   }
 
   index.completionPromise = (async () => {
+    await index.dbHandle.clear();
 
     await indexMeta(index, null);
 
@@ -700,8 +701,6 @@ async function initDefaultIndex(
 
   const meta = await indexMeta(idx);
   if (!meta || !meta.commitHash || !meta.completed) {
-    await idx.dbHandle.clear();
-
     // Will proceed in the background:
     fillInDefaultIndex(workDir, datasetID, idx);
   } else {
