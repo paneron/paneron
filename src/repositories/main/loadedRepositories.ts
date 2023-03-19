@@ -141,6 +141,7 @@ async function _loadRepository(workingCopyPath: string): Promise<RepoStatus> {
 
   log.silly("Repositories: Load: Kicking off sync", workingCopyPath);
 
+  // This will schedule itself forever, until repository is unloaded.
   syncRepoRepeatedly(workingCopyPath, undefined, workers);
 
   app.on('quit', () => { unloadRepository(workingCopyPath); });
