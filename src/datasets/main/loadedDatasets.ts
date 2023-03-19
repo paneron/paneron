@@ -549,7 +549,7 @@ async function fillInFilteredIndex(
     let indexed: number = 0;
     let loaded: number = 0;
 
-    // First pass: write items into a temp. DB that orders on read
+    // First pass: write items into a temporary DB that orders on read
     for await (const data of defaultIndexDB.createReadStream()) {
       // TODO: [upstream] NodeJS.ReadableStream is poorly typed.
       const { key, value } = data as unknown as { key: string, value: Record<string, any> };
