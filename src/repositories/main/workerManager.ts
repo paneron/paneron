@@ -37,8 +37,10 @@ export async function terminateRepoWorkers(workDir: string) {
     delete WORKERS[workDir];
     try {
       const repo = await repoPromise;
-      await terminateWorker(repo.sync);
-      await terminateWorker(repo.reader);
+      await Promise.allSettled([
+        terminateWorker(repo.sync),
+        terminateWorker(repo.reader),
+      ]);
     } finally {
       log.debug("Repositories: Terminating workers for repo: Done", workDir);
     }
@@ -47,13 +49,10 @@ export async function terminateRepoWorkers(workDir: string) {
   }
 }
 
+
 async function terminateAllWorkers() {
   log.debug("Repositories: Terminating all repo workers");
-
-  for (const workDir of Object.keys(WORKERS)) {
-    await terminateRepoWorkers(workDir);
-  }
-
+  await Promise.allSettled(Object.keys(WORKERS).map(terminateRepoWorkers));
   log.debug("Repositories: Terminating all repo workers: Done");
 }
 
