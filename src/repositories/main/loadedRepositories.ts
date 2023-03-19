@@ -50,10 +50,10 @@ export function getLoadedRepository(workDir: string) {
 /**
  * Loads a repository, unless it’s already loaded.
  * Loading a repo causes it to sync in background.
- * Unloading can be monitored via loadedRepositoryStatusChanged event.
+ * Unloading can be monitored via `loadedRepositoryStatusChanged` event.
  *
  * @param workingCopyPath path to Git working directory
- * @returns RepoStatus
+ * @returns Promise<RepoStatus>
  */
 async function _loadRepository(workingCopyPath: string): Promise<RepoStatus> {
   if (loadedRepositories[workingCopyPath]) {
