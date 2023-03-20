@@ -192,7 +192,7 @@
     "@riboseinc/isogit-lfs": "0.1.6",
     "@riboseinc/paneron-extension-glossarist": "^1.0.0-dev34",
     "@riboseinc/paneron-registry-kit": "2.0.0-alpha5",
-    "@riboseinc/paneron-extension-kit": "2.0.0-alpha24",
+    "@riboseinc/paneron-extension-kit": "2.0.0",
     "@riboseinc/reprose": "1.0.0-alpha11",
     "@types/mark.js": "^8.11.5",
     "asciidoctor": "^2.2.5",

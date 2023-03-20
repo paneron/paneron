@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { DatasetContext, RendererPlugin } from '@riboseinc/paneron-extension-kit/types';
 import { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
 import { IndexStatus, INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
+import { Hooks } from '@riboseinc/paneron-extension-kit/types/renderer';
 import { INITIAL_GLOBAL_SETTINGS } from '@riboseinc/paneron-extension-kit/settings';
 import { BaseAction, PersistentStateReducerHook } from '@riboseinc/paneron-extension-kit/usePersistentStateReducer';
 import useTimeTravelingPersistentStateReducer, { TimeTravelingPersistentStateReducerHook } from '@riboseinc/paneron-extension-kit/useTimeTravelingPersistentStateReducer';
@@ -29,6 +30,7 @@ import {
   getOrCreateFilteredIndex,
   indexStatusChanged,
   locateFilteredIndexPosition,
+  mapReduce,
   objectsChanged,
   updateObjects,
   updateSubtree,
@@ -288,6 +290,29 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
         throw new Error("Unable to retrieve index position from given object path");
       }
     },
+
+    useMapReducedData: function _useMapReducedData (opts) {
+      const initial =
+        Object.keys(opts.chains).
+          map(cid => ({ [cid]: undefined })).
+          reduce((prev, curr) => ({ ...prev, ...curr })) as Record<keyof typeof opts["chains"], undefined>;
+      return mapReduce.renderer!.useValue({
+        ...datasetParams,
+        chains: opts.chains as Hooks.Data.MapReduceChains,
+      }, initial);
+    } as DatasetContext["useMapReducedData"], // TODO: Avoid casting?
+
+    getMapReducedData: (async (opts) => {
+      const result = (await mapReduce.renderer!.trigger({
+        ...datasetParams,
+        chains: opts.chains as Hooks.Data.MapReduceChains,
+      })).result;
+      if (result) {
+        return result;
+      } else {
+        throw new Error("Error running map-reduce over dataset");
+      }
+    }) as DatasetContext["getMapReducedData"], // TODO: Avoid casting?
 
     usePersistentDatasetStateReducer,
     useTimeTravelingPersistentDatasetStateReducer,
