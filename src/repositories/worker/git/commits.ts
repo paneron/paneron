@@ -65,4 +65,5 @@ const chooseMostRecentCommit: Repositories.Data.ChooseMostRecentCommit = async f
 export default {
   getCurrentCommit,
   chooseMostRecentCommit,
+  describeCommit,
 };
