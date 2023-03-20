@@ -76,6 +76,17 @@ export namespace Git {
       currentCommit: string | undefined,
     }>;
 
+    /**
+     * Returns a flag indicating whether given auth can push
+     * to given remote URL.
+     */
+    export type AssessPushCapability = (msg: {
+      url: string
+      auth: GitAuthentication
+    }) => Promise<{
+      canPush: boolean,
+    }>;
+
     // TODO: workDir below is likely redundant?
     // repoOperation decorator provides it for initialized workers.
     export type AddOrigin = (msg: {
@@ -129,12 +140,39 @@ export namespace Repositories {
     export type GetCurrentCommit = (msg: GitOperationParams) =>
       Promise<{ commitHash: string }>
 
+    /**
+     * Returns a list of recent commit hashes, newest to oldest, optionally
+     * only affecting an object at given path relative to repo root.
+     */
+    export type ListCommits = (msg: GitOperationParams) =>
+      Promise<{ commitHashes: string[] }>
 
     /**
      * Retrieves commit metadata, given commit hash.
      */
     export type DescribeCommit = (msg: GitOperationParams & { commitHash: string }) =>
       Promise<{ commit: CommitMeta }>
+
+    /**
+     * Resets HEAD to previous commit hash. Takes the current commit hash.
+     * Intended for that time window when commit was created and not yet pushed.
+     *
+     * Will throw and do nothing in any of these circumstances:
+     *
+     * 1. If given commit hash is not the latest commit.
+     * 2. If given latest commit already exists in remote (got already synced).
+     * 3. If given unpushed latest commit has more than one parent (is a merge somehow).
+     * 4. If given unpushed latest commit has no parents (is initial commit somehow).
+     * 5. If there are uncommitted changes in working directory (somehow).
+     * 6. Repository is not on a branch (detached HEAD).
+     */
+    export type UndoCommit = (msg: GitOperationParams & {
+      commitHash: string
+      remoteURL: string | undefined
+      auth: GitAuthentication
+    }) =>
+      Promise<{ newCommitHash: string }>
+
     export type GetBufferDataset = (msg: GitOperationParams & {
       paths: string[]
     }) => Promise<BufferDataset>
@@ -270,8 +308,13 @@ export default interface WorkerMethods {
   /** Returns the hash of the latest commit in the repository. */
   repo_getCurrentCommit: OpenedRepoOperation<Repositories.Data.GetCurrentCommit>
 
+  /** Returns hashes of N most recent commits. */
+  repo_listCommits: OpenedRepoOperation<Repositories.Data.ListCommits>
+
   /** Return metadata for commit at given hash. */
   repo_describeCommit: OpenedRepoOperation<Repositories.Data.DescribeCommit>
+
+  repo_undoLatestCommit: OpenedRepoOperation<Repositories.Data.UndoCommit>
 
   /**
    * Given a list of commit hashes,

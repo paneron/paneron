@@ -4,6 +4,7 @@ import { remove, ensureDir } from 'fs-extra';
 
 import { checkPathIsOccupied } from '../../../main/fs-utils';
 import { Git } from '../types';
+import { stripLeadingSlash } from '../../../utils';
 
 
 const validate: Git.WorkDir.Validate = async function ({ workDir }) {
@@ -52,6 +53,27 @@ const discardUncommitted: Git.WorkDir.DiscardUncommittedChanges = async function
     filepaths: pathSpec ? [pathSpec] : undefined,
   });
   return { success: true };
+}
+
+
+export async function getUncommittedObjectPaths(workDir: string): Promise<string[]> {
+  // Status natrix row indexes
+  const FILEPATH = 0;
+  const WORKDIR = 2;
+  const STAGE = 3;
+
+  // Status matrix state
+  const UNCHANGED = 1;
+
+  const allFiles = await git.statusMatrix({ fs, dir: workDir });
+
+  return allFiles.
+    // get changed records relative to HEAD
+    filter((row) => row[WORKDIR] > UNCHANGED && row[STAGE] > UNCHANGED).
+    // get file paths from records
+    map((row) => row[FILEPATH]).
+    // normalize leading slash
+    map(filepath => `/${stripLeadingSlash(filepath)}`);
 }
 
 

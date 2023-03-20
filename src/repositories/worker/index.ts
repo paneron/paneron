@@ -221,6 +221,8 @@ const methods: WorkerSpec = {
 
   repo_getCurrentCommit: openedRepoOperation(commits.getCurrentCommit),
   repo_describeCommit: openedRepoOperation(commits.describeCommit),
+  repo_undoLatestCommit: lockingRepoOperation(commits.undoLatest, { failIfBusy: true }),
+  repo_listCommits: openedRepoOperation(commits.listCommits),
   repo_chooseMostRecentCommit: openedRepoOperation(commits.chooseMostRecentCommit),
   repo_updateBuffers: lockingRepoOperationWithStatusReporter(updateBuffers),
   repo_addExternalBuffers: lockingRepoOperationWithStatusReporter(addExternalBuffers),

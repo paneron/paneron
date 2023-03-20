@@ -24,6 +24,9 @@ import {
   updateBuffers,
   describeGitRepository,
   addDisconnected,
+  listCommits,
+  describeCommit,
+  undoLatestCommit,
 } from '../ipc';
 
 import { PANERON_REPOSITORY_META_FILENAME } from './meta';
@@ -334,6 +337,24 @@ describeGitRepository.main!.handle(async ({ workingCopyPath }) => {
     info: await readRepoConfig(workingCopyPath),
     isLoaded: isRepositoryLoaded(workingCopyPath),
   };
+});
+
+listCommits.main!.handle(async ({ workingCopyPath }) => {
+  return await getLoadedRepository(workingCopyPath).workers.reader.repo_listCommits({});
+});
+
+describeCommit.main!.handle(async ({ workingCopyPath, commitHash }) => {
+  return await getLoadedRepository(workingCopyPath).workers.reader.repo_describeCommit({ commitHash });
+});
+
+undoLatestCommit.main!.handle(async ({ workingCopyPath, commitHash }) => {
+  const { remote } = await readRepoConfig(workingCopyPath);
+  if (remote) {
+    const auth = await getAuth(remote.url, remote.username);
+    return await getLoadedRepository(workingCopyPath).workers.reader.
+      repo_undoLatestCommit({ commitHash, remoteURL: remote.url, auth });
+  }
+  throw new Error("no remote")
 });
 
 

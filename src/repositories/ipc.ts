@@ -11,6 +11,7 @@ import {
   PaneronRepository,
   GitRepository,
   RepositoryListQuery,
+  CommitMeta,
 } from './types';
 
 
@@ -101,6 +102,24 @@ export const describeGitRepository = makeEndpoint.main(
   'getGitRepository',
   <{ workingCopyPath: string }>_,
   <{ info: GitRepository, isLoaded: boolean }>_,
+);
+
+export const listCommits = makeEndpoint.main(
+  'listCommits',
+  <{ workingCopyPath: string }>_,
+  <{ commitHashes: string[] }>_,
+);
+
+export const describeCommit = makeEndpoint.main(
+  'describeGitCommit',
+  <{ workingCopyPath: string, commitHash: string }>_,
+  <{ commit: CommitMeta }>_,
+);
+
+export const undoLatestCommit = makeEndpoint.main(
+  'revertGitCommit',
+  <{ workingCopyPath: string, commitHash: string }>_,
+  <{ newCommitHash: string }>_,
 );
 
 export const savePassword = makeEndpoint.main(

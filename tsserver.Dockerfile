@@ -32,7 +32,7 @@ WORKDIR ${project_path:?}
 COPY --chown=paneron:paneron package.json package.json
 COPY --chown=paneron:paneron yarn.lock yarn.lock
 # If you work on dependencies, like registry-kit or extension-kit
-# COPY --chown=paneron:paneron dependencies-local dependencies-local
+COPY --chown=paneron:paneron dependencies-local dependencies-local
 RUN yarn install
 
 # RUN npx electron-rebuild
