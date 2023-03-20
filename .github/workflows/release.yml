@@ -49,19 +49,19 @@ jobs:
         if: startsWith(matrix.os, 'macos')
         continue-on-error: true
         run: |
-          mkdir -p bin/mac && cd bin/mac && curl -fsSL "https://github.com/metanorma/packed-mn/releases/latest/download/metanorma-darwin-x64.tgz" -O && find . -name "*.tgz" -exec tar xzf {} \; && rm *.tgz && mv metanorma-darwin* metanorma
+          mkdir -p bin/mac && cd bin/mac && curl -fsSL "https://github.com/metanorma/packed-mn/releases/latest/download/metanorma-darwin-x86_64.tgz" -O && find . -name "*.tgz" -exec tar xzf {} \; && rm *.tgz && mv metanorma-darwin* metanorma
 
       - name: Fetch Metanorma (Ubuntu)
         if: startsWith(matrix.os, 'ubuntu')
         continue-on-error: true
         run: |
-          mkdir -p bin/linux && cd bin/linux && curl -fsSL "https://github.com/metanorma/packed-mn/releases/latest/download/metanorma-linux-x64.tgz" -O && find . -name "*.tgz" -exec tar xzf {} \; && rm *.tgz && mv metanorma-linux* metanorma
+          mkdir -p bin/linux && cd bin/linux && curl -fsSL "https://github.com/metanorma/packed-mn/releases/latest/download/metanorma-linux-x86_64.tgz" -O && find . -name "*.tgz" -exec tar xzf {} \; && rm *.tgz && mv metanorma-linux* metanorma
 
       - name: Fetch Metanorma (Windows)
         if: startsWith(matrix.os, 'windows')
         continue-on-error: true
         run: |
-          md bin/win && cd bin/win && curl.exe -L -o metanorma "https://github.com/metanorma/packed-mn/releases/latest/download/metanorma-windows-x64.exe"
+          md bin/win && cd bin/win && curl.exe -L -o metanorma "https://github.com/metanorma/packed-mn/releases/latest/download/metanorma-windows-x86_64.exe"
 
       - name: Build/release Electron app
         uses: samuelmeuli/action-electron-builder@v1
