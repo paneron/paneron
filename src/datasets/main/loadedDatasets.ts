@@ -270,6 +270,10 @@ async function mapReduce(
   reduce: Datasets.Util.ReduceFunction | undefined
 ): Promise<unknown> {
   const defaultIndex = getDefaultIndex(workDir, datasetID);
+  // TODO: Shouldn’t we await completion in getDefaultIndex()?
+  if (defaultIndex.completionPromise) {
+    await defaultIndex.completionPromise;
+  }
   const mappedData: unknown[] = [];
   log.silly("mapReduce: mapping");
   for await (const data of defaultIndex.dbHandle.createReadStream()) {
