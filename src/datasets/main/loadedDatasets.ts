@@ -876,9 +876,9 @@ export async function updateDatasetIndexesIfNeeded(
   }
 
   if (!defaultIndexMeta || !oidIndex) {
-    // TODO: Eventually we can update indexes from nothing,
-    // but for now it’s separated across initial “filling in” and subsequent “updates”
     log.error("updateDatasetIndexesIfNeeded: Attempting to update dataset indexes, but default index lacks meta or commit hash");
+    // TODO: Eventually we can have a single logic that either fills or updates index
+    // but for now it’s separated across initial “filling in” and subsequent “updates”/“adjustments”
     throw new Error("Attempting to update dataset indexes, but default index lacks meta or commit hash");
   }
 
@@ -993,7 +993,8 @@ export async function updateDatasetIndexesIfNeeded(
         }
       }
 
-      // Update or delete structured object data in default index
+      // Update or delete structured object data in default index,
+      // update keys/paths in filtered indexes
       if (objv2 !== null) { // Object was changed or added
 
         // Add/update object data in default index
