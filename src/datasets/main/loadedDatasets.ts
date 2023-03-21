@@ -13,9 +13,8 @@ import type { ChangeStatus } from '@riboseinc/paneron-extension-kit/types/change
 
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
 import { listDescendantPaths } from 'repositories/worker/buffers/list';
-import { SOLE_DATASET_ID } from 'repositories/types';
 import { getDatasetRoot } from 'repositories/main/meta';
-import { hash, stripLeadingSlash, stripTrailingSlash } from 'utils';
+import { hash } from 'utils';
 import type { API as Datasets, ReturnsPromise } from '../types';
 import { filteredIndexUpdated, indexStatusChanged, objectsChanged } from '../ipc';
 import { listObjectPaths } from './objects/list';
@@ -346,27 +345,6 @@ async function _writeDefaultIndex(
 
 
 // Utility functions
-
-
-/** Strips leading and trailing slashes from dataset directory. */
-export function normalizeDatasetDir(datasetDir: string) {
-  return stripTrailingSlash(stripLeadingSlash(datasetDir));
-}
-
-
-/**
- * Dataset ID is derived from dataset directory name, differing in that:
- * 
- * - It is never undefined (if dataset is at repo root, `SOLE_DATASET_ID` is used),
- * - It is always normalized (no leading/trailing slashes).
- */
-export function getDatasetID(datasetDir?: string) {
-  if (datasetDir !== undefined) {
-    return normalizeDatasetDir(datasetDir);
-  } else {
-    return SOLE_DATASET_ID;
-  }
-}
 
 
 function getLoadedDataset(
