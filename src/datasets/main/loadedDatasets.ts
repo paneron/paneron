@@ -264,7 +264,7 @@ const resolveDatasetChanges: (opts: {
 }
 
 
-export async function mapReduce(
+async function mapReduce(
   workDir: string,
   datasetID: string,
   map: Datasets.Util.MapFunction,
@@ -369,7 +369,7 @@ export function getDatasetID(datasetDir?: string) {
 }
 
 
-export function getLoadedDataset(
+function getLoadedDataset(
   workDir: string,
   datasetID: string,
 ): Datasets.Util.LoadedDataset {
