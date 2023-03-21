@@ -520,29 +520,14 @@ async function fillInFilteredIndex(
   const predicate = filteredIndex.predicate;
   const keyer = filteredIndex.keyer;
 
-  if (filteredIndex.completionPromise) {
-    await filteredIndex.completionPromise;
+  if (filteredIndex.completionPromise || defaultIndex.completionPromise) {
+    await Promise.allSettled([
+      filteredIndex.completionPromise,
+      defaultIndex.completionPromise,
+    ]);
   }
 
   filteredIndex.completionPromise = (async () => {
-
-    if (defaultIndex.completionPromise) {
-      log.debug("Datasets: fillInFilteredIndex: Awaiting default index progress to finish...");
-
-      await defaultIndex.completionPromise;
-
-      log.debug("Datasets: fillInFilteredIndex: Awaiting default index progress to finish: Done");
-
-      //await new Promise<void>((resolve, reject) => {
-      //  defaultIndex.statusSubject.subscribe(
-      //    (val) => { if (val.progress === undefined) { resolve() } },
-      //    (err) => reject(err),
-      //    () => reject("Default index status stream completed without progress having finished"));
-      //});
-    } else {
-      log.debug("Datasets: fillInFilteredIndex: Default index is ready beforehand");
-    }
-
     const commitHash = (await indexMeta(defaultIndex))?.commitHash;
 
     if (!commitHash) {
