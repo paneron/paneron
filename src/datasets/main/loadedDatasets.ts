@@ -170,7 +170,7 @@ const describeIndex: ReturnsPromise<Datasets.Indexes.Describe> = async function 
   if (indexID) {
     idx = getFilteredIndex(workDir, datasetID, indexID);
   } else {
-    idx = await getDefaultIndex(workDir, datasetID);
+    idx = getDefaultIndex(workDir, datasetID);
   }
   return {
     status: idx.status,
@@ -270,7 +270,7 @@ async function mapReduce(
   map: Datasets.Util.MapFunction,
   reduce: Datasets.Util.ReduceFunction | undefined
 ): Promise<unknown> {
-  const defaultIndex = await getDefaultIndex(workDir, datasetID);
+  const defaultIndex = getDefaultIndex(workDir, datasetID);
   const mappedData: unknown[] = [];
   log.silly("mapReduce: mapping");
   for await (const data of defaultIndex.dbHandle.createReadStream()) {
@@ -631,8 +631,6 @@ async function initFilteredIndex(
 
   const cacheRoot = ds.indexDBRoot;
 
-  const defaultIndex = await getDefaultIndex(workDir, datasetID);
-
   const dbPath = getDBPath(cacheRoot, `${workDir}/${datasetID}/${indexID}`);
   const sortedDBPath = getDBPath(cacheRoot, `${workDir}/${datasetID}/${indexID}-sorted`);
 
@@ -673,7 +671,7 @@ async function initFilteredIndex(
   const statusReporter = getFilteredIndexStatusReporter(workDir, datasetID, indexID);
 
   // This will proceed in background.
-  fillInFilteredIndex(defaultIndex, idx, statusReporter);
+  fillInFilteredIndex(getDefaultIndex(workDir, datasetID), idx, statusReporter);
 
   return idx;
 }
@@ -727,10 +725,10 @@ async function initDefaultIndex(
   return idx;
 }
 
-export async function getDefaultIndex(
+export function getDefaultIndex(
   workDir: string,
   datasetID: string,
-): Promise<Datasets.Util.DefaultIndex> {
+): Datasets.Util.DefaultIndex {
   const ds = getLoadedDataset(workDir, datasetID);
 
   const idx = ds.indexes['default'] as Datasets.Util.DefaultIndex | undefined;
