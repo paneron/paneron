@@ -6,13 +6,16 @@ import crypto from 'crypto';
  * Returns given async function wrapped in such a way that it will
  * only execute one at a time,
  * waiting for previous invocation to complete if it’s ongoing.
+ * (Doesn’t care whether previous invocation succeeds,
+ * the call will be scheduled regardless.)
  */
 export function makeSequential
 <T, A extends unknown[]>
 (fn: (...args: A) => Promise<T>): (...args: A) => Promise<T> {
   let workQueue: Promise<void> = Promise.resolve();
   return (...args) => {
-    const result = workQueue.then(() => fn(...args));
+    const call = () => fn(...args);
+    const result = workQueue.then(call, call);
     workQueue = result.then(ignore, ignore);
     return result;
   };
