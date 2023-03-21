@@ -865,7 +865,7 @@ export async function updateDatasetIndexesIfNeeded(
 
   // Check current repository commit hash against default index’s stored commit hash.
   const { reader } = workers;
-  const { commitHash: oidCurrent } = await reader.repo_getCurrentCommit({ workDir });
+  const { commitHash: oidCurrent } = await reader.repo_getCurrentCommit({});
   const defaultIndexMeta = await indexMeta(defaultIndex);
   const oidIndex = defaultIndexMeta?.commitHash;
 
