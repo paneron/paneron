@@ -14,6 +14,7 @@ import type { ChangeStatus } from '@riboseinc/paneron-extension-kit/types/change
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
 import { listDescendantPaths } from 'repositories/worker/buffers/list';
 import { getDatasetRoot } from 'repositories/main/meta';
+import { makeQueue } from 'utils';
 import { hash } from 'main/utils';
 import type { API as Datasets, ReturnsPromise } from '../types';
 import { filteredIndexUpdated, indexStatusChanged, objectsChanged } from '../ipc';
@@ -32,10 +33,12 @@ const datasets: {
   }
 } = {};
 
+const datasetQueue = makeQueue();
+
 
 // Main API
 
-const load: Datasets.Lifecycle.Load = async function ({
+const load: Datasets.Lifecycle.Load = datasetQueue.oneAtATime(async function ({
   workDir,
   datasetID,
   cacheRoot,
@@ -62,7 +65,7 @@ const load: Datasets.Lifecycle.Load = async function ({
 
     log.info("Datasets: Load: Initialized dataset in-memory structure and default index", workDir, datasetID);
   }
-}
+}, ({ workDir, datasetID }) => [workDir, `${workDir}:${datasetID}`]);
 
 
 const unload: Datasets.Lifecycle.Unload = async function ({
@@ -147,13 +150,13 @@ const getOrCreateFilteredIndex: ReturnsPromise<Datasets.Indexes.GetOrCreateFilte
       keyer = undefined;
     }
 
-    await initFilteredIndex(
+    initFilteredIndex(
       workDir,
       datasetID,
       filteredIndexID,
       predicate,
       keyer,
-    ) as Datasets.Util.FilteredIndex;
+    );
   }
 
   return { indexID: filteredIndexID };
@@ -367,7 +370,7 @@ function getLoadedDataset(
 // Indexes
 
 /** Writes default index from scratch, by listing & reading objects from filesystem. */
-async function fillInDefaultIndex(
+const fillInDefaultIndex = datasetQueue.oneAtATime(async function _fillInDefaultIndex(
   workDir: string,
   datasetID: string,
   index: Datasets.Util.DefaultIndex,
@@ -488,7 +491,10 @@ async function fillInDefaultIndex(
   })();
 
   await index.completionPromise;
-}
+}, (workDir, datasetID) => [
+  `${workDir}:${datasetID}`,
+  `${workDir}:${datasetID}:default`,
+]);
 
 
 /** Fills in filtered index from scratch, by reading from default index. */
@@ -602,13 +608,13 @@ async function getCurrentCommit(workDir: string): Promise<string> {
 }
 
 
-async function initFilteredIndex(
+const initFilteredIndex = datasetQueue.oneAtATime(async function (
   workDir: string,
   datasetID: string,
   indexID: string,
   predicate: Datasets.Util.FilteredIndexPredicate,
   keyer?: Datasets.Util.FilteredIndexKeyer,
-): Promise<Datasets.Util.FilteredIndex> {
+) {
   const ds = getLoadedDataset(workDir, datasetID); 
 
   const cacheRoot = ds.indexDBRoot;
@@ -653,10 +659,12 @@ async function initFilteredIndex(
   const statusReporter = getFilteredIndexStatusReporter(workDir, datasetID, indexID);
 
   // This will proceed in background.
-  fillInFilteredIndex(getDefaultIndex(workDir, datasetID), idx, statusReporter);
-
-  return idx;
-}
+  await fillInFilteredIndex(getDefaultIndex(workDir, datasetID), idx, statusReporter);
+}, (workDir, datasetID, indexID) => [
+  // Lock for entire dataset
+  `${workDir}:${datasetID}`,
+  `${workDir}:${datasetID}:${indexID}`,
+]);
 
 
 export function getFilteredIndex(
@@ -811,7 +819,7 @@ async function indexMeta(
  *
  * Once index is being rebuilt, further rebuilds are skipped until the update is complete.
  */
-export async function updateDatasetIndexesIfNeeded(
+export const updateDatasetIndexesIfNeeded = datasetQueue.oneAtATime(async function _updateDatasetIndexesIfNeeded (
   workDir: string,
   datasetID: string,
 ) {
@@ -1114,7 +1122,7 @@ export async function updateDatasetIndexesIfNeeded(
       objectCount: newObjectCount,
     } });
   }
-}
+}, (workDir, datasetID) => [`${workDir}:${datasetID}`]);
 
 
 /** Drops and rebuilds filtered index sorted DB from its keyed DB. */
