@@ -1,5 +1,6 @@
 /** General-purpose utilities that work both in Node and in browser. */
 
+import AsyncLock from 'async-lock';
 import type { Changeset, PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
 
 
@@ -22,6 +23,107 @@ export function makeSequential
   };
 }
 const ignore = (_: any) => {};
+
+
+/**
+ * Queues based on async-lock.
+ *
+ * Use `oneAtATime` to run an async function in specified queues
+ * without interfering with other async functions that may run in those queues.
+ */
+export function makeQueue() {
+  const lock = new AsyncLock();
+  return {
+    /**
+     * Queue a function to be run after the previous function in given queue
+     * succeeds or fails. In case of multiple queues, waits until
+     * every queue becomes free.
+     */
+    oneAtATime: function _oneAtATime<T, A extends unknown[]>(
+      /** Function to be queued. */
+      fn: (...args: A) => Promise<T>,
+      /** Given function arguments, return queue IDs (“locking keys”). */
+      occupyQueues: (...args: A) => string[],
+    ): (...args: A) => Promise<T> {
+      return async function runQueued(...args) {
+        // Which queues do we want to occupy/which locks do we want to acquire?
+        const queueIDs = occupyQueues(...args);
+        // Acquire locks and run the function.
+        return await lock.acquire(queueIDs, () => fn(...args));
+      }
+    },
+  };
+}
+
+
+/**
+ * Queues based on p-limit/p-throttle (requires ESM support in bundler).
+ *
+ * Use `oneAtATime` to run an async function in specified queues
+ * without interfering with other async functions that may run in those queues.
+ */
+
+// import pLimit from 'p-limit';
+// import pThrottle from 'p-throttle';
+// export function makeQueue2() {
+//   interface Queue<T, A extends unknown[]> {
+//     add: (
+//       fn: (...args: A) => Promise<T>,
+//       ...args: A) => Promise<T>,
+//     /**
+//      * Returns a promise that resolves when current queue becomes empty.
+//      * Optionally executes given callback.
+//      */
+//     onComplete: (func?: () => void) => Promise<void>,
+//   }
+//   const queues: Record<string, Queue<any, any>> = {};
+//   function getQueue<T, A extends unknown[]>
+//   (key: string): Queue<T, A> {
+//     if (!queues[key]) {
+//       const limit = pLimit(1);
+//       const throttle = pThrottle({ limit: Infinity, interval: 0 });
+//       const q: Queue<T, A> = {
+//         add: (func, ...args) => throttle(() => limit(func, ...args))(),
+//         onComplete: (func) => limit(func ?? (() => void 0)),
+//       }
+//       queues[key] = q;
+//     }
+//     return queues[key];
+//   }
+//   return {
+//     /**
+//      * Queue a function to be run after the previous function in given queue
+//      * succeeds or fails. In case of multiple queues, waits until
+//      * every queue becomes free.
+//      */
+//     oneAtATime: function _oneAtATime<T, A extends unknown[]>(
+//       /** Function to be queued. */
+//       fn: (...args: A) => Promise<T>,
+//       /** Given function arguments, return queue IDs (“locking keys”). */
+//       occupyQueues: (...args: A) => string[],
+//     ): (...args: A) => Promise<T> {
+//       return async function runQueued(...args) {
+//         // Which queues do we want to occupy? (Which locks do we want to acquire?)
+//         const queues = occupyQueues(...args).map(getQueue);
+// 
+//         // Acquire the locks:
+// 
+//         // Wait until all those queues settle
+//         await Promise.allSettled(queues.map(q => q.onComplete()));
+//         // Start our work
+//         const promise = fn(...args);
+//         // Occupy all given queues with it
+//         queues.map(q => q.add(() => promise));
+// 
+//         // We have acquired the locks. Once the promise resolves,
+//         // queues will be able to take new tasks.
+// 
+//         // Resolve when work completes
+//         return await promise;
+//       }
+//     },
+//   };
+// }
 
 
 
