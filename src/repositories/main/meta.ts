@@ -24,7 +24,7 @@ export async function readPaneronRepoMeta(workingCopyPath: string): Promise<Pane
   if (meta === null) {
     throw new Error("Paneron repository metadata file is not found");
   } else {
-    return deserializeMeta(meta);
+    return deserializeMeta(meta) as PaneronRepository;
   }
 }
 
@@ -89,6 +89,6 @@ Promise<DatasetInfo> {
     log.error("Cannot read dataset metadata", workDir, datasetID, datasetMetaPath);
     throw new Error("Missing dataset metadata file");
   } else {
-    return deserializeMeta(meta);
+    return deserializeMeta(meta) as DatasetInfo;
   }
 }
