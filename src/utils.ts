@@ -1,3 +1,5 @@
+/** General-purpose utilities that work both in Node and in browser. */
+
 import type { Changeset, PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
 
 
