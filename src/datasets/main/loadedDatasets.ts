@@ -14,7 +14,7 @@ import type { ChangeStatus } from '@riboseinc/paneron-extension-kit/types/change
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
 import { listDescendantPaths } from 'repositories/worker/buffers/list';
 import { getDatasetRoot } from 'repositories/main/meta';
-import { hash } from 'utils';
+import { hash } from 'main/utils';
 import type { API as Datasets, ReturnsPromise } from '../types';
 import { filteredIndexUpdated, indexStatusChanged, objectsChanged } from '../ipc';
 import { listObjectPaths } from './objects/list';
