@@ -66,7 +66,7 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
     datasetID,
   };
 
-  function usePersistentDatasetStateReducer<S, A extends BaseAction>
+  function usePersistentDatasetStateReducer<S extends Record<string, any>, A extends BaseAction>
   (...opts: Parameters<PersistentStateReducerHook<S, A>>) {
     const effectiveOpts: Parameters<PersistentStateReducerHook<S, A>> = [
       // opts[0] is the storage key in the list of positional parameters.
@@ -81,7 +81,7 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
     return usePaneronPersistentStateReducer(...effectiveOpts);
   }
 
-  function useTimeTravelingPersistentDatasetStateReducer<S, A extends BaseAction>
+  function useTimeTravelingPersistentDatasetStateReducer<S extends Record<string, any>, A extends BaseAction>
   (...opts: Parameters<TimeTravelingPersistentStateReducerHook<S, A>>) {
     const effectiveOpts: Parameters<TimeTravelingPersistentStateReducerHook<S, A>> = [
       opts[0], opts[1],

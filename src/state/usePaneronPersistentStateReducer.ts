@@ -10,7 +10,7 @@ export type PaneronPersistentStateReducerHook<S, A extends BaseAction> = (...arg
 
 /* An implementation of PersistentStateReducer
    that uses Paneron’s state management IPC endpoints. */
-function usePaneronPersistentStateReducer<S, A extends BaseAction>(
+function usePaneronPersistentStateReducer<S extends Record<string, any>, A extends BaseAction>(
   ...args: Parameters<PersistentStateReducerHook<S, A>>
 ) {
   function _storeState(storageKey: string, state: S) {
