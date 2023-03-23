@@ -17,7 +17,7 @@ if (process.platform === 'linux' && process.env.SNAP && process.env.SNAP_USER_CO
   app.setAppLogsPath();
 }
 
-import { makeUUIDv4 } from 'utils';
+import { makeUUIDv4 } from './utils';
 
 // Import to execute initialization code as a side effect
 import '../state/main';

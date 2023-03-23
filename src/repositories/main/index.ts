@@ -33,7 +33,8 @@ import { PANERON_REPOSITORY_META_FILENAME } from './meta';
 
 import loadedDatasets from '../../datasets/main/loadedDatasets';
 
-import { changesetToPathChanges, makeUUIDv4 } from 'utils';
+import { changesetToPathChanges } from 'utils';
+import { makeUUIDv4 } from '../../main/utils';
 
 import { PaneronRepository, GitRemote, Repository } from '../types';
 

@@ -1,7 +1,8 @@
 import { ipcMain, IpcRendererEvent, IpcMainInvokeEvent, ipcRenderer } from 'electron';
 import log from 'electron-log';
 import { useEffect, useState } from 'react';
-import { hash, toJSONPreservingUndefined } from './utils';
+import { toJSONPreservingUndefined } from './utils';
+import { hash } from './main/utils';
 import { notifyAll, notifyWithTitle } from './window/main';
 
 
