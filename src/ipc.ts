@@ -256,6 +256,7 @@ export const makeEndpoint: EndpointMaker = {
             const payloadSliceToLog = payloadSnapshot.slice(0, LOG_PAYLOAD_SLICE);
 
             useEffect(() => {
+              let cancelled = false;
 
               async function doQuery() {
                 setUpdating(true);
@@ -263,6 +264,8 @@ export const makeEndpoint: EndpointMaker = {
                 try {
                   //log.debug("IPC: Invoking", name, payloadSliceToLog);
                   const maybeResp = await ipcRenderer.invoke(name, payload);
+
+                  if (cancelled) { return; }
 
                   if (maybeResp.result) {
                     const resp = maybeResp as MainEndpointResponse<O>;
@@ -285,16 +288,20 @@ export const makeEndpoint: EndpointMaker = {
                     //updateValue(maybeResp as O);
                   }
                 } catch (e) {
+                  if (cancelled) { return; }
                   log.error("IPC: Failed to invoke method", name, payloadSliceToLog, e);
                   updateErrors([(e as any).toString?.() ?? `${e}`]);
                   updateValue(initialValue);
                 } finally {
+                  if (cancelled) { return; }
                   setUpdating(false);
                 }
               };
 
               //log.debug("IPC: Querying", name, payloadSliceToLog);
               doQuery();
+
+              return function cleanUp() { cancelled = true; };
 
             }, [name, reqCounter, payloadHash]);
 
