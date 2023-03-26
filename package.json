@@ -228,6 +228,7 @@
     "react-flow-renderer": "^9.6.0",
     "react-helmet": "^6.1.0",
     "react-mathjax2": "^0.0.2",
+    "react-resizable": "^3.0.5",
     "react-virtualized-auto-sizer": "^1.0.7",
     "react-visual-diff": "^0.4.3",
     "react-window": "^1.8.8",
