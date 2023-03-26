@@ -9,6 +9,7 @@ import '!style-loader!css-loader!jsondiffpatch/dist/formatters-styles/annotated.
 import '!style-loader!css-loader!jsondiffpatch/dist/formatters-styles/html.css';
 import '!style-loader!css-loader!@blueprintjs/core/lib/css/blueprint.css';
 import '!style-loader!css-loader!@blueprintjs/popover2/lib/css/blueprint-popover2.css';
+import '!style-loader!css-loader!react-resizable/css/styles.css';
 import '!style-loader!css-loader!./normalize.css';
 import '!style-loader!css-loader!./renderer.css';
 
