@@ -333,14 +333,15 @@ mapReduce.main!.handle(async ({ workingCopyPath, datasetID, chains }) => {
     filter(r => r.status === 'fulfilled').
     map(r => (r as PromiseFulfilledResult<Record<string, unknown>>).value);
 
-  const result = fulfilledResults.reduce((prev, curr) => ({ ...prev, ...curr }));
-
   if (fulfilledResults.length != chainResults.length) {
-    log.error("mapReduce failed for certain chains");
-    throw new Error("Dataset mapReduce failed for certain chains");
+    const errResults: string[] = chainResults.
+      filter(r => r.status !== 'fulfilled').
+      map(r => (r as PromiseRejectedResult).reason.message);
+    const errors = errResults.map(r => r.split('\n')[0]).join('; ');
+    throw new Error(`mapReduce failed: ${errors}`);
   }
 
-  return result;
+  return fulfilledResults.reduce((prev, curr) => ({ ...prev, ...curr }));
 });
 
 

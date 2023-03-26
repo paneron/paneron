@@ -310,7 +310,7 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
       if (result) {
         return result;
       } else {
-        throw new Error("Error running map-reduce over dataset");
+        throw new Error("Error running map-reduce over dataset (no result)");
       }
     }) as DatasetContext["getMapReducedData"], // TODO: Avoid casting?
 
