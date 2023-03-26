@@ -329,7 +329,7 @@ mapReduce.main!.handle(async ({ workingCopyPath, datasetID, chains }) => {
     ({ [c.id]: await loadedDatasets.mapReduce(workingCopyPath, datasetID, c.map, c.reduce) })
   )))
 
-  const fulfilledResults = chainResults.
+  const fulfilledResults: Record<string, unknown>[] = chainResults.
     filter(r => r.status === 'fulfilled').
     map(r => (r as PromiseFulfilledResult<Record<string, unknown>>).value);
 
