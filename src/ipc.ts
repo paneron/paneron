@@ -124,8 +124,8 @@ type RendererEndpoint<I extends Payload> = {
 
     /**
      * Defines an async handler function, which will fire any time main thread invokes this endpoint.
-     * 
-     * NOTE: Must use with caution, and make sure to clean up the handler.
+     *
+     * NOTE: Always clean up the handler by calling `handler.destroy()`.
      */
     handle: (handler: RendererHandler<I>) => BoundHandler
   }
