@@ -3,7 +3,7 @@
 
 //import log from 'electron-log';
 import { jsx, css } from '@emotion/react';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import MathJax from 'react-mathjax2';
 import { NonIdealState, ProgressBar, Spinner, Toaster } from '@blueprintjs/core';
@@ -107,16 +107,27 @@ function ({ className }) {
     }
   }, [selectedRepoWorkDir, selectedDatasetID]);
 
-  const ctx = selectedRepoWorkDir && selectedDatasetID && dsProps
-    ? { ...getContext({
-        writeAccess: dsProps.writeAccess,
-        workingCopyPath: selectedRepoWorkDir,
-        datasetID: selectedDatasetID,
-        nodeModulesPath: NODE_MODULES_PATH,
-        datasetInfo: dsProps.dataset,
-        getObjectView: () => () => <></>,
-      }), performOperation, operationKey }
-    : null;
+  const ctx = useMemo((() => selectedRepoWorkDir && selectedDatasetID && dsProps
+    ? {
+        ...getContext({
+          writeAccess: dsProps.writeAccess,
+          workingCopyPath: selectedRepoWorkDir,
+          datasetID: selectedDatasetID,
+          nodeModulesPath: NODE_MODULES_PATH,
+          datasetInfo: dsProps.dataset,
+          getObjectView: () => () => <></>,
+        }),
+        performOperation,
+        operationKey,
+      }
+    : null
+  ), [
+    selectedRepoWorkDir,
+    selectedDatasetID,
+    JSON.stringify(dsProps),
+    performOperation,
+    operationKey,
+  ]);
 
   const view = ctx && dsProps
     ? <ErrorBoundary viewName="dataset"><dsProps.MainView {...ctx} /></ErrorBoundary>
