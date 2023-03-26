@@ -63,6 +63,8 @@ type MainEndpoint<I extends Payload, O extends Payload> = {
     /**
      * Associates an asynchronous function as the main-thread handler for this endpoint.
      * Define only one handler per endpoint.
+     *
+     * NOTE: Always clean up the handler by calling `handler.destroy()`.
      */
     handle: (handler: MainHandler<I, O>) => BoundHandler
   }
