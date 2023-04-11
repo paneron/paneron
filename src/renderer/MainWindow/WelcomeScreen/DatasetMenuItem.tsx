@@ -3,7 +3,8 @@
 
 import React from 'react';
 import { jsx, css } from '@emotion/react';
-import { Classes, Icon, IconSize, MenuItem } from '@blueprintjs/core';
+import { Classes, Icon, IconSize } from '@blueprintjs/core';
+import { MenuItem2 as MenuItem } from '@blueprintjs/popover2';
 import { getDatasetInfo } from 'datasets/ipc';
 import { getPluginInfo } from 'plugins';
 import { describeRepository } from 'repositories/ipc';

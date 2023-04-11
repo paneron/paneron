@@ -3,7 +3,8 @@
 
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { jsx, css } from '@emotion/react';
-import { Menu, MenuDivider, MenuItem, NonIdealState, Panel, PanelStack2, Spinner } from '@blueprintjs/core';
+import { Menu, MenuDivider, NonIdealState, Panel, PanelStack2, Spinner } from '@blueprintjs/core';
+import { MenuItem2 as MenuItem } from '@blueprintjs/popover2';
 import { addDisconnected, describeRepository, loadRepository, repositoryBuffersChanged } from 'repositories/ipc';
 import { Repository, SOLE_DATASET_ID } from 'repositories/types';
 import RepositorySettings from './RepositorySettings';
