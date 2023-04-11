@@ -8,12 +8,12 @@ import { Helmet } from 'react-helmet';
 import MathJax from 'react-mathjax2';
 import { NonIdealState, ProgressBar, Spinner, Toaster } from '@blueprintjs/core';
 
-import { DatasetContext } from '@riboseinc/paneron-extension-kit/types';
+import type { DatasetContext } from '@riboseinc/paneron-extension-kit/types';
 
 import { unloadDataset } from 'datasets/ipc';
 import getDataset from 'datasets/renderer/getDataset';
 import { getContext } from 'datasets/renderer/context';
-import { DatasetInfo } from 'datasets/types';
+import type { DatasetInfo } from 'datasets/types';
 import ErrorBoundary from '../common/ErrorBoundary';
 import { Context } from './context';
 
