@@ -135,10 +135,14 @@ const MainView: React.FC<{ className?: string }> = function ({ className }) {
       className={className}
       css={css`position: absolute; inset: 0; margin: auto; height: 70vh; width: 70vw;`}
       onOpenDataset={(workDir, datasetID) => dispatch({ type: 'open-dataset', workDir, datasetID })}
+      onExportDataset={(workDir, datasetID) => dispatch({ type: 'export-dataset', workDir, datasetID })}
     />;
 
   } else if (view === 'dataset') {
     return <Dataset className={className} />;
+
+  } else if (view === 'dataset-export') {
+    return <Dataset className={className} showExportOptions />;
 
   } else {
     return <NonIdealState

@@ -28,8 +28,8 @@ const MATHJAX_PATH = `${NODE_MODULES_PATH}/mathjax/MathJax.js?config=AM_HTMLorMM
 const toaster = Toaster.create({ position: 'bottom-left', canEscapeKeyClear: false });
 
 
-const Dataset: React.FC<{ className?: string }> =
-function ({ className }) {
+const Dataset: React.FC<{ className?: string; showExportOptions?: true }> =
+function ({ className, showExportOptions }) {
   const { state: { selectedRepoWorkDir, selectedDatasetID } } = useContext(Context);
   const [isLoading, setLoading] = useState(false);
   const [dsProps, setDatasetProperties] = useState<{

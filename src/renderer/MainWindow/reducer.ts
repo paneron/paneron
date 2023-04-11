@@ -16,9 +16,13 @@ interface OpenDatasetState extends BaseState {
   selectedRepoWorkDir: string
   selectedDatasetID: string
 }
+interface DatasetExportState extends Omit<OpenDatasetState, 'view'> {
+  view: 'dataset-export'
+}
 export type State =
   | WelcomeScreenState
   | OpenDatasetState
+  | DatasetExportState
 
 
 export const initialState: State = {
@@ -43,6 +47,13 @@ export default function reducer(prevState: State, action: Action): State {
         view: 'welcome-screen',
         selectedRepoWorkDir: null,
         selectedDatasetID: null,
+      };
+    case 'export-dataset':
+      return {
+        ...prevState,
+        view: 'dataset-export',
+        selectedDatasetID: action.datasetID,
+        selectedRepoWorkDir: action.workDir,
       };
     default:
       throw new Error("Invalid action");
