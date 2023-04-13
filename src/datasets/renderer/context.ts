@@ -3,13 +3,13 @@ import * as R from 'ramda';
 import log from 'electron-log';
 import { useEffect, useState } from 'react';
 
-import { DatasetContext, RendererPlugin } from '@riboseinc/paneron-extension-kit/types';
-import { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
-import { IndexStatus, INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
-import { Hooks } from '@riboseinc/paneron-extension-kit/types/renderer';
+import type { DatasetContext, RendererPlugin } from '@riboseinc/paneron-extension-kit/types';
+import type { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
+import { type IndexStatus, INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
+import type { Hooks } from '@riboseinc/paneron-extension-kit/types/renderer';
 import { INITIAL_GLOBAL_SETTINGS } from '@riboseinc/paneron-extension-kit/settings';
-import { BaseAction, PersistentStateReducerHook } from '@riboseinc/paneron-extension-kit/usePersistentStateReducer';
-import useTimeTravelingPersistentStateReducer, { TimeTravelingPersistentStateReducerHook } from '@riboseinc/paneron-extension-kit/useTimeTravelingPersistentStateReducer';
+import type { BaseAction, PersistentStateReducerHook } from '@riboseinc/paneron-extension-kit/usePersistentStateReducer';
+import useTimeTravelingPersistentStateReducer, { type TimeTravelingPersistentStateReducerHook } from '@riboseinc/paneron-extension-kit/useTimeTravelingPersistentStateReducer';
 
 import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
 import { makeRandomID, chooseFileFromFilesystem, saveFileToFilesystem, openExternalURL } from 'common';
@@ -19,7 +19,7 @@ import { SOLE_DATASET_ID } from 'repositories/types';
 import { describeRepository } from 'repositories/ipc';
 import { updateSetting, useSettings } from 'renderer/MainWindow/settings';
 
-import { DatasetInfo } from '../types';
+import type { DatasetInfo } from '../types';
 
 import {
   addFromFilesystem,
