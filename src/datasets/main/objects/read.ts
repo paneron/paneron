@@ -58,7 +58,7 @@ export async function readObject(
   workDir: string,
   datasetID: string,
 ): Promise<Record<string, any> | null> {
-  const idx: Datasets.Util.DefaultIndex = await getDefaultIndex(
+  const idx: Datasets.Util.DefaultIndex = getDefaultIndex(
     workDir,
     datasetID);
 
