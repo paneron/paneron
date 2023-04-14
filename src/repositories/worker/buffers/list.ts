@@ -24,16 +24,18 @@ export const resolveChanges: Repositories.Data.ResolveChanges = async ({ workDir
 
 /**
  * Streams paths that are descendants of given root path
- * as slash-prepended strings relative to root path.
- * 
- * root should be absolute path.
+ * as slash-prepended strings relative to root path
+ * (which should be given as system-absolute).
  * 
  * If root path is not a directory, yields the only string '/'.
  * 
  * Uses filesystem, so may report data or changes unknown to Git.
  */ 
 export async function* listDescendantPaths(
+  /** Filesystem-absolute path. */
   root: string,
+
+  /** Do not pass this, used during recursion. */
   originalRoot?: string,
 ): AsyncGenerator<string> {
   const rootStat = await lstat(root);
