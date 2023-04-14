@@ -136,7 +136,7 @@ function ({ className, showExportOptions }) {
           icon={<Spinner />}
           description={<>This should take a few seconds<br />Please make sure you’re online</>}
         />
-      : <NonIdealState icon="heart-broken" description="Unable to load dataset" />
+      : <NonIdealState icon="heart-broken" description="Unable to load dataset" />;
 
   return (
     <MathJax.Context
