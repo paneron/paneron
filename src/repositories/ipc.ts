@@ -1,9 +1,9 @@
-import { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
-import { BufferChangeset, BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
+import type { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
+import type { BufferChangeset, BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 
-import { EmptyPayload, makeEndpoint, _ } from '../ipc';
+import { type EmptyPayload, makeEndpoint, _ } from '../ipc';
 
-import {
+import type {
   GitAuthor,
   NewRepositoryDefaults,
   RepoStatus,
