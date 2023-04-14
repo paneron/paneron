@@ -170,6 +170,12 @@ export const getBufferDataset = makeEndpoint.main(
   <BufferDataset>_,
 );
 
+export const getBufferPaths = makeEndpoint.main(
+  'getBufferPaths',
+  <{ workingCopyPath: string, prefix: string }>_,
+  <{ bufferPaths: string[] }>_,
+);
+
 export const updateBuffers = makeEndpoint.main(
   'commitChanges',
   <{ workingCopyPath: string, bufferChangeset: BufferChangeset, commitMessage: string, ignoreConflicts?: true }>_,

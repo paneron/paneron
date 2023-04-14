@@ -21,6 +21,7 @@ import {
   updatePaneronRepository,
   unsetWriteAccess,
   getBufferDataset,
+  getBufferPaths,
   updateBuffers,
   describeGitRepository,
   addDisconnected,
@@ -28,6 +29,8 @@ import {
   describeCommit,
   undoLatestCommit,
 } from '../ipc';
+
+import { listDescendantPaths } from '../worker/buffers/list';
 
 import { PANERON_REPOSITORY_META_FILENAME } from './meta';
 
@@ -688,6 +691,17 @@ getBufferDataset.main!.handle(async ({ workingCopyPath, paths }) => {
   return await w.repo_getBufferDataset({
     paths,
   });
+});
+
+
+getBufferPaths.main!.handle(async ({ workingCopyPath, prefix }) => {
+  const paths: string[] = [];
+  for await (const p of listDescendantPaths(path.join(workingCopyPath, prefix))) {
+    if (p !== '/') {
+      paths.push(p);
+    }
+  }
+  return { bufferPaths: paths };
 });
 
 
