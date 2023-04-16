@@ -11,7 +11,7 @@ import { readLFSParams } from 'repositories/main/readRepoConfig';
 
 import type { API as Datasets } from '../../types';
 import { getDefaultIndex } from '../loadedDatasets';
-import { LFSParams } from 'repositories/types';
+import type { LFSParams } from 'repositories/types';
 
 
 /**

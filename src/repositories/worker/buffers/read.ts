@@ -4,12 +4,12 @@ import git from 'isomorphic-git';
 import http from 'isomorphic-git/http/node';
 import { pointsToLFS } from '@riboseinc/isogit-lfs/util';
 import { downloadBlobFromPointer, readPointer } from '@riboseinc/isogit-lfs';
-import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
+import type { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 
 import { stripLeadingSlash, stripTrailingSlash } from '../../../utils';
 import { readBuffer } from '../../../main/fs-utils';
 import { normalizeURL } from '../../util';
-import { Repositories } from '../types';
+import type { Repositories } from '../types';
 import { listDescendantPaths, listDescendantPathsAtVersion } from './list';
 
 

@@ -3,7 +3,7 @@ import path from 'path';
 import log from 'electron-log';
 import React from 'react';
 import { PluginManager } from 'live-plugin-manager';
-import { RendererPlugin, DatasetContext } from '@riboseinc/paneron-extension-kit/types';
+import type { RendererPlugin, DatasetContext } from '@riboseinc/paneron-extension-kit/types';
 import {
   getPluginManagerProps,
   installPlugin,
