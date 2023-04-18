@@ -60,6 +60,9 @@ export const readBuffers: Repositories.Data.ReadBuffers = async function ({
             http,
           }, lfsPointer);
         } catch (e) {
+          // NOTE: Handle failure to download LFS data differently?
+          // Currently we return raw LFS pointer data if we couldn’t download;
+          // should probably fail or return nothing for this path instead.
           buffers[relativeBufferPath] = bufferData;
         }
 
