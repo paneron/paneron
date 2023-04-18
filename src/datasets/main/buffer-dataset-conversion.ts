@@ -1,6 +1,6 @@
 import path from 'path';
-import { ObjectChangeset } from '@riboseinc/paneron-extension-kit/types/objects';
-import { BufferChange, BufferChangeset, BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
+import type { ObjectChangeset } from '@riboseinc/paneron-extension-kit/types/objects';
+import type { BufferChange, BufferChangeset, BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 import { findSerDesRuleForObject } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
 import { stripTrailingSlash } from 'utils';
 
