@@ -286,6 +286,9 @@ async function mapReduce(
       map(key, value, (val) => mappedData.push(val));
     }
   }
+  if (mappedData.length < 1) {
+    return {};
+  }
   if (reduce) {
     log.silly("mapReduce: reducing");
     return mappedData.reduce((prev, curr) => reduce(prev, curr));

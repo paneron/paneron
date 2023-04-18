@@ -341,7 +341,7 @@ mapReduce.main!.handle(async ({ workingCopyPath, datasetID, chains }) => {
     throw new Error(`mapReduce failed: ${errors}`);
   }
 
-  return fulfilledResults.reduce((prev, curr) => ({ ...prev, ...curr }));
+  return fulfilledResults.reduce((prev, curr) => ({ ...prev, ...curr }), {});
 });
 
 
