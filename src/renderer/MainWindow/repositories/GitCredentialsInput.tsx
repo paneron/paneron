@@ -202,7 +202,7 @@ function passed(
     testResult.error === undefined &&
     (!requireBlankRepo || testResult.isBlank) &&
     (!requirePush || testResult.canPush) &&
-    (!requireMainBranchName || testResult.mainBranchName === requireMainBranchName)
+    (!requireMainBranchName/* || testResult.mainBranchName === requireMainBranchName*/)
   );
 }
 
