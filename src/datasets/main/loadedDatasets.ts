@@ -278,7 +278,7 @@ async function mapReduce(
     await defaultIndex.completionPromise;
   }
   const mappedData: unknown[] = [];
-  log.silly("mapReduce: mapping");
+  //log.silly("mapReduce: mapping");
   for await (const data of defaultIndex.dbHandle.createReadStream()) {
     // TODO: [upstream] NodeJS.ReadableStream is poorly typed.
     const { key, value } = data as unknown as { key: string, value: Record<string, unknown> };
@@ -290,7 +290,7 @@ async function mapReduce(
     return {};
   }
   if (reduce) {
-    log.silly("mapReduce: reducing");
+    //log.silly("mapReduce: reducing");
     return mappedData.reduce((prev, curr) => reduce(prev, curr));
   } else {
     return mappedData;
@@ -837,7 +837,7 @@ export const updateDatasetIndexesIfNeeded = datasetQueue.oneAtATime(async functi
 
   const workers = getLoadedRepository(workDir).workers;
 
-  log.debug("updateDatasetIndexesIfNeeded: Starting");
+  //log.debug("updateDatasetIndexesIfNeeded: Starting");
 
   // Check current repository commit hash against default index’s stored commit hash.
   const { reader } = workers;
@@ -870,7 +870,7 @@ export const updateDatasetIndexesIfNeeded = datasetQueue.oneAtATime(async functi
 
     // Otherwise, start the process by figuring out which files have changed between index & repo commits.
 
-    log.debug("updateDatasetIndexesIfNeeded: Figuring out what changed between", oidIndex, oidCurrent);
+    //log.debug("updateDatasetIndexesIfNeeded: Figuring out what changed between", oidIndex, oidCurrent);
 
     const { changedObjectPaths } = await resolveDatasetChanges({
       workDir,
@@ -879,7 +879,7 @@ export const updateDatasetIndexesIfNeeded = datasetQueue.oneAtATime(async functi
       oidAfter: oidCurrent,
     });
 
-    log.debug("updateDatasetIndexesIfNeeded: Processing object paths & updating indexes");
+    //log.debug("updateDatasetIndexesIfNeeded: Processing object paths & updating indexes");
 
     defaultIndexStatusReporter({
       objectCount: defaultIndex.status.objectCount,
@@ -921,7 +921,7 @@ export const updateDatasetIndexesIfNeeded = datasetQueue.oneAtATime(async functi
         [objv1, objv2] = [null, null];
       }
 
-      log.debug("Datasets: updateDatasetIndexesIfNeeded: Changed object path", objectPath, objv1, objv2);
+      //log.debug("Datasets: updateDatasetIndexesIfNeeded: Changed object path", objectPath, objv1, objv2);
 
       // Check all filtered indexes that have not yet been marked as affected
       for (const idxID of filteredIndexIDs) {
@@ -932,7 +932,7 @@ export const updateDatasetIndexesIfNeeded = datasetQueue.oneAtATime(async functi
         const oldVersionMatched = (objv1 && idx.predicate(objectPath, objv1)) ? true : false;
         const newVersionMatches = (objv2 && idx.predicate(objectPath, objv2)) ? true : false;
         if ((oldVersionMatched || newVersionMatches) && newVersionMatches !== oldVersionMatched) {
-          log.debug("Datasets: updateDatasetIndexesIfNeeded: Path affects filtered indexes", objectPath, idxID)
+          //log.debug("Datasets: updateDatasetIndexesIfNeeded: Path affects filtered indexes", objectPath, idxID)
           pathAffectsFilteredIndexes[idxID] = {
             idx,
             newVersionMatches,
@@ -976,7 +976,7 @@ export const updateDatasetIndexesIfNeeded = datasetQueue.oneAtATime(async functi
         // Add/update object data in default index
         await defaultIdxDB.put(objectPath, objv2);
         if (objv1 === null) { // Object was added
-          log.debug("Datasets: updateDatasetsIndexesIfNeeded: Added object path", objectPath);
+          //log.debug("Datasets: updateDatasetsIndexesIfNeeded: Added object path", objectPath);
           changes[objectPath] = 'added';
 
           // Add object path in affected filtered indexes
