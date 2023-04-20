@@ -201,8 +201,9 @@ function passed(
     testResult !== undefined &&
     testResult.error === undefined &&
     (!requireBlankRepo || testResult.isBlank) &&
-    (!requirePush || testResult.canPush) &&
-    (!requireMainBranchName/* || testResult.mainBranchName === requireMainBranchName*/)
+    (!requirePush || testResult.canPush)
+    // TODO: Check that requiredMainBranchName exists
+    // (!requireMainBranchName || testResult.mainBranchName === requireMainBranchName)
   );
 }
 
