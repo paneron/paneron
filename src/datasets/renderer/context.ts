@@ -431,6 +431,15 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
         value: desc.value.pid >= 0 ? desc.value : null,
       }
     },
+
+    listExporters: () => {
+      return {};
+      // return (
+      //   Object.entries(exportFormats).
+      //   map(([formatID, { name, description }]) => ({ [formatID]: { name, description } })).
+      //   reduce((prev, curr) => ({ ...prev, ...curr }), {})
+      // );
+    },
   }
 }
 
