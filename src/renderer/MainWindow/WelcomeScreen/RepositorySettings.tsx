@@ -9,8 +9,8 @@ import PanelSeparator from '@riboseinc/paneron-extension-kit/widgets/panels/Pane
 
 import ShareRepoForm from 'renderer/MainWindow/repositories/ShareRepoForm';
 import { deleteRepository, describeRepository, repositoriesChanged, setAuthorInfo } from 'repositories/ipc';
-import { Repository } from 'repositories/types';
-import { GitAuthor } from 'repositories/types';
+import type { Repository } from 'repositories/types';
+import type { GitAuthor } from 'repositories/types';
 import { Context } from '../context';
 import AuthorForm from '../repositories/AuthorForm';
 
