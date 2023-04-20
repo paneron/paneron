@@ -87,6 +87,9 @@ const GitRepoPanel: React.FC<{ gitMeta: Repository["gitMeta"]; }> = function ({ 
     <PropertyView label="Work dir." title="Working directory">
       {gitMeta.workingCopyPath}
     </PropertyView>
+    <PropertyView label="Branch name" title="Branch name">
+      {gitMeta.mainBranch ?? '—'}
+    </PropertyView>
     <PanelSeparator />
     <AuthorForm
       author={author ?? { name: '', email: '' }}
