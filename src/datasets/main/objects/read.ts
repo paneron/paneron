@@ -34,11 +34,12 @@ export const getObjectDataset: Datasets.Data.GetObjectDataset = async function (
 
   const objectDataset: ObjectDataset = (await Promise.all(
     objectPaths?.map(async (objectPath) => {
+      const data = await readObjectCold(
+        workDir,
+        path.join(datasetRoot, objectPath),
+        resolveLFS);
       return {
-        [objectPath]: await readObjectCold(
-          workDir,
-          path.join(datasetRoot, objectPath),
-          resolveLFS),
+        [objectPath]: data,
       };
     }) ?? []
   )).reduce((prev, curr) => ({ ...prev, ...curr }), {});
