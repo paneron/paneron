@@ -100,7 +100,7 @@ const GitRepoPanel: React.FC<{ gitMeta: Repository["gitMeta"]; }> = function ({ 
     </Button>
     <PanelSeparator />
     <PropertyView label="Remote URL" title="Remote URL">
-      <TextInput value={gitMeta.remote?.url ?? ''} />
+      {gitMeta.remote?.url ?? '—'}
     </PropertyView>
     <ShareRepoForm repo={gitMeta} />
   </>;
