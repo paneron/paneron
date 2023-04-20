@@ -19,10 +19,18 @@ export type PaneronRepository = {
   dataset: true
 })
 
+/** Data used to work with a locally cloned Git repository. */
 export interface GitRepository {
+  /** Working directory location. */
   workingCopyPath: string
+
+  /** This is the branch in use; not necessarily the main/master branch. */
   mainBranch: string
+
+  /** Remote, if connected. */
   remote?: GitRemote
+
+  /** Author information required for making commits. */
   author?: GitAuthor
 }
 
