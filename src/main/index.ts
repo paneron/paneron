@@ -82,7 +82,7 @@ function handleAllWindowsClosed(e: Electron.Event) {
 
 (async function initMain() {
 
-  //log.catchErrors({ showDialog: true });
+  log.catchErrors({ showDialog: true });
 
   // Ensure only one instance of the app can run at a time on given user’s machine
   // by exiting any future instances
