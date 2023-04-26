@@ -8,7 +8,7 @@ import { GlobalSettingsContext } from '@riboseinc/paneron-extension-kit/Settings
 import { INITIAL_GLOBAL_SETTINGS } from '@riboseinc/paneron-extension-kit/settings';
 
 import { getAppVersion, refreshMainWindow, showGlobalSettings } from 'common';
-import { WindowComponentProps } from 'window/types';
+import type { WindowComponentProps } from 'window/types';
 
 import { useSettings } from './settings';
 

@@ -3,7 +3,7 @@ import path from 'path';
 import { app, BrowserWindow, dialog, Menu, protocol, shell } from 'electron';
 import log from 'electron-log';
 
-import { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
+import type { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
 import { findSerDesRuleForBuffers } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
 
 

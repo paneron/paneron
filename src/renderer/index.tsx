@@ -15,7 +15,7 @@ import '!style-loader!css-loader!./renderer.css';
 
 import ErrorState from '@riboseinc/paneron-extension-kit/widgets/ErrorState';
 
-import { WindowComponentProps } from 'window/types';
+import type { WindowComponentProps } from 'window/types';
 
 
 type DefaultImporter<T> = () => Promise<{ default: T | Promise<T> }>;
