@@ -58,7 +58,11 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
                 background: ${Colors.LIGHT_GRAY2};
               `}>
             <MainView
-              css={css`flex: 1; background: white; overflow: hidden;`}
+              css={css`
+                flex: 1;
+                background: white;
+                overflow: hidden;
+              `}
               className={Classes.ELEVATION_3}
             />
             <Dialog
