@@ -55,7 +55,7 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
                 flex-flow: column nowrap;
                 z-index: 1;
                 overflow: hidden;
-                background: ${Colors.LIGHT_GRAY2}
+                background: ${Colors.LIGHT_GRAY2};
               `}>
             <MainView
               css={css`flex: 1; background: white; overflow: hidden;`}
