@@ -27,6 +27,19 @@ export const getAppVersion = makeEndpoint.main(
 );
 
 
+export const getColorScheme = makeEndpoint.main(
+  'getColorScheme',
+  <EmptyPayload>_,
+  <{ colorSchemeName: string }>_,
+);
+
+
+export const colorSchemeUpdated = makeEndpoint.renderer(
+  'colorSchemeUpdated',
+  <{ colorSchemeName: string }>_,
+);
+
+
 export const clearDataAndRestart = makeEndpoint.main(
   'clearDataAndRestart',
   <{ options: Record<ClearOption, boolean> }>_,
