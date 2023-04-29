@@ -39,8 +39,10 @@ import { getColorScheme, colorSchemeUpdated } from 'common';
 function applyColorScheme(opts: { colorSchemeName: string }) {
   if (opts.colorSchemeName === 'dark') {
     document.body.classList.add('bp4-dark');
+    document.body.style.backgroundColor = 'black';
   } else {
     document.body.classList.remove('bp4-dark');
+    document.body.style.backgroundColor = 'white';
   }
 }
 const applyColorSchemeDebounced = debounce(1000, applyColorScheme);
