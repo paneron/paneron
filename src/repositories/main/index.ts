@@ -444,7 +444,7 @@ addRepository.main!.handle(async ({ gitRemoteURL, branch, username, password, au
   const workDirPath = path.join(DEFAULT_WORKING_DIRECTORY_CONTAINER, makeUUIDv4());
 
   if (fs.existsSync(workDirPath) || ((await readRepositories())).workingCopies[workDirPath] !== undefined) {
-    throw new Error("Could not generate a valid non-occupied repository path inside given container.");
+    throw new Error("Could not provide a valid non-occupied path to store local working directory for this repository");
   }
 
   if (branch === undefined || branch.trim() === '') {
