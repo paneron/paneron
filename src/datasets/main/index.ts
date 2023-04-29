@@ -109,7 +109,7 @@ initializeDataset.main!.handle(async ({ workingCopyPath, meta: datasetMeta, data
   const oldRepoMeta = await readPaneronRepoMeta(workingCopyPath);
 
   if (oldRepoMeta.dataset || oldRepoMeta.datasets === undefined) {
-    throw new Error("This repository does not support multiple repositories");
+    throw new Error("This repository does not support multiple datasets");
   }
 
   const newRepoMeta: PaneronRepository = {
