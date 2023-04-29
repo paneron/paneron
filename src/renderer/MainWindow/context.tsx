@@ -5,8 +5,8 @@ import { jsx } from '@emotion/react';
 import React, { useState } from 'react';
 import { IconSize, ToastProps, Spinner, Toaster } from '@blueprintjs/core';
 import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
-import reducer, { initialState, State } from './reducer';
-import { Action } from './actions';
+import reducer, { initialState, type State } from './reducer';
+import type { Action } from './actions';
 
 
 const toaster = Toaster.create({ position: 'bottom' });
