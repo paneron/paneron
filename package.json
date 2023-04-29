@@ -191,7 +191,7 @@
     "@react-three/fiber": "^7.0.19",
     "@riboseinc/isogit-lfs": "0.1.6",
     "@riboseinc/paneron-extension-glossarist": "^1.0.0-dev34",
-    "@riboseinc/paneron-extension-kit": "2.0.5",
+    "@riboseinc/paneron-extension-kit": "2.0.6",
     "@riboseinc/paneron-registry-kit": "2.0.8",
     "@riboseinc/reprose": "1.0.0-alpha11",
     "@types/mark.js": "^8.11.5",
