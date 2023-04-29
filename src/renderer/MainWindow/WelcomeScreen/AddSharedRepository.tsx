@@ -7,7 +7,7 @@ import { Button } from '@blueprintjs/core';
 import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import PanelSeparator from '@riboseinc/paneron-extension-kit/widgets/panels/PanelSeparator';
 
-import { addRepository, loadRepository, getNewRepoDefaults } from 'repositories/ipc';
+import { addRepository, getNewRepoDefaults } from 'repositories/ipc';
 import { GitAuthor } from 'repositories/types';
 
 import { Context } from '../context';
@@ -49,6 +49,31 @@ function ({ className, onAfterCreate }) {
     (username ?? '').trim() !== '' &&
     (branch ?? '').trim() !== '' &&
     author?.name && author?.email;
+
+  function clear() {
+    setRemoteURL(null);
+  }
+
+  async function handleAdd() {
+    if (!canImport) {
+      throw new Error("Cannot import shared repository. Something went wrong, try again?");
+    }
+
+    const resp = await addRepository.renderer!.trigger({
+      gitRemoteURL: remoteURL!.replace(/\/$/, ''),
+      username,
+      password: password !== '' ? password : undefined,
+      branch,
+      author,
+    });
+    if (resp.result?.workDir) {
+      //await loadRepository.renderer!.trigger({ workingCopyPath: resp.result.workDir });
+      onAfterCreate?.(resp.result.workDir);
+    } else {
+      throw new Error("Seems successful, but did not return working directory");
+    }
+    clear();
+  }
 
   return (
     <div
@@ -99,21 +124,7 @@ function ({ className, onAfterCreate }) {
           intent={canImport ? 'primary' : undefined}
           disabled={!canImport}
           onClick={canImport
-            ? performOperation('adding shared repository', async () => {
-                const resp = await addRepository.renderer!.trigger({
-                  gitRemoteURL: remoteURL!.replace(/\/$/, ''),
-                  username,
-                  password: password !== '' ? password : undefined,
-                  branch,
-                  author,
-                });
-                if (resp.result?.workDir) {
-                  await loadRepository.renderer!.trigger({ workingCopyPath: resp.result.workDir });
-                  onAfterCreate?.(resp.result.workDir);
-                } else {
-                  throw new Error("Seems successful, but did not return working directory");
-                }
-              })
+            ? performOperation('adding shared repository', handleAdd)
             : undefined}>
         Import
       </Button>
