@@ -29,6 +29,15 @@ function ({ workDir, repoInfo, className }) {
     }
   }, [workDir]);
 
+  async function handleChangeAuthor(newAuthor: GitAuthor) {
+    if (newAuthor?.name && newAuthor?.email && !isBusy) {
+      await setAuthorInfo.renderer!.trigger({
+        workingCopyPath: workDir,
+        author: newAuthor,
+      });
+    }
+  }
+
   const openedRepo = openedRepoResp.value.info;
 
   const repo = openedRepoResp.isUpdating ? (repoInfo ?? openedRepo) : openedRepo;
@@ -39,7 +48,12 @@ function ({ workDir, repoInfo, className }) {
     <div className={className}>
       <PaneronRepoPanel paneronMeta={repo.paneronMeta} />
       <PanelSeparator />
-      <GitRepoPanel gitMeta={repo.gitMeta} />
+      <GitRepoPanel
+        gitMeta={repo.gitMeta}
+        onChangeAuthor={!isBusy
+          ? performOperation('updating authoring information for this repository', handleChangeAuthor)
+          : undefined}
+      />
       <PanelSeparator />
       <Button small fill minimal
         disabled={!canDelete}
@@ -56,33 +70,29 @@ function ({ workDir, repoInfo, className }) {
 };
 
 
-const GitRepoPanel: React.FC<{ gitMeta: Repository["gitMeta"]; }> = function ({ gitMeta }) {
-  const [busy, setBusy] = useState(false);
+const GitRepoPanel: React.FC<{
+  gitMeta: Repository["gitMeta"];
+  onChangeAuthor?: (newAuthor: GitAuthor) => Promise<void> | void;
+}> = function ({ gitMeta, onChangeAuthor }) {
   const [newAuthor, setNewAuthor] = useState<GitAuthor | null>(null);
 
   const canSave = (
     newAuthor &&
     JSON.stringify(newAuthor) !== JSON.stringify(gitMeta.author ?? {}) &&
-    !busy);
+    onChangeAuthor);
 
-  const author: GitAuthor | null = newAuthor ?? gitMeta.author ?? null;
-
-  async function handleSaveAuthorInfo() {
-    if (newAuthor?.name && newAuthor?.email && !busy) {
-      setBusy(true);
+  async function handleChangeAuthor() {
+    if (canSave) {
       try {
-        await setAuthorInfo.renderer!.trigger({
-          workingCopyPath: gitMeta.workingCopyPath,
-          author: newAuthor,
-        });
-        setTimeout(() => {
-          setNewAuthor(null);
-        }, 200);
+        await onChangeAuthor!(newAuthor!);
       } finally {
-        setBusy(false);
+        setNewAuthor(null);
       }
     }
   }
+
+  const author: GitAuthor | null = newAuthor ?? gitMeta.author ?? null;
+
   return <>
     <PropertyView label="Work dir." title="Working directory">
       {gitMeta.workingCopyPath}
@@ -93,9 +103,12 @@ const GitRepoPanel: React.FC<{ gitMeta: Repository["gitMeta"]; }> = function ({ 
     <PanelSeparator />
     <AuthorForm
       author={author ?? { name: '', email: '' }}
-      onChange={!busy ? setNewAuthor : undefined}
+      onChange={onChangeAuthor ? setNewAuthor : undefined}
     />
-    <Button small fill minimal disabled={!canSave} onClick={handleSaveAuthorInfo}>
+    <Button
+        small fill minimal
+        disabled={!canSave}
+        onClick={handleChangeAuthor}>
       Update author information
     </Button>
     <PanelSeparator />
