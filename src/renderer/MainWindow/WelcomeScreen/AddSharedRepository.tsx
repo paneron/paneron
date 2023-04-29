@@ -90,7 +90,7 @@ function ({ className, onAfterCreate }) {
         <PanelSeparator title="Authoring information" />
         <AuthorForm
           author={author ?? { name: '', email: '' }}
-          onChange={setCustomAuthor}
+          onChange={!isBusy ? setCustomAuthor : undefined}
         />
       </div>
       <Button
