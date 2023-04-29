@@ -26,7 +26,7 @@ type WindowComponentImporter = DefaultImporter<React.FC<WindowComponentProps>>;
 const WINDOW_COMPONENTS: {
   [componentID: string]: WindowComponentImporter
 } = {
-  mainWindow:  () => import('./MainWindow/index'),
+  mainWindow: () => import('./MainWindow/index'),
 }
 
 
