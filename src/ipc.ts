@@ -99,7 +99,7 @@ type MainEndpoint<I extends Payload, O extends Payload> = {
 
 
 /** Renderer endpoint handler function. Not expected to return anything back to main thread. */
-export type RendererHandler<I extends Payload> = (params: I) => Promise<void>;
+export type RendererHandler<I extends Payload> = (params: I) => Promise<void> | void;
 
 /** A wrapper for Electron IPC endpoint with handler in the renderer thread. */
 type RendererEndpoint<I extends Payload> = {
