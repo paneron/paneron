@@ -1,9 +1,9 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 
-import { jsx } from '@emotion/react';
+import { jsx, css } from '@emotion/react';
 import React, { useState } from 'react';
-import { IconSize, ToastProps, Spinner, Toaster } from '@blueprintjs/core';
+import { ProgressBar, ToastProps, Toaster } from '@blueprintjs/core';
 import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
 import reducer, { initialState, type State } from './reducer';
 import type { Action } from './actions';
@@ -38,9 +38,12 @@ const ContextProvider: React.FC<Record<never, never>> = function ({ children }) 
   function performOperation<R>(gerund: string, func: () => Promise<R>) {
     return async () => {
       const opKey = toaster.show({
-        message: `${gerund}…`,
+        message: <div css={css`display: flex; flex-flow: row nowrap; white-space: nowrap; align-items: center;`}>
+          <ProgressBar intent="primary" css={css`width: 50px;`} />
+          &emsp;
+          {gerund}…
+        </div>,
         intent: 'primary',
-        icon: <Spinner size={IconSize.STANDARD} />,
         timeout: 0,
       });
       setOperationKey(opKey);
