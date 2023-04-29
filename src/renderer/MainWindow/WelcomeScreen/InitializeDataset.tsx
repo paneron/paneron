@@ -7,10 +7,10 @@ import { Card, Button, Colors, InputGroup, Classes } from '@blueprintjs/core';
 import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 
 import { listAvailablePlugins } from 'plugins';
-import { Extension } from 'plugins/types';
-import DatasetExtension, { DatasetExtensionCardProps } from 'plugins/renderer/DatasetExtensionCard';
+import type { Extension } from 'plugins/types';
+import DatasetExtension, { type DatasetExtensionCardProps } from 'plugins/renderer/DatasetExtensionCard';
 import { loadRepository } from 'repositories/ipc';
-import { Repository } from 'repositories/types';
+import type { Repository } from 'repositories/types';
 import { initializeDataset, proposeDatasetPath } from 'datasets/ipc';
 import { Context } from '../context';
 

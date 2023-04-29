@@ -6,7 +6,7 @@ import { jsx, css } from '@emotion/react';
 import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import PanelSeparator from '@riboseinc/paneron-extension-kit/widgets/panels/PanelSeparator';
 import { Button } from 'renderer/widgets';
-import { GitAuthor } from 'repositories/types';
+import type { GitAuthor } from 'repositories/types';
 import { getNewRepoDefaults } from 'repositories/ipc';
 import AuthorForm from '../repositories/AuthorForm';
 
