@@ -74,6 +74,7 @@ export namespace Git {
       canPush: boolean,
       mainBranchName: string | undefined,
       currentCommit: string | undefined,
+      availableBranches: string[],
     }>;
 
     /**

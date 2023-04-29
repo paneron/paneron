@@ -461,7 +461,14 @@ addRepository.main!.handle(async ({ gitRemoteURL, branch, username, password, au
     auth.password = (await getAuth(gitRemoteURL, username)).password;
   }
 
-  const { canPush } = await oneOffWorkerTask(w => w.git_describeRemote({ url: gitRemoteURL, auth }));
+  const {
+    canPush,
+    availableBranches,
+  } = await oneOffWorkerTask(w => w.git_describeRemote({ url: gitRemoteURL, auth }));
+
+  if (availableBranches.indexOf(branch) < 0) {
+    throw new Error(`No branch with requested name “${branch}” is found on upstream server`);
+  }
 
   await updateRepositories((data) => {
     if (data.workingCopies[workDirPath] !== undefined) {

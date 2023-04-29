@@ -50,6 +50,7 @@ const describe: Git.Remotes.Describe = async function ({ url, auth }) {
     canPush,
     mainBranchName,
     currentCommit,
+    availableBranches: branchRefs.map(r => r.ref.replace(HEAD_REF_PREFIX, '')),
   };
 };
 
