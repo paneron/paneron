@@ -455,12 +455,14 @@ addRepository.main!.handle(async ({ gitRemoteURL, branch, username, password, au
   //   throw new Error("Unexpected main branch name")
   // }
 
+  // Prepare auth
   const auth = { username, password };
   if (!auth.password) {
     log.error("Repositories: addRepository: password not supplied, trying to retrieve from OS storage");
     auth.password = (await getAuth(gitRemoteURL, username)).password;
   }
 
+  // Check remote (validate requested branch exists and we have write access)
   const {
     canPush,
     availableBranches,
@@ -560,7 +562,6 @@ addDisconnected.main!.handle(async ({ gitRemoteURL, branch, username, password }
       auth,
       branch,
     });
-
     await workers.sync.git_deleteOrigin({
       workDir: workDirPath,
     });
