@@ -107,11 +107,14 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
     });
   }
 
-  async function handleUpdate(key: string, value: any) {
-    await updateSetting(
-      'global',
-      { key, value });
-    refreshSettings();
+  async function handleUpdate(key: string, value: unknown) {
+    try {
+      await performOperation(`writing ${key} setting`, async () => {
+        await updateSetting('global', { key, value });
+      })();
+    } finally {
+      setTimeout(refreshSettings, 1000);
+    }
   }
 
   const localExtensions = Object.entries(localExtensionQuery.value).map(([id, ext]) => ({
