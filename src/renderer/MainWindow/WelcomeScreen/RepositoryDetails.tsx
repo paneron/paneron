@@ -5,7 +5,7 @@ import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { jsx, css } from '@emotion/react';
 import { Menu, MenuDivider, NonIdealState, Panel, PanelStack2, Spinner } from '@blueprintjs/core';
 import { MenuItem2 as MenuItem } from '@blueprintjs/popover2';
-import { addDisconnected, describeRepository, loadRepository, repositoryBuffersChanged } from 'repositories/ipc';
+import { addDisconnected, describeRepository, repositoryBuffersChanged } from 'repositories/ipc';
 import { Repository, SOLE_DATASET_ID } from 'repositories/types';
 import RepositorySettings from './RepositorySettings';
 import InitializeDataset from './InitializeDataset';
@@ -27,15 +27,15 @@ function ({ workDir, onOpen }) {
     }
   }, [workDir]);
 
-  useEffect(() => {
-    // If this repository has remote connected, load repository in order to sync
-    if (repo.gitMeta.remote?.url) {
-      console.debug("Loading repository to sync with remote", workDir, repo.gitMeta.remote?.url);
-      loadRepository.renderer!.trigger({ workingCopyPath: workDir });
-    } else {
-      console.debug("Not loading repository (no remote connected?)", workDir, repo.gitMeta.remote?.url);
-    }
-  }, [JSON.stringify(repo.gitMeta.remote?.url)]);
+  // useEffect(() => {
+  //   // If this repository has remote connected, load repository in order to sync
+  //   if (repo.gitMeta.remote?.url) {
+  //     console.debug("Loading repository to sync with remote", workDir, repo.gitMeta.remote?.url);
+  //     loadRepository.renderer!.trigger({ workingCopyPath: workDir });
+  //   } else {
+  //     console.debug("Not loading repository (no remote connected?)", workDir, repo.gitMeta.remote?.url);
+  //   }
+  // }, [JSON.stringify(repo.gitMeta.remote?.url)]);
 
   const repoSettingsPanel: Panel<RepoSettingsProps> = {
     title: "Settings",
