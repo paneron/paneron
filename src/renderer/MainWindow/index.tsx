@@ -55,11 +55,17 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
                 z-index: 1;
                 overflow: hidden;
                 background: ${Colors.LIGHT_GRAY2};
+                .bp4-dark & {
+                  background: ${Colors.DARK_GRAY2};
+                }
               `}>
             <MainView
               css={css`
                 flex: 1;
-                background: white;
+                background: ${Colors.WHITE};
+                .bp4-dark & {
+                  background: ${Colors.DARK_GRAY1};
+                }
                 overflow: hidden;
               `}
               className={Classes.ELEVATION_3}

@@ -79,7 +79,14 @@ function ({ icon, title, onClose, onNavigate, status, progress, onRefresh, class
           cursor: default;
           align-items: center;
           transform: skew(45deg);
-          ${onNavigate ? `&:hover { background: ${Colors.LIGHT_GRAY2} }` : ''}
+          ${onNavigate
+            ? `
+                &:hover { background: ${Colors.LIGHT_GRAY2}; }
+                .bp4-dark & {
+                  &:hover { background: ${Colors.DARK_GRAY2}; }
+                }
+              `
+            : ''}
         `}
       onClick={onNavigate}
       className={className}>

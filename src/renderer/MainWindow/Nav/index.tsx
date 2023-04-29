@@ -91,11 +91,14 @@ const Nav: React.FC<NavProps> = function ({ anchor, children, className }) {
           justify-content: ${anchor === 'end' ? 'flex-end' : 'flex-start'};
           font-size: 80%;
           box-sizing: border-box;
-          background: linear-gradient(to bottom, ${Colors.LIGHT_GRAY5}, ${Colors.LIGHT_GRAY3});
           line-height: 0;
           transform: skew(-45deg);
           padding: 0 ${padding};
           transition: width 1s linear;
+          background: linear-gradient(to bottom, ${Colors.LIGHT_GRAY5}, ${Colors.LIGHT_GRAY3});
+          .bp4-dark & {
+            background: linear-gradient(to bottom, ${Colors.DARK_GRAY5}, ${Colors.DARK_GRAY3});
+          }
         `}
         className={`${className ?? ''}`}>
       {breadcrumbs.map((bc, idx) =>

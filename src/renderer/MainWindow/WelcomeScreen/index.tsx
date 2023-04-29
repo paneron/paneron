@@ -72,6 +72,9 @@ function ({ onOpenDataset, className }) {
             padding: 5px;
             width: 200px;
             background: ${Colors.LIGHT_GRAY4};
+            .bp4-dark & {
+              background: ${Colors.DARK_GRAY4};
+            }
           }
           .bp4-tab-panel[role=tabpanel] {
             overflow-y: auto;
@@ -79,6 +82,9 @@ function ({ onOpenDataset, className }) {
             flex: 1;
             position: relative;
             border-left: 1px solid silver;
+            .bp4-dark & {
+              border-left: 1px solid ${Colors.DARK_GRAY2};
+            }
           }
         `}>
       <Helmet>

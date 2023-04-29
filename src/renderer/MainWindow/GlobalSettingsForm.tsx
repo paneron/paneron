@@ -195,7 +195,14 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
         {localExtensions.map(({ id, ext }) =>
           <div
               key={id}
-              css={css`position: relative; margin: 5px 0; background: ${Colors.LIGHT_GRAY4};`}>
+              css={css`
+                position: relative;
+                margin: 5px 0;
+                background: ${Colors.LIGHT_GRAY4};
+                .bp4-dark & {
+                  background: ${Colors.DARK_GRAY4};
+                }
+              `}>
             <InputGroup
               fill
               value={ext.localPath}
@@ -212,7 +219,15 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
                 />
               }
             />
-            <div css={css`background: white; transform: scale(0.9); transform-origin: top center; padding: 5px;`}>
+            <div css={css`
+              transform: scale(0.9);
+              transform-origin: top center;
+              padding: 5px;
+              background: ${Colors.WHITE};
+              .bp4-dark & {
+                background: ${Colors.BLACK};
+              }
+            `}>
               <DatasetExtension extension={ext} />
             </div>
           </div>

@@ -126,7 +126,14 @@ function ({ selectedExtension, onSelect, className }) {
           value={searchString}
           onChange={(evt: React.FormEvent<HTMLInputElement>) => setSearchString(evt.currentTarget.value)} />
       </div>
-      <div css={css`flex: 1; overflow-y: auto; background: ${Colors.LIGHT_GRAY1};`}>
+      <div css={css`
+        flex: 1;
+        overflow-y: auto;
+        background: ${Colors.LIGHT_GRAY1};
+        .bp4-dark & {
+          background: ${Colors.DARK_GRAY2};
+        }
+      `}>
         {extensionResp.isUpdating
           ? <>
               {/* Placeholders */}
@@ -156,7 +163,14 @@ React.FC<DatasetExtensionCardProps & { onSelect?: () => void, selected?: true }>
     <Card
         interactive={props.onSelect !== undefined}
         onClick={props.onSelect}
-        css={css`padding: 10px; border-radius: 0; background: ${props.selected ? Colors.LIGHT_GRAY4 : 'white'}`}>
+        css={css`
+          padding: 10px;
+          border-radius: 0;
+          background: ${props.selected ? Colors.LIGHT_GRAY4 : Colors.WHITE}
+          .bp4-dark & {
+            background: ${props.selected ? Colors.DARK_GRAY4 : Colors.BLACK}
+          }
+        `}>
       <DatasetExtension {...props} />
     </Card>
   )
