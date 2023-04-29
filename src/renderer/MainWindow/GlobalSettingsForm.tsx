@@ -7,6 +7,7 @@ import { Button, Classes, Colors, H4, Icon, IconSize, InputGroup, Switch } from 
 import { Tooltip2 } from '@blueprintjs/popover2';
 
 import { GlobalSettingsContext } from '@riboseinc/paneron-extension-kit/SettingsContext';
+import { INITIAL_GLOBAL_SETTINGS } from '@riboseinc/paneron-extension-kit/settings';
 import PropertyView, { TextInput, Select } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import HelpTooltip from '@riboseinc/paneron-extension-kit/widgets/HelpTooltip';
 import PanelSeparator from '@riboseinc/paneron-extension-kit/widgets/panels/PanelSeparator';
@@ -149,6 +150,35 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
               ? (evt => handleUpdate('sidebarPosition', evt.currentTarget.value as 'left' | 'right'))
               : undefined}
             value={settings.sidebarPosition}
+          />
+        </PropertyView>
+        <PropertyView
+            label="Prefer theme (beta)"
+            tooltipIntent="warning"
+            tooltip={<>
+              Support for themes other than “light” is patchy among extension GUIs.
+            </>}>
+          <Select
+            options={[
+              { value: 'light', label: "Light" },
+              { value: 'dark', label: "Dark" },
+              { value: '', label: "None (use system)" },
+            ]}
+            onChange={!isBusy
+              ? (evt => {
+                  if (['light', 'dark', ''].indexOf(evt.currentTarget.value) >= 0) {
+                    if (evt.currentTarget.value === '') {
+                      handleUpdate('defaultTheme', null);
+                    } else {
+                      handleUpdate('defaultTheme', (evt.currentTarget.value as 'light' | 'dark'));
+                    }
+                  }
+                })
+              : undefined}
+            value={
+              (settings.defaultTheme === null ? '' : settings.defaultTheme)
+              ?? INITIAL_GLOBAL_SETTINGS.defaultTheme
+            }
           />
         </PropertyView>
       </SettingsFormSection>
