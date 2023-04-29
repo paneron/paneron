@@ -223,7 +223,7 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
             outlined
             intent={canClear ? 'danger' : undefined}
             disabled={!canClear || isBusy}
-            onClick={handleClear}>
+            onClick={performOperation('clearing', handleClear)}>
           Clear &amp; restart
         </Button>
       </SettingsFormSection>
