@@ -3,7 +3,7 @@
 
 import { jsx, css } from '@emotion/react';
 import React, { useContext, useState } from 'react';
-import { Button, ButtonProps, Classes, Colors, Dialog, Spinner, NonIdealState } from '@blueprintjs/core';
+import { Button, ButtonProps, Classes, Colors, Dialog, NonIdealState } from '@blueprintjs/core';
 import { GlobalSettingsContext } from '@riboseinc/paneron-extension-kit/SettingsContext';
 import { INITIAL_GLOBAL_SETTINGS } from '@riboseinc/paneron-extension-kit/settings';
 
@@ -27,7 +27,6 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
   };
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
   const {
-    isUpdating: versionIsUpdating,
     value: { version, isPackaged },
   } = getAppVersion.renderer!.useValue({}, { version: '' });
 
@@ -37,9 +36,9 @@ const MainWindow: React.FC<WindowComponentProps> = function () {
 
   const Frag = isPackaged ? React.Fragment : React.StrictMode;
 
-  if (versionIsUpdating) {
-    return <Spinner className="initial-spinner" />;
-  }
+  //if (versionIsUpdating) {
+  //  return <Spinner className="initial-spinner" />;
+  //}
 
   return (
     <Frag>
