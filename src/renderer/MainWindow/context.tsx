@@ -18,7 +18,7 @@ interface ContextSpec {
   stateLoaded: boolean
   showMessage: (opts: ToastProps) => void
   isBusy: boolean
-  performOperation: <R>(gerund: string, func: () => Promise<R>) => () => Promise<R>
+  performOperation: <P extends any[], R>(gerund: string, func: (...args: P) => Promise<R>) => () => Promise<R>
 }
 
 
@@ -35,8 +35,8 @@ export const Context = React.createContext<ContextSpec>({
 const ContextProvider: React.FC<Record<never, never>> = function ({ children }) {
   const [_operationKey, setOperationKey] = useState<string | undefined>(undefined);
 
-  function performOperation<R>(gerund: string, func: () => Promise<R>) {
-    return async () => {
+  function performOperation<P extends any[], R>(gerund: string, func: (...args: P) => Promise<R>) {
+    return async (...args: P) => {
       const opKey = toaster.show({
         message: <div css={css`display: flex; flex-flow: row nowrap; white-space: nowrap; align-items: center;`}>
           <ProgressBar intent="primary" css={css`width: 50px;`} />
@@ -48,7 +48,7 @@ const ContextProvider: React.FC<Record<never, never>> = function ({ children }) 
       });
       setOperationKey(opKey);
       try {
-        const result: R = await func();
+        const result: R = await func(...args);
         toaster.dismiss(opKey);
         toaster.show({ message: `Done ${gerund}`, intent: 'success', icon: 'tick-circle' });
         setOperationKey(undefined);
