@@ -470,6 +470,31 @@ addRepository.main!.handle(async ({ gitRemoteURL, branch, username, password, au
     throw new Error(`No branch with requested name “${branch}” is found on upstream server`);
   }
 
+  // Save auth info
+  if (password) {
+    await saveAuth(gitRemoteURL, username, password);
+  }
+
+  // Do the cloning
+  const workers = await getRepoWorkers(workDirPath);
+  try {
+    await workers.sync.git_clone({
+      repoURL: gitRemoteURL,
+      auth,
+      branch,
+    });
+  } catch (e) {
+    // Cloning failed, try removing directory if it exists and re-throw the error.
+    try {
+      await oneOffWorkerTask(w => w.git_delete({
+        workDir: workDirPath,
+        yesReallyDestroyLocalWorkingCopy: true,
+      }));
+    } finally {}
+    throw e;
+  }
+
+  // Update repository configuration
   await updateRepositories((data) => {
     if (data.workingCopies[workDirPath] !== undefined) {
       throw new Error("Working copy already exists");
@@ -486,12 +511,7 @@ addRepository.main!.handle(async ({ gitRemoteURL, branch, username, password, au
     return newData;
   });
 
-  if (password) {
-    await saveAuth(gitRemoteURL, username, password);
-  }
-
-  await loadRepo(workDirPath);
-
+  // Notify GUI
   repositoriesChanged.main!.trigger({
     changedWorkingPaths: [],
     deletedWorkingPaths: [],
