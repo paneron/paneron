@@ -55,7 +55,7 @@ function ({ className, onAfterCreate }) {
       <div css={css`flex: 1;`}>
         <PanelSeparator
           title="Remote options"
-          tooltip={<>Paneron uses Git VCS to synchronize data. This section describes Git repository remote.</>}
+          tooltip={<>Paneron uses Git VCS to synchronize data. This section describes upstream Git repository used as remote.</>}
         />
         <PropertyView
             label="Remote URL"
