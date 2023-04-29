@@ -123,7 +123,16 @@ function ({ onOpenDataset, className }) {
         disabled={isBusy}
         title={<><Icon icon="add" />&ensp;Add shared repository</>}
         id="add-shared-repo"
-        panel={<AddSharedRepository css={css`position: absolute; inset: 0; padding: 10px; overflow-y: auto;`} />}
+        panel={
+          <AddSharedRepository
+            css={css`
+              position: absolute;
+              inset: 0;
+              padding: 10px;
+              overflow-y: auto;
+            `}
+          />
+        }
       />
       <InputGroup
         leftIcon="search"
