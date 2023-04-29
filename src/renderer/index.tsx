@@ -1,4 +1,5 @@
 import log from 'electron-log';
+import { debounce } from 'throttle-debounce';
 
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -32,7 +33,24 @@ const WINDOW_COMPONENTS: {
 require('events').EventEmitter.defaultMaxListeners = 20;
 
 
+import { getColorScheme, colorSchemeUpdated } from 'common';
+
+
+function applyColorScheme(opts: { colorSchemeName: string }) {
+  if (opts.colorSchemeName === 'dark') {
+    document.body.classList.add('bp4-dark');
+  } else {
+    document.body.classList.remove('bp4-dark');
+  }
+}
+const applyColorSchemeDebounced = debounce(1000, applyColorScheme);
+
+
 async function renderApp() {
+  const { result: colorSchemeQueryResult } = await getColorScheme.renderer!.trigger({});
+  applyColorScheme(colorSchemeQueryResult);
+  colorSchemeUpdated.renderer!.handle(applyColorSchemeDebounced);
+
   // electron-webpack guarantees presence of #app in index.html it bundles
   const containerEl: HTMLElement | null = document.getElementById('app');
 
