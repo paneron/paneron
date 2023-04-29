@@ -166,6 +166,7 @@ function ({
               fill
               outlined
               {...testButtonProps}
+              disabled={isBusy || !onEditUsername || !onEditPassword}
               css={css`.bp4-button-text { overflow: hidden; }`}
             />
           </Popover2>
