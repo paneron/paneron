@@ -18,6 +18,8 @@ import AuthorForm from '../repositories/AuthorForm';
 const AddSharedRepository: React.FC<{ className?: string; onAfterCreate?: (workDir: string) => void }> =
 function ({ className, onAfterCreate }) {
   const { performOperation, isBusy } = useContext(Context);
+
+  // TODO: use a single state object to keep all parameters for addRepository?
   const [customUsername, setUsername] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [remoteURL, setRemoteURL] = useState<string | null>(null);
