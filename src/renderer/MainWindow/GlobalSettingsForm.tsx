@@ -13,7 +13,7 @@ import PanelSeparator from '@riboseinc/paneron-extension-kit/widgets/panels/Pane
 
 import { clearDataAndRestart, ClearOption, CLEAR_OPTIONS, selectDirectoryPath } from 'common';
 import { getNewRepoDefaults, setNewRepoDefaults } from 'repositories/ipc';
-import { NewRepositoryDefaults } from 'repositories/types';
+import type { NewRepositoryDefaults } from 'repositories/types';
 import { listLocalPlugins, pluginsUpdated, removeLocalPluginPath, specifyLocalPluginPath } from 'plugins';
 import DatasetExtension from 'plugins/renderer/DatasetExtensionCard';
 

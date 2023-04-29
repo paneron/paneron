@@ -1,4 +1,4 @@
-import { Settings } from '@riboseinc/paneron-extension-kit/settings';
+import type { Settings } from '@riboseinc/paneron-extension-kit/settings';
 import { loadState, storeState } from 'state/ipc';
 
 export function useSettings<T extends Settings>(scope: string, initial: T) {
