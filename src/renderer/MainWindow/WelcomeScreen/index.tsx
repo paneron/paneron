@@ -38,7 +38,7 @@ const WelcomeScreen: React.FC<{ onOpenDataset: (workDir: string, dsID: string) =
 function ({ onOpenDataset, className }) {
   const [repoQuery, updateRepoQuery] = useState<string>('');
 
-  const { performOperation } = useContext(Context);
+  const { performOperation, isBusy } = useContext(Context);
 
   const normalizedRepoFilterString = useDebounce(
     repoQuery.trim() ?? '',
@@ -93,6 +93,7 @@ function ({ onOpenDataset, className }) {
       {SPECIAL_SECTIONS.map(sectionID => {
         const SectionView = specialSectionConfiguration[sectionID].view;
         return <Tab
+          disabled={isBusy}
           key={sectionID}
           id={sectionID}
           title={specialSectionConfiguration[sectionID].title}
@@ -102,6 +103,7 @@ function ({ onOpenDataset, className }) {
       {repositories.value.objects.map(repo =>
         <Tab
           key={`repo-${repo.gitMeta.workingCopyPath}`}
+          disabled={isBusy}
           id={`Repository-${repo.gitMeta.workingCopyPath}`}
           title={<><Icon icon={getRepoIcon(repo)} />&ensp;{repo.paneronMeta?.title ?? '(no title)'}</>}
           panel={<RepositoryDetails
@@ -112,11 +114,13 @@ function ({ onOpenDataset, className }) {
       )}
       <Tabs.Expander />
       <Tab
+        disabled={isBusy}
         title={<><Icon icon="lab-test" />&ensp;New local repository</>}
         id="create-repo"
         panel={<CreateRepoForm onCreate={handleCreateRepo} css={css`position: absolute; inset: 0; padding: 10px; overflow-y: auto;`} />}
       />
       <Tab
+        disabled={isBusy}
         title={<><Icon icon="add" />&ensp;Add shared repository</>}
         id="add-shared-repo"
         panel={<AddSharedRepository css={css`position: absolute; inset: 0; padding: 10px; overflow-y: auto;`} />}
