@@ -54,7 +54,7 @@ function ({
   }
 
   if (testResult === undefined) {
-    testButtonProps.text = "Test connection";
+    testButtonProps.text = "Check credentials";
     testButtonProps.alignText = 'center';
 
   // Test failed
@@ -124,7 +124,7 @@ function ({
               <li>
                 If you have provided it to Paneron before, it might already be stored by your operating system;
                 {" "}
-                to verify this you can leave it empty and click “Test connection” to verify you have write access.
+                to verify this you can leave it empty and click “Check credentials” to verify you have write access.
               </li>
               <li>
                 Note that for repositories hosted on Github you must supply a Personal Access Token
