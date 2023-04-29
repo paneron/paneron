@@ -273,7 +273,9 @@ const NewRepositoryDefaults: React.FC<{ className?: string }> = function ({ clas
       <PropertyView label="Default main branch name">
         <TextInput
           onChange={!busy ? (val) => editBranch(val) : undefined}
-          validationErrors={!branchValid ? ['Please specify a default branch name, e.g. “master” or “main”'] : []}
+          validationErrors={!branchValid
+            ? ['Please specify a default branch name, e.g. “master” or “main”']
+            : []}
           value={maybeEditedDefaults.branch ?? ''} />
       </PropertyView>
       <Button
