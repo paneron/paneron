@@ -1,13 +1,13 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 
-import { UL } from '@blueprintjs/core';
+import React from 'react';
 import { jsx, css } from '@emotion/react';
+import { UL } from '@blueprintjs/core';
 import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import { openExternalURL } from 'common';
-import React from 'react';
 import { ColorNeutralLink } from 'renderer/widgets';
-import { GitAuthor } from 'repositories/types';
+import type { GitAuthor } from 'repositories/types';
 
 
 const AuthorForm: React.FC<{ author: GitAuthor, onChange?: (newAuthor: GitAuthor) => void }> =
