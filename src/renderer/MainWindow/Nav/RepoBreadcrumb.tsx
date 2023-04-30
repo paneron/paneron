@@ -2,8 +2,9 @@
 /** @jsxFrag React.Fragment */
 
 import { throttle } from 'throttle-debounce';
+import formatDistance from 'date-fns/formatDistance';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { jsx } from '@emotion/react';
 import type { ToastProps } from '@blueprintjs/core';
 
@@ -30,11 +31,25 @@ export const RepoBreadcrumb: React.FC<{
 
   const [_status, setStatus] = useState<RepoStatus | null>(null);
 
+  const [lastSyncTS, setLastSyncTS] = useState<Date | null>(null);
+  const [timeSinceLastSync, setTimeSinceLastSync] = useState<string>('');
+
   const status = _status ?? repoStatus.value;
 
   const isLoaded = _status ? _status.status !== 'unloaded' : _isLoaded;
 
   const throttledSetStatus = useMemo(() => throttle(50, setStatus, false), []);
+
+  useEffect(() => {
+    const interval = setInterval(
+      (() =>
+        lastSyncTS
+          ? setTimeSinceLastSync(formatDistance(new Date(), lastSyncTS, { includeSeconds: true }))
+          : void 0
+      ),
+      888);
+    return function cleanup() { clearInterval(interval); };
+  }, [lastSyncTS]);
 
   loadedRepositoryStatusChanged.renderer!.useEvent(async ({ workingCopyPath, status }) => {
     if (workingCopyPath === workDir) {
@@ -95,6 +110,7 @@ export const RepoBreadcrumb: React.FC<{
         <div>
           {isLoaded ? "Loaded" : "Not loaded"}
           {status.status ? ` — status: ${status.status}` : null}
+          {timeSinceLastSync ? ` — ${timeSinceLastSync} since last sync attempt` : null}
         </div>
         <div>Working copy: <code>{repoInfo.gitMeta.workingCopyPath}</code></div>
         <div>Branch: <code>{repoInfo.gitMeta.mainBranch}</code></div>
