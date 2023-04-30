@@ -213,6 +213,10 @@ function syncRepoRepeatedly(
   logLevel: 'all' | 'warnings' = 'warnings',
   workers: RepoWorkers,
 ): void {
+  if (loadedRepositories[workingCopyPath]?.nextSyncTimeout) {
+    return;
+  }
+
   const repoSyncLog: (
     meth: 'silly' | 'debug' | 'info' | 'warn' | 'error',
     ...args: Parameters<typeof log.debug>
