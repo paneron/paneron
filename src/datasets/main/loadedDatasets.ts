@@ -108,7 +108,9 @@ const unloadAll: Datasets.Lifecycle.UnloadAll = async function ({
 }
 
 
-const getOrCreateFilteredIndex: ReturnsPromise<Datasets.Indexes.GetOrCreateFiltered> = async function ({
+const getOrCreateFilteredIndex:
+ReturnsPromise<Datasets.Indexes.GetOrCreateFiltered> =
+datasetQueue.oneAtATime(async function ({
   workDir,
   datasetID,
   queryExpression,
@@ -150,7 +152,7 @@ const getOrCreateFilteredIndex: ReturnsPromise<Datasets.Indexes.GetOrCreateFilte
       keyer = undefined;
     }
 
-    initFilteredIndex(
+    await initFilteredIndex(
       workDir,
       datasetID,
       filteredIndexID,
@@ -160,7 +162,7 @@ const getOrCreateFilteredIndex: ReturnsPromise<Datasets.Indexes.GetOrCreateFilte
   }
 
   return { indexID: filteredIndexID };
-}
+}, ({ workDir, datasetID, queryExpression }) => [`${workDir}:${datasetID}:${queryExpression}`]);
 
 
 const describeIndex: ReturnsPromise<Datasets.Indexes.Describe> = async function ({
