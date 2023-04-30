@@ -365,7 +365,7 @@ function getLoadedDataset(
 ): Datasets.Util.LoadedDataset {
   const ds = datasets[workDir]?.[datasetID];
   if (!ds) {
-    log.error("Dataset does not exist or is not loaded", datasetID);
+    log.warn("getLoadedDataset: is not loaded", datasetID);
     throw new Error("Dataset does not exist or is not loaded");
   }
   return ds;

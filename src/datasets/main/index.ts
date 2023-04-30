@@ -64,6 +64,9 @@ import {
 
 
 getDatasetInfo.main!.handle(async ({ workingCopyPath, datasetID }) => {
+  if (!datasetID.trim()) {
+    return { info: null }
+  }
   try {
     return { info: await readDatasetMeta(workingCopyPath, datasetID) };
   } catch (e) {
@@ -285,7 +288,7 @@ locateFilteredIndexPosition.main!.handle(async ({ workingCopyPath, datasetID, in
         objectPath,
       });
     } catch (e) {
-      log.error("Failed to retrieve index position for object path", objectPath, indexID, e);
+      //log.warn("Failed to retrieve index position for object path", objectPath, indexID, e);
       return { position: null };
     }
   }

@@ -364,7 +364,12 @@ undoLatestCommit.main!.handle(async ({ workingCopyPath, commitHash }) => {
 
 describeRepository.main!.handle(async ({ workingCopyPath }) => {
   if (workingCopyPath.trim() === '') {
-    log.warn("describeRepository: empty working directory path given", workingCopyPath);
+    //log.warn("describeRepository: empty working directory path given", workingCopyPath);
+    return {
+      info: { gitMeta: { workingCopyPath, mainBranch: 'main' } },
+      // ^ placeholder info.
+      isLoaded: false,
+    };
   }
 
   const gitRepo = await readRepoConfig(workingCopyPath);
