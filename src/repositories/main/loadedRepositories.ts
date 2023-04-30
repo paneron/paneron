@@ -356,7 +356,7 @@ function syncRepoRepeatedly(
 
       } else {
         repoSyncLog('debug', "Remote or author is not specified, cancelling sync");
-        return;
+        return cancelSync();
         // repoSyncLog('debug', "Cooldown before next sync", REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
         // if (loadedRepositories[workingCopyPath]) {
         //   loadedRepositories[workingCopyPath].nextSyncTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
