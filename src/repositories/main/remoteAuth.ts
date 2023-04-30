@@ -13,7 +13,10 @@ import log from 'electron-log';
  *
  * Does not throw.
  */
-export async function getAuth(remote: string, username: string): Promise<{ password: string | undefined; username: string; }> {
+export async function getAuth(
+  remote: string,
+  username: string,
+): Promise<{ password: string | undefined; username: string; }> {
   let url: URL | null;
   try {
     url = new URL(remote);
