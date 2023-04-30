@@ -50,7 +50,7 @@ const clone: WithStatusUpdater<Git.Sync.Clone> = async function (
             awaitingPassword: true,
           },
         });
-        return;
+        return { cancel: true };
       },
       onProgress: (progress) => {
         updateStatus({
@@ -105,7 +105,7 @@ async function push(opts: PushRequestMessage, updateStatus: RepoStatusUpdater) {
             awaitingPassword: true,
           },
         });
-        return;
+        return { cancel: true };
       },
       onProgress: (progress) => {
         updateStatus({
@@ -171,7 +171,7 @@ const pull: WithStatusUpdater<Git.Sync.Pull> = async function (
             awaitingPassword: true,
           },
         });
-        return;
+        return { cancel: true };
       },
       onProgress: (progress) => {
         updateStatus({
