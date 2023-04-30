@@ -227,14 +227,24 @@ function syncRepoRepeatedly(
     }
   };
 
+  function cancelSync() {
+    clearTimeout(loadedRepositories[workingCopyPath]?.nextSyncTimeout as number | undefined);
+  }
+
+  function scheduleSync(msec: number) {
+    cancelSync();
+    if (loadedRepositories[workingCopyPath]) {
+      loadedRepositories[workingCopyPath].nextSyncTimeout = setTimeout(_sync, msec);
+    }
+  }
+
   async function _sync(): Promise<void> {
     const w = workers.sync;
 
     repoSyncLog('info', "Beginning sync attempt");
 
     // Do our best to avoid multiple concurrent sync runs on one repo and clear sync timeout, if exists.
-    const timeout = loadedRepositories[workingCopyPath]?.nextSyncTimeout;
-    timeout ? clearTimeout(timeout) : void 0;
+    cancelSync();
 
     // 1. Check that repository is OK.
     // If something is broken or operation in latest status snapshot
@@ -387,11 +397,8 @@ function syncRepoRepeatedly(
   }
 
   repoSyncLog('debug', "Scheduling sync immediately");
-  const timeout = loadedRepositories[workingCopyPath]?.nextSyncTimeout;
-  timeout ? clearTimeout(timeout) : void 0;
-  if (loadedRepositories[workingCopyPath]) {
-    loadedRepositories[workingCopyPath].nextSyncTimeout = setTimeout(_sync, 100);
-  }
+  cancelSync();
+  return scheduleSync(500);
 }
 
 
