@@ -50,7 +50,7 @@ const load: Datasets.Lifecycle.Load = datasetQueue.oneAtATime(async function ({
   } catch (e) {
     log.info("Datasets: Load: Unloading first to clean up", workDir, datasetID);
 
-    await unload({ workDir, datasetID: datasetID });
+    await unloadDatasetDirect(workDir, datasetID);
 
     datasets[workDir] ||= {};
     datasets[workDir][datasetID] = {
@@ -68,43 +68,50 @@ const load: Datasets.Lifecycle.Load = datasetQueue.oneAtATime(async function ({
 }, ({ workDir, datasetID }) => [workDir, `${workDir}:${datasetID}`]);
 
 
-const unload: Datasets.Lifecycle.Unload = async function ({
+const unload: Datasets.Lifecycle.Unload = datasetQueue.oneAtATime(async function ({
   workDir,
   datasetID,
 }) {
   try {
-    const ds = getLoadedDataset(workDir, datasetID);
-
-    for (const [idxID, { dbHandle, sortedDBHandle }] of Object.entries(ds.indexes)) {
-      try {
-        await dbHandle.close();
-      } catch (e) {
-        log.error("Datasets: unload(): Failed to close DB handle", idxID, datasetID, workDir, e);
-      }
-      if (sortedDBHandle) {
-        try {
-          await sortedDBHandle.close();
-        } catch (e) {
-          log.error("Datasets: unload(): Failed to close filtered index sorted DB handle", idxID, datasetID, workDir, e);
-        }
-      }
-      //statusSubject.complete();
-    }
+    await unloadDatasetDirect(workDir, datasetID);
+    log.info("Datasets: Unloaded", workDir, datasetID);
   } catch (e) {
-    log.error("Failed to unload dataset", e, workDir, datasetID);
+    log.warn("Problem unloading dataset", e, workDir, datasetID);
   }
-
-  delete datasets[workDir]?.[datasetID];
-  log.info("Datasets: Unloaded", workDir, datasetID)
-}
+}, ({ workDir, datasetID }) => [`${workDir}:${datasetID}`]);
 
 
-const unloadAll: Datasets.Lifecycle.UnloadAll = async function ({
+const unloadAll: Datasets.Lifecycle.UnloadAll = datasetQueue.oneAtATime(async function ({
   workDir,
 }) {
   for (const datasetID of Object.keys(datasets[workDir] ?? {})) {
-    await unload({ workDir, datasetID });
+    await unloadDatasetDirect(workDir, datasetID);
   }
+}, ({ workDir }) => [workDir]);
+
+
+/** Unloads given dataset without locking, does not throw but logs. */
+async function unloadDatasetDirect(workDir: string, datasetID: string) {
+  const ds = datasets[workDir]?.[datasetID] ?? null;
+
+  if (!ds) { return; }
+
+  for (const [idxID, { dbHandle, sortedDBHandle }] of Object.entries(ds?.indexes ?? {})) {
+    try {
+      await dbHandle.close();
+    } catch (e) {
+      log.error("Datasets: unload(): Failed to close DB handle", idxID, datasetID, workDir, e);
+    }
+    if (sortedDBHandle) {
+      try {
+        await sortedDBHandle.close();
+      } catch (e) {
+        log.error("Datasets: unload(): Failed to close filtered index sorted DB handle", idxID, datasetID, workDir, e);
+      }
+    }
+  }
+
+  delete datasets[workDir]?.[datasetID];
 }
 
 
