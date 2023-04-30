@@ -310,15 +310,15 @@ function syncRepoRepeatedly(
         }
       } else {
         repoSyncLog(
-          'warn',
-          "Error detecting latest commit timestamp",
+          'error',
+          "Cannot detect latest commit timestamp",
           "neither commit nor author timestamp is present");
         return cancelSync();
       }
     } catch (e) {
       repoSyncLog(
-        'warn',
-        "Error detecting latest commit timestamp",
+        'error',
+        "Cannot detect latest commit timestamp due to error",
         e);
       return cancelSync();
     }
