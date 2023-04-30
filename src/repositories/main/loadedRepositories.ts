@@ -251,43 +251,46 @@ function syncRepoRepeatedly(
     cancelSync();
 
     // 1. Check that repository is OK.
-    // If something is broken or operation in latest status snapshot
-    // indicates that we are awaiting user input, clear status and cancel further sync.
-    // If latest operation indicates we are awaiting user input, skip sync during this run.
+    // If something is utterly broken, unload repository.
+    // If sync is not possible, operation in latest status snapshot
+    // indicates that we are awaiting user input, etc., clear status and cancel further sync
+    // (but don’t unload).
 
-    // 1.1. Check configuration
+    // 1.1. Check we’re “loaded”
     let repoCfg: GitRepository | null;
     if (!loadedRepositories[workingCopyPath]) {
       repoSyncLog('info', "Not loaded; clearing status cache and aborting sync");
       return await unloadRepository(workingCopyPath);
-    } else {
-      repoSyncLog('debug', "Checking configuration");
-      try {
-        repoCfg = await readRepoConfig(workingCopyPath);
-        if (!repoCfg.author && repoCfg.remote) {
-          repoSyncLog('error', "Configuration is missing author info or remote, required for remote sync");
-          return await unloadRepository(workingCopyPath);
-        }
-      } catch (e) {
-        repoSyncLog('error', "Configuration cannot be read");
-        return await unloadRepository(workingCopyPath);
-      }
-
-      const isBusy = loadedRepositories[workingCopyPath].latestStatus?.busy;
-      switch (isBusy?.operation) {
-        case 'pulling':
-        case 'pushing':
-        case 'cloning':
-          if (isBusy.awaitingPassword) {
-            repoSyncLog('warn', "An operation is already in progress", JSON.stringify(isBusy.operation));
-            return;
-          }
-      }
-      repoSyncLog('debug', "No operation is in progress, proceeding…");
     }
 
-    // 1.2. Check that working directory is OK.
-    // If missing, try to re-clone and skip pull/push this time.
+    // 1.2. Check there’s nothing in progress
+    const isBusy = loadedRepositories[workingCopyPath].latestStatus?.busy;
+    switch (isBusy?.operation) {
+      case 'pulling':
+      case 'pushing':
+      case 'cloning':
+        if (isBusy.awaitingPassword) {
+          repoSyncLog('error', "Password stored in credential manager didn’t work, aborting sync", JSON.stringify(isBusy.operation));
+          return cancelSync();
+        }
+    }
+    repoSyncLog('debug', "No operation is in progress, proceeding…");
+
+    // 1.3. Check configuration
+    repoSyncLog('debug', "Checking configuration");
+    try {
+      repoCfg = await readRepoConfig(workingCopyPath);
+      if (!repoCfg.author && repoCfg.remote) {
+        repoSyncLog('error', "Configuration is missing author info or remote, required for remote sync");
+        return await unloadRepository(workingCopyPath);
+      }
+    } catch (e) {
+      repoSyncLog('error', "Configuration cannot be read", e);
+      return await unloadRepository(workingCopyPath);
+    }
+
+    // 1.4. Check that working directory is OK.
+    // If if fails to stat, abort everything.
     try {
       await fs.stat(workingCopyPath);
     } catch (e) {
@@ -295,7 +298,7 @@ function syncRepoRepeatedly(
       return await unloadRepository(workingCopyPath);
     }
 
-    // 1.3. Check that there are no recent commits (less than 30 seconds old).
+    // 1.5. Check that there are no recent commits (less than 30 seconds old).
     // If there are, reschedule sync a bit later to allow the user to ninja undo.
     // Undo feature may do a reset which can break if commit is pushed.
 
