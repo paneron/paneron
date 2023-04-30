@@ -54,10 +54,16 @@ export const RepoBreadcrumb: React.FC<{
         case 'pushing':
         case 'pulling':
         case 'cloning':
-          progress = status.busy.progress
-            ? { ...status.busy.progress, phase: `${status.busy.operation}: ${status.busy.progress.phase}…` }
-            : { phase: status.busy.operation };
-          error = status.busy.networkError;
+          setLastSyncTS(new Date());
+          if (status.busy.awaitingPassword) {
+            progress = { phase: "Awaiting credentials" };
+            error = "Unable to authenticate — please check stored access credentials in repository settings";
+          } else {
+            progress = status.busy.progress
+              ? { ...status.busy.progress, phase: `${status.busy.operation}: ${status.busy.progress.phase}…` }
+              : { phase: status.busy.operation };
+            error = status.busy.networkError;
+          }
           break;
 
         // For the rest, show indeterminate progress
@@ -83,7 +89,13 @@ export const RepoBreadcrumb: React.FC<{
       onClose={onClose}
       onNavigate={onNavigate}
       status={<>
-        <div>{isLoaded ? "Loaded" : "Not loaded"} — status: {status.status ?? "N/A"}</div>
+        {error && error !== true
+          ? <div>{error}</div>
+          : null}
+        <div>
+          {isLoaded ? "Loaded" : "Not loaded"}
+          {status.status ? ` — status: ${status.status}` : null}
+        </div>
         <div>Working copy: <code>{repoInfo.gitMeta.workingCopyPath}</code></div>
         <div>Branch: <code>{repoInfo.gitMeta.mainBranch}</code></div>
       </>}
