@@ -36,9 +36,16 @@ export interface BreadcrumbProps {
   className?: string;
 }
 export const Breadcrumb: React.FC<BreadcrumbProps> =
-function ({ icon, title, onClose, onNavigate, status, progress, onRefresh, className }) {
+function ({ icon, title, onClose, onNavigate, status, error, progress, onRefresh, className }) {
   let statusIcon: JSX.Element;
-  if (progress) {
+  if (error) {
+    statusIcon = <Icon
+      {...ICON_PROPS}
+      intent="warning"
+      icon="warning-sign"
+      title={error !== true ? error : undefined}
+    />;
+  } else if (progress) {
     if (progress.loaded || progress.total) {
       const progressValue = Math.floor(100 / (progress.total || 100) * (progress.loaded || 0.5)) / 100;
       statusIcon = <Spinner {...SPINNER_PROPS} value={progressValue} />;
@@ -99,6 +106,7 @@ function ({ icon, title, onClose, onNavigate, status, progress, onRefresh, class
         ? <Tooltip
               interactionKind={PopoverInteractionKind.HOVER}
               hoverCloseDelay={200}
+              intent={error ? 'danger' : undefined}
               position="bottom-right"
               content={
                 <div
