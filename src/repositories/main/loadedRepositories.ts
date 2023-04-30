@@ -11,7 +11,10 @@ import { repositoryBuffersChanged, loadedRepositoryStatusChanged } from '../ipc'
 import { getRepoWorkers, RepoWorkers, terminateRepoWorkers } from './workerManager';
 import { readRepoConfig } from './readRepoConfig';
 import { getAuth } from './remoteAuth';
-import { makeSequential } from '../../utils';
+import { makeQueue } from '../../utils';
+
+
+const repoQueue = makeQueue();
 
 
 /** Holds currently loaded (synchronized) repositories. */
@@ -171,7 +174,7 @@ async function _loadRepository(workingCopyPath: string): Promise<RepoStatus> {
 }
 
 
-export const loadRepository = makeSequential(_loadRepository);
+export const loadRepository = repoQueue.oneAtATime(_loadRepository, (w) => [w]);
 
 
 /**
@@ -180,7 +183,7 @@ export const loadRepository = makeSequential(_loadRepository);
  *
  * Has no effect if is not loaded.
  */
-export async function unloadRepository(workingCopyPath: string) {
+async function _unloadRepository(workingCopyPath: string) {
   await terminateRepoWorkers(workingCopyPath);
 
   if (loadedRepositories[workingCopyPath]) {
@@ -194,6 +197,9 @@ export async function unloadRepository(workingCopyPath: string) {
     status: { status: 'unloaded' },
   });
 }
+
+
+export const unloadRepository = repoQueue.oneAtATime(_unloadRepository, (w) => [w]);
 
 
 // Sync sequence
