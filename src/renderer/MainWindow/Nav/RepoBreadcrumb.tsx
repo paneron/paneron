@@ -50,6 +50,7 @@ export const RepoBreadcrumb: React.FC<{
       switch (status.busy?.operation) {
 
         // Only these operations can provide specific progress info
+        case 'uploading to LFS':
         case 'pushing':
         case 'pulling':
         case 'cloning':
