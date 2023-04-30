@@ -113,6 +113,7 @@ export const RepoBreadcrumb: React.FC<{
           {timeSinceLastSync ? ` — ${timeSinceLastSync} since last sync attempt` : null}
         </div>
         <div>Working copy: <code>{repoInfo.gitMeta.workingCopyPath}</code></div>
+        <div>Remote: <code>{repoInfo.gitMeta.remote?.url ?? '—'}</code></div>
         <div>Branch: <code>{repoInfo.gitMeta.mainBranch}</code></div>
       </>}
       progress={progress}
