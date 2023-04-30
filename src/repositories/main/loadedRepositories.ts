@@ -327,10 +327,7 @@ function syncRepoRepeatedly(
         if (secondsElapsed < WAIT_AFTER_COMMIT_SECONDS) {
           const cooldown = WAIT_AFTER_COMMIT_SECONDS - secondsElapsed;
           repoSyncLog('info', "Recent commit is too fresh, rescheduling sync in seconds:", cooldown);
-          if (loadedRepositories[workingCopyPath]) {
-            loadedRepositories[workingCopyPath].nextSyncTimeout = setTimeout(_sync, cooldown * 1000);
-            return;
-          }
+          return scheduleSync(cooldown * 1000);
         }
       } else {
         repoSyncLog(
@@ -375,10 +372,8 @@ function syncRepoRepeatedly(
 
         repoSyncLog('info', "Finishing sync attempt");
 
-        if (loadedRepositories[workingCopyPath]) {
-          repoSyncLog('debug', "Cooldown before next sync", REPOSITORY_SYNC_INTERVAL_MS);
-          loadedRepositories[workingCopyPath].nextSyncTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_MS);
-        }
+        repoSyncLog('debug', "Cooldown before next sync", REPOSITORY_SYNC_INTERVAL_MS);
+        return scheduleSync(REPOSITORY_SYNC_INTERVAL_MS);
 
       } else {
         repoSyncLog('debug', "Remote or author is not specified, cancelling sync");
@@ -392,9 +387,7 @@ function syncRepoRepeatedly(
     } catch (e) {
       repoSyncLog('error', "Sync failed", e);
       repoSyncLog('debug', "Cooldown before next sync attempt", REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
-      if (loadedRepositories[workingCopyPath]) {
-        loadedRepositories[workingCopyPath].nextSyncTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
-      }
+      return scheduleSync(REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
     }
   }
 
