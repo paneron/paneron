@@ -288,28 +288,7 @@ function syncRepoRepeatedly(
       await fs.stat(workingCopyPath);
     } catch (e) {
       repoSyncLog('warn', "Working copy path failed to stat", e);
-      if (repoCfg.remote) {
-        repoSyncLog('info', "Attempting to re-clone");
-        const auth = await getAuth(repoCfg.remote.url, repoCfg.remote.username);
-        try {
-          await w.git_clone({
-            repoURL: repoCfg.remote.url,
-            auth,
-            branch: repoCfg.mainBranch,
-          });
-          await repositoryBuffersChanged.main!.trigger({
-            workingCopyPath,
-          });
-        } catch (e) {
-          repoSyncLog('error', "Re-cloning failed", e);
-        }
-      }
-      if (loadedRepositories[workingCopyPath]) {
-        repoSyncLog('error', "Working copy path doesn’t stat and remote is not specified, cancelling sync");
-        // repoSyncLog('debug', "Cooldown before next sync", REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
-        // loadedRepositories[workingCopyPath].nextSyncTimeout = setTimeout(_sync, REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS);
-      }
-      return;
+      return await unloadRepository(workingCopyPath);
     }
 
     // 1.3. Check that there are no recent commits (less than 30 seconds old).
