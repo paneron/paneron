@@ -337,12 +337,14 @@ function syncRepoRepeatedly(
           'warn',
           "Error detecting latest commit timestamp",
           "neither commit nor author timestamp is present");
+        return cancelSync();
       }
     } catch (e) {
       repoSyncLog(
         'warn',
         "Error detecting latest commit timestamp",
         e);
+      return cancelSync();
     }
 
     // 2. Perform actual sync.
