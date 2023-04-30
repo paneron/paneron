@@ -185,8 +185,7 @@ export async function unloadRepository(workingCopyPath: string) {
 
   if (loadedRepositories[workingCopyPath]) {
     loadedRepositories[workingCopyPath].statusStream?.unsubscribe();
-    const timeout = loadedRepositories[workingCopyPath].nextSyncTimeout;
-    timeout ? clearTimeout(timeout) : void 0;
+    clearTimeout(loadedRepositories[workingCopyPath].nextSyncTimeout as number | undefined);
     delete loadedRepositories[workingCopyPath];
   }
 
