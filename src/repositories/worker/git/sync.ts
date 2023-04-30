@@ -6,7 +6,7 @@ import { removeSync, ensureDir } from 'fs-extra';
 import git from 'isomorphic-git';
 import http from 'isomorphic-git/http/node';
 
-import {
+import type {
   CloneRequestMessage,
   PullRequestMessage,
   PushRequestMessage,
@@ -14,7 +14,7 @@ import {
 } from 'repositories/types';
 import { checkPathIsOccupied } from '../../../main/fs-utils';
 import { normalizeURL } from '../../util';
-import { Git, WithStatusUpdater } from '../types';
+import type { Git, WithStatusUpdater } from '../types';
 
 
 //import getDecoder from './decoders';

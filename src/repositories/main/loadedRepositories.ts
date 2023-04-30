@@ -3,9 +3,9 @@ import { Subscription } from 'observable-fns';
 import { app } from 'electron';
 import log from 'electron-log';
 
-import { PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
+import type { PathChanges } from '@riboseinc/paneron-extension-kit/types/changes';
 
-import { GitRepository, RepoStatus } from '../types';
+import type { GitRepository, RepoStatus } from '../types';
 import { repositoryBuffersChanged, loadedRepositoryStatusChanged } from '../ipc';
 
 import { getRepoWorkers, RepoWorkers, terminateRepoWorkers } from './workerManager';

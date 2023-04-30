@@ -5,12 +5,12 @@ import { throttle } from 'throttle-debounce';
 
 import React, { useState, useMemo } from 'react';
 import { jsx } from '@emotion/react';
-import { ToastProps } from '@blueprintjs/core';
+import type { ToastProps } from '@blueprintjs/core';
 
 import { loadRepository, loadedRepositoryStatusChanged } from 'repositories/ipc';
-import { Repository, RepoStatus } from 'repositories/types';
+import type { Repository, RepoStatus } from 'repositories/types';
 
-import { Breadcrumb, BreadcrumbProps } from './Breadcrumb';
+import { Breadcrumb, type BreadcrumbProps } from './Breadcrumb';
 
 
 const initialStatus: RepoStatus = { busy: { operation: 'initializing' } };
