@@ -10,6 +10,8 @@ import log from 'electron-log';
  * and with given username.
 
  * Returns { username, password }; password may be undefined.
+ *
+ * Does not throw.
  */
 export async function getAuth(remote: string, username: string): Promise<{ password: string | undefined; username: string; }> {
   let url: URL | null;
@@ -35,7 +37,7 @@ export async function getAuth(remote: string, username: string): Promise<{ passw
 }
 
 
-/** Stores password using OS mechanism (via keytar bindings). */
+/** Stores password using OS mechanism (via keytar bindings). Can throw. */
 export async function saveAuth(remote: string, username: string, password: string) {
   let url: URL | null;
   try {
