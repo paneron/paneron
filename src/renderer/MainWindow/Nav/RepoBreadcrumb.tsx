@@ -90,7 +90,7 @@ export const RepoBreadcrumb: React.FC<{
       }
     } else {
       progress = undefined;
-      error = undefined;
+      error = !isLoaded ? "Repository is not loaded" : undefined;
     }
     return [progress, error]
   }, [JSON.stringify(status.busy ?? {})]);
