@@ -232,12 +232,14 @@ function syncRepoRepeatedly(
   };
 
   function cancelSync() {
+    repoSyncLog('info', "Cancelling sync");
     clearTimeout(loadedRepositories[workingCopyPath]?.nextSyncTimeout as number | undefined);
   }
 
   function scheduleSync(msec: number) {
     cancelSync();
     if (loadedRepositories[workingCopyPath]) {
+      repoSyncLog('info', "Scheduling sync");
       loadedRepositories[workingCopyPath].nextSyncTimeout = setTimeout(_sync, msec);
     }
   }
