@@ -67,8 +67,8 @@ function ({ icon, title, onClose, onNavigate, status, error, progress, onRefresh
     progressDescription = <>
       {progress.phase}
       {progress.loaded || progress.total
-        ? <span>: <code>{progress.loaded ?? '?'}</code> of <code>{progress.total ?? '?'}</code>…</span>
-        : null}
+        ? <span>: <code>{progress.loaded ?? '?'}</code> of <code>{progress.total ?? '?'}</code></span>
+        : null}…
     </>;
   } else {
     progressDescription = null;

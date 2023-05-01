@@ -75,7 +75,7 @@ export const RepoBreadcrumb: React.FC<{
             error = "Unable to authenticate — please check stored access credentials in repository settings";
           } else {
             progress = status.busy.progress
-              ? { ...status.busy.progress, phase: `${status.busy.operation}: ${status.busy.progress.phase}…` }
+              ? { ...status.busy.progress, phase: `${status.busy.operation}: ${status.busy.progress.phase}` }
               : { phase: status.busy.operation };
             error = status.busy.networkError;
           }
