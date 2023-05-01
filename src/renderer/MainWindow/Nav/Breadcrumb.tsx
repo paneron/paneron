@@ -112,6 +112,11 @@ function ({ icon, title, onClose, onNavigate, status, error, progress, onRefresh
                 <div
                     css={css`font-size: 80%`}
                     onClick={e => e.stopPropagation()}>
+                  {error
+                    ? <div>
+                        <strong>Error</strong> — {error === true ? "An error might have occurred" : error}
+                      </div>
+                    : null}
                   {progressDescription
                     ? <div css={css`text-transform: capitalize`}>{progressDescription}</div>
                     : null}

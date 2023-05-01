@@ -77,7 +77,9 @@ export const RepoBreadcrumb: React.FC<{
             progress = status.busy.progress
               ? { ...status.busy.progress, phase: `${status.busy.operation}: ${status.busy.progress.phase}` }
               : { phase: status.busy.operation };
-            error = status.busy.networkError;
+            error = status.busy.networkError
+              ? "Possible networking issue"
+              : undefined;
           }
           break;
 
@@ -104,9 +106,6 @@ export const RepoBreadcrumb: React.FC<{
       onClose={onClose}
       onNavigate={onNavigate}
       status={<>
-        {error && error !== true
-          ? <div>{error}</div>
-          : null}
         <div>
           {isLoaded ? "Loaded" : "Not loaded"}
           {status.status ? ` — status: ${status.status}` : null}
