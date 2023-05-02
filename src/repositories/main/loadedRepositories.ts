@@ -174,7 +174,7 @@ async function _loadRepository(workingCopyPath: string): Promise<RepoStatus> {
 }
 
 
-export const loadRepository = repoQueue.oneAtATime(_loadRepository, (w) => [w]);
+const loadRepository = repoQueue.oneAtATime(_loadRepository, (w) => [w]);
 
 
 /**
@@ -199,7 +199,7 @@ async function _unloadRepository(workingCopyPath: string) {
 }
 
 
-export const unloadRepository = repoQueue.oneAtATime(_unloadRepository, (w) => [w]);
+const unloadRepository = repoQueue.oneAtATime(_unloadRepository, (w) => [w]);
 
 
 // Sync sequence
@@ -385,7 +385,7 @@ function syncRepoRepeatedly(
 }
 
 
-export async function reportBufferChanges(
+async function reportBufferChanges(
   workingCopyPath: string,
   changedPaths: PathChanges,
 ) {
@@ -403,3 +403,11 @@ app.on('quit', async () => {
     await unloadRepository(workingCopyPath);
   }
 });
+
+
+export default {
+  getLoadedRepository,
+  loadRepository,
+  unloadRepository,
+  reportBufferChanges,
+};

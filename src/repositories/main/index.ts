@@ -43,12 +43,7 @@ import { PaneronRepository, GitRemote, Repository } from '../types';
 
 import { getRepoWorkers, oneOffWorkerTask } from './workerManager';
 
-import {
-  getLoadedRepository,
-  loadRepository as loadRepo,
-  reportBufferChanges,
-  unloadRepository,
-} from './loadedRepositories';
+import loadedRepositories from './loadedRepositories';
 
 import {
   updateRepositories,
@@ -89,7 +84,7 @@ getDefaultWorkingDirectoryContainer.main!.handle(async () => {
 
 loadRepository.main!.handle(async ({ workingCopyPath }) => {
   if (workingCopyPath) {
-    const status = await loadRepo(workingCopyPath);
+    const status = await loadedRepositories.loadRepository(workingCopyPath);
     return status;
   } else {
     throw new Error("Missing repo working directory path");
@@ -98,7 +93,7 @@ loadRepository.main!.handle(async ({ workingCopyPath }) => {
 
 
 setRemote.main!.handle(async ({ workingCopyPath, url, username, password }) => {
-  const w = getLoadedRepository(workingCopyPath).workers.sync;
+  const w = loadedRepositories.getLoadedRepository(workingCopyPath).workers.sync;
 
   const auth = { username, password };
   const { isBlank, canPush } = await w.git_describeRemote({ url, auth });
@@ -185,7 +180,7 @@ unsetWriteAccess.main!.handle(async ({ workingCopyPath }) => {
 
 
 unsetRemote.main!.handle(async ({ workingCopyPath }) => {
-  const w = getLoadedRepository(workingCopyPath).workers.sync;
+  const w = loadedRepositories.getLoadedRepository(workingCopyPath).workers.sync;
 
   await updateRepositories((data) => {
     const existingConfig = data.workingCopies?.[workingCopyPath];
@@ -328,7 +323,7 @@ listRepositories.main!.handle(async ({ query: { matchesText, sortBy } }) => {
 
 function isRepositoryLoaded(workingCopyPath: string): boolean {
   try {
-    getLoadedRepository(workingCopyPath);
+    loadedRepositories.getLoadedRepository(workingCopyPath);
     return true;
   } catch (e) {
     return false;
@@ -344,18 +339,18 @@ describeGitRepository.main!.handle(async ({ workingCopyPath }) => {
 });
 
 listCommits.main!.handle(async ({ workingCopyPath }) => {
-  return await getLoadedRepository(workingCopyPath).workers.reader.repo_listCommits({});
+  return await loadedRepositories.getLoadedRepository(workingCopyPath).workers.reader.repo_listCommits({});
 });
 
 describeCommit.main!.handle(async ({ workingCopyPath, commitHash }) => {
-  return await getLoadedRepository(workingCopyPath).workers.reader.repo_describeCommit({ commitHash });
+  return await loadedRepositories.getLoadedRepository(workingCopyPath).workers.reader.repo_describeCommit({ commitHash });
 });
 
 undoLatestCommit.main!.handle(async ({ workingCopyPath, commitHash }) => {
   const { remote } = await readRepoConfig(workingCopyPath);
   if (remote) {
     const auth = await getAuth(remote.url, remote.username);
-    return await getLoadedRepository(workingCopyPath).workers.reader.
+    return await loadedRepositories.getLoadedRepository(workingCopyPath).workers.reader.
       repo_undoLatestCommit({ commitHash, remoteURL: remote.url, auth });
   }
   throw new Error("no remote")
@@ -403,7 +398,7 @@ updatePaneronRepository.main!.handle(async ({ workingCopyPath, info }) => {
     throw new Error("Repository configuration is missing author information");
   }
 
-  const w = getLoadedRepository(workingCopyPath).workers.sync;
+  const w = loadedRepositories.getLoadedRepository(workingCopyPath).workers.sync;
 
   const { newCommitHash } = await w.repo_updateBuffers({
     commitMessage: "Change repository title",
@@ -653,7 +648,7 @@ createRepository.main!.handle(async ({ title, author, mainBranchName: branch }) 
 
   log.debug("Repositories: Notifying about newly created repository");
 
-  await loadRepo(workDirPath);
+  await loadedRepositories.loadRepository(workDirPath);
 
   repositoriesChanged.main!.trigger({
     changedWorkingPaths: [],
@@ -670,7 +665,7 @@ createRepository.main!.handle(async ({ title, author, mainBranchName: branch }) 
 deleteRepository.main!.handle(async ({ workingCopyPath }) => {
   try {
     await loadedDatasets.unloadAll({ workDir: workingCopyPath });
-    await unloadRepository(workingCopyPath);
+    await loadedRepositories.unloadRepository(workingCopyPath);
 
   } catch (e) {
     log.warn("Repositories: Delete: Not loaded", workingCopyPath);
@@ -703,9 +698,9 @@ deleteRepository.main!.handle(async ({ workingCopyPath }) => {
 
 
 savePassword.main!.handle(async ({ workingCopyPath, remoteURL, username, password }) => {
-  await unloadRepository(workingCopyPath);
+  await loadedRepositories.unloadRepository(workingCopyPath);
   await saveAuth(remoteURL, username, password);
-  await loadRepo(workingCopyPath);
+  await loadedRepositories.loadRepository(workingCopyPath);
   return { success: true };
 });
 
@@ -719,7 +714,7 @@ getBufferDataset.main!.handle(async ({ workingCopyPath, paths }) => {
     return {};
   }
 
-  const w = getLoadedRepository(workingCopyPath).workers.reader;
+  const w = loadedRepositories.getLoadedRepository(workingCopyPath).workers.reader;
 
   return await w.repo_getBufferDataset({
     paths,
@@ -750,11 +745,11 @@ updateBuffers.main!.handle(async ({
     throw new Error("Author information is missing in repository config");
   }
 
-  const w = getLoadedRepository(workingCopyPath).workers.sync;
+  const w = loadedRepositories.getLoadedRepository(workingCopyPath).workers.sync;
 
   const pathChanges = changesetToPathChanges(bufferChangeset);
 
-  await reportBufferChanges(workingCopyPath, pathChanges);
+  await loadedRepositories.reportBufferChanges(workingCopyPath, pathChanges);
 
   return await w.repo_updateBuffers({
     author: repoCfg.author,
@@ -766,7 +761,7 @@ updateBuffers.main!.handle(async ({
 
 
 // getAbsoluteBufferPath.main!.handle(async ({ workingCopyPath, bufferPath }) => {
-//   const w = getLoadedRepository(workingCopyPath).workers.reader;
+//   const w = loadedRepositories.getLoadedRepository(workingCopyPath).workers.reader;
 //   const bufferDataset = await w.repo_readBuffers({
 //     workDir: workingCopyPath,
 //     rootPath: bufferPath,
