@@ -1,6 +1,6 @@
 import { ipcMain, IpcRendererEvent, IpcMainInvokeEvent, ipcRenderer } from 'electron';
 import log from 'electron-log';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { toJSONPreservingUndefined } from './utils';
 import { hash } from './main/utils';
 import { notifyAll, notifyWithTitle } from './window/main';
@@ -355,11 +355,13 @@ export const makeEndpoint: EndpointMaker = {
               handler(payload);
             }
 
+            const handleEventMemoized = useCallback(handleEvent, memoizedArgs);
+
             useEffect(() => {
-              ipcRenderer.on(name, handleEvent);
+              ipcRenderer.on(name, handleEventMemoized);
 
               return function cleanup() {
-                ipcRenderer.removeListener(name, handleEvent);
+                ipcRenderer.removeListener(name, handleEventMemoized);
               }
             }, memoizedArgs);
           }
