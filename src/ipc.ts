@@ -88,8 +88,15 @@ type MainEndpoint<I extends Payload, O extends Payload> = {
      */
     useValue: (payload: I, initialValue: O) => {
       value: O
+      /** Errors encountered while triggerind the IPC endpoint. */
       errors: string[]
+      /** Whether IPC request is in progress. */
       isUpdating: boolean
+      /**
+       * This can be triggered imperatively
+       * to re-trigger IPC for the `value` to update.
+       * Under the hood, this updated `_reqCounter`.
+       */
       refresh: () => void
       _reqCounter: number
     }
@@ -125,6 +132,9 @@ type RendererEndpoint<I extends Payload> = {
 
     /**
      * Defines an async handler function, which will fire any time main thread invokes this endpoint.
+     *
+     * IMPORTANT: Generally don’t use in React components, use `useEvent` instead.
+     * Renders can call this multiple time, causing duplicate event handling.
      *
      * NOTE: Always clean up the handler by calling `handler.destroy()`.
      */
