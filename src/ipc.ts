@@ -119,7 +119,8 @@ type RendererEndpoint<I extends Payload> = {
     /**
      * React hook that allows to subscribe to notifications from main.
      * If component is destroyed, or if any of `memoizedArgs` changes, listener is removed,
-     * so you don’t have to do this manually. */
+     * so you don’t have to do this manually.
+     */
     useEvent: (handler: RendererHandler<I>, memoizedArgs: any[]) => void
 
     /**
