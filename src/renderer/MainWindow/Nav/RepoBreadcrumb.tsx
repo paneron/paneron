@@ -8,7 +8,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { jsx } from '@emotion/react';
 import type { ToastProps } from '@blueprintjs/core';
 
-import { loadRepository, loadedRepositoryStatusChanged } from 'repositories/ipc';
+import { loadRepository, unloadRepository, loadedRepositoryStatusChanged } from 'repositories/ipc';
 import type { Repository, RepoStatus } from 'repositories/types';
 
 import { Breadcrumb, type BreadcrumbProps } from './Breadcrumb';
@@ -50,6 +50,12 @@ export const RepoBreadcrumb: React.FC<{
       888);
     return function cleanup() { clearInterval(interval); };
   }, [lastSyncTS]);
+
+  useEffect(() => {
+    return function cleanup() {
+      unloadRepository.renderer!.trigger({ workingCopyPath: workDir });
+    }
+  }, [workDir]);
 
   loadedRepositoryStatusChanged.renderer!.useEvent(async ({ workingCopyPath, status }) => {
     if (workingCopyPath === workDir) {
@@ -102,7 +108,7 @@ export const RepoBreadcrumb: React.FC<{
         repoInfo.gitMeta.workingCopyPath.slice(
           repoInfo.gitMeta.workingCopyPath.length - 20,
           repoInfo.gitMeta.workingCopyPath.length)}
-      icon={{ type: 'blueprint', iconName: isLoaded ? 'git-repo' : 'offline' }}
+      icon={{ type: 'blueprint', iconName: 'git-repo' }}
       onClose={onClose}
       onNavigate={onNavigate}
       status={<>
