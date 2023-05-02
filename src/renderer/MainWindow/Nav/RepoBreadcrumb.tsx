@@ -49,7 +49,7 @@ export const RepoBreadcrumb: React.FC<{
       ),
       888);
     return function cleanup() { clearInterval(interval); };
-  }, [lastSyncTS]);
+  }, [workDir, lastSyncTS]);
 
   useEffect(() => {
     return function cleanup() {
