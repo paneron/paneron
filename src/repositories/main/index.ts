@@ -40,7 +40,7 @@ import loadedDatasets from '../../datasets/main/loadedDatasets';
 import { changesetToPathChanges } from 'utils';
 import { makeUUIDv4 } from '../../main/utils';
 
-import { PaneronRepository, GitRemote, Repository } from '../types';
+import type { PaneronRepository, GitRemote, Repository } from '../types';
 
 import { getRepoWorkers, oneOffWorkerTask } from './workerManager';
 
