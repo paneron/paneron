@@ -283,7 +283,7 @@ export const makeEndpoint: EndpointMaker = {
                     updateValue(resp.result);
                     //log.debug("IPC: Got result", name, resp.result);
                   } else {
-                    log.error("IPC: Improperly structured main IPC response; returning the entire value", maybeResp);
+                    log.error("IPC: Improperly structured main IPC response", maybeResp);
                     updateErrors(["Invalid IPC response"]);
                     // Consider updateErrors()?
                     //updateValue(maybeResp as O);
