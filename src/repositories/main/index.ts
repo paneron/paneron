@@ -10,6 +10,7 @@ import { loadState } from 'state/manage';
 import {
   addRepository, createRepository, deleteRepository,
   loadRepository,
+  unloadRepository,
   listRepositories,
   repositoriesChanged,
   getDefaultWorkingDirectoryContainer,
@@ -89,6 +90,13 @@ loadRepository.main!.handle(async ({ workingCopyPath }) => {
   } else {
     throw new Error("Missing repo working directory path");
   }
+});
+
+unloadRepository.main!.handle(async ({ workingCopyPath }) => {
+  if (workingCopyPath) {
+    await loadedRepositories.unloadRepository(workingCopyPath);
+  }
+  return {};
 });
 
 

@@ -73,6 +73,15 @@ export const loadRepository = makeEndpoint.main(
   <RepoStatus>_,
 );
 
+/** 
+ * This would terminate workers & stop sync.
+ */
+export const unloadRepository = makeEndpoint.main(
+  'unloadRepository',
+  <{ workingCopyPath: string }>_,
+  <EmptyPayload>_,
+);
+
 /**
  * Returns repository info, including Git and Paneron metadata
  * as well as whether it’s currently loaded (synchronizing).
