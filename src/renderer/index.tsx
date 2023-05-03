@@ -13,13 +13,12 @@ import '!style-loader!css-loader!./normalize.css';
 import '!style-loader!css-loader!./renderer.css';
 
 import ErrorBoundary from '@riboseinc/paneron-extension-kit/widgets/ErrorBoundary';
-
 import MainWindow from './MainWindow/index';
-
-//require('events').EventEmitter.defaultMaxListeners = 20;
 
 import { colorSchemeUpdated } from 'common';
 
+
+// Set color scheme
 
 function applyColorScheme(opts: { colorSchemeName: string }) {
   if (opts.colorSchemeName === 'dark') {
@@ -30,21 +29,28 @@ function applyColorScheme(opts: { colorSchemeName: string }) {
     document.body.style.backgroundColor = 'white';
   }
 }
-const applyColorSchemeDebounced = debounce(1000, applyColorScheme);
 
 // Params passed to the window from main via GET query string
 const searchParams = new URLSearchParams(window.location.search);
 const colorScheme = searchParams.get('colorScheme');
 if (colorScheme) { applyColorScheme({ colorSchemeName: colorScheme }); }
 
-function renderApp() {
-  colorSchemeUpdated.renderer!.handle(applyColorSchemeDebounced);
+// electron-webpack guarantees presence of #app in index.html it bundles
+const containerEl: HTMLElement | null = document.getElementById('app');
+if (containerEl === null) {
+  throw new Error("Missing app container");
+}
 
-  // electron-webpack guarantees presence of #app in index.html it bundles
-  const containerEl: HTMLElement | null = document.getElementById('app');
-  if (containerEl === null) {
-    throw new Error("Missing app container");
-  }
+// Do the rest.
+//
+// NOTE: Moving this logic out of async function causes a crash on hot reload
+// when working on renderer code in yarn dev mode.
+
+async function renderApp() {
+  //require('events').EventEmitter.defaultMaxListeners = 20;
+
+  const applyColorSchemeDebounced = debounce(1000, applyColorScheme);
+  colorSchemeUpdated.renderer!.handle(applyColorSchemeDebounced);
 
   ReactDOM.render(
     <ErrorBoundary viewName="Main window">
