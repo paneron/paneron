@@ -153,7 +153,7 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
           />
         </PropertyView>
         <PropertyView
-            label="Prefer theme (beta)"
+            label="Prefer color scheme (beta)"
             tooltipIntent="warning"
             tooltip={<>
               Support for themes other than “light” is patchy among extension GUIs.
