@@ -5,6 +5,8 @@ import log from 'electron-log';
 
 import { type WindowOpenerParams, isComponentWindowSource, isExternalWindowSource } from './types';
 
+import { getEffectiveColorSchemeName } from '../main/colorScheme';
+
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 const isMacOS = process.platform === 'darwin';
@@ -65,7 +67,8 @@ export const open: WindowOpener = async (props) => {
 
         if (isComponentWindowSource(props)) {
           const { component, componentParams } = props;
-          const params = `c=${component}&${componentParams || ''}`;
+          const colorScheme = await getEffectiveColorSchemeName();
+          const params = `colorScheme=${colorScheme}&c=${component}&${componentParams || ''}`;
 
           window = await createWindowForLocalComponent(
             title,
