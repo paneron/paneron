@@ -12,7 +12,7 @@ import PropertyView, { TextInput, Select } from '@riboseinc/paneron-extension-ki
 import HelpTooltip from '@riboseinc/paneron-extension-kit/widgets/HelpTooltip';
 import PanelSeparator from '@riboseinc/paneron-extension-kit/widgets/panels/PanelSeparator';
 
-import { clearDataAndRestart, ClearOption, CLEAR_OPTIONS, selectDirectoryPath } from 'common';
+import { clearDataAndRestart, ClearOption, CLEAR_OPTIONS, selectDirectoryPath, colorSchemeUpdated, getColorScheme } from 'common';
 import { getNewRepoDefaults, setNewRepoDefaults } from 'repositories/ipc';
 import type { NewRepositoryDefaults } from 'repositories/types';
 import { listLocalPlugins, pluginsUpdated, removeLocalPluginPath, specifyLocalPluginPath } from 'plugins';
@@ -169,8 +169,14 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
                   if (['light', 'dark', ''].indexOf(evt.currentTarget.value) >= 0) {
                     if (evt.currentTarget.value === '') {
                       handleUpdate('defaultTheme', null);
+                      setTimeout(async () => {
+                        const { result: { colorSchemeName } } = await getColorScheme.renderer!.trigger({});
+                        colorSchemeUpdated.renderer!.trigger({ colorSchemeName });
+                      }, 500);
                     } else {
-                      handleUpdate('defaultTheme', (evt.currentTarget.value as 'light' | 'dark'));
+                      const colorSchemeName = (evt.currentTarget.value as 'light' | 'dark');
+                      handleUpdate('defaultTheme', colorSchemeName);
+                      colorSchemeUpdated.renderer!.trigger({ colorSchemeName });
                     }
                   }
                 })
