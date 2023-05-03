@@ -111,7 +111,7 @@ async function initMain() {
   // Ensure only one instance of the app can run at a time on given user’s machine
   // by exiting any future instances
   if (!app.requestSingleInstanceLock()) {
-    log.error("App is already running");
+    //log.error("App is already running");
     app.exit(0);
   }
 
