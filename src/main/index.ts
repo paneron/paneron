@@ -183,6 +183,7 @@ async function initMain() {
     if (window === null) { throw new Error("Unable to choose file: no focused window detected"); }
 
     const result = await dialog.showOpenDialog(window, {
+      title: opts.prompt,
       properties: [
         'openDirectory',
       ],
