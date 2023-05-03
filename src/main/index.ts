@@ -5,7 +5,6 @@ import log from 'electron-log';
 import { debounce } from 'throttle-debounce';
 
 import type { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
-import { INITIAL_GLOBAL_SETTINGS } from '@riboseinc/paneron-extension-kit/settings';
 import { findSerDesRuleForBuffers } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
 
 
@@ -32,13 +31,14 @@ import '../subprocesses/main';
 import { clearDataAndRestart, ClearOption, getAppVersion, getColorScheme, colorSchemeUpdated, openExternalURL, refreshMainWindow, saveFileToFilesystem, selectDirectoryPath } from '../common';
 import { chooseFileFromFilesystem, makeRandomID } from '../common';
 
-import { resetStateGlobal, loadState } from '../state/manage';
 import type { WindowOpenerParams } from '../window/types';
+import { resetStateGlobal } from '../state/manage';
 import { clearPluginData } from '../plugins/main';
 import { clearRepoConfig, clearRepoData } from '../repositories/main/readRepoConfig';
 import { clearIndexes } from '../datasets/main';
 import { refreshByID, open as openWindow } from '../window/main';
 
+import { getEffectiveColorSchemeName } from './colorScheme';
 import mainMenu from './mainMenu';
 
 
@@ -74,16 +74,6 @@ const CLEAR_OPTION_ROUTINES: Record<ClearOption, () => Promise<void>> = {
     await clearRepoData();
   },
 };
-
-
-async function getEffectiveColorSchemeName(): Promise<string> {
-  const settings = await loadState('settings-global');
-  return settings?.defaultTheme === null
-    ? nativeTheme.shouldUseDarkColors
-      ? 'dark'
-      : 'light'
-    : (settings?.defaultTheme || INITIAL_GLOBAL_SETTINGS.defaultTheme);
-}
 
 async function reportUpdatedColorScheme() {
   const colorSchemeName = await getEffectiveColorSchemeName();
