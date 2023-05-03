@@ -228,23 +228,27 @@ async function createWindow(
     ...winParams
   });
 
-  const promise = new Promise<BrowserWindow>((resolve, reject) => {
-    window.once('ready-to-show', () => {
-      if (showWhileLoading !== true) {
-        window.show();
-      }
-      resolve(window);
-    });
-    setTimeout(reject, 4000);
-  });
-
   if (debug) {
     window.loadURL(url, { 'extraHeaders': 'pragma: no-cache\n' });
   } else {
     window.loadURL(url);
   }
 
-  return promise;
+  if (showWhileLoading) {
+    return window;
+  } else {
+    return new Promise<BrowserWindow>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        log.error("Window is not ready to show after reasonable amount of time");
+        reject();
+      }, 20000);
+      window.once('ready-to-show', () => {
+        clearTimeout(timeout);
+        window.show();
+        resolve(window);
+      });
+    });
+  }
 }
 
 
