@@ -57,7 +57,7 @@ export async function updateSetting(scope: string, { key, value }: { key: string
         newState: INITIAL_GLOBAL_SETTINGS,
       });
     } finally {
-      throw new Error("Unexpected global settings structure obtained. Reset all settings to defaults just in case.");
+      throw new Error("Unexpected global settings structure obtained, please try again…");
     }
   }
 
