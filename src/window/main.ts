@@ -222,7 +222,6 @@ async function createWindow(
       nodeIntegration: true,
       contextIsolation: false,
       webSecurity: !debug,
-      enableRemoteModule: true,
     },
     title: title,
     show: showWhileLoading === true,
