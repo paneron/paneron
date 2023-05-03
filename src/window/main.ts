@@ -241,15 +241,32 @@ async function createWindow(
     return window;
   } else {
     return new Promise<BrowserWindow>((resolve, reject) => {
+      let readyToShow = false;
+      let loaded = false;
+      let domReady = false;
+      function check() {
+        if (readyToShow && loaded && domReady) {
+          clearTimeout(timeout);
+          window.show();
+          resolve(window);
+        }
+      }
+      window.once('ready-to-show', () => {
+        readyToShow = true;
+        check();
+      });
+      window.webContents.once('did-finish-load', () => {
+        loaded = true;
+        check();
+      });
+      window.webContents.once('dom-ready', () => {
+        domReady = true;
+        check();
+      });
       const timeout = setTimeout(() => {
         log.error("Window is not ready to show after reasonable amount of time");
         reject();
       }, 20000);
-      window.once('ready-to-show', () => {
-        clearTimeout(timeout);
-        window.show();
-        resolve(window);
-      });
     });
   }
 }
