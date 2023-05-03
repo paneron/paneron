@@ -8,7 +8,6 @@ import { GlobalSettingsContext } from '@riboseinc/paneron-extension-kit/Settings
 import { INITIAL_GLOBAL_SETTINGS } from '@riboseinc/paneron-extension-kit/settings';
 
 import { getAppVersion, refreshMainWindow, showGlobalSettings } from 'common';
-import type { WindowComponentProps } from 'window/types';
 
 import { useSettings } from './settings';
 
@@ -19,7 +18,7 @@ import WelcomeScreen from './WelcomeScreen';
 import GlobalSettingsForm from './GlobalSettingsForm';
 
 
-const MainWindow: React.FC<WindowComponentProps> = function () {
+const MainWindow: React.FC<Record<never, never>> = function () {
   const globalSettings = useSettings('global', INITIAL_GLOBAL_SETTINGS);
   const globalSettingsContext = {
     settings: globalSettings.value.settings,
