@@ -132,7 +132,7 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
       <SettingsFormSection title={<>
         Interface options
         &nbsp;
-        <HelpTooltip content="Some of these settings may not have effect until next time you open a dataset." />
+        <HelpTooltip content="Some of these settings may not have effect until restart or next time you open a dataset." />
       </>}>
         <PropertyView label="Main navigation bar position">
           <Select
