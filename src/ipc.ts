@@ -394,7 +394,7 @@ export const makeEndpoint: EndpointMaker = {
                 ipcRenderer.removeListener(name, handleEventMemoized);
               }
             }, memoizedArgs);
-          }
+          },
         },
       };
 
