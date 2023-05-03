@@ -3,7 +3,27 @@ import log from 'electron-log';
 import { useEffect, useState, useCallback } from 'react';
 import { toJSONPreservingUndefined } from './utils';
 import { hash } from './main/utils';
-import { notifyAll, notifyWithTitle } from './window/main';
+
+
+// A contrived way to avoid importing main stuff in renderer.
+import type { notifyAll, notifyWithTitle } from './window/main';
+
+let windowTools: {
+  notifyAll: typeof notifyAll,
+  notifyWithTitle: typeof notifyWithTitle,
+} | null = null;
+async function getWindowTools(): Promise<Exclude<typeof windowTools, null>> {
+  if (!windowTools) {
+    const _winMain = await import('./window/main');
+    windowTools = {
+      notifyAll: _winMain.notifyAll,
+      notifyWithTitle: _winMain.notifyWithTitle,
+    };
+  }
+  return windowTools;
+}
+// Preload
+if (process.type === 'browser') { getWindowTools(); }
 
 
 // TODO: No need to segregate them by process type here?
@@ -382,10 +402,11 @@ export const makeEndpoint: EndpointMaker = {
       return {
         main: {
           trigger: async (payload, forWindowWithTitle) => {
+            const windowTools = await getWindowTools();
             if (forWindowWithTitle) {
-              await notifyWithTitle(forWindowWithTitle, name, payload);
+              windowTools.notifyWithTitle(forWindowWithTitle, name, payload);
             } else {
-              await notifyAll(name, payload);
+              windowTools.notifyAll(name, payload);
             }
           },
         },
