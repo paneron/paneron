@@ -159,6 +159,9 @@ type RendererEndpoint<I extends Payload> = {
      * NOTE: Always clean up the handler by calling `handler.destroy()`.
      */
     handle: (handler: RendererHandler<I>) => BoundHandler
+
+    /** Proxies to main.trigger, allowing to do this from renderer. */
+    trigger: (payload: I, forWindowWithTitle?: string) => Promise<void>
   }
   main?: never
 }
@@ -363,6 +366,8 @@ export const makeEndpoint: EndpointMaker = {
       endpointsRegistered[process.type].push(name);
     }
 
+    const nameForRendererInitiatedTrigger = `${name}-triggered-from-renderer`;
+
     if (process.type === 'renderer') {
       return {
         renderer: {
@@ -395,20 +400,32 @@ export const makeEndpoint: EndpointMaker = {
               }
             }, memoizedArgs);
           },
+          trigger: async (payload, forWindowWithTitle) => {
+            ipcRenderer.invoke(nameForRendererInitiatedTrigger, payload, forWindowWithTitle);
+          },
         },
       };
 
     } else if (process.type === 'browser') {
+      async function handleNotify(payload: I, forWindowWithTitle?: string) {
+        const windowTools = await getWindowTools();
+        if (forWindowWithTitle) {
+          windowTools.notifyWithTitle(forWindowWithTitle, name, payload);
+        } else {
+          windowTools.notifyAll(name, payload);
+        }
+      }
+
+      function handler(_: IpcMainInvokeEvent, payload: I, forWindowWithTitle?: string) {
+        handleNotify(payload, forWindowWithTitle);
+      }
+
+      ipcMain.removeHandler(nameForRendererInitiatedTrigger);
+      ipcMain.handle(nameForRendererInitiatedTrigger, handler);
+
       return {
         main: {
-          trigger: async (payload, forWindowWithTitle) => {
-            const windowTools = await getWindowTools();
-            if (forWindowWithTitle) {
-              windowTools.notifyWithTitle(forWindowWithTitle, name, payload);
-            } else {
-              windowTools.notifyAll(name, payload);
-            }
-          },
+          trigger: handleNotify,
         },
       };
 
