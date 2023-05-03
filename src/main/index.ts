@@ -101,7 +101,7 @@ function handleAllWindowsClosed(e: Electron.Event) {
 
 let initialized: boolean = false;
 
-(async function initMain() {
+async function initMain() {
 
   if (initialized) { log.error("Attempt to initialize app multiple times; discarding"); return; }
   initialized = true;
@@ -273,4 +273,7 @@ let initialized: boolean = false;
   //   }
   // }
 
-})();
+};
+
+
+initMain().catch(e => { try { log.error("Failed to init main", e); } finally { app.quit() } });
