@@ -6,7 +6,7 @@ import type {
   SaveFileDialogProps,
 } from '@riboseinc/paneron-extension-kit/types/dialogs';
 
-import { EmptyPayload, makeEndpoint, _ } from './ipc';
+import { type EmptyPayload, makeEndpoint, _ } from './ipc';
 
 
 export const CLEAR_OPTIONS = [

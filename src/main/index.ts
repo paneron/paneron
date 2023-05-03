@@ -32,8 +32,8 @@ import '../subprocesses/main';
 import { clearDataAndRestart, ClearOption, getAppVersion, getColorScheme, colorSchemeUpdated, openExternalURL, refreshMainWindow, saveFileToFilesystem, selectDirectoryPath } from '../common';
 import { chooseFileFromFilesystem, makeRandomID } from '../common';
 
-import { WindowOpenerParams } from '../window/types';
 import { resetStateGlobal, loadState } from '../state/manage';
+import type { WindowOpenerParams } from '../window/types';
 import { clearPluginData } from '../plugins/main';
 import { clearRepoConfig, clearRepoData } from '../repositories/main/readRepoConfig';
 import { clearIndexes } from '../datasets/main';
