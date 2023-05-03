@@ -61,11 +61,11 @@ const MainWindow: React.FC<Record<never, never>> = function () {
             <MainView
               css={css`
                 flex: 1;
+                overflow: hidden;
                 background: ${Colors.WHITE};
                 .bp4-dark & {
                   background: ${Colors.DARK_GRAY1};
                 }
-                overflow: hidden;
               `}
               className={Classes.ELEVATION_3}
             />
