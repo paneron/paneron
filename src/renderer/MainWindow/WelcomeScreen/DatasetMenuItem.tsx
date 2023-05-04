@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { jsx, css } from '@emotion/react';
-import { Classes, Icon, IconSize } from '@blueprintjs/core';
+import { Classes, Spinner, Icon, IconSize } from '@blueprintjs/core';
 import { MenuItem2 as MenuItem } from '@blueprintjs/popover2';
 import { getDatasetInfo } from 'datasets/ipc';
 import { getPluginInfo, pluginsUpdated } from 'plugins';
@@ -32,14 +32,21 @@ function ({ workDir, datasetID, showRepoInfo, onClick, onExportClick }) {
   pluginsUpdated.renderer!.useEvent(refresh, [datasetType]);
 
   const effectiveIconEl: JSX.Element = (pluginInfoIsUpdating || datasetInfoIsUpdating)
-    ? <Icon icon="circle" />
-    : !pluginInfo?.iconURL
-      ? <Icon icon="heart-broken" />
-      : <Icon
-          icon={<img className={Classes.ICON}
-            css={css`height: ${IconSize.STANDARD}px; width: ${IconSize.STANDARD}px`}
-            src={pluginInfo?.iconURL} />}
-        />;
+    ? <Spinner
+        size={IconSize.STANDARD}
+        className={Classes.ICON}
+        css={css`display: inline-flex;`}
+        title="Loading extension information"
+      />
+    : pluginInfo !== null
+      ? pluginInfo.iconURL
+        ? <Icon
+            icon={<img className={Classes.ICON}
+              css={css`height: ${IconSize.STANDARD}px; width: ${IconSize.STANDARD}px`}
+              src={pluginInfo?.iconURL} />}
+          />
+        : <Icon icon="cube" title="Extension does not have an icon specified" />
+      : <Icon icon="offline" title="Unable to fetch extension information" />;
 
   return (
     <MenuItem
