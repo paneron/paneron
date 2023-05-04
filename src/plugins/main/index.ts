@@ -24,6 +24,7 @@ import { Methods as WorkerMethods, WorkerSpec } from './worker';
 const axios = _axios.create({ timeout: 6000 });
 axios.defaults.raxConfig = {
   instance: axios,
+  noResponseRetries: 1,
 };
 rax.attach(axios);
 
