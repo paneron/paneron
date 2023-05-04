@@ -13,8 +13,12 @@ import DatasetMenuItem from './DatasetMenuItem';
 import { Context } from '../context';
 
 
-const RepositoryDetails: React.FC<{ workDir: string; onOpen: (datasetID: string) => void; }> =
-function ({ workDir, onOpen }) {
+const RepositoryDetails: React.FC<{
+  workDir: string;
+  onOpen: (datasetID: string) => void;
+  onExport?: (datasetID: string) => void;
+}> =
+function ({ workDir, onOpen, onExport }) {
   const openedRepoResp = describeRepository.renderer!.useValue(
     { workingCopyPath: workDir },
     { info: { gitMeta: { workingCopyPath: workDir, mainBranch: '' } }, isLoaded: false });
@@ -62,6 +66,7 @@ function ({ workDir, onOpen }) {
     renderPanel: ({ repo, onOpenDataset, closePanel, openPanel }) => <RepoMenu
       repo={repo}
       onOpenDataset={onOpenDataset}
+      onExportDataset={onExport}
       onOpenSettings={() => openPanel(repoSettingsPanel)}
       onCreateDataset={() => openPanel(createDatasetPanel)} />,
   };
@@ -113,10 +118,17 @@ interface RepoSettingsProps {
 interface RepoMenuProps {
   repo: Repository;
   onOpenDataset?: (datasetID: string) => void;
+  onExportDataset?: (datasetID: string) => void;
   onOpenSettings?: () => void;
   onCreateDataset?: () => void;
 }
-const RepoMenu: React.FC<RepoMenuProps> = function ({ repo, onOpenDataset, onOpenSettings, onCreateDataset }) {
+const RepoMenu: React.FC<RepoMenuProps> = function ({
+  repo,
+  onOpenDataset,
+  onExportDataset,
+  onOpenSettings,
+  onCreateDataset,
+}) {
   const { workingCopyPath: workDir } = repo.gitMeta;
 
   const { performOperation, isBusy } = useContext(Context);
@@ -178,6 +190,7 @@ const RepoMenu: React.FC<RepoMenuProps> = function ({ repo, onOpenDataset, onOpe
             workDir={workDir}
             datasetID={dsID}
             onClick={onOpenDataset ? () => onOpenDataset!(dsID) : undefined}
+            onExportClick={onExportDataset ? () => onExportDataset!(dsID) : undefined}
           />
         )}
 
