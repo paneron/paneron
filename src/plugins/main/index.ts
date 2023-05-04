@@ -98,23 +98,10 @@ getPluginInfo.main!.handle(async ({ id }) => {
 
   const localPlugins = await w.listLocalPlugins();
 
-  let ext: Extension | undefined;
-
-  const localPlugin = localPlugins[id];
-  if (localPlugin) {
-    ext = localPlugin;
-  } else {
-    try {
-      const extensions = await fetchExtensions();
-      ext = extensions[name];
-    } catch (e) {
-      log.error("Plugins: Unable to fetch Paneron extension index", e);
-      return { plugin: null };
-    }
-  }
+  const ext: Extension | undefined = localPlugins[id] ?? (await fetchExtensions())[name]
 
   if (ext) {
-    const isLocal = localPlugin !== undefined ? true : undefined;
+    const isLocal = localPlugins[id] ? true : undefined;
     try {
       const { installedVersion } = await w.getInstalledVersion({ name });
       return { plugin: { ...ext, installedVersion, isLocal } };
@@ -186,6 +173,12 @@ function clearLockfile() {
 
 export async function clearPluginData() {
   clearLockfile();
+
+  // Clear cached extensions
+  for (const key of Object.keys(publishedExtensions)) {
+    delete publishedExtensions[key];
+  }
+
   fs.rmdirSync(PLUGINS_PATH, { recursive: true });
   fs.removeSync(PLUGIN_CONFIG_PATH);
 }
@@ -197,18 +190,23 @@ app.on('quit', clearLockfile);
 
 // Querying extension directory
 
-async function fetchPublishedExtensions(): Promise<ExtensionRegistry> {
-  return (await axios.get("https://extensions.paneron.org/extensions.json")).data.extensions;
+// Fetch them once per app launch and cache them here
+const publishedExtensions: ExtensionRegistry = {};
+
+async function fetchPublishedExtensions(ignoreCache?: true): Promise<ExtensionRegistry> {
+  if (ignoreCache || Object.keys(publishedExtensions).length < 1) {
+    try {
+      const ext = (await axios.get("https://extensions.paneron.org/extensions.json")).data.extensions;
+      Object.assign(publishedExtensions, ext);
+    } catch (e) {
+      log.error("Plugins: Unable to fetch published extensions", (e as any).message ?? 'unknown error');
+    }
+  }
+  return publishedExtensions;
 }
 
-export async function fetchExtensions(): Promise<ExtensionRegistry> {
-  let publishedExtensions: ExtensionRegistry
-  try {
-    publishedExtensions = await fetchPublishedExtensions();
-  } catch (e) {
-    log.error("Plugins: Unable to fetch published extensions", e);
-    publishedExtensions = {};
-  }
+async function fetchExtensions(): Promise<ExtensionRegistry> {
+  const publishedExtensions = await fetchPublishedExtensions();
   const localExtensions = await (await worker).listLocalPlugins();
   return {
     ...publishedExtensions,
