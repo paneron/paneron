@@ -10,21 +10,24 @@ import { getPluginInfo } from 'plugins';
 import { describeRepository } from 'repositories/ipc';
 
 
-const DatasetMenuItem: React.FC<{ workDir: string; datasetID: string; showRepoInfo?: true; onClick?: () => void; }> =
-function ({ workDir, datasetID, showRepoInfo, onClick }) {
-  const dsDescResp = getDatasetInfo.renderer!.useValue(
+const DatasetMenuItem: React.FC<{
+  workDir: string;
+  datasetID: string;
+  showRepoInfo?: true;
+  onExportClick?: () => void;
+  onClick?: () => void;
+}> =
+function ({ workDir, datasetID, showRepoInfo, onClick, onExportClick }) {
+  const { isUpdating: datasetInfoIsUpdating, value: { info: dsInfo } } =
+  getDatasetInfo.renderer!.useValue(
     { workingCopyPath: workDir, datasetID },
     { info: null });
-
-  const dsInfo = dsDescResp.value.info;
-
-  const pluginDescResp = getPluginInfo.renderer!.useValue(
+  const { isUpdating: pluginInfoIsUpdating, value: { plugin: pluginInfo } } =
+  getPluginInfo.renderer!.useValue(
     { id: dsInfo?.type.id ?? '' },
     { plugin: null });
 
-  const pluginInfo = pluginDescResp.value.plugin;
-
-  const effectiveIconEl: JSX.Element = pluginDescResp.isUpdating
+  const effectiveIconEl: JSX.Element = (pluginInfoIsUpdating || datasetInfoIsUpdating)
     ? <Icon icon="circle" />
     : !pluginInfo?.iconURL
       ? <Icon icon="heart-broken" />
@@ -36,18 +39,25 @@ function ({ workDir, datasetID, showRepoInfo, onClick }) {
 
   return (
     <MenuItem
-      icon="database"
-      intent="primary"
-      disabled={!dsInfo || !pluginInfo || !onClick}
-      labelElement={<>{pluginInfo?.title}&nbsp;{effectiveIconEl}</>}
-      text={<>
-        {showRepoInfo
-          ? <small css={css`font-variation-settings: 'GRAD' 500, 'opsz' 20;`}><RepositoryTitle workDir={workDir} />: </small>
-          : null}
-        {dsInfo?.title ?? datasetID}
-      </>}
-      title={dsInfo?.title ?? datasetID}
-      onClick={onClick} />
+        icon="database"
+        intent="primary"
+        disabled={!dsInfo || !pluginInfo || !onClick}
+        labelElement={<>{pluginInfo?.title}&nbsp;{effectiveIconEl}</>}
+        popoverProps={{
+          placement: 'bottom-end',
+        }}
+        text={<>
+          {showRepoInfo
+            ? <small css={css`font-variation-settings: 'GRAD' 500, 'opsz' 20;`}><RepositoryTitle workDir={workDir} />: </small>
+            : null}
+          {dsInfo?.title ?? datasetID}
+        </>}
+        title={dsInfo?.title ?? datasetID}
+        onClick={onClick}>
+      {onExportClick
+        ? <MenuItem icon="export" text="Export options…" onClick={onExportClick} />
+        : null}
+    </MenuItem>
   );
 };
 
