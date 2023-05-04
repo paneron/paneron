@@ -43,6 +43,7 @@ function ({ onOpenDataset, className }) {
   const normalizedRepoFilterString = useDebounce(
     repoQuery.trim() ?? '',
     250);
+
   const repositories = useRepositoryList({
     matchesText: normalizedRepoFilterString.trim(),
   });
