@@ -21,7 +21,7 @@ import { Extension, ExtensionRegistry } from '../../plugins/types';
 import { Methods as WorkerMethods, WorkerSpec } from './worker';
 
 
-const axios = _axios.create({ timeout: 10000 });
+const axios = _axios.create({ timeout: 6000 });
 axios.defaults.raxConfig = {
   instance: axios,
 };
