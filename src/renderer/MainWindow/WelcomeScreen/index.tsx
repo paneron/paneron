@@ -78,7 +78,7 @@ function ({ onOpenDataset, className }) {
           }
           .bp4-tab-panel[role=tabpanel] {
             overflow-y: auto;
-            padding: 0;
+            padding: 10px;
             flex: 1;
             position: relative;
             border-left: 1px solid silver;
@@ -100,18 +100,7 @@ function ({ onOpenDataset, className }) {
           panel={<SectionView onOpenDataset={handleOpenDataset} />}
         />
       })}
-      {repositories.value.objects.map(repo =>
-        <Tab
-          key={`repo-${repo.gitMeta.workingCopyPath}`}
-          disabled={isBusy}
-          id={`Repository-${repo.gitMeta.workingCopyPath}`}
-          title={<><Icon icon={getRepoIcon(repo)} />&ensp;{repo.paneronMeta?.title ?? '(no title)'}</>}
-          panel={<RepositoryDetails
-            workDir={repo.gitMeta.workingCopyPath}
-            onOpen={dsID => handleOpenDataset(repo.gitMeta.workingCopyPath, dsID)}
-          />}
-        />
-      )}
+      {repoTabs}
       <Tabs.Expander />
       <Tab
         disabled={isBusy}
