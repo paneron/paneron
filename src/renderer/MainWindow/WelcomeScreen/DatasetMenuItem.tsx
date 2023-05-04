@@ -6,7 +6,7 @@ import { jsx, css } from '@emotion/react';
 import { Classes, Icon, IconSize } from '@blueprintjs/core';
 import { MenuItem2 as MenuItem } from '@blueprintjs/popover2';
 import { getDatasetInfo } from 'datasets/ipc';
-import { getPluginInfo } from 'plugins';
+import { getPluginInfo, pluginsUpdated } from 'plugins';
 import { describeRepository } from 'repositories/ipc';
 
 
@@ -22,10 +22,14 @@ function ({ workDir, datasetID, showRepoInfo, onClick, onExportClick }) {
   getDatasetInfo.renderer!.useValue(
     { workingCopyPath: workDir, datasetID },
     { info: null });
-  const { isUpdating: pluginInfoIsUpdating, value: { plugin: pluginInfo } } =
+
+  const datasetType = dsInfo?.type.id ?? '';
+
+  const { isUpdating: pluginInfoIsUpdating, refresh, value: { plugin: pluginInfo } } =
   getPluginInfo.renderer!.useValue(
-    { id: dsInfo?.type.id ?? '' },
+    { id: datasetType },
     { plugin: null });
+  pluginsUpdated.renderer!.useEvent(refresh, [datasetType]);
 
   const effectiveIconEl: JSX.Element = (pluginInfoIsUpdating || datasetInfoIsUpdating)
     ? <Icon icon="circle" />
