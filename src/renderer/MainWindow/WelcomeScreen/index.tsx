@@ -101,7 +101,7 @@ function ({ onOpenDataset, onExportDataset, className }) {
           }
           .bp4-tab-panel[role=tabpanel] {
             overflow-y: auto;
-            padding: 10px;
+            padding: 2px 2px 2px 0;
             flex: 1;
             position: relative;
             border-left: 1px solid silver;

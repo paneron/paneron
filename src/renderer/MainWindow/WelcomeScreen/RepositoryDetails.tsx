@@ -3,7 +3,7 @@
 
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { jsx, css } from '@emotion/react';
-import { Menu, MenuDivider, NonIdealState, Panel, PanelStack2, Spinner } from '@blueprintjs/core';
+import { Menu, MenuDivider, NonIdealState, Panel, Colors, PanelStack2, Spinner } from '@blueprintjs/core';
 import { MenuItem2 as MenuItem } from '@blueprintjs/popover2';
 import { addDisconnected, describeRepository, repositoryBuffersChanged } from 'repositories/ipc';
 import { Repository, SOLE_DATASET_ID } from 'repositories/types';
@@ -101,7 +101,13 @@ function ({ workDir, onOpen, onExport }) {
         stack={panelStack as Array<Panel<object>>}
         onClose={handleClosePanel}
         onOpen={handleOpenPanel}
-        css={css`position: absolute; inset: 0;`}
+        css={css`
+          position: absolute;
+          inset: 0;
+          .bp4-dark & .bp4-panel-stack-view {
+            background: ${Colors.DARK_GRAY1};
+          }
+        `}
       />
     );
   } else if (openedRepoResp.isUpdating) {
@@ -181,7 +187,7 @@ const RepoMenu: React.FC<RepoMenuProps> = function ({
       : [SOLE_DATASET_ID];
 
     return (
-      <Menu>
+      <Menu css={css`.bp4-dark & { background: ${Colors.DARK_GRAY1}; }`}>
         <MenuDivider title="Datasets" />
 
         {datasetIDs.map(dsID =>
