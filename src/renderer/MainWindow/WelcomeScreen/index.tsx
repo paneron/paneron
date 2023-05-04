@@ -1,7 +1,7 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useMemo, useCallback } from 'react';
 import { jsx, css } from '@emotion/react';
 import { Helmet } from 'react-helmet';
 import { Button, Classes, Colors, Icon, IconName, InputGroup, Tab, Tabs } from '@blueprintjs/core';
@@ -34,8 +34,8 @@ interface SectionConfiguration {
   title: JSX.Element | string
 }
 
-const WelcomeScreen: React.FC<{ onOpenDataset: (workDir: string, dsID: string) => void, className?: string }> =
-function ({ onOpenDataset, className }) {
+const WelcomeScreen: React.FC<{ onOpenDataset: (workDir: string, dsID: string) => void, onExportDataset?: (workDir: string, dsID: string) => void, className?: string }> =
+function ({ onOpenDataset, onExportDataset, className }) {
   const [repoQuery, updateRepoQuery] = useState<string>('');
 
   const { performOperation, isBusy } = useContext(Context);
@@ -48,15 +48,37 @@ function ({ onOpenDataset, className }) {
     matchesText: normalizedRepoFilterString.trim(),
   });
 
-  function handleOpenDataset(workDir: string, datasetID: string) {
+  const handleOpenDataset = useCallback(function handleOpenDataset(workDir: string, datasetID: string) {
     onOpenDataset(workDir, datasetID);
-  }
+  }, []);
 
-  async function handleCreateRepo(title: string, author: GitAuthor, mainBranchName: string) {
+  const handleCreateRepo = useCallback(async function handleCreateRepo(
+    title: string,
+    author: GitAuthor,
+    mainBranchName: string,
+  ) {
     performOperation('creating repository', async () => {
       await createRepository.renderer!.trigger({ title, author, mainBranchName });
     })();
-  }
+  }, []);
+
+  const repoTabs = useMemo((() =>
+    repositories.value.objects.map(repo =>
+      <Tab
+        key={`repo-${repo.gitMeta.workingCopyPath}`}
+        disabled={isBusy}
+        id={`Repository-${repo.gitMeta.workingCopyPath}`}
+        title={<><Icon icon={getRepoIcon(repo)} />&ensp;{repo.paneronMeta?.title ?? '(no title)'}</>}
+        panel={<RepositoryDetails
+          workDir={repo.gitMeta.workingCopyPath}
+          onOpen={dsID => handleOpenDataset(repo.gitMeta.workingCopyPath, dsID)}
+          onExport={onExportDataset
+            ? dsID => onExportDataset?.(repo.gitMeta.workingCopyPath, dsID)
+            : undefined}
+        />}
+      />
+    )
+  ), [isBusy, JSON.stringify(repositories)]);
 
   return (
     <Tabs
