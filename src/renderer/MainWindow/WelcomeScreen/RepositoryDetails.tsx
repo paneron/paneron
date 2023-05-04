@@ -6,7 +6,7 @@ import { jsx, css } from '@emotion/react';
 import { Menu, MenuDivider, NonIdealState, Panel, Colors, PanelStack2, Spinner } from '@blueprintjs/core';
 import { MenuItem2 as MenuItem } from '@blueprintjs/popover2';
 import { addDisconnected, describeRepository, repositoryBuffersChanged } from 'repositories/ipc';
-import { Repository, SOLE_DATASET_ID } from 'repositories/types';
+import { type Repository, SOLE_DATASET_ID } from 'repositories/types';
 import RepositorySettings from './RepositorySettings';
 import InitializeDataset from './InitializeDataset';
 import DatasetMenuItem from './DatasetMenuItem';
