@@ -339,11 +339,15 @@ export const makeEndpoint: EndpointMaker = {
 
             }, [name, reqCounter, payloadHash]);
 
+            const refresh = useCallback(
+              () => updateReqCounter(c => c += 1),
+              [name, payloadHash]);
+
             return {
               value,
               errors,
               isUpdating,
-              refresh: () => updateReqCounter(counter => { return counter += 1 }),
+              refresh,
               _reqCounter: reqCounter,
             };
           },
