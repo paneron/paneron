@@ -2,6 +2,8 @@
 
 image:https://img.shields.io/badge/commitizen-friendly-brightgreen.svg[alt="Commitizen friendly",link="http://commitizen.github.io/cz-cli/"] image:https://github.com/paneron/paneron/workflows/Build/release/badge.svg[alt="Build/release"]
 
+NOTE: Currently, ongoing development is happening in the `release` branch.
+
 == Development
 
 NOTE: At the moment, a migration from `yarn` to a `pnpm`-based monorepo
