@@ -3,7 +3,7 @@
 
 import { jsx } from '@emotion/react';
 import React, { useState } from 'react';
-import { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
+import type { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
 import { getPluginInfo, pluginsUpdated } from 'plugins';
 import { describeIndex, indexStatusChanged } from 'datasets/ipc';
 import { DatasetInfo } from 'datasets/types';
