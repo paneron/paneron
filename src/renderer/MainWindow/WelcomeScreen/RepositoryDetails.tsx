@@ -161,7 +161,7 @@ const RepoMenu: React.FC<RepoMenuProps> = function ({
           disabled />
         <MenuItem
           text="Make private working copy"
-          title="Good for experiments and tests."
+          title="This will create a separate repository, offline and local to this computer only. Good for experiments and tests (but note that registers currently do not support creating proposals in offline repositories)."
           onClick={makePrivateCopy}
           icon="lab-test" />
       </>
