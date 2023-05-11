@@ -9,7 +9,8 @@ import { jsx } from '@emotion/react';
 import type { ToastProps } from '@blueprintjs/core';
 
 import { loadRepository, unloadRepository, loadedRepositoryStatusChanged } from 'repositories/ipc';
-import type { Repository, RepoStatus } from 'repositories/types';
+import { describeRepository, repositoryBuffersChanged } from 'repositories/ipc';
+import type { RepoStatus } from 'repositories/types';
 
 import { Breadcrumb, type BreadcrumbProps } from './Breadcrumb';
 
@@ -19,26 +20,47 @@ const initialStatus: RepoStatus = { busy: { operation: 'initializing' } };
 
 export const RepoBreadcrumb: React.FC<{
   workDir: string
-  repoInfo: Repository
-  isLoaded: boolean
   onNavigate?: () => void
   onClose?: () => void
   onMessage: (opts: ToastProps) => void
-}> = function ({ workDir, repoInfo, isLoaded: _isLoaded, onNavigate, onClose, onMessage }) {
-  const repoStatus = loadRepository.renderer!.useValue({
+}> = function ({ workDir, onNavigate, onClose, onMessage }) {
+  const openedRepoResp = describeRepository.renderer!.useValue({
+    workingCopyPath: workDir,
+  }, {
+    info: {
+      gitMeta: {
+        workingCopyPath: workDir,
+        mainBranch: '',
+      },
+    },
+    isLoaded: false,
+  });
+
+  const repoInfo = openedRepoResp.value.info;
+
+  repositoryBuffersChanged.renderer!.useEvent(async ({ workingCopyPath }) => {
+    if (workingCopyPath === workDir) {
+      openedRepoResp.refresh();
+    }
+  }, [workDir]);
+
+  const originalRepoStatus = loadRepository.renderer!.useValue({
     workingCopyPath: workDir,
   }, initialStatus);
 
   const [_status, setStatus] = useState<RepoStatus | null>(null);
+  const throttledSetStatus = useMemo(() => throttle(50, setStatus, false), [workDir]);
+  const status = _status ?? originalRepoStatus.value;
+  const isLoaded = _status?.status !== 'unloaded' ?? openedRepoResp.value.isLoaded;
+
+  loadedRepositoryStatusChanged.renderer!.useEvent(async ({ workingCopyPath, status }) => {
+    if (workingCopyPath === workDir) {
+      throttledSetStatus(status);
+    }
+  }, [workDir]);
 
   const [lastSyncTS, setLastSyncTS] = useState<Date | null>(null);
   const [timeSinceLastSync, setTimeSinceLastSync] = useState<string>('');
-
-  const status = _status ?? repoStatus.value;
-
-  const isLoaded = _status ? _status.status !== 'unloaded' : _isLoaded;
-
-  const throttledSetStatus = useMemo(() => throttle(50, setStatus, false), []);
 
   useEffect(() => {
     const interval = setInterval(
@@ -54,12 +76,6 @@ export const RepoBreadcrumb: React.FC<{
   useEffect(() => {
     return function cleanup() {
       unloadRepository.renderer!.trigger({ workingCopyPath: workDir });
-    }
-  }, [workDir]);
-
-  loadedRepositoryStatusChanged.renderer!.useEvent(async ({ workingCopyPath, status }) => {
-    if (workingCopyPath === workDir) {
-      throttledSetStatus(status);
     }
   }, [workDir]);
 
@@ -99,7 +115,7 @@ export const RepoBreadcrumb: React.FC<{
       error = !isLoaded ? "Repository is not loaded" : undefined;
     }
     return [progress, error]
-  }, [isLoaded, JSON.stringify(status.busy ?? {})]);
+  }, [isLoaded, status.status, JSON.stringify(status.busy ?? {})]);
 
   return (
     <Breadcrumb

@@ -3,11 +3,8 @@
 
 import styled from '@emotion/styled';
 import { jsx, css } from '@emotion/react';
-import React, { useContext } from 'react';
+import React, { useContext, useMemo } from 'react';
 import { Colors, Icon } from '@blueprintjs/core';
-
-import { describeRepository, repositoryBuffersChanged } from 'repositories/ipc';
-import { getDatasetInfo } from 'datasets/ipc';
 
 import { Context } from '../context';
 import Breadcrumb from './Breadcrumb';
@@ -28,59 +25,45 @@ export interface NavProps {
 const Nav: React.FC<NavProps> = function ({ anchor, children, className }) {
   const { state, dispatch, showMessage } = useContext(Context);
 
-  const openedRepoResp = describeRepository.renderer!.useValue({
-    workingCopyPath: state.selectedRepoWorkDir ?? ''
-  }, {
-    info: {
-      gitMeta: {
-        workingCopyPath: state.selectedRepoWorkDir ?? '',
-        mainBranch: '',
-      }
-    },
-    isLoaded: false,
-  });
+  const breadcrumbs = useMemo(() => {
+    let breadcrumbs = [];
 
-  repositoryBuffersChanged.renderer!.useEvent(async ({ workingCopyPath }) => {
-    if (workingCopyPath === state.selectedRepoWorkDir) {
-      openedRepoResp.refresh();
+    if (state.selectedDatasetID && state.view === 'dataset') {
+      breadcrumbs.push(<DatasetBreadcrumb
+        workDir={state.selectedRepoWorkDir}
+        datasetID={state.selectedDatasetID}
+        onClose={() => dispatch({ type: 'close-dataset' })}
+      />);
     }
-  }, [state.selectedRepoWorkDir]);
 
-  const openedDataset = getDatasetInfo.renderer!.useValue(
-    { workingCopyPath: state.selectedRepoWorkDir ?? '', datasetID: state.selectedDatasetID ?? '' },
-    { info: null }).value.info;
+    if (state.view !== 'welcome-screen') {
+      breadcrumbs.push(<RepoBreadcrumb
+        workDir={state.selectedRepoWorkDir}
+        onMessage={showMessage}
+      />);
+    }
 
-  let breadcrumbs: JSX.Element[] = [];
-
-  if (state.selectedDatasetID && openedDataset && state.view === 'dataset') {
-    breadcrumbs.push(<DatasetBreadcrumb
-      workDir={state.selectedRepoWorkDir}
-      datasetID={state.selectedDatasetID}
-      datasetInfo={openedDataset}
-      onClose={() => dispatch({ type: 'close-dataset' })}
+    breadcrumbs.push(<Breadcrumb
+      title="Paneron"
+      icon={{ type: 'file', fileName: `file://${__static}/icon.png` }}
+      onNavigate={state.view !== 'welcome-screen'
+        ? () => dispatch({ type: 'close-dataset' })
+        : undefined}
     />);
-  }
 
-  if (state.view !== 'welcome-screen') {
-    breadcrumbs.push(<RepoBreadcrumb
-      repoInfo={openedRepoResp.value.info}
-      isLoaded={openedRepoResp.value.isLoaded}
-      workDir={state.selectedRepoWorkDir}
-      onMessage={showMessage}
-    />);
-  }
+    if (anchor === 'start') {
+      breadcrumbs = breadcrumbs.reverse();
+    }
 
-  breadcrumbs.push(<Breadcrumb
-    title={'Paneron'}
-    icon={{ type: 'file', fileName: `file://${__static}/icon.png` }}
-    onNavigate={state.view !== 'welcome-screen'
-      ? () => dispatch({ type: 'close-dataset' })
-      : undefined}
-  />);
-
-  if (anchor === 'start') {
-    breadcrumbs = breadcrumbs.reverse();
-  }
+    return breadcrumbs.map((bc, idx) =>
+      <React.Fragment key={idx}>
+        {idx !== 0
+          ? <BreadcrumbSeparator icon={anchor === 'end' ? "chevron-left" : "chevron-right"} iconSize={10} />
+          : null}
+        {bc}
+      </React.Fragment>
+    );
+  }, [anchor, state.selectedRepoWorkDir, state.selectedDatasetID, state.view]);
 
   const padding = anchor === 'end' ? '25px' : '15px';
 
@@ -101,14 +84,7 @@ const Nav: React.FC<NavProps> = function ({ anchor, children, className }) {
           }
         `}
         className={`${className ?? ''}`}>
-      {breadcrumbs.map((bc, idx) =>
-        <React.Fragment key={idx}>
-          {idx !== 0
-            ? <BreadcrumbSeparator icon={anchor === 'end' ? "chevron-left" : "chevron-right"} iconSize={10} />
-            : null}
-          {bc}
-        </React.Fragment>
-      )}
+      {breadcrumbs}
       <div css={css`${anchor === 'start' ? css`position: absolute; right: ${padding};` : ''}`}>
         {children}
       </div>

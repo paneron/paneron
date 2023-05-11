@@ -6,17 +6,22 @@ import React, { useState } from 'react';
 import type { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
 import { getPluginInfo, pluginsUpdated } from 'plugins';
 import { describeIndex, indexStatusChanged } from 'datasets/ipc';
-import { DatasetInfo } from 'datasets/types';
+import { getDatasetInfo } from 'datasets/ipc';
 import { Breadcrumb } from './Breadcrumb';
 
 
 export const DatasetBreadcrumb: React.FC<{
   workDir: string
   datasetID: string
-  datasetInfo: DatasetInfo
   onClose: () => void
-}> = function ({ workDir, datasetID, datasetInfo, onClose }) {
+}> = function ({ workDir, datasetID, onClose }) {
   const [indexStatus, setIndexStatus] = useState<IndexStatus | null>(null);
+
+  const datasetInfoResp = getDatasetInfo.renderer!.useValue(
+    { workingCopyPath: workDir, datasetID },
+    { info: null });
+
+  const datasetInfo = datasetInfoResp.value.info
 
   const indexDescResp = describeIndex.renderer!.useValue({
     workingCopyPath: workDir,
@@ -24,14 +29,14 @@ export const DatasetBreadcrumb: React.FC<{
   }, { status: initialDefaultDatasetIndexStatus });
 
   const pluginInfoResp = getPluginInfo.renderer!.useValue(
-    { id: datasetInfo.type.id ?? 'N/A' },
+    { id: datasetInfo?.type.id ?? 'N/A' },
     { plugin: null });
 
   const activeDatasetUIExtension = pluginInfoResp.value.plugin;
 
   pluginsUpdated.renderer!.useEvent(async () => {
     pluginInfoResp.refresh();
-  }, [datasetInfo.type.id]);
+  }, [workDir, datasetID]);
 
   indexStatusChanged.renderer!.useEvent(async ({ workingCopyPath, datasetID: dsID, indexID, status }) => {
     if (workingCopyPath === workDir && dsID === datasetID && indexID === undefined) {
@@ -43,7 +48,7 @@ export const DatasetBreadcrumb: React.FC<{
 
   return (
     <Breadcrumb
-      title={datasetInfo.title}
+      title={datasetInfo?.title ?? 'N/A'}
       icon={{ type: 'blueprint', iconName: "database" }}
       onClose={onClose}
       status={<>
