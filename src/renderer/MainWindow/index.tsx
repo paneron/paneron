@@ -27,6 +27,7 @@ const MainWindow: React.FC<Record<never, never>> = function () {
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
   const {
     value: { version, isPackaged },
+    //isUpdating: versionIsUpdating,
   } = getAppVersion.renderer!.useValue({}, { version: '' });
 
   showGlobalSettings.renderer!.useEvent(async () => {
@@ -35,7 +36,7 @@ const MainWindow: React.FC<Record<never, never>> = function () {
 
   const Frag = isPackaged ? React.Fragment : React.StrictMode;
 
-  //if (versionIsUpdating) {
+  //if (globalSettings.isUpdating || versionIsUpdating) {
   //  return <Spinner className="initial-spinner" />;
   //}
 
