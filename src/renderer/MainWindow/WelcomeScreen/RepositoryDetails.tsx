@@ -160,7 +160,7 @@ const RepoMenu: React.FC<RepoMenuProps> = function ({
           icon="cloud"
           disabled />
         <MenuItem
-          text="Make private working copy"
+          text="Make a disconnected offline copy"
           title="This will create a separate repository, offline and local to this computer only. Good for experiments and tests (but note that registers currently do not support creating proposals in offline repositories)."
           onClick={makePrivateCopy}
           icon="lab-test" />
