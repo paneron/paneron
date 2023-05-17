@@ -166,9 +166,9 @@ React.FC<DatasetExtensionCardProps & { onSelect?: () => void, selected?: true }>
         css={css`
           padding: 10px;
           border-radius: 0;
-          background: ${props.selected ? Colors.LIGHT_GRAY4 : Colors.WHITE}
+          background: ${props.selected ? Colors.LIGHT_GRAY4 : Colors.WHITE};
           .bp4-dark & {
-            background: ${props.selected ? Colors.DARK_GRAY4 : Colors.BLACK}
+            background: ${props.selected ? Colors.DARK_GRAY4 : Colors.BLACK};
           }
         `}>
       <DatasetExtension {...props} />
