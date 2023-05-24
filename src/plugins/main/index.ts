@@ -18,7 +18,7 @@ import {
   pluginsUpdated, removeLocalPluginPath, removePlugin, specifyLocalPluginPath, upgradePlugin,
 } from '../../plugins';
 import { Extension, ExtensionRegistry } from '../../plugins/types';
-import { Methods as WorkerMethods, WorkerSpec } from './worker';
+import type { Methods as WorkerMethods, WorkerSpec } from './worker';
 
 
 const axios = _axios.create({ timeout: 6000 });
