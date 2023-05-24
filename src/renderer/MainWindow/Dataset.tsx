@@ -84,12 +84,17 @@ function ({ className, showExportOptions }) {
   }, [operationKey]);
 
   useEffect(() => {
+    let cancelled = false;
     performOperation('loading dataset', async () => {
-      setLoading(true);
+      if (cancelled) { return };
       if (selectedRepoWorkDir && selectedDatasetID) {
+        setLoading(true);
         try {
-          setDatasetProperties(await getDataset(selectedRepoWorkDir, selectedDatasetID));
+          const dsProps = await getDataset(selectedRepoWorkDir, selectedDatasetID);
+          if (cancelled) { return };
+          setDatasetProperties(dsProps);
         } finally {
+          if (cancelled) { return };
           setLoading(false);
         }
       } else {
@@ -98,6 +103,7 @@ function ({ className, showExportOptions }) {
       }
     })();
     return function cleanup() {
+      cancelled = true;
       if (selectedRepoWorkDir && selectedDatasetID) {
         unloadDataset.renderer!.trigger({
           workingCopyPath: selectedRepoWorkDir,
