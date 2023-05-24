@@ -5,7 +5,12 @@ export interface InstalledPluginInfo extends Extension {
 }
 
 
-export type ExtensionRegistry = { [packageID: string]: Extension & { localPath?: string } };
+export type ExtensionRegistry = { [packageID: string]: MaybeLocalExtension };
+
+
+export interface MaybeLocalExtension extends Extension {
+  localPath?: string
+}
 
 
 // TODO: Remove type duplication in extensions.paneron.org codebase
