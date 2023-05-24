@@ -192,7 +192,7 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
       <SettingsFormSection title={<>
           Local extensions
           &nbsp;
-          <HelpTooltip content="Specify local path to an extension, which will force Paneron to use it (even if a publicly released version is available) for any dataset that requires it. The folder you specify must contain a “package.json” file." />
+          <HelpTooltip content="Specify local path to an extension, which will force Paneron to use it (even if a publicly released version is available) for any dataset that requires it. The folder you specify must contain built & packaged extension code along with the “package.json” file." />
           &ensp;
           <Button disabled={isBusy} minimal small icon="add" onClick={handleAddLocalExtension}>
             Add…
