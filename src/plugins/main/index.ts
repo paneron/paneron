@@ -17,7 +17,7 @@ import {
   listLocalPlugins,
   pluginsUpdated, removeLocalPluginPath, removePlugin, specifyLocalPluginPath, upgradePlugin,
 } from '../../plugins';
-import { Extension, ExtensionRegistry } from '../../plugins/types';
+import type { Extension, ExtensionRegistry, MaybeLocalExtension } from '../../plugins/types';
 import type { Methods as WorkerMethods, WorkerSpec } from './worker';
 
 
@@ -32,7 +32,7 @@ rax.attach(axios);
 listAvailablePlugins.main!.handle(async () => {
   const packages = await fetchExtensions();
 
-  const extensions: Extension[] = Object.entries(packages).
+  const extensions: MaybeLocalExtension[] = Object.entries(packages).
   sort(([_0, ext1], [_1, ext2]) => compareDesc(parseJSON(ext1.latestUpdate), parseJSON(ext2.latestUpdate))).
   map(([_, ext]) => ext);
 

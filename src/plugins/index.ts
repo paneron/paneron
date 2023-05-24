@@ -1,5 +1,5 @@
 import { makeEndpoint, _, EmptyPayload } from '../ipc';
-import { Extension, ExtensionRegistry, InstalledPluginInfo } from './types';
+import type { Extension, ExtensionRegistry, MaybeLocalExtension, InstalledPluginInfo } from './types';
 
 
 export const getPluginManagerProps = makeEndpoint.main(
@@ -21,7 +21,7 @@ export const getPluginManagerProps = makeEndpoint.main(
 export const listAvailablePlugins = makeEndpoint.main(
   'listAvailablePlugins',
   <EmptyPayload>_,
-  <{ extensions: Extension[] }>_,
+  <{ extensions: MaybeLocalExtension[] }>_,
 );
 
 

@@ -5,11 +5,11 @@ import { Classes, ControlGroup, H5, Icon, InputGroup } from '@blueprintjs/core';
 import { css, jsx } from '@emotion/react';
 import React from 'react';
 import MarkedText from 'renderer/common/MarkedText';
-import { Extension } from 'plugins/types';
+import { MaybeLocalExtension } from 'plugins/types';
 
 
 export interface DatasetExtensionCardProps {
-  extension?: Extension
+  extension?: MaybeLocalExtension
   full?: true
   searchString?: string
 }
@@ -31,7 +31,9 @@ function ({ extension, full, searchString }) {
         </span>
         &emsp;
         <small className={!extension ? Classes.SKELETON : undefined} css={css`font-weight: normal;`}>
-          {extension?.npm.version}&emsp;
+          {extension?.localPath
+            ? "Locally installed"
+            : extension?.npm.version}&emsp;
         </small>
       </H5>
       <div css={css`margin-bottom: 10px;`}>
