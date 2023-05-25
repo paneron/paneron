@@ -181,7 +181,11 @@ export namespace Repositories {
     export type ReadBuffers = (msg: GitOperationParams & {
       rootPath: string
 
-      /** Parameters for resolving LFS. If undefined, do not resolve LFS pointers. */
+      /**
+       * Parameters for resolving LFS.
+       * If undefined, will not resolve LFS pointers.
+       * If provided, may error if fetch from LFS fails.
+       */
       resolveLFS?: LFSParams
     }) => Promise<Record<string, Uint8Array>>
 

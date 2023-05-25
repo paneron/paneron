@@ -53,19 +53,13 @@ export const readBuffers: Repositories.Data.ReadBuffers = async function ({
           gitdir: `${stripTrailingSlash(workDir)}/.git`,
           content: Buffer.from(bufferData),
         });
-        try {
-          buffers[relativeBufferPath] = await downloadBlobFromPointer({
-            fs,
-            url: normalizeURL(resolveLFS.url),
-            auth: resolveLFS.auth,
-            http,
-          }, lfsPointer);
-        } catch (e) {
-          // NOTE: Handle failure to download LFS data differently?
-          // Currently we return raw LFS pointer data if we couldn’t download;
-          // should probably fail or return nothing for this path instead.
-          buffers[relativeBufferPath] = bufferData;
-        }
+
+        buffers[relativeBufferPath] = await downloadBlobFromPointer({
+          fs,
+          url: normalizeURL(resolveLFS.url),
+          auth: resolveLFS.auth,
+          http,
+        }, lfsPointer);
 
       } else {
         buffers[relativeBufferPath] = bufferData;
