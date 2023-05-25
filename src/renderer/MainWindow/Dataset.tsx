@@ -113,7 +113,8 @@ function ({ className, showExportOptions }) {
     }
   }, [selectedRepoWorkDir, selectedDatasetID]);
 
-  const ctx = useMemo((() => selectedRepoWorkDir && selectedDatasetID && dsProps
+  const ctx: DatasetContext | null =
+  useMemo((() => selectedRepoWorkDir && selectedDatasetID && dsProps
     ? {
         ...getContext({
           writeAccess: dsProps.writeAccess,
