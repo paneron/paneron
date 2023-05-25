@@ -138,11 +138,11 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
         { workingCopyPath },
         { info: { gitMeta: { workingCopyPath, mainBranch: '' } }, isLoaded: false },
       );
-      const username = resp.value.info.gitMeta.remote?.username;
-      const value = username ? { username } : {};
+      const remote = resp.value.info.gitMeta.remote;
+      const username = remote ? remote.username : undefined;
       return {
         ...resp,
-        value,
+        value: { username },
       };
     },
 
