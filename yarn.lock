@@ -1588,10 +1588,10 @@
   resolved "https://registry.yarnpkg.com/@riboseinc/isogit-lfs/-/isogit-lfs-0.2.0.tgz#73280ac719556f8117f34ce036a992b93e82facd"
   integrity sha512-g+CCScF6x1le+S5zD4gp35clc/wxQMq3eOrMgppsLV51SP/TikHOpT2p50mPSoXN4/u2ZMIdPeJucHXNBBsKzw==
 
-"@riboseinc/paneron-extension-glossarist@2.0.7":
-  version "2.0.7"
-  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-extension-glossarist/-/paneron-extension-glossarist-2.0.7.tgz#99212743e0a9190f64bb27253e7f3310ce64e9a6"
-  integrity sha512-mj/HTmXG5J7h5OQIWQT1wbljkb0PWcuBn13QOraaTo9WAjFl5vv2wG+R5Tm9sP6PGMEFjYt4jq8LEe7M1Zczow==
+"@riboseinc/paneron-extension-glossarist@2.0.10":
+  version "2.0.10"
+  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-extension-glossarist/-/paneron-extension-glossarist-2.0.10.tgz#8a61bd0b1aa8210624fba7f8ea4b4404b3e8bdac"
+  integrity sha512-E9PpQe9vfB0oU6BAnECZV/L/KAlEwni49LAzz555CM253Mmm3JnbPNP0hdAKGzNQA+yHK0eetCLQcaCQNp4vVg==
 
 "@riboseinc/paneron-extension-kit@2.0.8":
   version "2.0.8"
