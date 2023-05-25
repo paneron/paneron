@@ -133,11 +133,11 @@ datasetQueue.oneAtATime(async function ({
       filteredIndexID,
     ) as Datasets.Util.FilteredIndex;
 
-    log.debug("Datasets: getOrCreateFilteredIndex: Already exists");
+    log.debug("Datasets: getOrCreateFilteredIndex: Already exists", queryExpression, filteredIndexID);
 
   } catch (e) {
 
-    log.debug("Datasets: getOrCreateFilteredIndex: Creating");
+    log.debug("Datasets: getOrCreateFilteredIndex: Creating", queryExpression, filteredIndexID);
 
     let predicate: Datasets.Util.FilteredIndexPredicate;
     try {
