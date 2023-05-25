@@ -48,13 +48,14 @@ export const readBuffers: Repositories.Data.ReadBuffers = async function ({
     if (bufferData !== null) {
       // TODO: Refactor LFS fetch: implement batch in `resolveLFSPointersInBufferDataset()`
       // and reuse it in `readBuffersAtVersion()`? Depends on batch support in isogit-lfs.
-      if (resolveLFS !== undefined && pointsToLFS(Buffer.from(bufferData))) {
+      if (resolveLFS !== undefined && pointsToLFS(bufferData)) {
         const lfsPointer = readPointer({
-          dir: workDir,
+          gitdir: `${stripTrailingSlash(workDir)}/.git`,
           content: Buffer.from(bufferData),
         });
         try {
           buffers[relativeBufferPath] = await downloadBlobFromPointer({
+            fs,
             url: normalizeURL(resolveLFS.url),
             auth: resolveLFS.auth,
             http,

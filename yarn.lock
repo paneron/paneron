@@ -1583,10 +1583,10 @@
     utility-types "^3.10.0"
     zustand "^3.5.1"
 
-"@riboseinc/isogit-lfs@0.1.6":
-  version "0.1.6"
-  resolved "https://registry.yarnpkg.com/@riboseinc/isogit-lfs/-/isogit-lfs-0.1.6.tgz#31641abf24051c628c1e796b23f45fcee20367ed"
-  integrity sha512-LX/FQZTUXIrAR+loZFWHYND5g41KTrS5yZukqDvMgQK3nOnkeLAwtcrb3Lysjg2VwNXQN3KSVD6UeuGr1FlnxA==
+"@riboseinc/isogit-lfs@~0.2.0":
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/@riboseinc/isogit-lfs/-/isogit-lfs-0.2.0.tgz#73280ac719556f8117f34ce036a992b93e82facd"
+  integrity sha512-g+CCScF6x1le+S5zD4gp35clc/wxQMq3eOrMgppsLV51SP/TikHOpT2p50mPSoXN4/u2ZMIdPeJucHXNBBsKzw==
 
 "@riboseinc/paneron-extension-glossarist@2.0.7":
   version "2.0.7"
