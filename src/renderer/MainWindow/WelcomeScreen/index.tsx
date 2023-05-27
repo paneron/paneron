@@ -118,7 +118,7 @@ function ({ onOpenDataset, onExportDataset, className }) {
           }
         `}>
       <Helmet>
-        <title>Paneron</title>
+        <title>Paneron: Repositories</title>
       </Helmet>
       {SPECIAL_SECTIONS.map(sectionID => {
         const SectionView = specialSectionConfiguration[sectionID].view;
