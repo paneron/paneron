@@ -8,10 +8,10 @@ const MAX_RECENTLY_OPENED_DATASETS = 5;
 export async function record(workDir: string, datasetID: string) {
   const state = await loadState(RECENT_DATASETS_STATE_KEY);
   const datasetsPrev: RecentlyOpenedDataset[] = state?.datasets ?? [];
-  const datasetsWithout = datasetsPrev.filter(ds => ds.workDir !== workDir || ds.datasetID !== datasetID);
+  const otherDatasets = datasetsPrev.filter(ds => ds.workDir !== workDir || ds.datasetID !== datasetID);
   const datasets: RecentlyOpenedDataset[] = [
     { workDir, datasetID },
-    ...datasetsWithout,
+    ...otherDatasets,
   ].slice(0, MAX_RECENTLY_OPENED_DATASETS);
   await storeState(RECENT_DATASETS_STATE_KEY, {
     datasets,
