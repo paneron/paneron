@@ -13,6 +13,7 @@ import { describeRepository, repositoryBuffersChanged } from 'repositories/ipc';
 import type { RepoStatus } from 'repositories/types';
 
 import { Breadcrumb, type BreadcrumbProps } from './Breadcrumb';
+import RepositorySummary from '../repositories/TooltipSummary';
 
 
 const initialStatus: RepoStatus = { busy: { operation: 'initializing' } };
@@ -128,14 +129,14 @@ export const RepoBreadcrumb: React.FC<{
       onClose={onClose}
       onNavigate={onNavigate}
       status={<>
-        <div>
-          {isLoaded ? "Loaded" : "Not loaded"}
-          {status.status ? ` — status: ${status.status}` : null}
-          {timeSinceLastSync ? ` — ${timeSinceLastSync} since last sync attempt` : null}
-        </div>
-        <div>Working copy: <code>{repoInfo.gitMeta.workingCopyPath}</code></div>
-        <div>Remote: <code>{repoInfo.gitMeta.remote?.url ?? '—'}</code></div>
-        <div>Branch: <code>{repoInfo.gitMeta.mainBranch}</code></div>
+        {!progress
+          ? <>
+              {isLoaded ? "Loaded" : "Not loaded"}
+              {status.status ? ` — status: ${status.status ?? 'N/A'}` : null}
+              {timeSinceLastSync ? ` — ${timeSinceLastSync} since last sync attempt` : null}
+            </>
+          : null}
+        <RepositorySummary repo={repoInfo} />
       </>}
       progress={progress}
       error={error}

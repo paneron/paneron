@@ -5,6 +5,7 @@ import React, { useContext, useState, useMemo, useCallback } from 'react';
 import { jsx, css } from '@emotion/react';
 import { Helmet } from 'react-helmet';
 import { Button, Classes, Colors, Icon, IconName, InputGroup, Tab, Tabs } from '@blueprintjs/core';
+import { Tooltip2 as Tooltip } from '@blueprintjs/popover2';
 
 import useDebounce from '@riboseinc/paneron-extension-kit/useDebounce';
 
@@ -17,6 +18,7 @@ import RepositoryDetails from './RepositoryDetails';
 import RecentDatasets from './RecentDatasets';
 import CreateRepoForm from './CreateRepo';
 import AddSharedRepository from './AddSharedRepository';
+import RepoSummary from '../repositories/TooltipSummary';
 
 
 const SPECIAL_SECTIONS = [
@@ -68,7 +70,12 @@ function ({ onOpenDataset, onExportDataset, className }) {
         key={`repo-${repo.gitMeta.workingCopyPath}`}
         disabled={isBusy}
         id={`Repository-${repo.gitMeta.workingCopyPath}`}
-        title={<><Icon icon={getRepoIcon(repo)} />&ensp;{repo.paneronMeta?.title ?? '(no title)'}</>}
+        title={<Tooltip position='bottom-right' content={<RepoSummary repo={repo} css={css`font-size: 80%; max-width: 400px;`} />}>
+          {/* Without nested div, contents with multiple roots are not shown. Possibly BP4 tooltip limitation. */}
+          <div>
+            <Icon icon={getRepoIcon(repo)} />&ensp;{repo.paneronMeta?.title ?? '(no title)'}
+          </div>
+        </Tooltip>}
         panel={<RepositoryDetails
           workDir={repo.gitMeta.workingCopyPath}
           onOpen={dsID => handleOpenDataset(repo.gitMeta.workingCopyPath, dsID)}
