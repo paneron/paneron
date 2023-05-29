@@ -35,7 +35,7 @@
     "format:fix": "yarn format --write"
   },
   "browserslist": [
-    "electron 10.0"
+    "electron 15.0"
   ],
   "electronWebpack": {
     "staticSourceDirectory": "src/static",
