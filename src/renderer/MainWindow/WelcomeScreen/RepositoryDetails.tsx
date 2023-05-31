@@ -5,7 +5,12 @@ import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { jsx, css } from '@emotion/react';
 import { Menu, MenuDivider, NonIdealState, Panel, Colors, PanelStack2, Spinner } from '@blueprintjs/core';
 import { MenuItem2 as MenuItem } from '@blueprintjs/popover2';
-import { addDisconnected, describeRepository, repositoryBuffersChanged } from 'repositories/ipc';
+import {
+  addDisconnected,
+  describeRepository,
+  repositoryBuffersChanged,
+  repositoriesChanged,
+} from 'repositories/ipc';
 import { type Repository, SOLE_DATASET_ID } from 'repositories/types';
 import RepositorySettings from './RepositorySettings';
 import InitializeDataset from './InitializeDataset';
@@ -27,6 +32,12 @@ function ({ workDir, onOpen, onExport }) {
 
   repositoryBuffersChanged.renderer!.useEvent(async ({ workingCopyPath }) => {
     if (workingCopyPath === workDir) {
+      openedRepoResp.refresh();
+    }
+  }, [workDir]);
+
+  repositoriesChanged.renderer!.useEvent(async ({ changedWorkingPaths }) => {
+    if ((changedWorkingPaths ?? []).indexOf(workDir) >= 0) {
       openedRepoResp.refresh();
     }
   }, [workDir]);
