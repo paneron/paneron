@@ -8,6 +8,7 @@ import { MenuItem2 as MenuItem } from '@blueprintjs/popover2';
 import { getDatasetInfo } from 'datasets/ipc';
 import { getPluginInfo, pluginsUpdated } from 'plugins';
 import { describeRepository } from 'repositories/ipc';
+import RepoLabel from './RepoLabel';
 
 
 const DatasetMenuItem: React.FC<{
@@ -80,9 +81,7 @@ const RepositoryTitle: React.FC<{ workDir: string }> = function ({ workDir }) {
 
   const repo = openedRepoResp.value.info;
 
-  return <>
-    {repo.paneronMeta?.title ?? '(no repository title)'}
-  </>;
+  return <RepoLabel repo={repo} />;
 }
 
 
