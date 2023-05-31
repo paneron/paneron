@@ -24,6 +24,9 @@ export interface GitRepository {
   /** Working directory location. */
   workingCopyPath: string
 
+  /** Custom label */
+  label?: string
+
   /** This is the branch in use; not necessarily the main/master branch. */
   mainBranch: string
 

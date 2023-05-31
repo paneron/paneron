@@ -19,6 +19,7 @@ import {
   queryGitRemote,
   unsetRemote,
   setAuthorInfo,
+  setLabel,
   updatePaneronRepository,
   unsetWriteAccess,
   getBufferDataset,
@@ -238,6 +239,35 @@ setAuthorInfo.main!.handle(async ({ workingCopyPath, author }) => {
       };
     } else {
       throw new Error("Cannot edit author info for nonexistent working copy configuration");
+    }
+  });
+
+  await repositoriesChanged.main!.trigger({
+    changedWorkingPaths: [workingCopyPath],
+    deletedWorkingPaths: [],
+    createdWorkingPaths: [],
+  });
+
+  return { success: true };
+});
+
+
+setLabel.main!.handle(async ({ workingCopyPath, label }) => {
+  await updateRepositories((data) => {
+    const existingConfig = data.workingCopies?.[workingCopyPath];
+    if (existingConfig) {
+      return {
+        ...data,
+        workingCopies: {
+          ...data.workingCopies,
+          [workingCopyPath]: {
+            ...data.workingCopies[workingCopyPath],
+            label,
+          },
+        }
+      };
+    } else {
+      throw new Error("Cannot edit label for nonexistent working copy configuration");
     }
   });
 

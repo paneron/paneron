@@ -161,6 +161,12 @@ export const setAuthorInfo = makeEndpoint.main(
   <{ success: true }>_,
 );
 
+export const setLabel = makeEndpoint.main(
+  'setRepoLabel',
+  <{ workingCopyPath: string, label: string | undefined }>_,
+  <{ success: true }>_,
+);
+
 
 // Paneron repositories
 

@@ -73,7 +73,7 @@ function ({ onOpenDataset, onExportDataset, className }) {
         title={<Tooltip position='bottom-right' content={<RepoSummary repo={repo} css={css`font-size: 80%; max-width: 400px;`} />}>
           {/* Without nested div, contents with multiple roots are not shown. Possibly BP4 tooltip limitation. */}
           <div>
-            <Icon icon={getRepoIcon(repo)} />&ensp;{repo.paneronMeta?.title ?? '(no title)'}
+            <Icon icon={getRepoIcon(repo)} />&ensp;{repo.gitMeta.label ?? repo.paneronMeta?.title ?? '(no title)'}
           </div>
         </Tooltip>}
         panel={<RepositoryDetails

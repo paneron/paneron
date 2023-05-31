@@ -10,9 +10,11 @@ import {
   describeRepository,
   repositoryBuffersChanged,
   repositoriesChanged,
+  setLabel,
 } from 'repositories/ipc';
 import { type Repository, SOLE_DATASET_ID } from 'repositories/types';
 import RepositorySettings from './RepositorySettings';
+import RepoLabel from './RepoLabel';
 import InitializeDataset from './InitializeDataset';
 import DatasetMenuItem from './DatasetMenuItem';
 import { Context } from '../context';
@@ -27,6 +29,8 @@ function ({ workDir, onOpen, onExport }) {
   const openedRepoResp = describeRepository.renderer!.useValue(
     { workingCopyPath: workDir },
     { info: { gitMeta: { workingCopyPath: workDir, mainBranch: '' } }, isLoaded: false });
+
+  const { performOperation, isBusy } = useContext(Context);
 
   const repo = openedRepoResp.value.info;
 
@@ -68,8 +72,17 @@ function ({ workDir, onOpen, onExport }) {
     props: {},
   };
 
+  const handleRepoLabelEdit = performOperation(
+    'updating repository label',
+    async function _handleRepoLabelEdit (label: string | undefined) {
+      await setLabel.renderer!.trigger({ workingCopyPath: workDir, label });
+    },
+  );
+
+  const [panel, setPanel] = useState<Panel<CreateDatasetProps | RepoSettingsProps> | null>(null);
+
   const repoMenuPanel: Panel<RepoMenuProps> = {
-    title: repo.paneronMeta?.title ?? `${workDir.slice(0, 10)}…`,
+    title: <RepoLabel repo={repo} onEdit={!isBusy && !panel ? handleRepoLabelEdit : undefined} />,
     props: {
       repo: repo,
       onOpenDataset: onOpen,
@@ -83,35 +96,23 @@ function ({ workDir, onOpen, onExport }) {
   };
 
   useEffect(() => {
-    setPanelStack([repoMenuPanel]);
+    setPanel(null);
   }, [JSON.stringify(repo)]);
 
-  const [panelStack, setPanelStack] = useState<
-    [Panel<RepoMenuProps>] |
-    [Panel<RepoMenuProps>, Panel<CreateDatasetProps>] |
-    [Panel<RepoMenuProps>, Panel<RepoSettingsProps>]
-  >([repoMenuPanel]);
-
-  const handleOpenPanel = useCallback(
-    (newPanel: Panel<CreateDatasetProps | RepoSettingsProps>) => setPanelStack(stack => {
-      if (stack.length === 1) {
-        return [...stack, newPanel];
-      } else {
-        return stack;
-      }
-    }),
-    []);
-
   const handleClosePanel = useCallback(() => {
-    setPanelStack(stack => [stack[0]]);
+    setPanel(null);
   }, []);
+
+  const panelStack: Panel<any>[] = !panel
+    ? [repoMenuPanel]
+    : [repoMenuPanel, panel];
 
   if (repo) {
     return (
       <PanelStack2
-        stack={panelStack as Array<Panel<object>>}
+        stack={panelStack}
         onClose={handleClosePanel}
-        onOpen={handleOpenPanel}
+        onOpen={setPanel}
         css={css`
           position: absolute;
           inset: 0;
