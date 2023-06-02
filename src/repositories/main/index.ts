@@ -38,7 +38,7 @@ import { PANERON_REPOSITORY_META_FILENAME } from './meta';
 
 import loadedDatasets from '../../datasets/main/loadedDatasets';
 
-import { changesetToPathChanges } from 'utils';
+import { makeQueue, changesetToPathChanges } from 'utils';
 import { makeUUIDv4 } from '../../main/utils';
 
 import type { PaneronRepository, GitRemote, Repository } from '../types';
@@ -58,6 +58,9 @@ import {
 import { readPaneronRepoMeta } from './meta';
 
 import { saveAuth, getAuth } from './remoteAuth';
+
+
+const repoOpQueue = makeQueue();
 
 
 const DEFAULT_WORKING_DIRECTORY_CONTAINER = path.join(app.getPath('userData'), 'working_copies');
@@ -464,13 +467,14 @@ updatePaneronRepository.main!.handle(async ({ workingCopyPath, info }) => {
 });
 
 
-queryGitRemote.main!.handle(async ({ url, username, password }) => {
+queryGitRemote.main!.handle(repoOpQueue.oneAtATime(async ({ url, username, password }) => {
   const auth = { username, password };
   if (!auth.password) {
     auth.password = (await getAuth(url, username)).password;
   }
+  log.info("CHECKING REMOTE", url, username, password);
   return await oneOffWorkerTask(w => w.git_describeRemote({ url, auth }));
-});
+}, ({ url }) => [url]));
 
 
 // function isValidBranchName(val: string): boolean {
