@@ -2,13 +2,17 @@
 /** @jsxFrag React.Fragment */
 
 import { jsx, ClassNames } from '@emotion/react';
-import React, { useState } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
+import { useDebounce } from 'use-debounce';
 import { Button, ButtonProps, Callout, UL } from '@blueprintjs/core';
 import { Popover2 } from '@blueprintjs/popover2';
 import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import { queryGitRemote } from 'repositories/ipc';
 import { openExternalURL } from 'common';
 import { ColorNeutralLink } from 'renderer/widgets';
+
+
+interface RemoteTestConfig { remoteURL: string, username: string, password: string };
 
 
 interface GitCredentialsInputProps {
@@ -34,9 +38,41 @@ function ({
   const [testResult, setTestResult] =
     useState<RepositoryConnectionTestResult | undefined>(undefined);
 
+  const getTestResult = useCallback(
+    async function _getTestResult({ password, username, remoteURL }: RemoteTestConfig):
+    Promise<RepositoryConnectionTestResult> {
+      const remote = await queryGitRemote.renderer!.trigger({
+        url: remoteURL,
+        username,
+        password: password !== '' ? password : undefined,
+      });
+      return remote.result;
+    },
+    [],
+  );
+
+  const [testCounter, setTestCounter] = useState(0);
+
+  function displayTestResult(result: RepositoryConnectionTestResult | null, error: string | null) {
+    if (result) {
+      setTestResult(result);
+      setTimeout(() => {
+        if (!getNotes(result, requireBlankRepo, requirePush, requireMainBranchName)) {
+          setTestResult(undefined);
+        }
+      }, 5000);
+    } else if (error) {
+      setTestResult({ error });
+    }
+  }
+
+  const handleTestClick = useCallback(async function _handleTestClick() {
+    setTestCounter(c => c + 1);
+  }, [testCounter]);
+
   const testButtonProps: ButtonProps = {
     disabled: isBusy || remoteURL.trim() === '',
-    onClick: handleTest,
+    onClick: handleTestClick,
   };
 
   const testPassed = testResult && passed(testResult, requireBlankRepo, requirePush, requireMainBranchName);
@@ -54,7 +90,7 @@ function ({
   }
 
   if (testResult === undefined) {
-    testButtonProps.text = "Check credentials";
+    testButtonProps.text = isBusy ? "Checking credentials…" : "Check credentials";
     testButtonProps.alignText = 'center';
 
   // Test failed
@@ -75,26 +111,36 @@ function ({
     }
   }
 
-  async function handleTest() {
-    setBusy(true);
-    try {
-      const remote = await queryGitRemote.renderer!.trigger({
-        url: remoteURL,
-        username,
-        password: password !== '' ? password : undefined,
-      });
-      setTestResult(remote.result);
-      setTimeout(() => {
-        if (!getNotes(remote.result, requireBlankRepo, requirePush, requireMainBranchName)) {
-          setTestResult(undefined);
-        }
-      }, 5000);
-    } catch (e) {
-      setTestResult({ error: (e as any)?.toString() ?? 'unknown error' });
-    } finally {
-      setBusy(false);
+  const [debouncedConfig] = useDebounce(
+    { password, username, remoteURL },
+    888,
+    { equalityFn: (prev: unknown, next: unknown) => JSON.stringify(prev) === JSON.stringify(next) },
+  )
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await getTestResult(debouncedConfig);
+        if (cancelled) { return; }
+        displayTestResult(result, null);
+      } catch (e) {
+        if (cancelled) { return; }
+        displayTestResult(null, (e as any)?.toString() ?? 'unknown error');
+      } finally {
+        if (cancelled) { return; }
+        setBusy(false);
+      }
+    })();
+    return function cleanUp() {
+      cancelled = true;
     }
-  }
+  }, [debouncedConfig.password, debouncedConfig.username, debouncedConfig.remoteURL]);
+
+  useEffect(() => {
+    setTestCounter(c => c + 1);
+    setBusy(true);
+  }, [password, username, remoteURL]);
 
   function handleOpenGitHubPATHelp() {
     openExternalURL.renderer!.trigger({
@@ -110,7 +156,7 @@ function ({
         <TextInput
           value={username}
           inputGroupProps={{ required: true }}
-          onChange={!isBusy && onEditUsername
+          onChange={onEditUsername
             ? (val) => onEditUsername!(val.replace(/ /g,'-').replace(/[^\w-]+/g,''))
             : undefined} />
       </PropertyView>
@@ -143,8 +189,8 @@ function ({
           </>}>
         <TextInput
           value={onEditPassword ? password : '•••••••••'}
-          inputGroupProps={{ type: 'password', placeholder: 'Secret token' }}
-          onChange={!isBusy && onEditPassword ? (val) => onEditPassword!(val) : undefined} />
+          inputGroupProps={{ type: 'password', placeholder: '•••••••••' }}
+          onChange={onEditPassword ? (val) => onEditPassword!(val) : undefined} />
       </PropertyView>
       <ClassNames>
         {({ css, cx }) => (
@@ -152,6 +198,7 @@ function ({
               minimal
               fill
               isOpen={testResultNotes !== null}
+              placement='bottom'
               popoverClassName={`${css`&& { margin: 10px !important; }`}`}
               content={testResultNotes
                 ? <Callout
@@ -166,7 +213,7 @@ function ({
               fill
               outlined
               {...testButtonProps}
-              disabled={isBusy || !onEditUsername || !onEditPassword}
+              disabled={isBusy}
               css={css`.bp4-button-text { overflow: hidden; }`}
             />
           </Popover2>

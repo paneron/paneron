@@ -240,7 +240,8 @@
     "subleveldown": "^5.0.1",
     "three": "^0.134.0",
     "three-stdlib": "^2.5.9",
-    "throttle-debounce": "^3.0.1"
+    "throttle-debounce": "^3.0.1",
+    "use-debounce": "9.0.4"
   },
   "devDependencies": {
     "@emotion/eslint-plugin": "^11.0.0",
