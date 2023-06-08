@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { ensureDir } from 'fs-extra';
 import path from 'path';
-import { app, BrowserWindow, dialog, OpenDialogOptions } from 'electron';
+import { app, BrowserWindow, dialog, type OpenDialogOptions } from 'electron';
 import log from 'electron-log';
 import type { BufferChange, BufferChangeset } from '@riboseinc/paneron-extension-kit/types/buffers';
 import { INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
@@ -16,7 +16,7 @@ import {
   repositoryBuffersChanged,
 } from 'repositories/ipc';
 
-import { PaneronRepository } from 'repositories/types';
+import type { PaneronRepository } from 'repositories/types';
 
 import { readRepoConfig } from 'repositories/main/readRepoConfig';
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
