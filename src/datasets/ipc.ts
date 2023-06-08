@@ -1,10 +1,10 @@
-import { ObjectChangeset, ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
-import { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
-import { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
+import type { ObjectChangeset, ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
+import type { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
+import type { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
+import type { OpenFileDialogProps } from '@riboseinc/paneron-extension-kit/types/dialogs';
 
-import { EmptyPayload, makeEndpoint, _ } from '../ipc';
-import { DatasetInfo, DatasetType, RecentlyOpenedDataset } from './types';
-import { OpenFileDialogProps } from '@riboseinc/paneron-extension-kit/types/dialogs';
+import { type EmptyPayload, makeEndpoint, _ } from '../ipc';
+import type { DatasetInfo, DatasetType, RecentlyOpenedDataset } from './types';
 
 
 /** List dataset types, provided by extensions, available for dataset initialization */
