@@ -3,10 +3,10 @@ import { ensureDir } from 'fs-extra';
 import path from 'path';
 import { app, BrowserWindow, dialog, OpenDialogOptions } from 'electron';
 import log from 'electron-log';
-import { BufferChange } from '@riboseinc/paneron-extension-kit/types/buffers';
+import type { BufferChange, BufferChangeset } from '@riboseinc/paneron-extension-kit/types/buffers';
 import { INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
 
-import { forceSlug } from 'utils';
+import { stripLeadingSlash, forceSlug } from 'utils';
 import { checkPathIsOccupied } from 'main/fs-utils';
 import { serializeMeta } from 'main/meta-serdes';
 
@@ -98,7 +98,7 @@ proposeDatasetPath.main!.handle(async ({ workingCopyPath, datasetPath }) => {
 });
 
 
-initializeDataset.main!.handle(async ({ workingCopyPath, meta: datasetMeta, datasetPath }) => {
+initializeDataset.main!.handle(async ({ workingCopyPath, meta: datasetMeta, datasetPath, initialBufferDataset }) => {
   if (!datasetPath.trim || !datasetPath.trim()) {
     throw new Error("Invalid or missing dataset path");
   }
@@ -138,10 +138,19 @@ initializeDataset.main!.handle(async ({ workingCopyPath, meta: datasetMeta, data
 
   const datasetMetaPath = path.join(datasetPath, DATASET_FILENAME);
 
-  const bufferChangeset = {
-    [datasetMetaPath]: datasetMetaAddition,
-    [PANERON_REPOSITORY_META_FILENAME]: repoMetaChange,
-  };
+  const bufferChangeset: BufferChangeset = {}
+
+  if (initialBufferDataset) {
+    const initialData: BufferChangeset = {};
+    for (const [_path, _blob] of Object.entries(initialBufferDataset)) {
+      const fullPath = `${workingCopyPath}/${stripLeadingSlash(_path)}`;
+      initialData[fullPath] = { newValue: _blob };
+    }
+    Object.assign(bufferChangeset, initialData);
+  }
+
+  bufferChangeset[datasetMetaPath] = datasetMetaAddition;
+  bufferChangeset[PANERON_REPOSITORY_META_FILENAME] = repoMetaChange;
 
   log.info("datasets: Initializing with buffer changeset", JSON.stringify(bufferChangeset, undefined, 4), datasetPath);
 

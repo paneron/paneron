@@ -1,4 +1,5 @@
 import type { ObjectChangeset, ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
+import type { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 import type { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
 import type { IndexStatus } from '@riboseinc/paneron-extension-kit/types/indexes';
 import type { OpenFileDialogProps } from '@riboseinc/paneron-extension-kit/types/dialogs';
@@ -49,6 +50,7 @@ export const initializeDataset = makeEndpoint.main(
     workingCopyPath: string
     datasetPath: string
     meta: DatasetInfo
+    initialData?: BufferDataset,
   }>_,
   <{ info: DatasetInfo }>_,
 );
