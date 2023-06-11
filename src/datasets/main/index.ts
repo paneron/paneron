@@ -152,7 +152,16 @@ initializeDataset.main!.handle(async ({ workingCopyPath, meta: datasetMeta, data
   bufferChangeset[datasetMetaPath] = datasetMetaAddition;
   bufferChangeset[PANERON_REPOSITORY_META_FILENAME] = repoMetaChange;
 
-  log.info("datasets: Initializing with buffer changeset", JSON.stringify(bufferChangeset, undefined, 4), datasetPath);
+  const decoder = new TextDecoder();
+  try {
+    log.info(
+      "datasets: Initializing with buffer changeset",
+      JSON.stringify(
+        Object.values(bufferChangeset).map(v => v.newValue ? decoder.decode(v.newValue) : v),
+        undefined,
+        4),
+      datasetPath);
+  } catch (e) {}
 
   const { newCommitHash } = await repos.repo_updateBuffers({
     commitMessage: `Initialize dataset at ${datasetPath}`,
