@@ -50,7 +50,7 @@ export const initializeDataset = makeEndpoint.main(
     workingCopyPath: string
     datasetPath: string
     meta: DatasetInfo
-    initialData?: BufferDataset,
+    initialBufferDataset?: BufferDataset,
   }>_,
   <{ info: DatasetInfo }>_,
 );
