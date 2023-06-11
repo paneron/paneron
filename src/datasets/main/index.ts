@@ -6,7 +6,7 @@ import log from 'electron-log';
 import type { BufferChange, BufferChangeset } from '@riboseinc/paneron-extension-kit/types/buffers';
 import { INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
 
-import { stripLeadingSlash, forceSlug } from 'utils';
+import { stripLeadingSlash, stripTrailingSlash, forceSlug } from 'utils';
 import { checkPathIsOccupied } from 'main/fs-utils';
 import { serializeMeta } from 'main/meta-serdes';
 
@@ -143,7 +143,7 @@ initializeDataset.main!.handle(async ({ workingCopyPath, meta: datasetMeta, data
   if (initialBufferDataset) {
     const initialData: BufferChangeset = {};
     for (const [_path, _blob] of Object.entries(initialBufferDataset)) {
-      const fullPath = `${workingCopyPath}/${stripLeadingSlash(_path)}`;
+      const fullPath = `${stripTrailingSlash(datasetPath)}/${stripLeadingSlash(_path)}`;
       initialData[fullPath] = { newValue: _blob };
     }
     Object.assign(bufferChangeset, initialData);
