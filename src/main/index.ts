@@ -41,6 +41,10 @@ import { refreshByID, open as openWindow } from '../window/main';
 import { getEffectiveColorSchemeName } from './colorScheme';
 import mainMenu from './mainMenu';
 
+if (process.argv.includes('--version')) {
+  console.log(app.getVersion());
+  process.exit(0);
+}
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
