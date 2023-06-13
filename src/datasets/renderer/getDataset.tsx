@@ -1,4 +1,3 @@
-import log from 'electron-log';
 import React from 'react';
 import type { RendererPlugin, DatasetContext } from '@riboseinc/paneron-extension-kit/types';
 import { describeRepository, loadRepository } from 'repositories/ipc';
@@ -62,7 +61,7 @@ export default async function getDataset(workingCopyPath: string, datasetID: str
     pluginVersion = undefined;
 
   } catch (e) {
-    log.error("Failed to get extension ID or load extension manager", e);
+    console.error("Failed to get extension ID or load extension manager", e);
     throw e;
   }
 
@@ -75,37 +74,39 @@ export default async function getDataset(workingCopyPath: string, datasetID: str
   // }
   // Require plugin
   try {
-    log.silly("Dataset view: Requiring renderer plugin...", pluginName);
     const pluginPromise: RendererPlugin = pluginManager.require(pluginName).default;
-
     // Experiment with using plain remote did not work so well so far.
     //const pluginPromise: RendererPlugin = global.require(path.resolve(`${pluginPath}/plugin`)).default;
-    log.silly("Dataset view: Awaiting renderer plugin...", pluginPromise);
+    console.debug("Dataset view: Awaiting renderer plugin…", pluginName, pluginVersion);
 
     // IMPORTANT: VS Code may report await as unnecessary, but it is very much required.
     // Could be due to broken typings in live-plugin-manager.
+    console.time("Dataset view: Awaiting renderer plugin…");
     const plugin = await getPlugin(pluginName, pluginVersion);
+    console.timeEnd("Dataset view: Awaiting renderer plugin…");
 
     if (!plugin.mainView) {
-      log.error("Dataset view: Not provided by plugin", pluginName, pluginVersion, plugin.mainView);
+      console.error("Dataset view: Not provided by plugin", pluginName, pluginVersion, plugin.mainView);
       throw new Error("Error requesting main dataset view from Paneron extension");
     }
 
     MainView = plugin.mainView;
     getObjectView = plugin.getObjectView;
-    log.silly("Dataset view: Got renderer plugin and dataset view", plugin);
+    console.debug("Dataset view: Got renderer plugin and dataset view", plugin);
 
-    log.silly("Dataset view: Loading dataset…");
+    console.time("Dataset view: Loading dataset…");
     const dataset = (await loadDataset.renderer!.trigger({
       workingCopyPath,
       datasetID,
     })).result;
+    console.timeEnd("Dataset view: Loading dataset…");
+
     if (!dataset || !dataset.success) {
       throw new Error("Unable to load dataset");
     }
 
   } catch (e) {
-    log.error("Dataset view: Error requiring plugin", workingCopyPath, pluginName, pluginVersion, e);
+    console.error("Dataset view: Error requiring plugin", workingCopyPath, pluginName, pluginVersion, e);
     throw e;
   }
 
