@@ -74,7 +74,6 @@ export default async function getDataset(workingCopyPath: string, datasetID: str
   // }
   // Require plugin
   try {
-    const pluginPromise: RendererPlugin = pluginManager.require(pluginName).default;
     // Experiment with using plain remote did not work so well so far.
     //const pluginPromise: RendererPlugin = global.require(path.resolve(`${pluginPath}/plugin`)).default;
     console.debug("Dataset view: Awaiting renderer plugin…", pluginName, pluginVersion);
