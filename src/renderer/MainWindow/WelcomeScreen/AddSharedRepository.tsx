@@ -10,6 +10,7 @@ import PanelSeparator from '@riboseinc/paneron-extension-kit/widgets/panels/Pane
 import { addRepository, getNewRepoDefaults } from 'repositories/ipc';
 import type { GitAuthor } from 'repositories/types';
 
+import { stripTrailingSlash } from 'utils';
 import { Context } from '../context';
 import GitCredentialsInput from '../repositories/GitCredentialsInput';
 import AuthorForm from '../repositories/AuthorForm';
@@ -34,7 +35,7 @@ function ({ className, onAfterCreate }) {
   const [customAuthor, setCustomAuthor] = useState<GitAuthor | null>(null);
   const author: GitAuthor | null = customAuthor ?? defaults.value.defaults?.author ?? null;
 
-  const remoteComponents = (remoteURL ?? '').split('/');
+  const remoteComponents = stripTrailingSlash(remoteURL ?? '').split('/');
   const defaultName = remoteComponents[remoteComponents.length - 1];
   const name = defaultName;
 
