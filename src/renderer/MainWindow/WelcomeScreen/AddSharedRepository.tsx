@@ -61,7 +61,7 @@ function ({ className, onAfterCreate }) {
     }
 
     const resp = await addRepository.renderer!.trigger({
-      gitRemoteURL: remoteURL!.replace(/\/$/, ''),
+      gitRemoteURL: stripTrailingSlash(remoteURL!),
       username,
       password: password !== '' ? password : undefined,
       branch,
