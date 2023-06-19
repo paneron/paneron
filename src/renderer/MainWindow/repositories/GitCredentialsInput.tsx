@@ -67,11 +67,15 @@ function ({
   }
 
   const handleTestClick = useCallback(async function _handleTestClick() {
-    setTestCounter(c => c + 1);
-  }, [testCounter]);
+    if (remoteURL) {
+      setTestCounter(c => c + 1);
+    }
+  }, [testCounter, remoteURL]);
+
+  const canTest = !isBusy && remoteURL.trim() !== '';
 
   const testButtonProps: ButtonProps = {
-    disabled: isBusy || remoteURL.trim() === '',
+    disabled: !canTest,
     onClick: handleTestClick,
   };
 
@@ -118,6 +122,10 @@ function ({
   )
 
   useEffect(() => {
+    if (!debouncedConfig.remoteURL) { return; }
+
+    setBusy(true);
+
     let cancelled = false;
     (async () => {
       try {
@@ -135,11 +143,12 @@ function ({
     return function cleanUp() {
       cancelled = true;
     }
-  }, [debouncedConfig.password, debouncedConfig.username, debouncedConfig.remoteURL]);
+  }, [testCounter, debouncedConfig.password, debouncedConfig.username, debouncedConfig.remoteURL]);
 
   useEffect(() => {
-    setTestCounter(c => c + 1);
-    setBusy(true);
+    if (remoteURL) {
+      setTestCounter(c => c + 1);
+    }
   }, [password, username, remoteURL]);
 
   function handleOpenGitHubPATHelp() {
