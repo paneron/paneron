@@ -472,7 +472,6 @@ queryGitRemote.main!.handle(repoOpQueue.oneAtATime(async ({ url, username, passw
   if (!auth.password) {
     auth.password = (await getAuth(url, username)).password;
   }
-  log.info("CHECKING REMOTE", url, username, password);
   return await oneOffWorkerTask(w => w.git_describeRemote({ url, auth }));
 }, ({ url }) => [url]));
 
