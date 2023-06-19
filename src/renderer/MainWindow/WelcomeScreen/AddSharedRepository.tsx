@@ -8,7 +8,7 @@ import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widget
 import PanelSeparator from '@riboseinc/paneron-extension-kit/widgets/panels/PanelSeparator';
 
 import { addRepository, getNewRepoDefaults } from 'repositories/ipc';
-import { GitAuthor } from 'repositories/types';
+import type { GitAuthor } from 'repositories/types';
 
 import { Context } from '../context';
 import GitCredentialsInput from '../repositories/GitCredentialsInput';
