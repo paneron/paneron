@@ -11,15 +11,14 @@ import { listAvailablePlugins } from 'plugins';
 import type { Extension } from 'plugins/types';
 import DatasetExtension, { type DatasetExtensionCardProps } from 'plugins/renderer/DatasetExtensionCard';
 import { loadRepository } from 'repositories/ipc';
-import type { Repository } from 'repositories/types';
 import { initializeDataset, proposeDatasetPath } from 'datasets/ipc';
 import getPlugin from 'plugins/renderer/getPlugin';
 import { getBasicReadAPI } from 'datasets/renderer/context';
 import { Context } from '../context';
 
 
-const InitializeDataset: React.FC<{ workDir: string; repoInfo?: Repository; className?: string; }> =
-function ({ workDir, repoInfo, className }) {
+const InitializeDataset: React.FC<{ workDir: string }> =
+function ({ workDir }) {
   const { performOperation, isBusy } = useContext(Context);
 
   const [selectedExtension, selectExtension] = useState<Extension | null>(null);

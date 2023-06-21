@@ -68,7 +68,7 @@ function ({ workDir, onOpen, onExport }) {
 
   const createDatasetPanel: Panel<CreateDatasetProps> = {
     title: "Initialize new dataset",
-    renderPanel: () => <InitializeDataset workDir={workDir} repoInfo={repo} />,
+    renderPanel: () => <InitializeDataset workDir={workDir} />,
     props: {},
   };
 
