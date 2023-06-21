@@ -2,7 +2,7 @@ import React from 'react';
 import type { RendererPlugin, DatasetContext } from '@riboseinc/paneron-extension-kit/types';
 import { describeRepository, loadRepository } from 'repositories/ipc';
 import getPlugin from 'plugins/renderer/getPlugin';
-import { DatasetInfo } from '../types';
+import type { DatasetInfo } from '../types';
 import { getDatasetInfo, loadDataset } from '../ipc';
 
 
