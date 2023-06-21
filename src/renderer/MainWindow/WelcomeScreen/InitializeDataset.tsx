@@ -14,7 +14,7 @@ import { loadRepository } from 'repositories/ipc';
 import type { Repository } from 'repositories/types';
 import { initializeDataset, proposeDatasetPath } from 'datasets/ipc';
 import getPlugin from 'plugins/renderer/getPlugin';
-import { getReadContext } from 'datasets/renderer/context';
+import { getBasicReadAPI } from 'datasets/renderer/context';
 import { Context } from '../context';
 
 
@@ -48,7 +48,7 @@ function ({ workDir, repoInfo, className }) {
       const plugin = await getPlugin(selectedExtension.npm.name, selectedExtension.npm.version);
       if (typeof plugin.initialMigration?.migrator === 'function') {
         const { migrator } = plugin.initialMigration;
-        for await (const buf of migrator(getReadContext({ workingCopyPath: workDir, datasetID }))) {
+        for await (const buf of migrator(getBasicReadAPI({ workingCopyPath: workDir, datasetID }))) {
           Object.assign(initialBufferDataset, buf);
         }
       }

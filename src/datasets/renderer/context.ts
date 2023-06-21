@@ -1,4 +1,11 @@
-import path from 'path';
+/**
+ * Responsible for API made available to extensions.
+ *
+ * Mostly about dataset manipulation,
+ * but some of it is about persisting GUI state,
+ * accessing settings and interoperating with outside world.
+ */
+
 import * as R from 'ramda';
 import log from 'electron-log';
 import { useEffect, useState } from 'react';
@@ -15,11 +22,9 @@ import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateRed
 import { makeRandomID, chooseFileFromFilesystem, saveFileToFilesystem, openExternalURL } from 'common';
 import { copyObjects, requestCopiedObjects } from 'clipboard/ipc';
 import { describeBundledExecutable, describeSubprocess, execBundled, subprocessEvent } from 'subprocesses';
-import { SOLE_DATASET_ID } from 'repositories/types';
+//import { SOLE_DATASET_ID } from 'repositories/types';
 import { describeRepository } from 'repositories/ipc';
 import { updateSetting, useSettings } from 'renderer/MainWindow/settings';
-
-import type { DatasetInfo } from '../types';
 
 import {
   addFromFilesystem,
@@ -37,13 +42,13 @@ import {
 } from '../ipc';
 
 
-export interface ContextGetterProps {
-  nodeModulesPath: string
-  writeAccess: boolean
+interface BasicDatasetOptions {
   workingCopyPath: string
   datasetID: string
-  datasetInfo: DatasetInfo
-  getObjectView: RendererPlugin["getObjectView"]
+}
+
+export interface ContextGetterProps extends BasicDatasetOptions {
+  writeAccess: boolean
 }
 
 
@@ -51,14 +56,96 @@ const decoder = new TextDecoder('utf-8');
 const encoder = new TextEncoder();
 
 
-export function getContext(opts: ContextGetterProps): DatasetContext {
+type BasicDatasetReadAPI = Pick<DatasetContext,
+  'getObjectData'
+| 'getMapReducedData'
+| 'getBlob'
+| 'useDecodedBlob'>
+
+/** Returns basic extension context, read-only. */
+export function getBasicReadAPI(contextOpts: BasicDatasetOptions): BasicDatasetReadAPI {
+  const { workingCopyPath, datasetID } = contextOpts;
+  const datasetParams = { workingCopyPath, datasetID };
+  return {
+    getObjectData: async function _getObjectData(opts) {
+      const resp = await getObjectDataset.renderer!.trigger({
+        ...datasetParams,
+        ...opts,
+      });
+
+      return resp.result;
+    },
+
+    getMapReducedData: (async (opts) => {
+      const result = (await mapReduce.renderer!.trigger({
+        ...datasetParams,
+        chains: opts.chains as Hooks.Data.MapReduceChains,
+      })).result;
+      if (result) {
+        return result;
+      } else {
+        throw new Error("Error running map-reduce over dataset (no result)");
+      }
+    }) as DatasetContext["getMapReducedData"], // TODO: Avoid casting?
+
+    // TODO: Are these required? Can invoke TextEncoder/TextDecoder directly
+
+    // NOTE: Confusingly named? Not truly a hook
+    useDecodedBlob: ({ blob }) => {
+      return {
+        asString: decoder.decode(blob),
+      };
+    },
+
+    getBlob: async (val) => encoder.encode(val),
+  };
+}
+
+
+type FilesystemAPI = Pick<DatasetContext,
+  'requestFileFromFilesystem'
+| 'writeFileToFilesystem'
+| 'addFromFilesystem'>
+
+/** Returns API for working with external files. */
+function getFilesystemAPI(datasetParams: BasicDatasetOptions): FilesystemAPI {
+  return {
+
+    requestFileFromFilesystem:  async function  _requestFileFromFilesystem (opts, callback?: (data: ObjectDataset) => void) {
+      const resp = await chooseFileFromFilesystem.renderer!.trigger(opts);
+      log.info("Requested file from filesystem", opts, resp);
+      if (callback) {
+        callback(resp.result);
+      }
+      return resp.result;
+    },
+
+    writeFileToFilesystem: async function _writeFileToFilesystem (opts) {
+      const { result } = await saveFileToFilesystem.renderer!.trigger(opts);
+      return result;
+    },
+
+    addFromFilesystem: async function _addFromFilesystem (dialogOpts, commitMessage, targetPath, opts) {
+      const { result } = await addFromFilesystem.renderer!.trigger({
+        ...datasetParams,
+        dialogOpts,
+        commitMessage,
+        targetPath,
+        opts,
+      });
+      return result;
+    },
+
+  };
+}
+
+
+/** Returns context including data modification utilities and React hooks. */
+export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'title'> {
   const {
-    nodeModulesPath,
     writeAccess,
     workingCopyPath,
     datasetID,
-    datasetInfo,
-    getObjectView,
   } = opts;
 
   const datasetParams = {
@@ -100,18 +187,21 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
 
   const EXT_SETTINGS_SCOPE = `${workingCopyPath}-${datasetID}`;
 
-  function resolvePath(datasetRelativePath: string) {
-    if (datasetID === SOLE_DATASET_ID) {
-      return path.join(workingCopyPath, datasetRelativePath);
-    } else {
-      return path.join(workingCopyPath, datasetID, datasetRelativePath);
-    }
-  }
+  // function resolvePath(datasetRelativePath: string) {
+  //   if (datasetID === SOLE_DATASET_ID) {
+  //     return path.join(workingCopyPath, datasetRelativePath);
+  //   } else {
+  //     return path.join(workingCopyPath, datasetID, datasetRelativePath);
+  //   }
+  // }
 
   return {
-    title: datasetInfo.title,
 
-    logger: log,
+    // TODO: Reinstate logging via electron-log through IPC or roll our own
+    logger: console,
+
+    ...getBasicReadAPI(datasetParams),
+    ...getFilesystemAPI(datasetParams),
 
     openExternalLink: async ({ uri }) => {
       await openExternalURL.renderer!.trigger({
@@ -119,19 +209,7 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
       });
     },
 
-    useSettings: () => {
-      return useSettings(EXT_SETTINGS_SCOPE, {});
-    },
-
-    useGlobalSettings: () => {
-      return useSettings('global', INITIAL_GLOBAL_SETTINGS);
-    },
-
     performOperation: <P>() => async () => (void 0) as unknown as P,
-
-    updateSetting: async ({ key, value }) => {
-      return await updateSetting(EXT_SETTINGS_SCOPE, { key, value });
-    },
 
     useRemoteUsername: () => {
       const resp = describeRepository.renderer!.useValue(
@@ -146,27 +224,23 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
       };
     },
 
-    copyObjects: async (dataset) => {
-      await copyObjects.renderer!.trigger({
-        workDir: workingCopyPath,
-        datasetDir: datasetID,
-        objects: dataset,
-      });
+
+    // Settings
+
+    useSettings: () => {
+      return useSettings(EXT_SETTINGS_SCOPE, {});
     },
 
-    requestCopiedObjects: async () => {
-      const { result } = await requestCopiedObjects.renderer!.trigger({});
-      return result;
+    useGlobalSettings: () => {
+      return useSettings('global', INITIAL_GLOBAL_SETTINGS);
     },
 
-    // NOTE: Confusingly named? Not truly a hook
-    useDecodedBlob: ({ blob }) => {
-      return {
-        asString: decoder.decode(blob),
-      };
+    updateSetting: async ({ key, value }) => {
+      return await updateSetting(EXT_SETTINGS_SCOPE, { key, value });
     },
 
-    getBlob: async (val) => encoder.encode(val),
+
+    // Basic data access
 
     useObjectData: function _useObjectData (opts) {
       const result = getObjectDataset.renderer!.useValue({
@@ -187,14 +261,21 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
       return result;
     },
 
-    getObjectData: async function _getObjectData(opts) {
-      const resp = await getObjectDataset.renderer!.trigger({
+    useMapReducedData: function _useMapReducedData (opts) {
+      const initial =
+        Object.keys(opts.chains).
+          map(cid => ({ [cid]: undefined })).
+          reduce((prev, curr) => ({ ...prev, ...curr })) as Record<keyof typeof opts["chains"], undefined>;
+      return mapReduce.renderer!.useValue({
         ...datasetParams,
-        ...opts,
-      });
+        chains: opts.chains as Hooks.Data.MapReduceChains,
+      }, initial);
+    } as DatasetContext["useMapReducedData"], // TODO: Avoid casting?
 
-      return resp.result;
-    },
+
+    // Filtered indexes for windowed data access
+    //
+    // TODO: Simplify filtered index API
 
     useIndexDescription: function _useIndexDescription (opts) {
       const { indexID } = opts;
@@ -291,78 +372,14 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
       }
     },
 
-    useMapReducedData: function _useMapReducedData (opts) {
-      const initial =
-        Object.keys(opts.chains).
-          map(cid => ({ [cid]: undefined })).
-          reduce((prev, curr) => ({ ...prev, ...curr })) as Record<keyof typeof opts["chains"], undefined>;
-      return mapReduce.renderer!.useValue({
-        ...datasetParams,
-        chains: opts.chains as Hooks.Data.MapReduceChains,
-      }, initial);
-    } as DatasetContext["useMapReducedData"], // TODO: Avoid casting?
 
-    getMapReducedData: (async (opts) => {
-      const result = (await mapReduce.renderer!.trigger({
-        ...datasetParams,
-        chains: opts.chains as Hooks.Data.MapReduceChains,
-      })).result;
-      if (result) {
-        return result;
-      } else {
-        throw new Error("Error running map-reduce over dataset (no result)");
-      }
-    }) as DatasetContext["getMapReducedData"], // TODO: Avoid casting?
+    // Persisting state
 
     usePersistentDatasetStateReducer,
     useTimeTravelingPersistentDatasetStateReducer,
 
-    getObjectView,
 
-    getRuntimeNodeModulePath: moduleName =>
-      path.join(nodeModulesPath, moduleName),
-
-    makeAbsolutePath: relativeDatasetPath => {
-      return resolvePath(relativeDatasetPath);
-    },
-
-    // TODO: Support LFS with absolute paths.
-    // useAbsolutePath: async (relativeDatasetPath) => {
-    //   const { result } = await getAbsoluteBufferPath.renderer!.trigger({
-    //     workingCopyPath,
-    //     bufferPath: resolvePath(relativeDatasetPath),
-    //   });
-    //   if (result) {
-    //     return result.absolutePath;
-    //   } else {
-    //     throw new Error("Unable to resolve absolute path");
-    //   }
-    // },
-
-    requestFileFromFilesystem:  async function  _requestFileFromFilesystem (opts, callback?: (data: ObjectDataset) => void) {
-      const resp = await chooseFileFromFilesystem.renderer!.trigger(opts);
-      log.info("Requested file from filesystem", opts, resp);
-      if (callback) {
-        callback(resp.result);
-      }
-      return resp.result;
-    },
-
-    writeFileToFilesystem: async function _writeFileToFilesystem (opts) {
-      const { result } = await saveFileToFilesystem.renderer!.trigger(opts);
-      return result;
-    },
-
-    addFromFilesystem: async function _addFromFilesystem (dialogOpts, commitMessage, targetPath, opts) {
-      const { result } = await addFromFilesystem.renderer!.trigger({
-        ...datasetParams,
-        dialogOpts,
-        commitMessage,
-        targetPath,
-        opts,
-      });
-      return result;
-    },
+    // Writing data
 
     makeRandomID: writeAccess
       ? async function _makeRandomID () {
@@ -393,6 +410,53 @@ export function getContext(opts: ContextGetterProps): DatasetContext {
           return result.result;
         }
       : undefined,
+
+
+    // Deprecated
+
+    getObjectView: () => undefined,
+
+
+    // Copying objects between datasets (provisional)
+
+    copyObjects: async (dataset) => {
+      await copyObjects.renderer!.trigger({
+        workDir: workingCopyPath,
+        datasetDir: datasetID,
+        objects: dataset,
+      });
+    },
+
+    requestCopiedObjects: async () => {
+      const { result } = await requestCopiedObjects.renderer!.trigger({});
+      return result;
+    },
+
+
+    // Node-specific (obsolete)
+
+    // getRuntimeNodeModulePath: moduleName =>
+    //   path.join(nodeModulesPath, moduleName),
+
+    // makeAbsolutePath: relativeDatasetPath => {
+    //   return resolvePath(relativeDatasetPath);
+    // },
+
+    // TODO: Support LFS with absolute paths.
+    // useAbsolutePath: async (relativeDatasetPath) => {
+    //   const { result } = await getAbsoluteBufferPath.renderer!.trigger({
+    //     workingCopyPath,
+    //     bufferPath: resolvePath(relativeDatasetPath),
+    //   });
+    //   if (result) {
+    //     return result.absolutePath;
+    //   } else {
+    //     throw new Error("Unable to resolve absolute path");
+    //   }
+    // },
+
+
+    // Metanorma
 
     invokeMetanorma: async function _invokeMetanorma ({ cliArgs }) {
       await describeBundledExecutable.renderer!.trigger({ name: METANORMA_BINARY_NAME });

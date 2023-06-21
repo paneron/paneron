@@ -12,7 +12,7 @@ import type { DatasetContext } from '@riboseinc/paneron-extension-kit/types';
 
 import { unloadDataset } from 'datasets/ipc';
 import getDataset from 'datasets/renderer/getDataset';
-import { getContext } from 'datasets/renderer/context';
+import { getFullAPI } from 'datasets/renderer/context';
 import type { DatasetInfo } from 'datasets/types';
 import ErrorBoundary from '../common/ErrorBoundary';
 import { Context } from './context';
@@ -116,14 +116,12 @@ function ({ className, showExportOptions }) {
   const ctx: DatasetContext | null =
   useMemo((() => selectedRepoWorkDir && selectedDatasetID && dsProps
     ? {
-        ...getContext({
-          writeAccess: dsProps.writeAccess,
+        ...getFullAPI({
           workingCopyPath: selectedRepoWorkDir,
           datasetID: selectedDatasetID,
-          nodeModulesPath: NODE_MODULES_PATH,
-          datasetInfo: dsProps.dataset,
-          getObjectView: () => () => <></>,
+          writeAccess: dsProps.writeAccess,
         }),
+        title: dsProps.dataset.title,
         performOperation,
         operationKey,
       }

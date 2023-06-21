@@ -10,7 +10,6 @@ export default async function getDataset(workingCopyPath: string, datasetID: str
   writeAccess: boolean;
   dataset: DatasetInfo;
   MainView: React.FC<DatasetContext & { className?: string }>;
-  getObjectView: RendererPlugin["getObjectView"];
 }> {
 
   if (workingCopyPath === '') {
@@ -20,7 +19,6 @@ export default async function getDataset(workingCopyPath: string, datasetID: str
   let MainView: React.FC<DatasetContext & { className?: string }>;
   let writeAccess: boolean;
   let dataset: DatasetInfo;
-  let getObjectView: RendererPlugin["getObjectView"];
 
   let pluginID: string;
   let pluginVersion: string | undefined;
@@ -90,7 +88,6 @@ export default async function getDataset(workingCopyPath: string, datasetID: str
     }
 
     MainView = plugin.mainView;
-    getObjectView = plugin.getObjectView;
     console.debug("Dataset view: Got renderer plugin and dataset view", plugin);
 
     console.time("Dataset view: Loading dataset…");
@@ -109,5 +106,5 @@ export default async function getDataset(workingCopyPath: string, datasetID: str
     throw e;
   }
 
-  return { MainView, writeAccess, dataset, getObjectView };
+  return { MainView, writeAccess, dataset };
 }
