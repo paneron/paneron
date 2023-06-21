@@ -5,6 +5,7 @@ import { jsx, css } from '@emotion/react';
 import React, { useContext, useState } from 'react';
 import { Card, Button, Colors, InputGroup, Classes } from '@blueprintjs/core';
 import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
+import type { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 
 import { listAvailablePlugins } from 'plugins';
 import type { Extension } from 'plugins/types';
@@ -12,10 +13,13 @@ import DatasetExtension, { type DatasetExtensionCardProps } from 'plugins/render
 import { loadRepository } from 'repositories/ipc';
 import type { Repository } from 'repositories/types';
 import { initializeDataset, proposeDatasetPath } from 'datasets/ipc';
+import getPlugin from 'plugins/renderer/getPlugin';
+import { getReadContext } from 'datasets/renderer/context';
 import { Context } from '../context';
 
 
-const InitializeDataset: React.FC<{ workDir: string; repoInfo?: Repository; className?: string; }> = function ({ workDir, repoInfo, className }) {
+const InitializeDataset: React.FC<{ workDir: string; repoInfo?: Repository; className?: string; }> =
+function ({ workDir, repoInfo, className }) {
   const { performOperation, isBusy } = useContext(Context);
 
   const [selectedExtension, selectExtension] = useState<Extension | null>(null);
@@ -38,6 +42,17 @@ const InitializeDataset: React.FC<{ workDir: string; repoInfo?: Repository; clas
       await loadRepository.renderer!.trigger({
         workingCopyPath: workDir,
       });
+
+      const initialBufferDataset: BufferDataset = {};
+
+      const plugin = await getPlugin(selectedExtension.npm.name, selectedExtension.npm.version);
+      if (typeof plugin.initialMigration?.migrator === 'function') {
+        const { migrator } = plugin.initialMigration;
+        for await (const buf of migrator(getReadContext({ workingCopyPath: workDir, datasetID }))) {
+          Object.assign(initialBufferDataset, buf);
+        }
+      }
+
       await initializeDataset.renderer!.trigger({
         workingCopyPath: workDir,
         meta: {
@@ -47,8 +62,10 @@ const InitializeDataset: React.FC<{ workDir: string; repoInfo?: Repository; clas
             version: selectedExtension.npm.version,
           },
         },
+        initialBufferDataset,
         datasetPath: checkResult.value.path,
       });
+
       setDatasetID('');
       setTitle('');
     }
