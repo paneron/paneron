@@ -141,6 +141,7 @@ export const updateObjects = makeEndpoint.main(
   <CommitOutcome>_,
 );
 
+/** Moves or deletes an entire file subtree within a dataset. */
 export const updateSubtree = makeEndpoint.main(
   'datasets_updateSubtree',
   <{
@@ -153,6 +154,7 @@ export const updateSubtree = makeEndpoint.main(
   <CommitOutcome>_,
 );
 
+/** Prompt user for a single file and add it to the repository at specified path. */
 export const addFromFilesystem = makeEndpoint.main(
   'datasets_addFromFilesystem',
   <{

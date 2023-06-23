@@ -47,6 +47,7 @@ export const clearDataAndRestart = makeEndpoint.main(
 );
 
 
+/** Prompts user for a file and returns file data as object dataset. */
 export const chooseFileFromFilesystem = makeEndpoint.main(
   'chooseFileFromFilesystem',
   <OpenFileDialogProps>_,
