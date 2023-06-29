@@ -10,7 +10,7 @@ import * as R from 'ramda';
 import log from 'electron-log';
 import { useEffect, useState } from 'react';
 
-import type { DatasetContext, RendererPlugin } from '@riboseinc/paneron-extension-kit/types';
+import type { DatasetContext } from '@riboseinc/paneron-extension-kit/types';
 import type { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
 import { type IndexStatus, INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
 import type { Hooks } from '@riboseinc/paneron-extension-kit/types/renderer';
