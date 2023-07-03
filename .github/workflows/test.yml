@@ -47,7 +47,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v1
         with:
-          node-version: 12
+          node-version: 16
 
       - name: Install project dependencies
         if: steps.yarn-cache.outputs.cache-hit != 'true'
@@ -78,7 +78,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v1
         with:
-          node-version: 12
+          node-version: 16
 
       - name: Install project dependencies
         if: steps.yarn-cache.outputs.cache-hit != 'true'
