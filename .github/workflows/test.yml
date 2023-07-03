@@ -68,8 +68,7 @@ jobs:
 
     strategy:
       matrix:
-        includes:
-          - os: ubuntu-latest
+        os: [ ubuntu-latest ]
 
     steps:
       - name: Check out Git repository
