@@ -24,7 +24,7 @@ jobs:
     # Platforms to build on/for
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest]
+        os: [macos-latest, ubuntu-latest, windows-latest]
 
     env:
       USE_HARD_LINKS: false
@@ -78,8 +78,8 @@ jobs:
           mac_certs_password: ${{ secrets.mac_certs_password }}
 
           # Windows code signing certificate
-          windows_certs: ${{ secrets.windows_certs }}
-          windows_certs_password: ${{ secrets.windows_certs_password }}
+          # windows_certs: ${{ secrets.windows_certs }}
+          # windows_certs_password: ${{ secrets.windows_certs_password }}
 
           max_attempts: 3
 
