@@ -73,6 +73,7 @@ jobs:
       - name: Build snap
         run: |
           yarn compile
+          yarn dist
           yarn dist:linux
 
       - name: Install snap
