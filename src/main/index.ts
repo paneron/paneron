@@ -43,7 +43,7 @@ import mainMenu from './mainMenu';
 
 if (process.argv.includes('--version')) {
   console.log(app.getVersion());
-  process.exit(0);
+  app.quit();
 }
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
