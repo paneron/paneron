@@ -82,8 +82,8 @@ jobs:
         env:
           USE_HARD_LINKS: false
 
-      - name: Install snap
-        run: sudo snap install dist/paneron-desktop-*.snap --dangerous
+      - run: sudo snap install dist/paneron-desktop-*.snap --dangerous
 
-      - name: Test app
-        run: paneron --version
+      - run: sudo apt-get install xvfb
+
+      - run: xvfb-run -- paneron --version
