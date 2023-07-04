@@ -47,7 +47,7 @@ jobs:
           node-version: 16
           cache: yarn
 
-      - run: yarn install --immutable
+      - run: yarn install --immutable --network-timeout 120000
 
       - run: yarn compile
 
