@@ -75,11 +75,12 @@ jobs:
         run: |
           mkdir -p bin/linux && cd bin/linux && curl -fsSL "https://github.com/metanorma/packed-mn/releases/latest/download/metanorma-linux-x86_64.tgz" -O && find . -name "*.tgz" -exec tar xzf {} \; && rm *.tgz && mv metanorma-linux* metanorma
 
-      - uses: samuelmeuli/action-electron-builder@v1
-        with:
-          build_script_name: "compile"
-          github_token: ${{ secrets.github_token }}
-          max_attempts: 3
+      - run: |
+          yarn compile
+          yarn dist
+          yarn dist:linux
+        env:
+          USE_HARD_LINKS: false
 
       - name: Install snap
         run: sudo snap install dist/paneron-desktop-*.snap --dangerous
