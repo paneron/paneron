@@ -38,6 +38,10 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 16
+          
+      - name: "Yarn: clean cache and install with large timeout"
+        run: |
+          yarn cache clean && yarn install --network-timeout 120000
 
       - name: Prepare for app notarization (macOS)
         if: startsWith(matrix.os, 'macos')
