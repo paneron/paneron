@@ -17,6 +17,10 @@ on:
       - '.github/workflows/*.yml'
       - '!.github/workflows/release.yml'
 
+env:
+  NPM_NETWORK_TIMEOUT: 120000
+  CACHE_DIR: dist
+
 jobs:
   release:
     runs-on: ${{ matrix.os }}
@@ -26,6 +30,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
+        node: [16]
 
     env:
       USE_HARD_LINKS: false
@@ -33,15 +38,18 @@ jobs:
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
 
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v3
         with:
-          node-version: 16
-          
+          node-version: ${{ matrix.node }}
+          cache: yarn
+
       - name: "Yarn: clean cache and install with large timeout"
         run: |
-          yarn cache clean && yarn install --network-timeout 120000
+          yarn cache clean && yarn install --frozen-lockfile --immutable --network-timeout ${{ env.NPM_NETWORK_TIMEOUT }}
 
       - name: Prepare for app notarization (macOS)
         if: startsWith(matrix.os, 'macos')
@@ -50,23 +58,23 @@ jobs:
           mkdir -p ~/private_keys/
           echo '${{ secrets.APPLE_API_KEY }}' > ~/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
 
-      - name: Fetch Metanorma (macOS)
+      - name: Fetch platform-specific prerequisites (macOS)
         if: startsWith(matrix.os, 'macos')
         continue-on-error: true
         run: |
-          mkdir -p bin/mac && cd bin/mac && curl -fsSL "https://github.com/metanorma/packed-mn/releases/latest/download/metanorma-darwin-x86_64.tgz" -O && find . -name "*.tgz" -exec tar xzf {} \; && rm *.tgz && mv metanorma-darwin* metanorma
+          yarn pre-dist:mac
 
-      - name: Fetch Metanorma (Ubuntu)
+      - name: Fetch platform-specific prerequisites (Ubuntu)
         if: startsWith(matrix.os, 'ubuntu')
         continue-on-error: true
         run: |
-          mkdir -p bin/linux && cd bin/linux && curl -fsSL "https://github.com/metanorma/packed-mn/releases/latest/download/metanorma-linux-x86_64.tgz" -O && find . -name "*.tgz" -exec tar xzf {} \; && rm *.tgz && mv metanorma-linux* metanorma
+          yarn pre-dist:linux
 
-      - name: Fetch Metanorma (Windows)
+      - name: Fetch platform-specific prerequisites (Windows)
         if: startsWith(matrix.os, 'windows')
         continue-on-error: true
         run: |
-          md bin/win && cd bin/win && curl.exe -L -o metanorma "https://github.com/metanorma/packed-mn/releases/latest/download/metanorma-windows-x86_64.exe"
+          yarn pre-dist:win
 
       - name: Build/release Electron app
         uses: samuelmeuli/action-electron-builder@v1
@@ -96,6 +104,14 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: release-dist-${{ matrix.os }}
+          path: |
+            dist/paneron*
 
   update-website:
     # If the commit is tagged with a version (e.g. "v1.0.0"),
