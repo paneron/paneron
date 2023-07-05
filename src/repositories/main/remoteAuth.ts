@@ -1,22 +1,87 @@
 /** Storing & retrieving credentials for Git server authentication. */
 
-import keytar from 'keytar';
 import log from 'electron-log';
+
+import { loadState, storeState, encryptionIsAvailable } from 'state/manage';
 
 
 /**
- * Fetches password associated with the hostname of given remote URL
- * (if that fails, with full remote URL)
- * and with given username.
-
- * Returns { username, password }; password may be undefined.
+ * Retrieves password saved for given remote.
+ * If there is no password saved for given remote, and given remote
+ * is a valid URL, also tries retrieving a password saved for
+ * the hostname of that remote.
  *
- * Does not throw.
+ * Returns { username, password }; password may be undefined
+ * if no stored password was found.
+ *
+ * Throws only if decryption facilities are not available.
  */
 export async function getAuth(
   remote: string,
   username: string,
 ): Promise<{ password: string | undefined; username: string; }> {
+  if (!encryptionIsAvailable()) {
+    throw new Error("safeStorage API is not available on this systen");
+  }
+
+  let password = (await loadState(
+    getStateKey(remote, username),
+    { encrypted: true },
+  ))?.password;
+
+  if (!password) {
+    const hostname = getHostname(remote);
+    if (hostname) {
+      password = (await loadState(
+        getStateKey(hostname, username),
+        { encrypted: true },
+      ))?.password ?? undefined;
+    }
+  }
+
+  return { password, username };
+}
+
+
+/**
+ * Stores encrypted password for given remote.
+ *
+ * If remote is a valid URL, stores also a password for the hostname of the remote.
+ * This way `getAuth()` may retrieve usable results
+ * if the user doesn’t specify a password for this specific remote,
+ * but uses the same password for the domain.
+ *
+ * May throw if decryption facilities are not available.
+ */
+export async function saveAuth(remote: string, username: string, password: string) {
+  if (!encryptionIsAvailable()) {
+    throw new Error("safeStorage API is not available on this systen");
+  }
+
+  const hostname = getHostname(remote);
+
+  if (hostname) {
+    await storeState(
+      getStateKey(hostname, username),
+      { password },
+      { encrypted: true },
+    );
+  }
+  await storeState(
+    getStateKey(remote, username),
+    { password },
+    { encrypted: true },
+  );
+}
+
+
+function getStateKey(remote: string, username: string): string {
+  return `remote-credentials-${remote}@${username}`;
+}
+
+
+function getHostname(remote: string): string | undefined {
+
   let url: URL | null;
   try {
     url = new URL(remote);
@@ -24,37 +89,5 @@ export async function getAuth(
     log.warn("Repositories: getAuth: Likely malformed Git remote URL", remote);
     url = null;
   }
-
-  let password: string | undefined;
-  try {
-    password =
-      (url?.hostname ? await keytar.getPassword(url.hostname, username) : undefined) ||
-      await keytar.getPassword(remote, username) ||
-      undefined;
-  } catch (e) {
-    log.warn("Repositories: getAuth: Error retrieving password using keytar", remote, username, e);
-    password = undefined;
-  }
-
-  return { password, username };
-}
-
-
-/** Stores password using OS mechanism (via keytar bindings). Can throw. */
-export async function saveAuth(remote: string, username: string, password: string) {
-  let url: URL | null;
-  try {
-    url = new URL(remote);
-  } catch (e) {
-    log.warn("Repositories: saveAuth: Likely malformed Git remote URL", remote);
-    url = null;
-  }
-
-  const service = url?.hostname ?? remote;
-  try {
-    await keytar.setPassword(service, username, password);
-  } catch (e) {
-    log.error("Repositories: saveAuth: Error saving password using keytar", remote, username, e);
-    throw e;
-  }
+  return url?.hostname;
 }
