@@ -1,0 +1,111 @@
+name: build-dist-debug
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      os:
+        required: true
+        type: string
+      node:
+        required: false
+        type: string
+        default: ${{ vars.DEFAULT_NODE_VERSION }}
+      MAX_BUILD_ATTEMPTS:
+        required: false
+        type: number
+        default: 5
+      CACHE_DIR:
+        required: false
+        type: string
+        default: dist
+      NPM_NETWORK_TIMEOUT:
+        required: false
+        type: number
+        default: 12000
+
+jobs:
+  build:
+    name: Build debug distributions on ${{ inputs.os }}
+    runs-on: ${{ inputs.os }}
+
+    strategy:
+      fail-fast: false
+
+    env:
+      USE_HARD_LINKS: false
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Calculate build-cache and dist-cache keys
+        # Because the exact same hashFiles invocation produces different
+        # results down the file
+        id: build-cache-keys
+        shell: bash
+        run: |
+          if command -v shasum; then sum() { shasum -a 256 "$@"; } ; else sum() { sha256sum "$@"; }; fi
+          fragment="${{ runner.os }}-${{ inputs.node }}-${{ hashFiles('*.ts', '**/src/**', '**/.npmrc', '**/tsconfig*.json', '**/yarn.lock') }}-$(< package.json sum | command head -c8)"
+          build_fragment="${{ hashFiles('.github/workflows/build.yml') }}"
+          dist_fragment="${build_fragment}-${{ hashFiles('.github/workflows/build-dist-debug.yml') }}"
+          echo "build-key=build-${fragment}-${build_fragment}" | tee -a $GITHUB_OUTPUT
+          echo "dist-key=dist-${fragment}-${dist_fragment}" | tee -a $GITHUB_OUTPUT
+
+      - name: Restore dist cache
+        id: dist_cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ inputs.CACHE_DIR }}
+          key: ${{ steps.build-cache-keys.outputs.dist-key }}
+
+      - name: Restore build cache
+        if: steps.dist_cache.outputs.cache-hit != 'true'
+        id: build_cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ inputs.CACHE_DIR }}
+          key: ${{ steps.build-cache-keys.outputs.build-key }}
+          fail-on-cache-miss: true
+
+      - name: Install Node.js, NPM and Yarn
+        if: steps.dist_cache.outputs.cache-hit != 'true'
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ inputs.node }}
+          cache: yarn
+
+      - run: yarn install --frozen-lockfile --immutable --network-timeout ${{ inputs.NPM_NETWORK_TIMEOUT }}
+        if: steps.dist_cache.outputs.cache-hit != 'true'
+
+      - name: Fetch platform-specific prerequisites
+        if: steps.dist_cache.outputs.cache-hit != 'true'
+        run: |
+          yarn fetch-dist-deps
+
+      - name: Run yarn dist-debug for a maximum of ${{ inputs.MAX_BUILD_ATTEMPTS }} time(s)
+        run: |
+          attempt=1
+          until yarn dist-debug
+          do
+            >&2 echo "warning: ⚠️ Attempt #${attempt} failed."
+            if ((attempt >= ${{ inputs.MAX_BUILD_ATTEMPTS }}))
+            then
+              >&2 echo "error: ❌ Attempted ${{ inputs.MAX_BUILD_ATTEMPTS }} times and all have failed.  Aborting."
+              exit 1
+            fi
+            ((attempt++))
+          done
+          >&2 echo "info: ✅ Completed after attempt #${attempt}."
+        shell: bash
+        if: steps.dist_cache.outputs.cache-hit != 'true'
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: dist-${{ inputs.os }}
+          path: |
+            ${{ inputs.CACHE_DIR }}/

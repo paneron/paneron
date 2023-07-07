@@ -1,0 +1,71 @@
+name: test-dist
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      os:
+        required: true
+        type: string
+      node:
+        required: false
+        type: string
+        default: ${{ vars.DEFAULT_NODE_VERSION }}
+      CACHE_DIR:
+        required: false
+        type: string
+        default: dist
+
+jobs:
+  test-dist:
+    name: Test distributions on ${{ inputs.os }}
+    runs-on: ${{ inputs.os }}
+
+    strategy:
+      fail-fast: false
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Calculate dist-cache keys
+        # Because the exact same hashFiles invocation produces different
+        # results down the file
+        id: build-cache-keys
+        shell: bash
+        run: |
+          if command -v shasum; then sum() { shasum -a 256 "$@"; } ; else sum() { sha256sum "$@"; }; fi
+          fragment="${{ runner.os }}-${{ inputs.node }}-${{ hashFiles('*.ts', '**/src/**', '**/.npmrc', '**/tsconfig*.json', '**/yarn.lock') }}-$(< package.json sum | command head -c8)"
+          build_fragment="${{ hashFiles('.github/workflows/build.yml') }}"
+          dist_fragment="${build_fragment}-${{ hashFiles('.github/workflows/build-dist.yml') }}"
+          test_fragment="${dist_fragment}-${{ hashFiles('.github/workflows/test-dist.yml') }}"
+          echo "build-key=build-${fragment}-${build_fragment}" | tee -a $GITHUB_OUTPUT
+          echo "dist-key=dist-${fragment}-${dist_fragment}" | tee -a $GITHUB_OUTPUT
+          echo "test-dist-key=test_dist-${fragment}-${test_fragment}" | tee -a $GITHUB_OUTPUT
+
+      - name: Restore test cache
+        id: test_cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ inputs.CACHE_DIR }}
+          key: ${{ steps.build-cache-keys.outputs.test-dist-key }}
+
+      - name: Restore dist cache
+        if: steps.test_cache.outputs.cache-hit != 'true'
+        id: dist_cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ inputs.CACHE_DIR }}
+          key: ${{ steps.build-cache-keys.outputs.dist-key }}
+          fail-on-cache-miss: true
+
+      - run: sudo snap install dist/paneron-desktop-*.snap --dangerous
+        if: startsWith(inputs.os, 'ubuntu') && steps.test_cache.outputs.cache-hit != 'true'
+
+      - run: sudo apt-get install xvfb
+        if: startsWith(inputs.os, 'ubuntu') && steps.test_cache.outputs.cache-hit != 'true'
+
+      - run: xvfb-run -- paneron --version
+        if: startsWith(inputs.os, 'ubuntu') && steps.test_cache.outputs.cache-hit != 'true'
