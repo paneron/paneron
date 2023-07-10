@@ -1,0 +1,66 @@
+name: ubuntu-latest
+
+on:
+  workflow_dispatch:
+  workflow_call:
+  push:
+    tags-ignore:
+      - v*
+    paths-ignore:
+      - '/*.sh'
+      - '/.*'
+      - '/_*'
+      - '/vcpkg.txt'
+      - 'docs/**'
+      - '**.adoc'
+      - '**.md'
+      - '**.nix'
+      - 'flake.lock'
+      - '.github/workflows/*.yml'
+      - '!.github/workflows/ubuntu-latest.yml'
+      - '!.github/workflows/build.yml'
+      - '!.github/workflows/build-dist.yml'
+      - '!.github/workflows/test-dist.yml'
+  pull_request:
+    paths-ignore:
+      - '/*.sh'
+      - '/.*'
+      - '/_*'
+      - '/vcpkg.txt'
+      - 'docs/**'
+      - '**.adoc'
+      - '**.md'
+      - '**.nix'
+      - 'flake.lock'
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+    with:
+      os: ubuntu-latest
+
+  build-dist:
+    needs: [build]
+    uses: ./.github/workflows/build-dist.yml
+    with:
+      os: ubuntu-latest
+
+  build-dist-debug:
+    needs: [build]
+    uses: ./.github/workflows/build-dist-debug.yml
+    with:
+      os: ubuntu-latest
+
+  test-dist:
+    needs: [build-dist]
+    uses: ./.github/workflows/test-dist.yml
+    with:
+      os: ubuntu-latest
+
+  update-website:
+    needs: [test-dist, build-dist]
+    # If the commit is tagged with a version (e.g. "v1.0.0"),
+    # that means a new release has been created.
+    # Update the website to show new version.
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    uses: ./.github/workflows/update-website.yml
