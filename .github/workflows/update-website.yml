@@ -3,7 +3,6 @@ name: update-website
 on:
   workflow_call:
   workflow_dispatch:
-  push:
 
 jobs:
   trigger-website-build:
