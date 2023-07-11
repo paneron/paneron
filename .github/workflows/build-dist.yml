@@ -10,6 +10,23 @@ on:
       CSC_KEY_PASSWORD:
         description: Used to codesign binaries
         required: false
+
+      SM_CLIENT_CERT_FILE_B64:
+        description: (Windows) base64 encoded text of certificate downloaded from client authentication certificate setup
+        required: false
+      SM_CLIENT_CERT_PASSWORD:
+        description: (Windows) password from client authentication certificate setup
+        required: false
+      SM_API_KEY:
+        description: (Windows) API token generated during API token setup
+        required: false
+      SM_CODE_SIGNING_CERT_SHA1_HASH:
+        description: (Windows) certificate fingerprint
+        required: false
+      SM_HOST:
+        description: (Windows) path to the Software Trust Manager portal with client authorization
+        required: false
+
     inputs:
       os:
         required: true
@@ -135,6 +152,55 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+
+      - name: Set up certificate for app codesigning (Windows)
+        if: startsWith(inputs.os, 'windows')
+        shell: bash
+        run: |
+          echo "${{ secrets.SM_CLIENT_CERT_FILE_B64 }}" | base64 --decode > /d/Certificate_pkcs12.p12
+
+      - name: Set variables (Windows)
+        if: startsWith(inputs.os, 'windows')
+        id: windows_variables
+        shell: bash
+        run: |
+          echo "::set-output name=version::${GITHUB_REF#refs/tags/v}"
+          echo "SM_HOST=${{ secrets.SM_HOST }}" >> "$GITHUB_ENV"
+          echo "SM_API_KEY=${{ secrets.SM_API_KEY }}" >> "$GITHUB_ENV"
+          echo "SM_CLIENT_CERT_FILE=D:\\Certificate_pkcs12.p12" >> "$GITHUB_ENV"
+          echo "SM_CLIENT_CERT_PASSWORD=${{ secrets.SM_CLIENT_CERT_PASSWORD }}" >> "$GITHUB_ENV"
+          echo "C:\Program Files (x86)\Windows Kits\10\App Certification Kit" >> $GITHUB_PATH
+
+          echo "C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools" >> $GITHUB_PATH
+
+          echo "C:\Program Files\DigiCert\DigiCert One Signing Manager Tools" >> $GITHUB_PATH
+
+      - name: Set up Secure Software Manager (Windows)
+        if: startsWith(inputs.os, 'windows')
+        uses: digicert/ssm-code-signing@master
+        env:
+          SM_API_KEY: ${{ secrets.SM_API_KEY }}
+          SM_CLIENT_CERT_PASSWORD: ${{ secrets.SM_CLIENT_CERT_PASSWORD }}
+          SM_CLIENT_CERT_FILE: ${{ secrets.SM_CLIENT_CERT_FILE }}
+
+      - name: Set up SSM KSP (Windows)
+        if: startsWith(inputs.os, 'windows')
+        shell: cmd
+        run: |
+          curl -X GET  https://stage.one.digicert.com/signingmanager/api-ui/v1/releases/smtools-windows-x64.msi/download -H "x-api-key:%SM_API_KEY%" -o smtools-windows-x64.msi
+          msiexec /i smtools-windows-x64.msi /quiet /qn
+          smksp_registrar.exe list
+          smctl.exe keypair ls
+          C:\Windows\System32\certutil.exe -csp "DigiCert Signing Manager KSP" -key -user
+          smksp_cert_sync.exe
+
+      - name: Sign using Signtool (Windows)
+        if: startsWith(inputs.os, 'windows')
+        run: |
+          signtool.exe sign /sha1 ${{ secrets.SM_CODE_SIGNING_CERT_SHA1_HASH }} /tr http://timestamp.digicert.com /td SHA256 /fd SHA256 "D:\a\paneron\paneron\dist\install-paneron-desktop-${{ steps.windows_variables.outputs.version }}.exe"
+          signtool.exe verify /v /pa "D:\a\paneron\paneron\dist\install-paneron-desktop-${{ steps.windows_variables.outputs.version }}.exe"
+          signtool.exe sign /sha1 ${{ secrets.SM_CODE_SIGNING_CERT_SHA1_HASH }} /tr http://timestamp.digicert.com /td SHA256 /fd SHA256 "D:\a\paneron\paneron\dist\paneron-desktop-${{ steps.windows_variables.outputs.version }}-portable.exe"
+          signtool.exe verify /v /pa "D:\a\paneron\paneron\dist\paneron-desktop-${{ steps.windows_variables.outputs.version }}-portable.exe"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
