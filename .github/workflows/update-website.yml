@@ -16,6 +16,6 @@ jobs:
             -X POST \
             --fail-with-body \
             -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ secrets.GH_PANERON_CI_TOKEN__TEST }}" \
+            -H "Authorization: Bearer ${{ secrets.GH_PANERON_CI_TOKEN }}" \
             https://api.github.com/repos/paneron/extensions.paneron.org/dispatches \
             -d '{"event_type":"update-website","client_payload":{}}'
