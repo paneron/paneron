@@ -143,3 +143,4 @@ jobs:
           name: dist-${{ inputs.os }}
           path: |
             ${{ inputs.CACHE_DIR }}/*paneron*
+          if-no-files-found: error
