@@ -131,6 +131,7 @@ async function _loadRepository(workingCopyPath: string): Promise<RepoStatus> {
     loadTime: new Date(),
   };
 
+  // Clean up previously loaded repositories
   const loadedSorted = Object.entries(loadedRepositories).
     sort((r1, r2) => r1[1].loadTime > r2[1].loadTime ? -1 : 1).
     slice(MAX_LOADED_REPOSITORIES).
