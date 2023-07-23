@@ -4,7 +4,7 @@ import { ensureFile, removeSync, remove, move } from 'fs-extra';
 import git from 'isomorphic-git';
 import http from 'isomorphic-git/http/node';
 
-import { BufferChangeset } from '@riboseinc/paneron-extension-kit/types/buffers';
+import type { BufferChangeset } from '@riboseinc/paneron-extension-kit/types/buffers';
 import { formatPointerInfo } from '@riboseinc/isogit-lfs/pointers';
 import uploadBlob from '@riboseinc/isogit-lfs/upload';
 
@@ -12,7 +12,7 @@ import { stripLeadingSlash } from 'utils';
 import { normalizeURL } from '../../util';
 //import { BufferChangeset } from '@riboseinc/paneron-extension-kit/types/buffers';
 //import { AuthoringGitOperationParams, RepoStatusUpdater } from 'repositories/types';
-import { Repositories } from '../types';
+import type { Repositories } from '../types';
 
 
 /**
