@@ -819,18 +819,18 @@ updateBuffers.main!.handle(async ({
 // listObjectPaths.main!.handle(async ({ workingCopyPath, query }) => {
 //   return await cache.listPaths({ workingCopyPath, query });
 // });
-// 
-// 
+//
+//
 // listAllObjectPathsWithSyncStatus.main!.handle(async ({ workingCopyPath }) => {
 //   // TODO: Rename to just list all paths; implement proper sync status checker for subsets of files.
-// 
+//
 //   const paths = await cache.listPaths({ workingCopyPath });
-// 
+//
 //   const result: Record<string, FileChangeType> =
 //     paths.map(p => ({ [`/${p}`]: 'unchanged' as const })).reduce((p, c) => ({ ...p, ...c }), {});
-// 
+//
 //   //const result = await w.listAllObjectPathsWithSyncStatus({ workDir: workingCopyPath });
 //   log.info("Got sync status", JSON.stringify(result));
-// 
+//
 //   return result;
 // });

@@ -96,7 +96,7 @@ async function push(opts: PushRequestMessage, updateStatus: RepoStatusUpdater) {
     branch,
     _presumeCanceledErrorMeansAwaitingAuth,
     _presumeRejectedPushMeansNothingToPush,
-} = opts;
+  } = opts;
 
   if (!branch) {
     throw new Error("Need to know a branch in order to push");
