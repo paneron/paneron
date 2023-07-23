@@ -28,7 +28,7 @@ import type {
  * as an object containing required parameters, often including “workDir”.)
  */
 type OpenedRepoOperation<F extends (opts: any) => any> =
-  (opts: Omit<Parameters<F>[0], 'workDir'>) =>
+  (opts: Omit<Parameters<F>[0], 'workDir' | 'branch'>) =>
     ReturnType<F>
 // TODO: Check in `OpenedRepoOperation` that wrapped function takes workDir parameter
 // TODO: Consolidate the two `OpenedRepoOperation` types, they seem to attempt the same in different ways.
@@ -265,7 +265,7 @@ export default interface WorkerMethods {
    * If a function requiring working directory to be open is called before
    * the directory is assigned, it will throw.
    */
-  openLocalRepo: (workDirPath: string, mode: 'r' | 'rw') => Promise<void>
+  openLocalRepo: (workDirPath: string, branch: string, mode: 'r' | 'rw') => Promise<void>
 
   destroy: () => Promise<void>
 

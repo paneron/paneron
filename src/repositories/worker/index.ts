@@ -42,7 +42,7 @@ type RepoOperation<I extends GitOperationParams, O> =
  * Does not allow “workDir” in input parameters.
  */
 type OpenedRepoOperation<I extends GitOperationParams, O> =
-  (opts: Omit<I, 'workDir'>) => Promise<O>;
+  (opts: Omit<I, 'workDir' | 'branch'>) => Promise<O>;
 
 function openedRepoOperation<I extends GitOperationParams, O>(
   func: RepoOperation<I, O>
@@ -55,6 +55,7 @@ function openedRepoOperation<I extends GitOperationParams, O>(
         ...args,
         // TODO: Validate that `workDir` is a descendant of a safe directory under user’s home
         workDir: openedRepository.workDirPath,
+        branch: openedRepository.branch,
       } as I;
       return await func(params);
     }
@@ -123,6 +124,7 @@ export type WorkerSpec = ModuleMethods & WorkerMethods;
 
 let openedRepository: {
   workDirPath: string
+  branch: string
   statusSubject: Subject<RepoStatus>
   updateSubject: Subject<RepoUpdate>
   latestStatus: RepoStatus
@@ -167,18 +169,21 @@ const methods: WorkerSpec = {
     openedRepository?.statusSubject.complete();
   },
 
-  async openLocalRepo(workDirPath) {
+  async openLocalRepo(workDirPath, branch, mode) {
     if (openedRepository !== null && openedRepository.workDirPath !== workDirPath) {
       throw new Error("Repository already initialized with a different working directory path");
     } else if (openedRepository?.workDirPath === workDirPath) {
       // Already opened?
       console.warn("Worker: Repository already initialized", workDirPath);
     } else {
+      const commit = await commits.getCurrentCommit({ workDir: workDirPath, branch });
       const defaultStatus: RepoStatus = {
         status: 'ready', // TODO: Should say “initializing”, probably
+        localHead: commit.commitHash,
       };
       openedRepository = {
         workDirPath,
+        branch,
         statusSubject: new Subject<RepoStatus>(),
         updateSubject: new Subject<RepoUpdate>(),
         latestStatus: defaultStatus,

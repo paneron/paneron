@@ -58,7 +58,7 @@ async function terminateAllWorkers() {
 
 
 /** Returns repository workers, spawns if necessary. */
-export function getRepoWorkers(workDir: string): Promise<RepoWorkers> {
+export function getRepoWorkers(workDir: string, branch: string): Promise<RepoWorkers> {
 
   if (!WORKERS[workDir]) {
     log.debug("Repositories: Workers not spawned yet, spawning now…", workDir);
@@ -71,8 +71,8 @@ export function getRepoWorkers(workDir: string): Promise<RepoWorkers> {
           spawnWorker(),
         ]).then(([ sync, reader ]) => {
           Promise.all([
-            sync.openLocalRepo(workDir, 'rw'),
-            reader.openLocalRepo(workDir, 'r'),
+            sync.openLocalRepo(workDir, branch, 'rw'),
+            reader.openLocalRepo(workDir, branch, 'r'),
           ]).then(() => {
             resolve({ sync, reader })
           }).catch(reject);

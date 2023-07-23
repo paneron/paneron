@@ -519,12 +519,11 @@ addRepository.main!.handle(async ({ gitRemoteURL, branch, username, password, au
   }
 
   // Do the cloning
-  const workers = await getRepoWorkers(workDirPath);
+  const workers = await getRepoWorkers(workDirPath, branch);
   try {
     await workers.sync.git_clone({
       repoURL: gitRemoteURL,
       auth,
-      branch,
     });
   } catch (e) {
     // Cloning failed, try removing directory if it exists and re-throw the error.
@@ -595,13 +594,12 @@ addDisconnected.main!.handle(async ({ gitRemoteURL, branch, username, password }
     auth.password = (await getAuth(gitRemoteURL, username)).password;
   }
 
-  const workers = await getRepoWorkers(workDirPath);
+  const workers = await getRepoWorkers(workDirPath, branch);
 
   try {
     await workers.sync.git_clone({
       repoURL: gitRemoteURL,
       auth,
-      branch,
     });
     await workers.sync.git_deleteOrigin({
       workDir: workDirPath,
@@ -655,7 +653,7 @@ createRepository.main!.handle(async ({ title, author, mainBranchName: branch }) 
     return newData;
   });
 
-  const w = (await getRepoWorkers(workDirPath)).sync;
+  const w = (await getRepoWorkers(workDirPath, branch)).sync;
 
   log.debug("Repositories: Initializing new working directory", workDirPath);
 

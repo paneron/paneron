@@ -133,6 +133,7 @@ export const RepoBreadcrumb: React.FC<{
           ? <>
               {isLoaded ? "Loaded" : "Not loaded"}
               {status.status ? ` — status: ${status.status ?? 'N/A'}` : null}
+              {status.status === 'ready' ? ` (${status.localHead.slice(0, 6)})` : ' (commit N/A)'}
               {timeSinceLastSync ? ` — ${timeSinceLastSync} since last sync attempt` : null}
             </>
           : null}

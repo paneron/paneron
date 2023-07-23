@@ -24,7 +24,7 @@ export interface GitRepository {
   /** Working directory location. */
   workingCopyPath: string
 
-  /** Custom label */
+  /** Custom label assigned by the user, e.g. if there are similar repositories. */
   label?: string
 
   /** This is the branch in use; not necessarily the main/master branch. */
@@ -137,7 +137,24 @@ type RepoOperationStatus =
   | LFSUploadStatus;
 
 export type RepoStatus = {
-  status: 'ahead' | 'behind' | 'diverged' | 'ready' | 'invalid-working-copy' | 'unloaded'
+  status: 'ahead' | 'behind' | 'diverged'
+
+  /** Local branch head commit OID. */
+  localHead: string
+
+  /** Remote branch head commit OID. */
+  remoteHead: string
+
+  busy?: undefined
+} | {
+  status: 'ready'
+
+  /** Local branch head commit OID. */
+  localHead: string
+
+  busy?: undefined
+} | {
+  status: 'unloaded' | 'invalid-working-copy'
   busy?: undefined
 } | {
   busy: RepoOperationStatus
@@ -182,6 +199,9 @@ export interface LFSParams {
 
 export interface GitOperationParams {
   workDir: string
+
+  /** Optional for now, but most operations will be branch-based eventually. */
+  branch?: string
 }
 
 export interface DatasetOperationParams extends GitOperationParams {
