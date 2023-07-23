@@ -21,7 +21,7 @@ import type {
 /**
  * Operation on an opened local repository.
  * Same function as F, but omits “workDir” from first parameter.
- * 
+ *
  * See `openLocalRepo` function for details.
  *
  * (The convention is that all worker methods take first argument
