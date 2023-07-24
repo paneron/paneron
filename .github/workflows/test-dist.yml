@@ -1,0 +1,50 @@
+name: test-dist
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      os:
+        required: true
+        type: string
+      node:
+        required: false
+        type: string
+        default: ${{ vars.DEFAULT_NODE_VERSION }}
+      cache_dir:
+        required: false
+        type: string
+        default: dist
+
+jobs:
+  test-dist:
+    name: Test distributions on ${{ inputs.os }}
+    runs-on: ${{ inputs.os }}
+
+    strategy:
+      fail-fast: false
+
+    concurrency:
+      group: '${{ github.workflow }}-${{ inputs.os }}-${{ inputs.node }}-${{ github.head_ref || github.ref_name }}'
+      cancel-in-progress: true
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Restore dist cache
+        uses: actions/download-artifact@v3
+        with:
+          name: dist-${{ inputs.os }}
+          path: ${{ inputs.cache_dir }}
+
+      - run: sudo snap install dist/paneron-desktop-*.snap --dangerous
+        if: startsWith(inputs.os, 'ubuntu')
+
+      - run: sudo apt-get install xvfb
+        if: startsWith(inputs.os, 'ubuntu')
+
+      - run: xvfb-run -- paneron --version
+        if: startsWith(inputs.os, 'ubuntu')
