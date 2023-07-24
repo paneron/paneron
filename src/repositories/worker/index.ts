@@ -142,7 +142,7 @@ function getRepoStatusUpdater() {
 
   const updaterDebounced = throttle(100, false, updater);
 
-  return (newStatus: RepoStatus) => {
+  return function reportStatusUpdate (newStatus: RepoStatus) {
     if (openedRepository === null) {
       throw new Error("Repository is not initialized");
     }
