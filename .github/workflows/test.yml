@@ -1,0 +1,197 @@
+name: Test
+
+on:
+  workflow_dispatch:
+  workflow_call:
+  push:
+    tags-ignore:
+      - v*
+    paths-ignore:
+      - '/*.sh'
+      - '/.*'
+      - '/_*'
+      - '/vcpkg.txt'
+      - 'docs/**'
+      - '**.adoc'
+      - '**.md'
+      - '**.nix'
+      - 'flake.lock'
+      - '.github/workflows/*.yml'
+      - '!.github/workflows/test.yml'
+  pull_request:
+    paths-ignore:
+      - '/*.sh'
+      - '/.*'
+      - '/_*'
+      - '/vcpkg.txt'
+      - 'docs/**'
+      - '**.adoc'
+      - '**.md'
+      - '**.nix'
+      - 'flake.lock'
+
+env:
+  NPM_NETWORK_TIMEOUT: 120000
+  CACHE_DIR: dist
+
+jobs:
+  test:
+    name: Test
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: [16]
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Calculate build-cache key
+        # Because the exact same hashFiles invocation produces different
+        # results down the file
+        id: build-cache-keys
+        shell: bash
+        run: |
+          if command -v shasum; then sum() { shasum -a 256 "$@"; } ; else sum() { sha256sum "$@"; }; fi
+          fragment=$(< package.json sum | command head -c8)
+          fragment="${{ runner.os }}-${{ matrix.node }}-${{ hashFiles('*.ts', '**/src/**', '**/.npmrc', '**/tsconfig*.json', '**/yarn.lock', '.github/workflows/test.yml') }}-${fragment}"
+          echo "build-key=build-${fragment}" | tee -a $GITHUB_OUTPUT
+
+      - name: Restore build cache
+        id: build_cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.CACHE_DIR }}
+          key: ${{ steps.build-cache-keys.outputs.build-key }}
+
+      - name: Install Node.js, NPM and Yarn
+        if: steps.build_cache.outputs.cache-hit != 'true'
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+          cache: yarn
+
+      - run: yarn install --frozen-lockfile --immutable --network-timeout ${{ env.NPM_NETWORK_TIMEOUT }}
+        if: steps.build_cache.outputs.cache-hit != 'true'
+
+      - run: yarn compile
+        if: steps.build_cache.outputs.cache-hit != 'true'
+
+      - name: Upload artifacts as build cache
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: compile-${{ matrix.os }}-${{ matrix.node }}
+          path: ${{ env.CACHE_DIR }}
+
+
+  test-dist:
+    name: Test distributions on ${{ matrix.os }}
+    needs: test
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: [16]
+
+    env:
+      USE_HARD_LINKS: false
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Calculate build-cache and dist-cache keys
+        # Because the exact same hashFiles invocation produces different
+        # results down the file
+        id: build-cache-keys
+        shell: bash
+        run: |
+          if command -v shasum; then sum() { shasum -a 256 "$@"; } ; else sum() { sha256sum "$@"; }; fi
+          fragment=$(< package.json sum | command head -c8)
+          fragment="${{ runner.os }}-${{ matrix.node }}-${{ hashFiles('*.ts', '**/src/**', '**/.npmrc', '**/tsconfig*.json', '**/yarn.lock', '.github/workflows/test.yml') }}-${fragment}"
+          echo "build-key=build-${fragment}" | tee -a $GITHUB_OUTPUT
+          echo "dist-key=dist-${fragment}" | tee -a $GITHUB_OUTPUT
+
+      - name: Restore dist cache
+        id: dist_cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.CACHE_DIR }}
+          key: ${{ steps.build-cache-keys.outputs.dist-key }}
+
+      - name: Restore build cache
+        if: steps.dist_cache.outputs.cache-hit != 'true'
+        id: build_cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.CACHE_DIR }}
+          key: ${{ steps.build-cache-keys.outputs.build-key }}
+          fail-on-cache-miss: true
+
+      - name: Install Node.js, NPM and Yarn
+        if: steps.dist_cache.outputs.cache-hit != 'true'
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+          cache: yarn
+
+      - run: yarn install --frozen-lockfile --immutable --network-timeout ${{ env.NPM_NETWORK_TIMEOUT }}
+        if: steps.dist_cache.outputs.cache-hit != 'true'
+
+      - name: Fetch platform-specific prerequisites (macOS)
+        if: startsWith(matrix.os, 'macos') && steps.dist_cache.outputs.cache-hit != 'true'
+        run: |
+          yarn pre-dist:mac
+
+      - name: Fetch platform-specific prerequisites (Ubuntu)
+        if: startsWith(matrix.os, 'ubuntu') && steps.dist_cache.outputs.cache-hit != 'true'
+        run: |
+          yarn pre-dist:linux
+
+      - name: Fetch platform-specific prerequisites (Windows)
+        if: startsWith(matrix.os, 'windows') && steps.dist_cache.outputs.cache-hit != 'true'
+        run: |
+          yarn pre-dist:win
+
+      - run: |
+          yarn dist
+        if: steps.dist_cache.outputs.cache-hit != 'true'
+
+      - run: |
+          yarn dist:linux
+        if: startsWith(matrix.os, 'ubuntu') && steps.dist_cache.outputs.cache-hit != 'true'
+
+      - run: |
+          yarn dist:mac
+        if: startsWith(matrix.os, 'mac') && steps.dist_cache.outputs.cache-hit != 'true'
+
+      - run: |
+          yarn dist:win
+        if: startsWith(matrix.os, 'windows') && steps.dist_cache.outputs.cache-hit != 'true'
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        if: always() && steps.dist_cache.outputs.cache-hit != 'true'
+        with:
+          name: dist-${{ matrix.os }}
+          path: |
+            ${{ env.CACHE_DIR }}/paneron*
+
+      - run: sudo snap install dist/paneron-desktop-*.snap --dangerous
+        if: startsWith(matrix.os, 'ubuntu')
+
+      - run: sudo apt-get install xvfb
+        if: startsWith(matrix.os, 'ubuntu')
+
+      - run: xvfb-run -- paneron --version
+        if: startsWith(matrix.os, 'ubuntu')

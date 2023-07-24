@@ -1,0 +1,122 @@
+name: Build/release
+
+on:
+  workflow_dispatch:
+  workflow_call:
+  push:
+    paths-ignore:
+      - '/*.sh'
+      - '/.*'
+      - '/_*'
+      - '/vcpkg.txt'
+      - 'docs/**'
+      - '**.adoc'
+      - '**.md'
+      - '**.nix'
+      - 'flake.lock'
+      - '.github/workflows/*.yml'
+      - '!.github/workflows/release.yml'
+
+env:
+  NPM_NETWORK_TIMEOUT: 120000
+  CACHE_DIR: dist
+
+jobs:
+  release:
+    runs-on: ${{ matrix.os }}
+
+    # Platforms to build on/for
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+        node: [16]
+
+    env:
+      USE_HARD_LINKS: false
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+          cache: yarn
+
+      - name: "Yarn: clean cache and install with large timeout"
+        run: |
+          yarn cache clean && yarn install --frozen-lockfile --immutable --network-timeout ${{ env.NPM_NETWORK_TIMEOUT }}
+
+      - name: Prepare for app notarization (macOS)
+        if: startsWith(matrix.os, 'macos')
+        # Import Apple API key for app notarization on macOS
+        run: |
+          mkdir -p ~/private_keys/
+          echo '${{ secrets.APPLE_API_KEY }}' > ~/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
+
+      - name: Fetch platform-specific prerequisites (macOS)
+        if: startsWith(matrix.os, 'macos')
+        continue-on-error: true
+        run: |
+          yarn pre-dist:mac
+
+      - name: Fetch platform-specific prerequisites (Ubuntu)
+        if: startsWith(matrix.os, 'ubuntu')
+        continue-on-error: true
+        run: |
+          yarn pre-dist:linux
+
+      - name: Fetch platform-specific prerequisites (Windows)
+        if: startsWith(matrix.os, 'windows')
+        continue-on-error: true
+        run: |
+          yarn pre-dist:win
+
+      - name: Build/release Electron app
+        uses: samuelmeuli/action-electron-builder@v1
+        with:
+          # Compile before invoking electron-builder
+          build_script_name: "compile"
+
+          # GitHub token, automatically provided to the action
+          # (No need to define this secret in the repo settings)
+          github_token: ${{ secrets.github_token }}
+
+          # macOS code signing certificate
+          mac_certs: ${{ secrets.mac_certs }}
+          mac_certs_password: ${{ secrets.mac_certs_password }}
+
+          # Windows code signing certificate
+          # windows_certs: ${{ secrets.windows_certs }}
+          # windows_certs_password: ${{ secrets.windows_certs_password }}
+
+          max_attempts: 3
+
+          # If the commit is tagged with a version (e.g. "v1.0.0"),
+          # release the app after building
+          # release: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        env:
+          # macOS notarization
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: release-dist-${{ matrix.os }}
+          path: |
+            dist/paneron*
+
+  update-website:
+    # If the commit is tagged with a version (e.g. "v1.0.0"),
+    # that means a new release has been created.
+    # Update the website to show new version.
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    needs: [release]
+    uses: ./.github/workflows/update-website.yml
