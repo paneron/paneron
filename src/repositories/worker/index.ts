@@ -106,12 +106,13 @@ function lockingRepoOperationWithStatusReporter<I extends GitOperationParams, O>
   func: RepoOperationWithStatusReporter<I, O>,
   lockOpts?: { failIfBusy?: boolean, timeout?: number },
 ): OpenedRepoOperation<I, O> {
+  const statusUpdater = getRepoStatusUpdater();
   return lockingRepoOperation(async (args) => {
     if (openedRepository === null) {
       throw new Error("Repository is not initialized");
     }
     console.debug("Got repository lock");
-    return await func(args, getRepoStatusUpdater());
+    return await func(args, statusUpdater);
   }, lockOpts);
 }
 
