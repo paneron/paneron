@@ -1,0 +1,65 @@
+name: windows-latest
+
+on:
+  workflow_dispatch:
+  workflow_call:
+  push:
+    branches:
+      - main
+      - release
+    tags-ignore:
+      - v*
+    paths-ignore:
+      - '/*.sh'
+      - '/.*'
+      - '/_*'
+      - '/vcpkg.txt'
+      - 'docs/**'
+      - '**.adoc'
+      - '**.md'
+      - '**.nix'
+      - 'flake.lock'
+      - '.github/workflows/*.yml'
+      - '!.github/workflows/windows-latest.yml'
+      - '!.github/workflows/build.yml'
+      - '!.github/workflows/build-dist.yml'
+  pull_request:
+    paths-ignore:
+      - '/*.sh'
+      - '/.*'
+      - '/_*'
+      - '/vcpkg.txt'
+      - 'docs/**'
+      - '**.adoc'
+      - '**.md'
+      - '**.nix'
+      - 'flake.lock'
+
+concurrency:
+  group: '${{ github.workflow }}-${{ github.head_ref || github.ref_name }}'
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+    with:
+      os: windows-latest
+
+  build-dist:
+    needs: [build]
+    uses: ./.github/workflows/build-dist.yml
+    secrets:
+      GH_TOKEN: ${{ secrets.GH_PANERON_CI_TOKEN }}
+      # Uncomment the following to enable codesigning:
+      # CSC_LINK: ${{ secrets.windows_certs }}
+      # CSC_KEY_PASSWORD: ${{ secrets.windows_certs_password }}
+    with:
+      os: windows-latest
+
+  update-website:
+    needs: [build-dist]
+    # If the commit is tagged with a version (e.g. "v1.0.0"),
+    # that means a new release has been created.
+    # Update the website to show new version.
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    uses: ./.github/workflows/update-website.yml

@@ -1,0 +1,137 @@
+name: build-dist
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    secrets:
+      GH_TOKEN:
+        description: Used by electron-publish\src\gitHubPublisher.ts
+        required: false
+      CSC_LINK:
+        description: Used to codesign binaries
+        required: false
+      CSC_KEY_PASSWORD:
+        description: Used to codesign binaries
+        required: false
+    inputs:
+      os:
+        required: true
+        type: string
+      node:
+        required: false
+        type: string
+        default: ${{ vars.DEFAULT_NODE_VERSION }}
+      max_build_attempts:
+        required: false
+        type: number
+        default: 5
+      cache_dir:
+        required: false
+        type: string
+        default: dist
+      npm_network_timeout:
+        required: false
+        type: number
+        default: 120000
+
+env:
+  # Disable console advertisements during install phase
+  ADBLOCK: true
+
+jobs:
+  build:
+    name: Build signed artifacts on ${{ inputs.os }}
+    runs-on: ${{ inputs.os }}
+
+    strategy:
+      fail-fast: false
+
+    concurrency:
+      group: '${{ github.workflow }}-${{ inputs.os }}-${{ inputs.node }}-${{ github.head_ref || github.ref_name }}'
+      cancel-in-progress: true
+
+    env:
+      USE_HARD_LINKS: false
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Restore build cache
+        uses: actions/download-artifact@v3
+        with:
+          name: compile-${{ inputs.os }}-${{ inputs.node }}
+          path: ${{ inputs.cache_dir }}
+
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ inputs.node }}
+          cache: yarn
+
+      - run: yarn install --frozen-lockfile --immutable --network-timeout ${{ inputs.npm_network_timeout }}
+
+      - name: Prepare for app notarization (macOS)
+        if: startsWith(inputs.os, 'macos')
+        # Import Apple API key for app notarization on macOS
+        run: |
+          mkdir -p ~/private_keys/
+          echo '${{ secrets.APPLE_API_KEY }}' > ~/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
+
+      - name: Fetch platform-specific prerequisites
+        run: |
+          yarn fetch-dist-deps
+
+      - name: Run yarn dist for a maximum of ${{ inputs.max_build_attempts }} time(s)
+        run: |
+          # Unset empty variables for electron-builder (mainly for Windows but may also help with other OSs)
+          for var in GH_TOKEN CSC_LINK CSC_KEY_PASSWORD
+          do
+            if [[ -z "${!var:-}" ]]
+            then
+              >&2 echo "info: unsetting empty \$${var} variable."
+              unset "${var}"
+            else
+              >&2 echo "info: keeping non-empty \$${var} variable."
+            fi
+          done
+
+          attempt=1
+          until yarn dist
+          do
+            >&2 echo "warning: ⚠️ Attempt #${attempt} failed."
+            if ((attempt >= ${{ inputs.max_build_attempts }}))
+            then
+              >&2 echo "error: ❌ Attempted ${{ inputs.max_build_attempts }} times and all have failed.  Aborting."
+              exit 1
+            fi
+            ((attempt++))
+          done
+          >&2 echo "info: ✅ Completed after attempt #${attempt}."
+        shell: bash
+        env:
+          # Always helpful for debugging non-interactive sessions
+          DEBUG: electron-builder
+
+          # macOS notarization
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+          # macOS + Windows codesigning
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+
+          # electron-builder publishing
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: dist-${{ inputs.os }}
+          path: |
+            ${{ inputs.cache_dir }}/*paneron*
+          if-no-files-found: error

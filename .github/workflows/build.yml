@@ -1,0 +1,56 @@
+name: build
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      os:
+        required: true
+        type: string
+      node:
+        required: false
+        type: string
+        default: ${{ vars.DEFAULT_NODE_VERSION }}
+      cache_dir:
+        required: false
+        type: string
+        default: dist
+      npm_network_timeout:
+        required: false
+        type: number
+        default: 120000
+
+jobs:
+  build:
+    name: Build
+    runs-on: ${{ inputs.os }}
+
+    strategy:
+      fail-fast: false
+
+    concurrency:
+      group: '${{ github.workflow }}-${{ inputs.os }}-${{ inputs.node }}-${{ github.head_ref || github.ref_name }}'
+      cancel-in-progress: true
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ inputs.node }}
+          cache: yarn
+
+      - run: yarn install --frozen-lockfile --immutable --network-timeout ${{ inputs.npm_network_timeout }}
+
+      - run: yarn compile
+
+      - name: Upload artifacts as build cache
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: compile-${{ inputs.os }}-${{ inputs.node }}
+          path: ${{ inputs.cache_dir }}
