@@ -1,7 +1,7 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 
-import { throttle } from 'throttle-debounce';
+//import { throttle } from 'throttle-debounce';
 import formatDistance from 'date-fns/formatDistance';
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -50,13 +50,20 @@ export const RepoBreadcrumb: React.FC<{
   }, initialStatus);
 
   const [_status, setStatus] = useState<RepoStatus | null>(null);
-  const throttledSetStatus = useMemo(() => throttle(50, setStatus, false), [workDir]);
+
+  // NOTE: We started relying exclusively on status updates being throttled
+  // in the worker thread. One reason for that is that we need to
+  // throttle *only consecutive* “busy” progress updates: the first “busy”
+  // must trigger setStatus, as we rely on it e.g. to set latest sync timestamp
+  // in GUI.
+  //const setStatus = useMemo(() => throttle(50, setStatus, false), [workDir]);
+
   const status = _status ?? originalRepoStatus.value;
   const isLoaded = _status?.status !== 'unloaded' ?? openedRepoResp.value.isLoaded;
 
   loadedRepositoryStatusChanged.renderer!.useEvent(async ({ workingCopyPath, status }) => {
     if (workingCopyPath === workDir) {
-      throttledSetStatus(status);
+      setStatus(status);
     }
   }, [workDir]);
 
