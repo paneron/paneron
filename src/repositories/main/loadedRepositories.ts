@@ -213,7 +213,7 @@ const REPOSITORY_SYNC_INTERVAL_AFTER_ERROR_MS = 15000;
 // TODO: Only sync a repository if one of its datasets is opened?
 function syncRepoRepeatedly(
   workingCopyPath: string,
-  logLevel: 'all' | 'warnings' = 'warnings',
+  logLevel: 'all' | 'warnings' = 'all',
   workers: RepoWorkers,
 ): void {
   if (loadedRepositories[workingCopyPath]?.nextSyncTimeout) {
