@@ -216,9 +216,6 @@ function syncRepoRepeatedly(
   logLevel: 'all' | 'warnings' = 'all',
   workers: RepoWorkers,
 ): void {
-  if (loadedRepositories[workingCopyPath]?.nextSyncTimeout) {
-    return;
-  }
 
   const repoSyncLog: (
     meth: 'silly' | 'debug' | 'info' | 'warn' | 'error',
@@ -242,9 +239,16 @@ function syncRepoRepeatedly(
   function scheduleSync(msec: number) {
     cancelSync();
     if (loadedRepositories[workingCopyPath]) {
-      repoSyncLog('info', "Scheduling sync");
       loadedRepositories[workingCopyPath].nextSyncTimeout = setTimeout(_sync, msec);
+      repoSyncLog('info', `Scheduled sync in ${msec} ms`);
+    } else {
+      repoSyncLog('warn', "Not scheduling sync: repository not loaded");
     }
+  }
+
+  if (loadedRepositories[workingCopyPath]?.nextSyncTimeout) {
+    repoSyncLog('warn', "Sync already scheduled, doing nothing");
+    return;
   }
 
   async function _sync(): Promise<void> {
