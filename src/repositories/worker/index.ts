@@ -147,8 +147,6 @@ function getRepoStatusUpdater() {
       throw new Error("Repository is not initialized");
     }
 
-    openedRepository.latestStatus = newStatus;
-
     if (newStatus.busy && openedRepository.latestStatus?.busy) {
       // To avoid excess communication, debounce repeated updates
       // with “busy” status (meaning an operation is in progress).
@@ -158,6 +156,8 @@ function getRepoStatusUpdater() {
       updaterDebounced.cancel();
       updater(newStatus);
     }
+
+    openedRepository.latestStatus = newStatus;
   };
 }
 
