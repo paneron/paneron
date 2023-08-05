@@ -15,6 +15,11 @@ const getCurrentCommit: Repositories.Data.GetCurrentCommit = async function ({ w
       dir: workDir,
       ref: branch ?? 'HEAD',
     }),
+    // Alternative:
+    // fs.readFileSync(
+    //   path.join(workDir, '.git', 'refs', 'heads', branch),
+    //   { encoding: 'utf-8' },
+    // ).trim()
   };
 }
 
