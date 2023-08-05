@@ -193,7 +193,7 @@ const methods: WorkerSpec = {
         localHead = '';
       }
       const defaultStatus: RepoStatus = {
-        status: 'ready', // TODO: Should say “initializing”, probably
+        status: 'ready', // TODO: Implement “initializing” status?
         localHead,
       };
       openedRepository = {
