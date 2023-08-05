@@ -176,6 +176,13 @@ const methods: WorkerSpec = {
     } else if (openedRepository?.workDirPath === workDirPath) {
       // Already opened?
       console.warn("Worker: Repository already initialized", workDirPath);
+      if (openedRepository.branch !== branch) {
+        // Cannot change branches on the fly this way.
+        console.error(
+          `Worker: Repository is initialized with a different branch (${openedRepository.branch}, but ${branch} was requested)`,
+          workDirPath,
+        );
+      }
     } else {
       const commit = await commits.getCurrentCommit({ workDir: workDirPath, branch });
       const defaultStatus: RepoStatus = {
