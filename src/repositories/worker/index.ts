@@ -184,10 +184,17 @@ const methods: WorkerSpec = {
         );
       }
     } else {
-      const commit = await commits.getCurrentCommit({ workDir: workDirPath, branch });
+      let localHead: string;
+      try {
+        localHead = (await commits.getCurrentCommit({ workDir: workDirPath, branch }))?.commitHash;
+      } catch (e) {
+        // We have probably not initialized yet.
+        console.warn("Worker: Unable to read current commit, the repository does not exist (yet?)", workDirPath, branch);
+        localHead = '';
+      }
       const defaultStatus: RepoStatus = {
         status: 'ready', // TODO: Should say “initializing”, probably
-        localHead: commit.commitHash,
+        localHead,
       };
       openedRepository = {
         workDirPath,
