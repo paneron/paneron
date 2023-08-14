@@ -53,3 +53,8 @@ jobs:
           hdiutil detach "$VOLUME"
 
           /Applications/Paneron.app/Contents/MacOS/Paneron --version
+
+      - if: startsWith(inputs.os, 'windows')
+        shell: bash
+        run: |
+          ${{ inputs.cache_dir }}/paneron-desktop-*.exe --version
