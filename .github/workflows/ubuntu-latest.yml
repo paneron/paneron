@@ -49,8 +49,7 @@ jobs:
   build-dist:
     needs: [build]
     uses: ./.github/workflows/build-dist.yml
-    secrets:
-      GH_TOKEN: ${{ secrets.GH_PANERON_CI_TOKEN }}
+    secrets: inherit
     with:
       os: ubuntu-latest
 
