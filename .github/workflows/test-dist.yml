@@ -40,11 +40,16 @@ jobs:
           name: dist-${{ inputs.os }}
           path: ${{ inputs.cache_dir }}
 
-      - run: sudo snap install dist/paneron-desktop-*.snap --dangerous
-        if: startsWith(inputs.os, 'ubuntu')
+      - if: startsWith(inputs.os, 'ubuntu')
+        run: |
+          sudo snap install ${{ inputs.cache_dir }}/paneron-desktop-*.snap --dangerous
+          sudo apt-get install xvfb
+          xvfb-run -- paneron --version
 
-      - run: sudo apt-get install xvfb
-        if: startsWith(inputs.os, 'ubuntu')
+      - if: startsWith(inputs.os, 'macos')
+        run: |
+          VOLUME=`hdiutil attach ${{ inputs.cache_dir }}/paneron-desktop-*.dmg | grep Volumes | cut -f 3-`
+          cp -rf "$VOLUME/Paneron.app" /Applications
+          hdiutil detach "$VOLUME"
 
-      - run: xvfb-run -- paneron --version
-        if: startsWith(inputs.os, 'ubuntu')
+          /Applications/Paneron.app/Contents/MacOS/Paneron --version
