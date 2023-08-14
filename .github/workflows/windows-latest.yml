@@ -56,8 +56,14 @@ jobs:
     with:
       os: windows-latest
 
-  update-website:
+  test-dist:
     needs: [build-dist]
+    uses: ./.github/workflows/test-dist.yml
+    with:
+      os: windows-latest
+
+  update-website:
+    needs: [test-dist]
     # If the commit is tagged with a version (e.g. "v1.0.0"),
     # that means a new release has been created.
     # Update the website to show new version.
