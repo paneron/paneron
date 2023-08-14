@@ -3,16 +3,6 @@ name: build-dist
 on:
   workflow_dispatch:
   workflow_call:
-    secrets:
-      GH_TOKEN:
-        description: Used by electron-publish\src\gitHubPublisher.ts
-        required: false
-      CSC_LINK:
-        description: Used to codesign binaries
-        required: false
-      CSC_KEY_PASSWORD:
-        description: Used to codesign binaries
-        required: false
     inputs:
       os:
         required: true
@@ -86,8 +76,19 @@ jobs:
 
       - name: Run yarn dist for a maximum of ${{ inputs.max_build_attempts }} time(s)
         run: |
+          if [[ ${{ inputs.os }} = macos-* ]]
+          then
+            export CSC_KEY_PASSWORD='${{ secrets.MAC_CERTS_PASSWORD }}'
+            export CSC_LINK='${{ secrets.MAC_CERTS }}'
+          # Windows codesigning disabled until cloud HSM has been set up.
+          # elif [[ ${{ inputs.os }} = windows-* ]]
+          # then
+          #   export CSC_KEY_PASSWORD='${{ secrets.WINDOWS_CERTS_PASSWORD }}'
+          #   export CSC_LINK='${{ secrets.WINDOWS_CERTS }}'
+          fi
+
           # Unset empty variables for electron-builder (mainly for Windows but may also help with other OSs)
-          for var in GH_TOKEN CSC_LINK CSC_KEY_PASSWORD
+          for var in CSC_LINK CSC_KEY_PASSWORD
           do
             if [[ -z "${!var:-}" ]]
             then
@@ -120,12 +121,16 @@ jobs:
           APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
-          # macOS + Windows codesigning
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          # Windows codesigning
+          WINDOWS_CERTS_PASSWORD: ${{ secrets.WINDOWS_CERTS_PASSWORD }}
+          WINDOWS_CERTS: ${{ secrets.WINDOWS_CERTS }}
+
+          # macOS notarization
+          MAC_CERTS_PASSWORD: ${{ secrets.MAC_CERTS_PASSWORD }}
+          MAC_CERTS: ${{ secrets.MAC_CERTS }}
 
           # electron-builder publishing
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PANERON_CI_TOKEN }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3

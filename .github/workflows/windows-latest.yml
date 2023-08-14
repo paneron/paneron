@@ -48,11 +48,7 @@ jobs:
   build-dist:
     needs: [build]
     uses: ./.github/workflows/build-dist.yml
-    secrets:
-      GH_TOKEN: ${{ secrets.GH_PANERON_CI_TOKEN }}
-      # Uncomment the following to enable codesigning:
-      # CSC_LINK: ${{ secrets.windows_certs }}
-      # CSC_KEY_PASSWORD: ${{ secrets.windows_certs_password }}
+    secrets: inherit
     with:
       os: windows-latest
 
