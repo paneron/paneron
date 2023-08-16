@@ -64,7 +64,8 @@ jobs:
     # If the commit is tagged with a version (e.g. "v1.0.0"),
     # that means a new release has been created.
     # Update the website to show new version.
-    # if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
     uses: ./.github/workflows/update-website.yml
     secrets:
       GH_PANERON_CI_TOKEN: ${{ secrets.GH_PANERON_CI_TOKEN }}
+    secrets: inherit
