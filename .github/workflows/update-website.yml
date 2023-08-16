@@ -2,9 +2,6 @@ name: update-website
 
 on:
   workflow_call:
-    secrets:
-      GH_PANERON_CI_TOKEN:
-        required: true
   workflow_dispatch:
 
 jobs:
