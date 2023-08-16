@@ -9,10 +9,6 @@ jobs:
     name: Trigger website build
     runs-on: ubuntu-latest
 
-    concurrency:
-      group: '${{ github.workflow }}-${{ github.head_ref || github.ref_name }}'
-      cancel-in-progress: true
-
     steps:
       - name: Dispatch update-website event
         run: |
