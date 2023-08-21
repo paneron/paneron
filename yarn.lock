@@ -1493,6 +1493,11 @@
     "@nodelib/fs.scandir" "2.1.3"
     fastq "^1.6.0"
 
+"@paneron/libmmel@~0.1.3":
+  version "0.1.3"
+  resolved "https://registry.yarnpkg.com/@paneron/libmmel/-/libmmel-0.1.3.tgz#9e38e233d77e0653e135d9ed19a7bb08108089ab"
+  integrity sha512-BmpcuqowAj4DubcPZ76xqi70xOiJtIMs/XakgvM3lpQWaeFj0avRpGJX1Lcag2R/FZnWlxm1AwYVsnE9FfVfVA==
+
 "@popperjs/core@^2.11.6":
   version "2.11.6"
   resolved "https://registry.yarnpkg.com/@popperjs/core/-/core-2.11.6.tgz#cee20bd55e68a1720bdab363ecf0c821ded4cd45"
@@ -1593,15 +1598,15 @@
   resolved "https://registry.yarnpkg.com/@riboseinc/paneron-extension-glossarist/-/paneron-extension-glossarist-2.0.10.tgz#8a61bd0b1aa8210624fba7f8ea4b4404b3e8bdac"
   integrity sha512-E9PpQe9vfB0oU6BAnECZV/L/KAlEwni49LAzz555CM253Mmm3JnbPNP0hdAKGzNQA+yHK0eetCLQcaCQNp4vVg==
 
-"@riboseinc/paneron-extension-kit@2.1.1":
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-extension-kit/-/paneron-extension-kit-2.1.1.tgz#beffa71216bf564fb49dbcb3cfe47f41356d8648"
-  integrity sha512-Trux9sz3HJXKzONbiR08H8ZWe2fzgiSSmTHYbDlg37VH3OuW35fLr8l23KZRp8ukrF/LcRmoIfZnfEtFUj7gKw==
+"@riboseinc/paneron-extension-kit@2.2.0":
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-extension-kit/-/paneron-extension-kit-2.2.0.tgz#1e00d709f5547afd391467bf4324deb81aaf043f"
+  integrity sha512-fYbejKKb//Nyp9DK01bwqPSH5MCNUZJxZZ7t2fZkpveU8WE7IX+GGt+amKLaaDDGmDvh1ePQhHX1cXD7dJGOag==
 
-"@riboseinc/paneron-registry-kit@2.1.4":
-  version "2.1.4"
-  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-registry-kit/-/paneron-registry-kit-2.1.4.tgz#ea7cad436d42be2162545e883b71232a23642381"
-  integrity sha512-j3yD6DhI7SHdAturMrKd6oe45RrqNe98dFb9lqadW7+k+94OBUtHMeoTLTydQrMGYPAaSjm+p6O81AQpl0uFeA==
+"@riboseinc/paneron-registry-kit@2.2.0":
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/@riboseinc/paneron-registry-kit/-/paneron-registry-kit-2.2.0.tgz#ff62e79fb7c3748b78d99229229f67c0d1510dbf"
+  integrity sha512-DFGl/0Qmd3mwTKQRZusgB3w/O4AbQ5YZVWvuZAqSyAVP3mKHCjr+Y7pgcC1LbEfIRow9NhfRy+mHJefqt6Zd1w==
 
 "@riboseinc/reprose@1.0.0-alpha11":
   version "1.0.0-alpha11"
