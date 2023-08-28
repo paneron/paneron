@@ -8,12 +8,12 @@ import { Button, Classes, Colors, Icon, IconName, InputGroup, Tab, Tabs } from '
 import { Tooltip2 as Tooltip } from '@blueprintjs/popover2';
 
 import useDebounce from '@riboseinc/paneron-extension-kit/useDebounce';
+import OperationQueueContext from '@riboseinc/paneron-extension-kit/widgets/OperationQueue/context';
 
 import { createRepository } from 'repositories/ipc';
 import type { GitAuthor, Repository } from 'repositories/types';
 
 import useRepositoryList from '../useRepositoryList';
-import { Context } from '../context';
 import RepositoryDetails from './RepositoryDetails';
 import RecentDatasets from './RecentDatasets';
 import CreateRepoForm from './CreateRepo';
@@ -40,7 +40,7 @@ const WelcomeScreen: React.FC<{ onOpenDataset: (workDir: string, dsID: string) =
 function ({ onOpenDataset, onExportDataset, className }) {
   const [repoQuery, updateRepoQuery] = useState<string>('');
 
-  const { performOperation, isBusy } = useContext(Context);
+  const { performOperation, isBusy } = useContext(OperationQueueContext);
 
   const normalizedRepoFilterString = useDebounce(
     repoQuery.trim() ?? '',

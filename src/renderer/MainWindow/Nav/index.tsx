@@ -36,7 +36,7 @@ const Nav: React.FC<NavProps> = function ({ anchor, children, className }) {
       />);
     }
 
-    if (state.view !== 'welcome-screen') {
+    if (state.view !== 'welcome-screen' && state.selectedRepoWorkDir) {
       breadcrumbs.push(<RepoBreadcrumb
         workDir={state.selectedRepoWorkDir}
         onMessage={showMessage}

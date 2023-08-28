@@ -6,19 +6,19 @@ import React, { useContext, useState } from 'react';
 import { Button } from '@blueprintjs/core';
 import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import PanelSeparator from '@riboseinc/paneron-extension-kit/widgets/panels/PanelSeparator';
+import OperationQueueContext from '@riboseinc/paneron-extension-kit/widgets/OperationQueue/context';
 
 import { addRepository, getNewRepoDefaults } from 'repositories/ipc';
 import type { GitAuthor } from 'repositories/types';
 
 import { stripTrailingSlash } from 'utils';
-import { Context } from '../context';
 import GitCredentialsInput from '../repositories/GitCredentialsInput';
 import AuthorForm from '../repositories/AuthorForm';
 
 
 const AddSharedRepository: React.FC<{ className?: string; onAfterCreate?: (workDir: string) => void }> =
 function ({ className, onAfterCreate }) {
-  const { performOperation, isBusy } = useContext(Context);
+  const { performOperation, isBusy } = useContext(OperationQueueContext);
 
   // TODO: use a single state object to keep all parameters for addRepository?
   const [customUsername, setUsername] = useState<string | null>(null);

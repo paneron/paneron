@@ -5,6 +5,9 @@ import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { jsx, css } from '@emotion/react';
 import { Menu, MenuDivider, NonIdealState, Panel, Colors, PanelStack2, Spinner } from '@blueprintjs/core';
 import { MenuItem2 as MenuItem } from '@blueprintjs/popover2';
+
+import OperationQueueContext from '@riboseinc/paneron-extension-kit/widgets/OperationQueue/context';
+
 import {
   addDisconnected,
   describeRepository,
@@ -17,7 +20,6 @@ import RepositorySettings from './RepositorySettings';
 import RepoLabel from './RepoLabel';
 import InitializeDataset from './InitializeDataset';
 import DatasetMenuItem from './DatasetMenuItem';
-import { Context } from '../context';
 
 
 const RepositoryDetails: React.FC<{
@@ -30,7 +32,7 @@ function ({ workDir, onOpen, onExport }) {
     { workingCopyPath: workDir },
     { info: { gitMeta: { workingCopyPath: workDir, mainBranch: '' } }, isLoaded: false });
 
-  const { performOperation, isBusy } = useContext(Context);
+  const { performOperation, isBusy } = useContext(OperationQueueContext);
 
   const repo = openedRepoResp.value.info;
 
@@ -149,7 +151,7 @@ const RepoMenu: React.FC<RepoMenuProps> = function ({
 }) {
   const { workingCopyPath: workDir } = repo.gitMeta;
 
-  const { performOperation, isBusy } = useContext(Context);
+  const { performOperation, isBusy } = useContext(OperationQueueContext);
 
   const makePrivateCopy = repo.gitMeta.remote && !isBusy
     ? performOperation('making private working copy', async () => {

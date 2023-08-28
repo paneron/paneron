@@ -11,6 +11,7 @@ import { INITIAL_GLOBAL_SETTINGS } from '@riboseinc/paneron-extension-kit/settin
 import PropertyView, { TextInput, Select } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import HelpTooltip from '@riboseinc/paneron-extension-kit/widgets/HelpTooltip';
 import PanelSeparator from '@riboseinc/paneron-extension-kit/widgets/panels/PanelSeparator';
+import OperationQueueContext from '@riboseinc/paneron-extension-kit/widgets/OperationQueue/context';
 
 import { clearDataAndRestart, ClearOption, CLEAR_OPTIONS, selectDirectoryPath, colorSchemeUpdated, getColorScheme } from 'common';
 import { getNewRepoDefaults, setNewRepoDefaults } from 'repositories/ipc';
@@ -18,7 +19,6 @@ import type { NewRepositoryDefaults } from 'repositories/types';
 import { listLocalPlugins, pluginsUpdated, removeLocalPluginPath, specifyLocalPluginPath } from 'plugins';
 import DatasetExtension from 'plugins/renderer/DatasetExtensionCard';
 
-import { Context } from './context';
 import { updateSetting } from './settings';
 import AuthorForm from './repositories/AuthorForm';
 import { describeBundledExecutable } from 'subprocesses';
@@ -63,7 +63,7 @@ const SettingsFormSection: React.FC<{ title?: string | JSX.Element }> = function
 
 export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({ className }) {
   const { settings, refresh: refreshSettings } = useContext(GlobalSettingsContext);
-  const { performOperation, isBusy } = useContext(Context);
+  const { performOperation, isBusy } = useContext(OperationQueueContext);
 
   const { value: { fullPath: metanormaExecPath } } =
     describeBundledExecutable.renderer!.useValue({ name: 'metanorma' }, { fullPath: '' });
@@ -284,7 +284,7 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
 
 
 const NewRepositoryDefaults: React.FC<{ className?: string }> = function ({ className }) {
-  const { performOperation, isBusy } = useContext(Context);
+  const { performOperation, isBusy } = useContext(OperationQueueContext);
   const defaultsResp = getNewRepoDefaults.renderer!.useValue({}, { defaults: null });
   const defaults = defaultsResp.value.defaults;
   const busy = defaultsResp.isUpdating || isBusy;

@@ -17,6 +17,7 @@ import type { Hooks } from '@riboseinc/paneron-extension-kit/types/renderer';
 import { INITIAL_GLOBAL_SETTINGS } from '@riboseinc/paneron-extension-kit/settings';
 import type { BaseAction, PersistentStateReducerHook } from '@riboseinc/paneron-extension-kit/usePersistentStateReducer';
 import useTimeTravelingPersistentStateReducer, { type TimeTravelingPersistentStateReducerHook } from '@riboseinc/paneron-extension-kit/useTimeTravelingPersistentStateReducer';
+import { type ContextSpec as OperationQueueContextSpec } from '@riboseinc/paneron-extension-kit/widgets/OperationQueue/context';
 
 import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
 import { makeRandomID, chooseFileFromFilesystem, saveFileToFilesystem, openExternalURL } from 'common';
@@ -47,7 +48,7 @@ interface BasicDatasetOptions {
   datasetID: string
 }
 
-export interface ContextGetterProps extends BasicDatasetOptions {
+export interface ContextGetterProps extends BasicDatasetOptions, OperationQueueContextSpec {
   writeAccess: boolean
 }
 
@@ -146,6 +147,8 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
     writeAccess,
     workingCopyPath,
     datasetID,
+    performOperation,
+    isBusy,
   } = opts;
 
   const datasetParams = {
@@ -203,13 +206,14 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
     ...getBasicReadAPI(datasetParams),
     ...getFilesystemAPI(datasetParams),
 
+    performOperation,
+    isBusy,
+
     openExternalLink: async ({ uri }) => {
       await openExternalURL.renderer!.trigger({
         url: uri,
       });
     },
-
-    performOperation: <P>() => async () => (void 0) as unknown as P,
 
     useRemoteUsername: () => {
       const resp = describeRepository.renderer!.useValue(
@@ -246,9 +250,10 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
       const result = getObjectDataset.renderer!.useValue({
         ...datasetParams,
         ...opts,
-      }, { data: {} });
+      }, { data: {} }, { nounLabel: opts.nounLabel });
 
-      objectsChanged.renderer!.useEvent(async ({ workingCopyPath, datasetID, objects }) => {
+      function handleUpdate (updateParams: { workingCopyPath: string, datasetID: string, objects?: Record<string, unknown> }) {
+        const { workingCopyPath, datasetID, objects } = updateParams;
         if (
           workingCopyPath === datasetParams.workingCopyPath
           && datasetID === datasetParams.datasetID
@@ -256,7 +261,9 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
         ) {
           result.refresh();
         }
-      }, [workingCopyPath, datasetID, JSON.stringify(opts.objectPaths)]);
+      }
+
+      objectsChanged.renderer!.useEvent(handleUpdate, [workingCopyPath, datasetID, JSON.stringify(opts.objectPaths)]);
 
       return result;
     },
@@ -397,6 +404,32 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
             ...datasetParams,
             ...opts,
           }));
+
+          performOperation("waiting for update", function () {
+            return new Promise((resolve) => {
+              objectsChanged.renderer!.once(function (results) {
+                if (handleUpdate(results)) {
+                  resolve(void 0);
+                }
+              });
+              setTimeout(function autoResolve() {
+                resolve(void 0);
+              }, 15000);
+            });
+          }, { blocking: false })();
+
+          function handleUpdate (updateParams: { workingCopyPath: string, datasetID: string, objects?: Record<string, unknown> }): boolean {
+            const { workingCopyPath, datasetID, objects } = updateParams;
+            if (
+              workingCopyPath === datasetParams.workingCopyPath
+              && datasetID === datasetParams.datasetID
+              && (objects === undefined || R.intersection(Object.keys(objects), Object.keys(opts.objectChangeset)).length > 0)
+            ) {
+              return true;
+            }
+            return false;
+          }
+
           return result.result;
         }
       : undefined,

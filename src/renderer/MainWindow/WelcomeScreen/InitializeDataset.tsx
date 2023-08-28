@@ -6,6 +6,7 @@ import React, { useContext, useState } from 'react';
 import { Card, Button, Colors, InputGroup, Classes } from '@blueprintjs/core';
 import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import type { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
+import OperationQueueContext from '@riboseinc/paneron-extension-kit/widgets/OperationQueue/context';
 
 import { listAvailablePlugins } from 'plugins';
 import type { Extension } from 'plugins/types';
@@ -14,12 +15,11 @@ import { loadRepository } from 'repositories/ipc';
 import { initializeDataset, proposeDatasetPath } from 'datasets/ipc';
 import getPlugin from 'plugins/renderer/getPlugin';
 import { getBasicReadAPI } from 'datasets/renderer/context';
-import { Context } from '../context';
 
 
 const InitializeDataset: React.FC<{ workDir: string }> =
 function ({ workDir }) {
-  const { performOperation, isBusy } = useContext(Context);
+  const { performOperation, isBusy } = useContext(OperationQueueContext);
 
   const [selectedExtension, selectExtension] = useState<Extension | null>(null);
 

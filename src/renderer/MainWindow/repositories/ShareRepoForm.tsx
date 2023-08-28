@@ -5,18 +5,19 @@ import { css, jsx } from '@emotion/react';
 import React, { useContext, useState } from 'react';
 import { ButtonGroup } from '@blueprintjs/core';
 
+import OperationQueueContext from '@riboseinc/paneron-extension-kit/widgets/OperationQueue/context';
+
 import { getNewRepoDefaults, savePassword, setRemote, unsetRemote, unsetWriteAccess } from 'repositories/ipc';
-import { GitRepository } from 'repositories/types';
+import type { GitRepository } from 'repositories/types';
 
 import { Button } from '../../widgets';
 import GitCredentialsInput from './GitCredentialsInput';
-import { Context } from '../context';
 import ButtonWithPrompt from '../../common/ButtonWithPrompt';
 
 
 export const ShareRepoForm: React.FC<{ repo: GitRepository }> =
 function ({ repo }) {
-  const { performOperation, isBusy } = useContext(Context);
+  const { performOperation, isBusy } = useContext(OperationQueueContext);
   const defaults = getNewRepoDefaults.renderer!.useValue({}, { defaults: { author: { name: '', email: '' } } });
 
   const [_url] = useState('');

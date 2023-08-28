@@ -2,13 +2,12 @@
 /** @jsxFrag React.Fragment */
 
 import { jsx, css } from '@emotion/react';
-import React, { useContext, useState } from 'react';
-import { Button, ButtonProps, Classes, Colors, Dialog, NonIdealState } from '@blueprintjs/core';
+import React, { useContext } from 'react';
+import { Button, ButtonProps, Classes, Colors, NonIdealState } from '@blueprintjs/core';
 import { GlobalSettingsContext } from '@riboseinc/paneron-extension-kit/SettingsContext';
 import { INITIAL_GLOBAL_SETTINGS } from '@riboseinc/paneron-extension-kit/settings';
 
-import { getAppVersion, refreshMainWindow, showGlobalSettings } from 'common';
-
+import { getAppVersion, refreshMainWindow } from 'common';
 import { useSettings } from './settings';
 
 import Nav from './Nav';
@@ -24,21 +23,12 @@ const MainWindow: React.FC<Record<never, never>> = function () {
     settings: globalSettings.value.settings,
     refresh: globalSettings.refresh,
   };
-  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
+
   const {
     value: { version, isPackaged },
-    //isUpdating: versionIsUpdating,
   } = getAppVersion.renderer!.useValue({}, { version: '' });
 
-  showGlobalSettings.renderer!.useEvent(async () => {
-    setSettingsDialogOpen(true);
-  }, []);
-
   const Frag = isPackaged ? React.Fragment : React.StrictMode;
-
-  //if (globalSettings.isUpdating || versionIsUpdating) {
-  //  return <Spinner className="initial-spinner" />;
-  //}
 
   return (
     <Frag>
@@ -70,52 +60,55 @@ const MainWindow: React.FC<Record<never, never>> = function () {
               `}
               className={Classes.ELEVATION_3}
             />
-            <Dialog
-                isOpen={settingsDialogOpen}
-                title="Settings"
-                usePortal={false}
-                onClose={() => setSettingsDialogOpen(false)}
-                css={css`padding-bottom: 0; height: 70vh; width: 70vw;`}>
-              <GlobalSettingsContext.Provider value={globalSettingsContext}>
-                <GlobalSettingsForm css={css`overflow-y: auto;`} />
-              </GlobalSettingsContext.Provider>
-            </Dialog>
           </div>
-          <Nav
-              anchor={globalSettingsContext.settings.mainNavbarPosition === 'top'
-                ? 'start'
-                : 'end'}
-              className={globalSettingsContext.settings.mainNavbarPosition === 'bottom'
-                ? Classes.ELEVATION_2
-                : Classes.ELEVATION_1}
-              css={css`
-                position: absolute;
-                ${globalSettingsContext.settings.mainNavbarPosition === 'bottom'
-                  ? 'bottom: 0'
-                  : 'top: 0'};
-                right: -15px; left: -15px;
-                height: ${NAV_HEIGHT_PX}px;
-                z-index: 2;`}>
-            <NavbarButton
-              title="Host application version"
-              text={isPackaged ? `v${version}` : 'DEV'}
-              disabled
-            />
-            <NavbarButton
-              icon="refresh"
-              title="Refresh window"
-              onClick={() => refreshMainWindow.renderer!.trigger({})}
-            />
-            <NavbarButton
-              icon="settings"
-              title="Settings"
-              active={settingsDialogOpen}
-              onClick={() => setSettingsDialogOpen(true)}
-            />
-          </Nav>
+          <Navbar
+            mainNavbarPosition={globalSettings.value.settings.mainNavbarPosition}
+            isPackaged={isPackaged}
+            version={version}
+          />
         </div>
       </ContextProvider>
     </Frag>
+  );
+};
+
+
+const Navbar: React.FC<{ version: string, isPackaged?: boolean, mainNavbarPosition: 'top' | 'bottom' }> =
+function ({ version, isPackaged, mainNavbarPosition }) {
+  const { state: { view }, dispatch } = useContext(Context);
+  return (
+    <Nav
+        anchor={mainNavbarPosition === 'top'
+          ? 'start'
+          : 'end'}
+        className={mainNavbarPosition === 'bottom'
+          ? Classes.ELEVATION_2
+          : Classes.ELEVATION_1}
+        css={css`
+          position: absolute;
+          ${mainNavbarPosition === 'bottom'
+            ? 'bottom: 0'
+            : 'top: 0'};
+          right: -15px; left: -15px;
+          height: ${NAV_HEIGHT_PX}px;
+          z-index: 2;`}>
+      <NavbarButton
+        title="Host application version"
+        text={isPackaged ? `v${version}` : 'DEV'}
+        disabled
+      />
+      <NavbarButton
+        icon="refresh"
+        title="Refresh window"
+        onClick={() => refreshMainWindow.renderer!.trigger({})}
+      />
+      <NavbarButton
+        icon="settings"
+        title="Settings"
+        active={view === 'settings'}
+        onClick={() => dispatch({ type: view === 'settings' ? 'close-settings' : 'open-settings' })}
+      />
+    </Nav>
   );
 };
 
@@ -137,21 +130,32 @@ const NavbarButton: React.FC<ButtonProps & { title?: string }> = function (props
 
 
 const MainView: React.FC<{ className?: string }> = function ({ className }) {
-  const { state: { view }, dispatch } = useContext(Context);
+  const globalSettings = useSettings('global', INITIAL_GLOBAL_SETTINGS);
+  const globalSettingsContext = {
+    settings: globalSettings.value.settings,
+    refresh: globalSettings.refresh,
+  };
+  const { state, dispatch } = useContext(Context);
 
-  if (view === 'welcome-screen') {
+  if (state.view === 'welcome-screen') {
     return <WelcomeScreen
       className={className}
       css={css`position: absolute; inset: 0; margin: auto; height: 70vh; width: 70vw;`}
       onOpenDataset={(workDir, datasetID) => dispatch({ type: 'open-dataset', workDir, datasetID })}
-      //onExportDataset={(workDir, datasetID) => dispatch({ type: 'export-dataset', workDir, datasetID })}
+      onExportDataset={(workDir, datasetID) => dispatch({ type: 'export-dataset', workDir, datasetID })}
     />;
 
-  } else if (view === 'dataset') {
-    return <Dataset className={className} />;
+  } else if (state.view === 'dataset') {
+    return <Dataset className={className} showExportOptions={state.export ? true : undefined} />;
 
-  } else if (view === 'dataset-export') {
-    return <Dataset className={className} showExportOptions />;
+
+  } else if (state.view === 'settings') {
+    return (
+      <GlobalSettingsContext.Provider value={globalSettingsContext}>
+        <GlobalSettingsForm className={className} css={css`overflow-y: auto !important; display: flex; flex-flow: column nowrap;`} />
+      </GlobalSettingsContext.Provider>
+    );
+    //return <Dataset className={className} showExportOptions />;
 
   } else {
     return <NonIdealState

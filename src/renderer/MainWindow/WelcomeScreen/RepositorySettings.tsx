@@ -6,18 +6,18 @@ import React, { useContext, useState } from 'react';
 import { Button } from '@blueprintjs/core';
 import PropertyView from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import PanelSeparator from '@riboseinc/paneron-extension-kit/widgets/panels/PanelSeparator';
+import OperationQueueContext from '@riboseinc/paneron-extension-kit/widgets/OperationQueue/context';
 
 import ShareRepoForm from 'renderer/MainWindow/repositories/ShareRepoForm';
 import { deleteRepository, describeRepository, repositoriesChanged, setAuthorInfo } from 'repositories/ipc';
 import type { Repository } from 'repositories/types';
 import type { GitAuthor } from 'repositories/types';
-import { Context } from '../context';
 import AuthorForm from '../repositories/AuthorForm';
 
 
 const RepositorySettings: React.FC<{ workDir: string; repoInfo?: Repository; className?: string; }> =
 function ({ workDir, repoInfo, className }) {
-  const { performOperation, isBusy } = useContext(Context);
+  const { performOperation, isBusy } = useContext(OperationQueueContext);
 
   const openedRepoResp = describeRepository.renderer!.useValue(
     { workingCopyPath: workDir },

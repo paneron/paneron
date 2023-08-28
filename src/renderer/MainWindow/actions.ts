@@ -12,7 +12,15 @@ interface ExportDatasetAction extends Omit<OpenDatasetAction, 'type'> {
 interface CloseAction extends BaseAction {
   type: 'close-dataset'
 }
+interface OpenSettingsAction extends BaseAction {
+  type: 'open-settings'
+}
+interface CloseSettingsAction extends BaseAction {
+  type: 'close-settings'
+}
 export type Action =
   | OpenDatasetAction
   | ExportDatasetAction
   | CloseAction
+  | OpenSettingsAction
+  | CloseSettingsAction

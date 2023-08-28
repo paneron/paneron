@@ -3,17 +3,25 @@
 
 //import log from 'electron-log';
 import { jsx, css } from '@emotion/react';
-import React, { useCallback, useContext, useEffect, useState, useMemo } from 'react';
+import { useContext, useEffect, useState, useMemo } from 'react';
+import React from 'react';
 import { Helmet } from 'react-helmet';
 import MathJax from 'react-mathjax2';
-import { NonIdealState, ProgressBar, Spinner, Toaster } from '@blueprintjs/core';
+import { FormGroup, Button, Radio, RadioGroup, Icon, IconSize, Classes, NonIdealState, Spinner } from '@blueprintjs/core';
 
-import type { DatasetContext } from '@riboseinc/paneron-extension-kit/types';
+import HelpTooltip from '@riboseinc/paneron-extension-kit/widgets/HelpTooltip';
+import type { RendererPlugin, DatasetContext } from '@riboseinc/paneron-extension-kit/types';
+import OperationQueueContext from '@riboseinc/paneron-extension-kit/widgets/OperationQueue/context';
 
+import { ZipArchive } from '../../renderer/zip/ZipArchive';
+import { stripLeadingSlash } from '../../utils';
+
+import { getBufferDataset, getBufferPaths } from 'repositories/ipc';
 import { unloadDataset } from 'datasets/ipc';
 import getDataset from 'datasets/renderer/getDataset';
 import { getFullAPI } from 'datasets/renderer/context';
 import type { DatasetInfo } from 'datasets/types';
+import { getPluginInfo } from 'plugins';
 import ErrorBoundary from '../common/ErrorBoundary';
 import { Context } from './context';
 
@@ -25,63 +33,19 @@ const NODE_MODULES_PATH = process.env.NODE_ENV === 'production'
 const MATHJAX_PATH = `${NODE_MODULES_PATH}/mathjax/MathJax.js?config=AM_HTMLorMML`;
 
 
-const toaster = Toaster.create({ position: 'bottom-left', canEscapeKeyClear: false });
+//const toaster = Toaster.create({ position: 'bottom-left', canEscapeKeyClear: false });
 
 
 const Dataset: React.FC<{ className?: string; showExportOptions?: true }> =
 function ({ className, showExportOptions }) {
-  const { state: { selectedRepoWorkDir, selectedDatasetID } } = useContext(Context);
+  const { state: { selectedRepoWorkDir, selectedDatasetID }, dispatch } = useContext(Context);
+  const { performOperation, isBusy } = useContext(OperationQueueContext);
   const [isLoading, setLoading] = useState(false);
   const [dsProps, setDatasetProperties] = useState<{
     writeAccess: boolean;
     dataset: DatasetInfo;
     MainView: React.FC<DatasetContext & { className?: string }>;
   } | null>(null);
-
-  const [operationKey, setOperationKey] = useState<string | undefined>(undefined);
-  const performOperation = useCallback(function <P extends any[], R>(gerund: string, func: (...opts: P) => Promise<R>) {
-    return async (...opts: P) => {
-      const opKey = toaster.show({
-        message: <div css={css`display: flex; flex-flow: row nowrap; white-space: nowrap; align-items: center;`}>
-          <ProgressBar intent="primary" css={css`width: 50px;`} />
-          &emsp;
-          {gerund}…
-        </div>,
-        intent: 'primary',
-        timeout: 0,
-      });
-      setOperationKey(opKey);
-      try {
-        // TODO: Investigate whether/why calls to console or electron-log from within func()
-        // are not resulting in expected console output.
-        const result: R = await func(...opts);
-        toaster.dismiss(opKey);
-        toaster.show({ message: `Done ${gerund}`, intent: 'success', icon: 'tick-circle' });
-        setOperationKey(undefined);
-        return result;
-      } catch (e) {
-        let errMsg: string;
-        const rawErrMsg = (e as any).toString?.();
-        if (rawErrMsg.indexOf('Error:')) {
-          const msgParts = rawErrMsg.split('Error:');
-          errMsg = msgParts[msgParts.length - 1].trim();
-        } else {
-          errMsg = rawErrMsg;
-        }
-        toaster.dismiss(opKey);
-        toaster.show({
-          message: `Problem ${gerund}. The error said: “${errMsg}”`,
-          intent: 'danger',
-          icon: 'error',
-          timeout: 0,
-          onDismiss: () => {
-            setOperationKey(undefined);
-          },
-        });
-        throw e;
-      }
-    }
-  }, [operationKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -101,7 +65,7 @@ function ({ className, showExportOptions }) {
         setLoading(false);
         setDatasetProperties(null);
       }
-    })();
+    }, { blocking: true })();
     return function cleanup() {
       cancelled = true;
       if (selectedRepoWorkDir && selectedDatasetID) {
@@ -120,10 +84,10 @@ function ({ className, showExportOptions }) {
           workingCopyPath: selectedRepoWorkDir,
           datasetID: selectedDatasetID,
           writeAccess: dsProps.writeAccess,
+          performOperation,
+          isBusy,
         }),
         title: dsProps.dataset.title,
-        performOperation,
-        operationKey,
       }
     : null
   ), [
@@ -131,7 +95,6 @@ function ({ className, showExportOptions }) {
     selectedDatasetID,
     JSON.stringify(dsProps),
     performOperation,
-    operationKey,
   ]);
 
   const view = ctx && dsProps

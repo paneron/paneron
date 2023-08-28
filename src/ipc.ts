@@ -1,6 +1,9 @@
 import { ipcMain, IpcRendererEvent, IpcMainInvokeEvent, ipcRenderer } from 'electron';
 import log from 'electron-log';
-import { useEffect, useState, useCallback } from 'react';
+import { useContext, useEffect, useState, useCallback } from 'react';
+
+import OperationQueueContext from '@riboseinc/paneron-extension-kit/widgets/OperationQueue/context';
+
 import { toJSONPreservingUndefined } from './utils';
 import { hash } from './main/utils';
 
@@ -103,10 +106,13 @@ type MainEndpoint<I extends Payload, O extends Payload> = {
      * A hook that takes a payload and provides the result supplied by main handler.
      * Used for idempotent requests, like querying data.
      * Calls main thread again whenever payload changes.
-     * 
+     *
+     * `opts.nounLabel` is used to show a non-blocking operation
+     * using `OperationQueue`.
+     *
      * NOTE: Don’t use this method if the function can modify data.
      */
-    useValue: (payload: I, initialValue: O) => {
+    useValue: (payload: I, initialValue: O, opts?: { nounLabel?: string }) => {
       value: O
       /** Errors encountered while triggerind the IPC endpoint. */
       errors: string[]
@@ -126,7 +132,7 @@ type MainEndpoint<I extends Payload, O extends Payload> = {
 
 
 /** Renderer endpoint handler function. Not expected to return anything back to main thread. */
-export type RendererHandler<I extends Payload> = (params: I) => Promise<void> | void;
+export type RendererHandler<I extends Payload> = (params: I) => Promise<unknown> | unknown;
 
 /** A wrapper for Electron IPC endpoint with handler in the renderer thread. */
 type RendererEndpoint<I extends Payload> = {
@@ -159,6 +165,8 @@ type RendererEndpoint<I extends Payload> = {
      * NOTE: Always clean up the handler by calling `handler.destroy()`.
      */
     handle: (handler: RendererHandler<I>) => BoundHandler
+
+    once: (handler: RendererHandler<I>) => BoundHandler
 
     /** Proxies to main.trigger, allowing to do this from renderer. */
     trigger: (payload: I, forWindowWithTitle?: string) => Promise<void>
@@ -278,7 +286,9 @@ export const makeEndpoint: EndpointMaker = {
             const result: MainEndpointResponse<O> = await ipcRenderer.invoke(name, payload);
             return result;
           },
-          useValue: (payload: I, initialValue: O) => {
+          useValue: (payload: I, initialValue: O, opts) => {
+            const opQueueContext = useContext(OperationQueueContext);
+
             const [value, updateValue] = useState(initialValue);
             const [errors, updateErrors] = useState<string[]>([]);
             const [isUpdating, setUpdating] = useState(true);
@@ -297,7 +307,10 @@ export const makeEndpoint: EndpointMaker = {
 
                 try {
                   //log.debug("IPC: Invoking", name, payloadSliceToLog);
-                  const maybeResp = await ipcRenderer.invoke(name, payload);
+                  const maybeResp =
+                    opts?.nounLabel && opQueueContext
+                      ? await opQueueContext.performOperation(`reading ${opts.nounLabel}`, ipcRenderer.invoke, { blocking: false })(name, payload)
+                      : await ipcRenderer.invoke(name, payload);
 
                   if (cancelled) { return; }
 
@@ -376,11 +389,24 @@ export const makeEndpoint: EndpointMaker = {
       return {
         renderer: {
           handle: (handler) => {
-            async function _handler(_: IpcRendererEvent, payload: I): Promise<void> {
-              await handler(payload);
+            async function _handler(_: IpcRendererEvent, payload: I): Promise<unknown> {
+              return await handler(payload);
             }
 
             ipcRenderer.on(name, _handler);
+
+            return {
+              destroy: () => {
+                ipcRenderer.removeListener(name, _handler);
+              },
+            };
+          },
+          once: (handler) => {
+            async function _handler(_: IpcRendererEvent, payload: I): Promise<unknown> {
+              return await handler(payload);
+            }
+
+            ipcRenderer.once(name, _handler);
 
             return {
               destroy: () => {
