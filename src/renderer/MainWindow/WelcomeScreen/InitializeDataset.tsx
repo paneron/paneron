@@ -81,7 +81,7 @@ function ({ workDir }) {
         <PropertyView label="ID">
           <TextInput
             value={datasetID}
-            onChange={(id) => setDatasetID(id.toLowerCase())} 
+            onChange={(id) => setDatasetID(id.toLowerCase())}
             validationErrors={datasetID.trim() === ''
               ? ["Alphanumeric, no spaces. This will also be used as a name for dataset directory under repository root."]
               : !checkResult.value.path

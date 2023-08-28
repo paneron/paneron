@@ -15,7 +15,7 @@ const toaster = Toaster.create({ position: 'bottom' });
 
 interface ContextSpec {
   state: State
-  dispatch: React.Dispatch<Action> 
+  dispatch: React.Dispatch<Action>
   stateLoaded: boolean
   showMessage: (opts: ToastProps) => void
 }
