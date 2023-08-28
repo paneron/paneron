@@ -11,6 +11,7 @@ import log from 'electron-log';
 import { useEffect, useState } from 'react';
 
 import type { DatasetContext } from '@riboseinc/paneron-extension-kit/types';
+import type { RendererPlugin } from '@riboseinc/paneron-extension-kit/types';
 import type { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
 import { type IndexStatus, INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
 import type { Hooks } from '@riboseinc/paneron-extension-kit/types/renderer';
@@ -50,6 +51,7 @@ interface BasicDatasetOptions {
 
 export interface ContextGetterProps extends BasicDatasetOptions, OperationQueueContextSpec {
   writeAccess: boolean
+  exportFormats: RendererPlugin["exportFormats"]
 }
 
 
@@ -147,6 +149,7 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
     writeAccess,
     workingCopyPath,
     datasetID,
+    exportFormats,
     performOperation,
     isBusy,
   } = opts;
@@ -386,6 +389,17 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
     useTimeTravelingPersistentDatasetStateReducer,
 
 
+    // Extension-specific export formats (provisional)
+
+    listExporters: () => {
+      return (
+        Object.entries(exportFormats).
+        map(([formatID, { name, description }]) => ({ [formatID]: { name, description } })).
+        reduce((prev, curr) => ({ ...prev, ...curr }), {})
+      );
+    },
+
+
     // Writing data
 
     makeRandomID: writeAccess
@@ -527,15 +541,6 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
         ...desc,
         value: desc.value.pid >= 0 ? desc.value : null,
       }
-    },
-
-    listExporters: () => {
-      return {};
-      // return (
-      //   Object.entries(exportFormats).
-      //   map(([formatID, { name, description }]) => ({ [formatID]: { name, description } })).
-      //   reduce((prev, curr) => ({ ...prev, ...curr }), {})
-      // );
     },
   }
 }

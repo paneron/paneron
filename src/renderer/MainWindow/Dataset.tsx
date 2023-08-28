@@ -12,6 +12,7 @@ import { FormGroup, Button, Radio, RadioGroup, Icon, IconSize, Classes, NonIdeal
 import HelpTooltip from '@riboseinc/paneron-extension-kit/widgets/HelpTooltip';
 import type { RendererPlugin, DatasetContext } from '@riboseinc/paneron-extension-kit/types';
 import OperationQueueContext from '@riboseinc/paneron-extension-kit/widgets/OperationQueue/context';
+import type { Exporter, ExportOptions, ExportFormatInfo } from '@riboseinc/paneron-extension-kit/types/export-formats';
 
 import { ZipArchive } from '../../renderer/zip/ZipArchive';
 import { stripLeadingSlash } from '../../utils';
@@ -45,6 +46,7 @@ function ({ className, showExportOptions }) {
     writeAccess: boolean;
     dataset: DatasetInfo;
     MainView: React.FC<DatasetContext & { className?: string }>;
+    exportFormats: RendererPlugin["exportFormats"],
   } | null>(null);
 
   useEffect(() => {
@@ -84,6 +86,7 @@ function ({ className, showExportOptions }) {
           workingCopyPath: selectedRepoWorkDir,
           datasetID: selectedDatasetID,
           writeAccess: dsProps.writeAccess,
+          exportFormats: dsProps.exportFormats,
           performOperation,
           isBusy,
         }),
@@ -97,8 +100,86 @@ function ({ className, showExportOptions }) {
     performOperation,
   ]);
 
-  const view = ctx && dsProps
-    ? <ErrorBoundary viewName="dataset"><dsProps.MainView {...ctx} /></ErrorBoundary>
+  const exportGit: (opts: ExportOptions) => Exporter = async function* _exportGit () {
+    if (!selectedRepoWorkDir || !selectedDatasetID) {
+      throw new Error("No repository or dataset");
+    }
+    // List ALL buffer paths in the dataset at once (!)
+    const { result: { bufferPaths } } = await getBufferPaths.renderer!.trigger({
+      workingCopyPath: selectedRepoWorkDir,
+      prefix: selectedDatasetID,
+    });
+    // Yield buffer dataset per chunk of paths.
+    for (let i = 0; i < bufferPaths.length; i+= 10) {
+      const bufferPathChunk = bufferPaths.slice(i, i + 10).
+        map(p => `${selectedDatasetID}/${stripLeadingSlash(p)}`);
+      const { result } = await getBufferDataset.renderer!.trigger({
+        workingCopyPath: selectedRepoWorkDir,
+        paths: bufferPathChunk,
+      });
+      console.debug("Got buffer dataset", result);
+      yield result;
+    }
+  }
+
+  async function handleExport(formatID: string): Promise<string> {
+    if (!dsProps || !ctx) {
+      throw new Error("Dataset is not ready");
+    }
+    if (!ctx.writeFileToFilesystem) {
+      throw new Error("Capability to export to filesystem is not available");
+    }
+    const exporter = formatID === GIT_EXPORT_FORMAT_ID
+      ? exportGit
+      : dsProps?.exportFormats[formatID]?.exporter;
+    if (!exporter) {
+      throw new Error(`No exporter ${formatID}`);
+    }
+    const zip = new ZipArchive();
+    const datasetGenerator = exporter({
+      getObjectData: ctx.getObjectData,
+      getMapReducedData: ctx.getMapReducedData,
+    });
+    for await (const _ds of datasetGenerator) {
+      for (const [_fp, _buf] of Object.entries(_ds)) {
+        if (_buf !== null) {
+          await zip.set(stripLeadingSlash(_fp), new Blob([_buf]));
+        }
+      }
+    }
+    const opts = {
+      dialogOpts: {
+        prompt: "Select where to save exported data",
+        filters: [{
+          name: "ZIP arhcive",
+          extensions: ['zip'],
+        }],
+      },
+      bufferData: new Uint8Array((await zip.to_blob().arrayBuffer())),
+    };
+    const { savedToFileAtPath } = await ctx.writeFileToFilesystem(opts);
+    return savedToFileAtPath;
+  }
+
+  const exportFormats = {
+     ...(ctx?.listExporters() ?? {}),
+     ...DEFAULT_EXPORT_FORMATS,
+  };
+
+  const view = ctx && dsProps && selectedRepoWorkDir && selectedDatasetID
+    ? showExportOptions
+      ? <ExportOptions
+          datasetInfo={dsProps.dataset}
+          exportFormats={exportFormats}
+          inProgress={isBusy}
+          onCancel={() => dispatch({ type: 'close-dataset' })}
+          onRequestExport={isBusy
+            ? undefined
+            : ctx.performOperation('exporting', handleExport, { blocking: true })}
+        />
+      : <ErrorBoundary viewName="dataset">
+          <dsProps.MainView {...ctx} />
+        </ErrorBoundary>
     : isLoading
       ? <NonIdealState
           icon={<Spinner />}
@@ -125,6 +206,85 @@ function ({ className, showExportOptions }) {
     </MathJax.Context>
   );
 }
+
+
+const GIT_EXPORT_FORMAT_ID = 'git' as const;
+const DEFAULT_EXPORT_FORMATS = {
+  [GIT_EXPORT_FORMAT_ID]: {
+    name: "Source data, as is",
+    description: "Full source data. NOTE: Prefer to clone the corresponding Git repository instead. This may take a while.",
+  },
+};
+
+
+const ExportOptions: React.FC<{
+  datasetInfo: DatasetInfo
+  exportFormats: { [formatID: string]: ExportFormatInfo }
+  onRequestExport?: (formatID: string) => void
+  onCancel?: () => void
+  inProgress?: boolean
+}> = function ({ datasetInfo, exportFormats, onRequestExport, onCancel, inProgress }) {
+  const [formatID, setFormatID] = useState<undefined | string>(undefined);
+
+  const { value: { plugin } } = getPluginInfo.renderer!.useValue(
+    { id: datasetInfo.type.id ?? '' },
+    { plugin: null });
+
+  const effectiveIconEl: JSX.Element = !plugin
+    ? <Icon icon="circle" size={IconSize.LARGE * 4} />
+    : !plugin?.iconURL
+      ? <Icon icon="heart-broken" />
+      : <Icon
+          icon={<img className={Classes.ICON}
+            css={css`height: ${IconSize.LARGE * 4}px; width: ${IconSize.LARGE * 4}px`}
+            src={plugin?.iconURL} />}
+        />;
+
+  const canExport = !!(!inProgress && onRequestExport && formatID)
+
+  return <NonIdealState
+    icon={effectiveIconEl}
+    title={`Export dataset ${datasetInfo.title}`}
+    description={<div css={css`text-align: left;`}>
+      <FormGroup label="Available export formats:">
+        <RadioGroup
+            onChange={evt => setFormatID(evt.currentTarget.value)}
+            selectedValue={formatID}>
+          {Object.entries(exportFormats).map(([formatID, formatInfo]) =>
+            <Radio
+                key={formatID}
+                disabled={!onRequestExport}
+                value={formatID}
+                labelElement={<>
+                  {formatInfo.name}
+                  {formatInfo.description.trim()
+                    ? <>&ensp;<HelpTooltip content={formatInfo.description} /></>
+                    : undefined}
+                </>} />
+          )}
+        </RadioGroup>
+      </FormGroup>
+      <FormGroup helperText={<>
+        This will generate a ZIP archive with exported data,
+        after which you will be prompted for a location to write the file to.
+      </>}>
+        <Button
+            large
+            fill
+            icon='export'
+            intent={canExport ? 'primary' : undefined}
+            onClick={() => onRequestExport?.(formatID ?? '')}
+            loading={inProgress}
+            disabled={!canExport}>
+          Export
+        </Button>
+      </FormGroup>
+      <Button disabled={inProgress} onClick={onCancel}>
+        Cancel
+      </Button>
+    </div>}
+  />;
+};
 
 
 export default Dataset;

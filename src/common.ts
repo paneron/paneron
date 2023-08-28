@@ -72,7 +72,7 @@ export const openExternalURL = makeEndpoint.main(
 
 export const saveFileToFilesystem = makeEndpoint.main(
   'saveFileToFilesystem',
-  <{ dialogOpts: SaveFileDialogProps, bufferData: Uint8Array }>_,
+  <{ dialogOpts: SaveFileDialogProps, bufferData: Uint8Array | DataView }>_,
   <{ success: true, savedToFileAtPath: string }>_,
 );
 

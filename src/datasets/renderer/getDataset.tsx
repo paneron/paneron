@@ -1,4 +1,5 @@
 import React from 'react';
+import type { RendererPlugin } from '@riboseinc/paneron-extension-kit/types';
 import type { DatasetContext } from '@riboseinc/paneron-extension-kit/types';
 import { describeRepository, loadRepository } from 'repositories/ipc';
 import getPlugin from 'plugins/renderer/getPlugin';
@@ -10,6 +11,7 @@ export default async function getDataset(workingCopyPath: string, datasetID: str
   writeAccess: boolean;
   dataset: DatasetInfo;
   MainView: React.FC<DatasetContext & { className?: string }>;
+  exportFormats: RendererPlugin["exportFormats"];
 }> {
 
   if (workingCopyPath === '') {
@@ -19,6 +21,7 @@ export default async function getDataset(workingCopyPath: string, datasetID: str
   let MainView: React.FC<DatasetContext & { className?: string }>;
   let writeAccess: boolean;
   let dataset: DatasetInfo;
+  let exportFormats: RendererPlugin["exportFormats"];
 
   let pluginID: string;
   let pluginVersion: string | undefined;
@@ -88,6 +91,7 @@ export default async function getDataset(workingCopyPath: string, datasetID: str
     }
 
     MainView = plugin.mainView;
+    exportFormats = plugin.exportFormats;
     console.debug("Dataset view: Got renderer plugin and dataset view", plugin);
 
     console.time("Dataset view: Loading dataset…");
@@ -106,5 +110,5 @@ export default async function getDataset(workingCopyPath: string, datasetID: str
     throw e;
   }
 
-  return { MainView, writeAccess, dataset };
+  return { MainView, writeAccess, dataset, exportFormats };
 }
