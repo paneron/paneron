@@ -190,17 +190,17 @@ export const _ = <unknown>null;
  *
  * The code that creates these endpoints should be separated into a shared module
  * (i.e., it’ll be imported and called in both renderer and main thread).
- * 
+ *
  * The code that calls methods on these endpoints
  * to set up listeners (handlers) or to trigger them,
  * however, must be split into thread-specific files.
- * 
+ *
  * ### Example of creating & using a main-side endpoint:
- * 
+ *
  * (For a renderer-side endpoint, it’s more or less the reverse.)
  *
  * Defining endpoint (will be imported in both threads later):
- * 
+ *
  * ```typescript
  *   // shared-ipc.ts
  *   import { _, makeEndpoint } from 'ipc'
@@ -209,7 +209,7 @@ export const _ = <unknown>null;
  *     <{ foo: string }>_,
  *     <{ bar: number }>_)
  * ```
- * 
+ *
  * Defining the handler:
  *
  * ```typescript
@@ -223,7 +223,7 @@ export const _ = <unknown>null;
  * ```
  *
  * Triggering in renderer:
- * 
+ *
  * ```typescript
  *   // renderer/some-file.ts
  *   import { doSomething } from 'shared-ipc'
