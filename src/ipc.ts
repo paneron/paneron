@@ -1,4 +1,4 @@
-import { ipcMain, IpcRendererEvent, IpcMainInvokeEvent, ipcRenderer } from 'electron';
+import { ipcMain, type IpcRendererEvent, type IpcMainInvokeEvent, ipcRenderer } from 'electron';
 import log from 'electron-log';
 import { useContext, useEffect, useState, useCallback } from 'react';
 
