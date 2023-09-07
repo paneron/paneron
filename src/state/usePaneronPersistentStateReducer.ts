@@ -1,4 +1,4 @@
-import { Dispatch } from 'react';
+import { type Dispatch, useCallback } from 'react';
 import usePersistentStateReducer, {
   type BaseAction,
   type PersistentStateReducerHook,
@@ -15,18 +15,19 @@ export type PaneronPersistentStateReducerHook<S, A extends BaseAction> = (...arg
 function usePaneronPersistentStateReducer<S extends Record<string, any>, A extends BaseAction>(
   ...args: Parameters<PersistentStateReducerHook<S, A>>
 ) {
-  function _storeState(storageKey: string, state: S) {
+  const _storeState = useCallback(function _storeState(storageKey: string, state: S) {
     storeState.renderer!.trigger({
       key: storageKey,
       newState: state,
     });
-  }
-  async function _loadState(storageKey: string): Promise<S | undefined> {
+  }, [storeState.renderer!.trigger]);
+
+  const _loadState = useCallback(async function _loadState(storageKey: string): Promise<S | undefined> {
     const loadedState =
       (await loadState.renderer!.trigger({ key: storageKey })).
         result?.state as S | undefined;
     return loadedState;
-  }
+  }, [loadState.renderer!.trigger]);
 
   return usePersistentStateReducer(
     _storeState,
