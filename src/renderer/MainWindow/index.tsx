@@ -18,15 +18,11 @@ import GlobalSettingsForm from './GlobalSettingsForm';
 
 
 const MainWindow: React.FC<Record<never, never>> = function () {
-  const globalSettings = useSettings('global', INITIAL_GLOBAL_SETTINGS);
-  const globalSettingsContext = {
-    settings: globalSettings.value.settings,
-    refresh: globalSettings.refresh,
-  };
+  const { value: { settings: { mainNavbarPosition } } } =
+    useSettings('global', INITIAL_GLOBAL_SETTINGS);
 
-  const {
-    value: { version, isPackaged },
-  } = getAppVersion.renderer!.useValue({}, { version: '' });
+  const { value: { version, isPackaged } } =
+    getAppVersion.renderer!.useValue({}, { version: '' });
 
   const Frag = isPackaged ? React.Fragment : React.StrictMode;
 
@@ -37,7 +33,7 @@ const MainWindow: React.FC<Record<never, never>> = function () {
           <div
               css={css`
                 position: absolute; right: 0; left: 0;
-                ${globalSettingsContext.settings.mainNavbarPosition === 'bottom'
+                ${mainNavbarPosition === 'bottom'
                   ? `bottom: ${NAV_HEIGHT_PX}px; top: 0;`
                   : `top: ${NAV_HEIGHT_PX}px; bottom: 0;`}
                 display: flex;
@@ -62,7 +58,7 @@ const MainWindow: React.FC<Record<never, never>> = function () {
             />
           </div>
           <Navbar
-            mainNavbarPosition={globalSettings.value.settings.mainNavbarPosition}
+            mainNavbarPosition={mainNavbarPosition}
             isPackaged={isPackaged}
             version={version}
           />
