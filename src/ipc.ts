@@ -299,6 +299,18 @@ export const makeEndpoint: EndpointMaker = {
             const payloadHash = hash(payloadSnapshot);
             const payloadSliceToLog = payloadSnapshot.slice(0, LOG_PAYLOAD_SLICE);
 
+            // Wrap in performOperation to notify the user,
+            // if OperationQueue context is available and nounLabel is given.
+            // Otherwise, do IPC invokation directly.
+            const performRequest = opQueueContext && opts?.nounLabel
+              ? opQueueContext.performOperation(
+                  `reading ${opts.nounLabel}`,
+                  ipcRenderer.invoke,
+                  // Not “blocking” since it’s just data fetching.
+                  { blocking: false },
+                )
+              : ipcRenderer.invoke;
+
             useEffect(() => {
               let cancelled = false;
 
@@ -307,10 +319,7 @@ export const makeEndpoint: EndpointMaker = {
 
                 try {
                   //log.debug("IPC: Invoking", name, payloadSliceToLog);
-                  const maybeResp =
-                    opts?.nounLabel && opQueueContext
-                      ? await opQueueContext.performOperation(`reading ${opts.nounLabel}`, ipcRenderer.invoke, { blocking: false })(name, payload)
-                      : await ipcRenderer.invoke(name, payload);
+                  const maybeResp = await performRequest(name, payload);
 
                   if (cancelled) { return; }
 
