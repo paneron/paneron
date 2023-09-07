@@ -1,7 +1,7 @@
 import { Dispatch } from 'react';
 import usePersistentStateReducer, {
-  BaseAction,
-  PersistentStateReducerHook,
+  type BaseAction,
+  type PersistentStateReducerHook,
 } from '@riboseinc/paneron-extension-kit/usePersistentStateReducer';
 import { loadState, storeState } from './ipc';
 
