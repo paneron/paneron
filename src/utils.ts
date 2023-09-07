@@ -105,19 +105,19 @@ export function makeQueue() {
 //       return async function runQueued(...args) {
 //         // Which queues do we want to occupy? (Which locks do we want to acquire?)
 //         const queues = occupyQueues(...args).map(getQueue);
-// 
+//
 //         // Acquire the locks:
-// 
+//
 //         // Wait until all those queues settle
 //         await Promise.allSettled(queues.map(q => q.onComplete()));
 //         // Start our work
 //         const promise = fn(...args);
 //         // Occupy all given queues with it
 //         queues.map(q => q.add(() => promise));
-// 
+//
 //         // We have acquired the locks. Once the promise resolves,
 //         // queues will be able to take new tasks.
-// 
+//
 //         // Resolve when work completes
 //         return await promise;
 //       }
