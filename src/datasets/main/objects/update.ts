@@ -8,7 +8,7 @@ import { LFSParams } from 'repositories/types';
 import { updateDatasetIndexesIfNeeded } from '../loadedDatasets';
 import { toBufferChangeset } from '../buffer-dataset-conversion';
 import { API as Datasets } from '../../types';
-import { diffObjectDatasets } from './equality';
+import { diffObjectDatasets } from '../../util';
 import { readObjectCold } from './read';
 
 
