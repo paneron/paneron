@@ -15,7 +15,7 @@ import OperationQueueContext from '@riboseinc/paneron-extension-kit/widgets/Oper
 import type { Exporter, ExportOptions, ExportFormatInfo } from '@riboseinc/paneron-extension-kit/types/export-formats';
 
 import { ZipArchive } from '../../renderer/zip/ZipArchive';
-import { stripLeadingSlash } from '../../utils';
+import { stripLeadingSlash, normalizeObject } from '../../utils';
 
 import { getBufferDataset, getBufferPaths } from 'repositories/ipc';
 import { unloadDataset } from 'datasets/ipc';
@@ -96,7 +96,7 @@ function ({ className, showExportOptions }) {
   ), [
     selectedRepoWorkDir,
     selectedDatasetID,
-    JSON.stringify(dsProps),
+    dsProps ? JSON.stringify(normalizeObject(dsProps)) : null,
     performOperation,
   ]);
 
