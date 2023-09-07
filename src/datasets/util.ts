@@ -1,5 +1,6 @@
 import type { DiffStatus } from '@riboseinc/paneron-extension-kit/types/changes';
 import { diffDatasets } from '../repositories/util';
+import { normalizeObject } from '../utils';
 
 
 /**
@@ -11,10 +12,6 @@ import { diffDatasets } from '../repositories/util';
  * i.e. unchanged paths will not be returned.
  *
  * Intended to check for conflicts before committing changes.
- *
- * NOTE: Currently, objects are not considered the same only if their
- * JSON representations are identical (per `JSON.stringify()`);
- * meaning key order matters. This is a known problem.
  */
 export async function* diffObjectDatasets(
   objectPaths: AsyncGenerator<string>,
@@ -29,10 +26,13 @@ export async function* diffObjectDatasets(
 }
 
 
+/**
+ * Returns `true` if both given objects have identical shape,
+ * disregarding key ordering.
+ */
 export function objectsAreSame(
   obj1: Record<string, any>,
   obj2: Record<string, any>,
 ): boolean {
-  return JSON.stringify(obj1) === JSON.stringify(obj2);
+  return JSON.stringify(normalizeObject(obj1)) === JSON.stringify(normalizeObject(obj2));
 }
-
