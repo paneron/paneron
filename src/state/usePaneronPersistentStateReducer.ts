@@ -8,8 +8,10 @@ import { loadState, storeState } from './ipc';
 
 export type PaneronPersistentStateReducerHook<S, A extends BaseAction> = (...args: Parameters<PersistentStateReducerHook<S, A>>) => [state: S, dispatch: Dispatch<A>, initialized: boolean];
 
-/* An implementation of PersistentStateReducer
-   that uses Paneron’s state management IPC endpoints. */
+/**
+ * An implementation of PersistentStateReducer
+ * that uses Paneron’s state management IPC endpoints.
+ */
 function usePaneronPersistentStateReducer<S extends Record<string, any>, A extends BaseAction>(
   ...args: Parameters<PersistentStateReducerHook<S, A>>
 ) {
