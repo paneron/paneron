@@ -1,10 +1,11 @@
 import path from 'path';
-import { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
-import { ObjectChangeset, ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
+
+import type { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
+import type { ObjectChangeset, ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
 import { getDatasetRoot } from 'repositories/main/meta';
 import { readLFSParams } from 'repositories/main/readRepoConfig';
-import { LFSParams } from 'repositories/types';
+import type { LFSParams } from 'repositories/types';
 import { updateDatasetIndexesIfNeeded } from '../loadedDatasets';
 import { toBufferChangeset } from '../buffer-dataset-conversion';
 import { API as Datasets } from '../../types';
