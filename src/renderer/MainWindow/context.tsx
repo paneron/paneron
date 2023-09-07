@@ -2,7 +2,7 @@
 /** @jsxFrag React.Fragment */
 
 import { jsx } from '@emotion/react';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { type ToastProps, Toaster } from '@blueprintjs/core';
 import OperationQueueContextProvider from '@riboseinc/paneron-extension-kit/widgets/OperationQueue/index';
 import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
@@ -99,7 +99,7 @@ const ContextProvider: React.FC<Record<never, never>> = function ({ children }) 
         state,
         dispatch,
         stateLoaded,
-        showMessage: (opts) => toaster.show(opts),
+        showMessage: useCallback((opts) => toaster.show(opts), []),
         //isBusy: _operationKey !== undefined,
         //performOperation,
       }}>
