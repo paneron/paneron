@@ -42,24 +42,15 @@ if (containerEl === null) {
 }
 
 // Do the rest.
-//
-// NOTE: Moving this logic out of async function causes a crash on hot reload
-// when working on renderer code in yarn dev mode.
 
-async function renderApp() {
-  //require('events').EventEmitter.defaultMaxListeners = 20;
+const applyColorSchemeDebounced = debounce(1000, applyColorScheme);
+colorSchemeUpdated.renderer!.handle(applyColorSchemeDebounced);
 
-  const applyColorSchemeDebounced = debounce(1000, applyColorScheme);
-  colorSchemeUpdated.renderer!.handle(applyColorSchemeDebounced);
-
-  ReactDOM.render(
-    <ErrorBoundary viewName="Main window">
-      <MainWindow />
-    </ErrorBoundary>,
-    containerEl);
-}
-
-renderApp();
+ReactDOM.render(
+  <ErrorBoundary viewName="Main window">
+    <MainWindow />
+  </ErrorBoundary>,
+  containerEl);
 
 
 import 'common';
