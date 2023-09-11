@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import {
   INITIAL_GLOBAL_SETTINGS,
   isValidGlobalSettings,
@@ -28,17 +30,18 @@ export function useSettings<T extends Settings>(scope: string, initial: T) {
   const state = loadState.renderer!.useValue({
     key: `settings-${scope}`,
   }, { state: initial });
-  const settings: T =
+  const maybeValidSettings: T =
     state.value.state as (T | undefined)
     ?? initial;
-  return {
+  const validSettings = scope !== GLOBAL_SCOPE || isValidGlobalSettings(maybeValidSettings)
+    ? maybeValidSettings
+    : INITIAL_GLOBAL_SETTINGS;
+  return useMemo((() => ({
     ...state,
     value: {
-      settings: scope !== GLOBAL_SCOPE || isValidGlobalSettings(settings)
-        ? settings
-        : INITIAL_GLOBAL_SETTINGS,
+      settings: validSettings,
     },
-  };
+  })), [scope, state, initial]);
 };
 
 
