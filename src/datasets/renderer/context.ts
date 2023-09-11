@@ -8,7 +8,7 @@
 
 import * as R from 'ramda';
 import log from 'electron-log';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import type { DatasetContext } from '@riboseinc/paneron-extension-kit/types';
 import type { RendererPlugin } from '@riboseinc/paneron-extension-kit/types';
@@ -161,7 +161,7 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
 
   function usePersistentDatasetStateReducer<S extends Record<string, any>, A extends BaseAction>
   (...opts: Parameters<PersistentStateReducerHook<S, A>>) {
-    const effectiveOpts: Parameters<PersistentStateReducerHook<S, A>> = [
+    const effectiveOpts: Parameters<PersistentStateReducerHook<S, A>> = useMemo((() => [
       // opts[0] is the storage key in the list of positional parameters.
       // Extension code should specify locally scoped key,
       // and this takes care of additionally scoping it by repository and dataset.
@@ -170,13 +170,13 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
       opts[1], opts[2],
 
       opts[3], opts[4], opts[5],
-    ];
+    ]), [...Array(6).keys()].map(k => opts[k]));
     return usePaneronPersistentStateReducer(...effectiveOpts);
   }
 
   function useTimeTravelingPersistentDatasetStateReducer<S extends Record<string, any>, A extends BaseAction>
   (...opts: Parameters<TimeTravelingPersistentStateReducerHook<S, A>>) {
-    const effectiveOpts: Parameters<TimeTravelingPersistentStateReducerHook<S, A>> = [
+    const effectiveOpts: Parameters<TimeTravelingPersistentStateReducerHook<S, A>> = useMemo((() => [
       opts[0], opts[1],
 
       // opts[2] is the storage key in the list of positional parameters.
@@ -187,7 +187,7 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
       opts[3], opts[4],
 
       opts[5], opts[6], opts[7],
-    ];
+    ]),  [...Array(8).keys()].map(k => opts[k]));
     return useTimeTravelingPersistentStateReducer(...effectiveOpts);
   }
 
