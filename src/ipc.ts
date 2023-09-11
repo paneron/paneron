@@ -359,11 +359,11 @@ export const makeEndpoint: EndpointMaker = {
 
               return function cleanUp() { cancelled = true; };
 
-            }, [name, reqCounter, payloadHash]);
+            }, [reqCounter, payloadHash]);
 
             const refresh = useCallback(
               () => updateReqCounter(c => c += 1),
-              [name, payloadHash]);
+              [payloadHash]);
 
             return {
               value,
