@@ -299,20 +299,20 @@ export const makeEndpoint: EndpointMaker = {
             const payloadHash = hash(payloadSnapshot);
             const payloadSliceToLog = payloadSnapshot.slice(0, LOG_PAYLOAD_SLICE);
 
-            // Wrap in performOperation to notify the user,
-            // if OperationQueue context is available and nounLabel is given.
-            // Otherwise, do IPC invokation directly.
-            const performRequest = opQueueContext && opts?.nounLabel
-              ? opQueueContext.performOperation(
-                  `reading ${opts.nounLabel}`,
-                  ipcRenderer.invoke,
-                  // Not “blocking” since it’s just data fetching.
-                  { blocking: false },
-                )
-              : ipcRenderer.invoke;
-
             useEffect(() => {
               let cancelled = false;
+
+              // Wrap in performOperation to notify the user,
+              // if OperationQueue context is available and nounLabel is given.
+              // Otherwise, do IPC invokation directly.
+              const performRequest = opQueueContext && opts?.nounLabel
+                ? opQueueContext.performOperation(
+                    `reading ${opts.nounLabel}`,
+                    ipcRenderer.invoke,
+                    // Not “blocking” since it’s just data fetching.
+                    { blocking: false },
+                  )
+                : ipcRenderer.invoke;
 
               async function doQuery() {
                 setUpdating(true);
