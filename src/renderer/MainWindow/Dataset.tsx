@@ -31,8 +31,17 @@ const NODE_MODULES_PATH = process.env.NODE_ENV === 'production'
   ? `${__static}/../../app.asar.unpacked/node_modules`
   : `${__static}/../../node_modules`;
 
-const MATHJAX_PATH = `${NODE_MODULES_PATH}/mathjax/MathJax.js?config=AM_HTMLorMML`;
+const MATHJAX_PATH = `${NODE_MODULES_PATH}/mathjax/MathJax.js?config=AM_HTMLorMML` as const;
 
+const MATHJAX_PATH_WITH_PROTO = `file://${MATHJAX_PATH}` as const;
+
+const MATHJAX_OPTS = {
+  asciimath2jax: {
+    useMathMLspacing: true,
+    delimiters: [["`","`"]],
+    preview: "none",
+  },
+} as const;
 
 //const toaster = Toaster.create({ position: 'bottom-left', canEscapeKeyClear: false });
 
@@ -189,14 +198,8 @@ function ({ className, showExportOptions }) {
 
   return (
     <MathJax.Context
-        script={`file://${MATHJAX_PATH}`}
-        options={{
-          asciimath2jax: {
-            useMathMLspacing: true,
-            delimiters: [["`","`"]],
-            preview: "none",
-          },
-        }}>
+        script={MATHJAX_PATH_WITH_PROTO}
+        options={MATHJAX_OPTS}>
       <div css={css`display: flex; flex-flow: row nowrap;`} className={className}>
         <Helmet>
           <title>{ctx?.title ?? selectedDatasetID} (dataset)</title>
