@@ -222,10 +222,10 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
       );
       const remote = resp.value.info.gitMeta.remote;
       const username = remote ? remote.username : undefined;
-      return {
+      return useMemo((() => ({
         ...resp,
         value: { username },
-      };
+      })), [resp.isUpdating, resp.errors, username]);
     },
 
 
@@ -312,13 +312,13 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
         }
       }, [indexID]);
 
-      return {
+      return useMemo((() => ({
         ...result,
         value: {
           ...result.value,
           status,
         },
-      };
+      })), [result]);
     },
 
     useFilteredIndex: function _useFilteredIndex (opts) {
@@ -537,10 +537,10 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
         }
       }, [desc.value.pid]);
 
-      return {
+      return useMemo((() => ({
         ...desc,
         value: desc.value.pid >= 0 ? desc.value : null,
-      }
+      })), [desc]);
     },
   }
 }
