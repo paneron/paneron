@@ -3,7 +3,7 @@
 
 //import log from 'electron-log';
 import { jsx, css } from '@emotion/react';
-import { useContext, useEffect, useState, useMemo } from 'react';
+import { useContext, useCallback, useEffect, useState, useMemo } from 'react';
 import React from 'react';
 import { Helmet } from 'react-helmet';
 import MathJax from 'react-mathjax2';
@@ -15,7 +15,7 @@ import OperationQueueContext from '@riboseinc/paneron-extension-kit/widgets/Oper
 import type { Exporter, ExportOptions, ExportFormatInfo } from '@riboseinc/paneron-extension-kit/types/export-formats';
 
 import { ZipArchive } from '../../renderer/zip/ZipArchive';
-import { stripLeadingSlash, normalizeObject } from '../../utils';
+import { stripLeadingSlash } from '../../utils';
 
 import { getBufferDataset, getBufferPaths } from 'repositories/ipc';
 import { unloadDataset } from 'datasets/ipc';
@@ -88,26 +88,27 @@ function ({ className, showExportOptions }) {
     }
   }, [selectedRepoWorkDir, selectedDatasetID]);
 
+  const dsAPI = useMemo((() => selectedRepoWorkDir && selectedDatasetID && dsProps
+    ? getFullAPI({
+        workingCopyPath: selectedRepoWorkDir,
+        datasetID: selectedDatasetID,
+        writeAccess: dsProps.writeAccess,
+        exportFormats: dsProps.exportFormats,
+        performOperation,
+      })
+    : null
+  ), [performOperation, selectedDatasetID, selectedRepoWorkDir, dsProps]);
+
   const ctx: DatasetContext | null =
-  useMemo((() => selectedRepoWorkDir && selectedDatasetID && dsProps
+  useMemo((() => dsAPI && dsProps
     ? {
-        ...getFullAPI({
-          workingCopyPath: selectedRepoWorkDir,
-          datasetID: selectedDatasetID,
-          writeAccess: dsProps.writeAccess,
-          exportFormats: dsProps.exportFormats,
-          performOperation,
-          isBusy,
-        }),
+        ...dsAPI,
         title: dsProps.dataset.title,
+        isBusy,
+        performOperation,
       }
     : null
-  ), [
-    selectedRepoWorkDir,
-    selectedDatasetID,
-    dsProps ? JSON.stringify(normalizeObject(dsProps)) : null,
-    performOperation,
-  ]);
+  ), [isBusy, dsProps, dsAPI, performOperation]);
 
   const exportGit: (opts: ExportOptions) => Exporter = async function* _exportGit () {
     if (!selectedRepoWorkDir || !selectedDatasetID) {

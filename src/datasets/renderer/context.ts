@@ -49,9 +49,10 @@ interface BasicDatasetOptions {
   datasetID: string
 }
 
-export interface ContextGetterProps extends BasicDatasetOptions, OperationQueueContextSpec {
+export interface ContextGetterProps extends BasicDatasetOptions {
   writeAccess: boolean
   exportFormats: RendererPlugin["exportFormats"]
+  performOperation: OperationQueueContextSpec["performOperation"]
 }
 
 
@@ -144,14 +145,13 @@ function getFilesystemAPI(datasetParams: BasicDatasetOptions): FilesystemAPI {
 
 
 /** Returns context including data modification utilities and React hooks. */
-export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'title'> {
+export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'title' | 'isBusy' | 'performOperation'> {
   const {
     writeAccess,
     workingCopyPath,
     datasetID,
     exportFormats,
     performOperation,
-    isBusy,
   } = opts;
 
   const datasetParams = {
@@ -208,9 +208,6 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
 
     ...getBasicReadAPI(datasetParams),
     ...getFilesystemAPI(datasetParams),
-
-    performOperation,
-    isBusy,
 
     openExternalLink: async ({ uri }) => {
       await openExternalURL.renderer!.trigger({
