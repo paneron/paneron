@@ -1,6 +1,6 @@
 import { ipcMain, type IpcRendererEvent, type IpcMainInvokeEvent, ipcRenderer } from 'electron';
 import log from 'electron-log';
-import { useContext, useEffect, useState, useCallback } from 'react';
+import { useContext, useEffect, useState, useMemo, useCallback } from 'react';
 
 import OperationQueueContext from '@riboseinc/paneron-extension-kit/widgets/OperationQueue/context';
 import { toJSONPreservingUndefined } from '@riboseinc/paneron-extension-kit/util';
@@ -289,7 +289,7 @@ export const makeEndpoint: EndpointMaker = {
           useValue: (payload: I, initialValue: O, opts) => {
             const opQueueContext = useContext(OperationQueueContext);
 
-            const [value, updateValue] = useState(initialValue);
+            const [value, updateValue] = useState<O | null>(null);
             const [errors, updateErrors] = useState<string[]>([]);
             const [isUpdating, setUpdating] = useState(true);
 
@@ -298,6 +298,9 @@ export const makeEndpoint: EndpointMaker = {
             const payloadSnapshot = toJSONPreservingUndefined(payload);
             const payloadHash = hash(payloadSnapshot);
             const payloadSliceToLog = payloadSnapshot.slice(0, LOG_PAYLOAD_SLICE);
+
+            // XXX
+            const initial = useMemo((() => initialValue), [JSON.stringify(initialValue)]);
 
             useEffect(() => {
               let cancelled = false;
@@ -340,6 +343,7 @@ export const makeEndpoint: EndpointMaker = {
                   } else {
                     log.error("IPC: Improperly structured main IPC response", maybeResp);
                     updateErrors(["Invalid IPC response"]);
+                    updateValue(null);
                     // Consider updateErrors()?
                     //updateValue(maybeResp as O);
                   }
@@ -347,7 +351,7 @@ export const makeEndpoint: EndpointMaker = {
                   if (cancelled) { return; }
                   log.error("IPC: Failed to invoke method", name, payloadSliceToLog, e);
                   updateErrors([(e as any).toString?.() ?? `${e}`]);
-                  updateValue(initialValue);
+                  updateValue(null);
                 } finally {
                   if (cancelled) { return; }
                   setUpdating(false);
@@ -365,13 +369,13 @@ export const makeEndpoint: EndpointMaker = {
               () => updateReqCounter(c => c += 1),
               [payloadHash]);
 
-            return {
-              value,
+            return useMemo((() => ({
+              value: value ?? initial,
               errors,
               isUpdating,
               refresh,
               _reqCounter: reqCounter,
-            };
+            })), [value, errors, isUpdating, initial, refresh]);
           },
         },
       };
