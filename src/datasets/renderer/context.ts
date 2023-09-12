@@ -265,7 +265,7 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
 
       objectsChanged.renderer!.useEvent(
         handleUpdate,
-        [workingCopyPath, datasetID, opts.objectPaths.toString()]);
+        [opts.objectPaths.toString()]);
 
       return result;
     },
@@ -310,7 +310,7 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
           setStatus(evt.status);
           //result.refresh();
         }
-      }, [workingCopyPath, datasetID, indexID]);
+      }, [indexID]);
 
       return {
         ...result,
