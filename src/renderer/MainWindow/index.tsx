@@ -2,9 +2,9 @@
 /** @jsxFrag React.Fragment */
 
 import { jsx, css } from '@emotion/react';
-import React, { useContext } from 'react';
+import styled from '@emotion/styled';
+import React, { useContext, useMemo } from 'react';
 import { Button, ButtonProps, Classes, Colors, NonIdealState } from '@blueprintjs/core';
-import { GlobalSettingsContext } from '@riboseinc/paneron-extension-kit/SettingsContext';
 import { INITIAL_GLOBAL_SETTINGS } from '@riboseinc/paneron-extension-kit/settings';
 
 import { getAppVersion, refreshMainWindow } from 'common';
@@ -18,33 +18,19 @@ import GlobalSettingsForm from './GlobalSettingsForm';
 
 
 const MainWindow: React.FC<Record<never, never>> = function () {
+
   const { value: { settings: { mainNavbarPosition } } } =
     useSettings('global', INITIAL_GLOBAL_SETTINGS);
 
   const { value: { version, isPackaged } } =
     getAppVersion.renderer!.useValue({}, { version: '' });
 
-  const Frag = isPackaged ? React.Fragment : React.StrictMode;
-
-  return (
-    <Frag>
-      <ContextProvider>
-        <div css={css`position: absolute; inset: 0; box-sizing: border-box; overflow: hidden;`}>
-          <div
-              css={css`
-                position: absolute; right: 0; left: 0;
-                ${mainNavbarPosition === 'bottom'
-                  ? `bottom: ${NAV_HEIGHT_PX}px; top: 0;`
-                  : `top: ${NAV_HEIGHT_PX}px; bottom: 0;`}
-                display: flex;
-                flex-flow: column nowrap;
-                z-index: 1;
-                overflow: hidden;
-                background: ${Colors.LIGHT_GRAY2};
-                .bp4-dark & {
-                  background: ${Colors.DARK_GRAY2};
-                }
-              `}>
+  return useMemo(() => {
+    const Frag = isPackaged ? React.Fragment : React.StrictMode;
+    return (
+      <Frag>
+        <ContextProvider>
+          <div css={css`position: absolute; inset: 0; box-sizing: border-box; overflow: hidden;`}>
             <MainView
               css={css`
                 flex: 1;
@@ -56,22 +42,25 @@ const MainWindow: React.FC<Record<never, never>> = function () {
               `}
               className={Classes.ELEVATION_3}
             />
+            <Navbar
+              isPackaged={isPackaged}
+              version={version}
+            />
           </div>
-          <Navbar
-            mainNavbarPosition={mainNavbarPosition}
-            isPackaged={isPackaged}
-            version={version}
-          />
-        </div>
-      </ContextProvider>
-    </Frag>
-  );
+        </ContextProvider>
+      </Frag>
+    );
+  }, [mainNavbarPosition, isPackaged, version]);
 };
 
 
-const Navbar: React.FC<{ version: string, isPackaged?: boolean, mainNavbarPosition: 'top' | 'bottom' }> =
-function ({ version, isPackaged, mainNavbarPosition }) {
+const Navbar: React.FC<{ version: string, isPackaged?: boolean }> =
+function ({ version, isPackaged }) {
   const { state: { view }, dispatch } = useContext(Context);
+
+  const { value: { settings: { mainNavbarPosition } } } =
+    useSettings('global', INITIAL_GLOBAL_SETTINGS);
+
   return (
     <Nav
         anchor={mainNavbarPosition === 'top'
@@ -125,45 +114,60 @@ const NavbarButton: React.FC<ButtonProps & { title?: string }> = function (props
 }
 
 
-const MainView: React.FC<{ className?: string }> = function ({ className }) {
-  const globalSettings = useSettings('global', INITIAL_GLOBAL_SETTINGS);
-  const globalSettingsContext = {
-    settings: globalSettings.value.settings,
-    refresh: globalSettings.refresh,
-  };
-  const { state, dispatch } = useContext(Context);
+const MainView: React.FC<{ className?: string }> =
+function ({ className }) {
+  const { state } = useContext(Context);
 
-  if (state.view === 'welcome-screen') {
-    return <WelcomeScreen
+  const { value: { settings: { mainNavbarPosition } } } =
+    useSettings('global', INITIAL_GLOBAL_SETTINGS);
+
+  const MAIN_VIEWS = useMemo((() => ({
+    'welcome-screen': <WelcomeScreen
       className={className}
       css={css`position: absolute; inset: 0; margin: auto; height: 70vh; width: 70vw;`}
-      onOpenDataset={(workDir, datasetID) => dispatch({ type: 'open-dataset', workDir, datasetID })}
-      onExportDataset={(workDir, datasetID) => dispatch({ type: 'export-dataset', workDir, datasetID })}
-    />;
-
-  } else if (state.view === 'dataset') {
-    return <Dataset className={className} showExportOptions={state.export ? true : undefined} />;
-
-
-  } else if (state.view === 'settings') {
-    return (
-      <GlobalSettingsContext.Provider value={globalSettingsContext}>
-        <GlobalSettingsForm className={className} css={css`overflow-y: auto !important; display: flex; flex-flow: column nowrap;`} />
-      </GlobalSettingsContext.Provider>
-    );
-    //return <Dataset className={className} showExportOptions />;
-
-  } else {
-    return <NonIdealState
+    />,
+    'settings': <GlobalSettingsForm
+      className={className}
+      css={css`overflow-y: auto !important; display: flex; flex-flow: column nowrap;`}
+    />,
+    'dataset': <Dataset
+      className={className}
+      showExportOptions={state.view === 'dataset' && state.export ? true : undefined}
+    />,
+    'fallback': <NonIdealState
       title="Unknown view"
       icon="heart-broken"
       description="Please try refreshing the window."
-    />;
-  }
+    />,
+  })), [className]);
+
+  return (
+    <MainViewWrapper
+        css={css`
+          ${mainNavbarPosition === 'bottom'
+              ? `bottom: ${NAV_HEIGHT_PX}px; top: 0;`
+              : `top: ${NAV_HEIGHT_PX}px; bottom: 0;`}
+        `}>
+      {MAIN_VIEWS[state.view] ?? MAIN_VIEWS.fallback}
+    </MainViewWrapper>
+  );
 }
 
 
 const NAV_HEIGHT_PX = '24';
+
+
+const MainViewWrapper = styled.div`
+  position: absolute; right: 0; left: 0;
+  display: flex;
+  flex-flow: column nowrap;
+  z-index: 1;
+  overflow: hidden;
+  background: ${Colors.LIGHT_GRAY2};
+  .bp4-dark & {
+    background: ${Colors.DARK_GRAY2};
+  }
+`;
 
 
 export default MainWindow;

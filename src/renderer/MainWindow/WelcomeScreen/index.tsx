@@ -9,6 +9,7 @@ import { Tooltip2 as Tooltip } from '@blueprintjs/popover2';
 
 import useDebounce from '@riboseinc/paneron-extension-kit/useDebounce';
 import OperationQueueContext from '@riboseinc/paneron-extension-kit/widgets/OperationQueue/context';
+import { Context } from '../context';
 
 import { createRepository } from 'repositories/ipc';
 import type { GitAuthor, Repository } from 'repositories/types';
@@ -36,11 +37,20 @@ interface SectionConfiguration {
   title: JSX.Element | string
 }
 
-const WelcomeScreen: React.FC<{ onOpenDataset: (workDir: string, dsID: string) => void, onExportDataset?: (workDir: string, dsID: string) => void, className?: string }> =
-function ({ onOpenDataset, onExportDataset, className }) {
+const WelcomeScreen: React.FC<{ className?: string }> =
+function ({ className }) {
   const [repoQuery, updateRepoQuery] = useState<string>('');
 
   const { performOperation, isBusy } = useContext(OperationQueueContext);
+  const { dispatch } = useContext(Context);
+
+  const handleOpenDataset = useCallback((
+    (workDir, datasetID) => dispatch({ type: 'open-dataset', workDir, datasetID })
+  ), [dispatch])
+
+  const onExportDataset = useCallback((
+    (workDir, datasetID) => dispatch({ type: 'export-dataset', workDir, datasetID })
+  ), [dispatch])
 
   const normalizedRepoFilterString = useDebounce(
     repoQuery.trim() ?? '',
@@ -49,10 +59,6 @@ function ({ onOpenDataset, onExportDataset, className }) {
   const repositories = useRepositoryList({
     matchesText: normalizedRepoFilterString.trim(),
   });
-
-  const handleOpenDataset = useCallback(function handleOpenDataset(workDir: string, datasetID: string) {
-    onOpenDataset(workDir, datasetID);
-  }, []);
 
   const handleCreateRepo = useCallback(async function handleCreateRepo(
     title: string,

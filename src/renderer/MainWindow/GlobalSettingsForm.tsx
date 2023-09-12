@@ -6,8 +6,7 @@ import React, { useContext, useState, useMemo, useCallback } from 'react';
 import { Button, Classes, Colors, H4, Icon, IconSize, InputGroup, Switch } from '@blueprintjs/core';
 import { Tooltip2 } from '@blueprintjs/popover2';
 
-import { GlobalSettingsContext } from '@riboseinc/paneron-extension-kit/SettingsContext';
-import { INITIAL_GLOBAL_SETTINGS } from '@riboseinc/paneron-extension-kit/settings';
+import { type GlobalSettings, INITIAL_GLOBAL_SETTINGS } from '@riboseinc/paneron-extension-kit/settings';
 import PropertyView, { TextInput, Select } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import HelpTooltip from '@riboseinc/paneron-extension-kit/widgets/HelpTooltip';
 import PanelSeparator from '@riboseinc/paneron-extension-kit/widgets/panels/PanelSeparator';
@@ -19,7 +18,7 @@ import type { NewRepositoryDefaults } from 'repositories/types';
 import { listLocalPlugins, pluginsUpdated, removeLocalPluginPath, specifyLocalPluginPath } from 'plugins';
 import DatasetExtension from 'plugins/renderer/DatasetExtensionCard';
 
-import { updateSetting } from './settings';
+import { useSettings, updateSetting } from './settings';
 import AuthorForm from './repositories/AuthorForm';
 import { describeBundledExecutable } from 'subprocesses';
 
@@ -85,7 +84,9 @@ const THEME_OPTIONS = [
 
 
 export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({ className }) {
-  const { settings, refresh: refreshSettings } = useContext(GlobalSettingsContext);
+  const { value: { settings }, refresh: refreshSettings } =
+    useSettings<GlobalSettings>('global', INITIAL_GLOBAL_SETTINGS);
+
   const { performOperation, isBusy } = useContext(OperationQueueContext);
 
   const { value: { fullPath: metanormaExecPath } } =
