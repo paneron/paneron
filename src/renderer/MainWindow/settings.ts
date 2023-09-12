@@ -41,7 +41,7 @@ export function useSettings<T extends Settings>(scope: string, initial: T) {
     value: {
       settings: validSettings,
     },
-  })), [scope, state, initial]);
+  })), [scope, validSettings]);
 };
 
 
