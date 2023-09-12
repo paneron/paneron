@@ -110,7 +110,9 @@ function ({ className, showExportOptions }) {
     : null
   ), [isBusy, dsProps, dsAPI, performOperation]);
 
-  const exportGit: (opts: ExportOptions) => Exporter = async function* _exportGit () {
+  // TODO: Move out exporting to a separate view
+
+  const exportGit: (opts: ExportOptions) => Exporter = useCallback(async function* _exportGit () {
     if (!selectedRepoWorkDir || !selectedDatasetID) {
       throw new Error("No repository or dataset");
     }
@@ -130,9 +132,9 @@ function ({ className, showExportOptions }) {
       console.debug("Got buffer dataset", result);
       yield result;
     }
-  }
+  }, [selectedRepoWorkDir, selectedDatasetID]);
 
-  async function handleExport(formatID: string): Promise<string> {
+  const handleExport = useCallback(async function handleExport(formatID: string): Promise<string> {
     if (!dsProps || !ctx) {
       throw new Error("Dataset is not ready");
     }
@@ -169,7 +171,7 @@ function ({ className, showExportOptions }) {
     };
     const { savedToFileAtPath } = await ctx.writeFileToFilesystem(opts);
     return savedToFileAtPath;
-  }
+  }, [ctx, exportGit, dsProps]);
 
   const exportFormats = {
      ...(ctx?.listExporters() ?? {}),
