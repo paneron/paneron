@@ -263,7 +263,9 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
         }
       }
 
-      objectsChanged.renderer!.useEvent(handleUpdate, [workingCopyPath, datasetID, JSON.stringify(opts.objectPaths)]);
+      objectsChanged.renderer!.useEvent(
+        handleUpdate,
+        [workingCopyPath, datasetID, opts.objectPaths.toString()]);
 
       return result;
     },
