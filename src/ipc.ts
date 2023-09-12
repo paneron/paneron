@@ -3,8 +3,8 @@ import log from 'electron-log';
 import { useContext, useEffect, useState, useCallback } from 'react';
 
 import OperationQueueContext from '@riboseinc/paneron-extension-kit/widgets/OperationQueue/context';
+import { toJSONPreservingUndefined } from '@riboseinc/paneron-extension-kit/util';
 
-import { toJSONPreservingUndefined } from './utils';
 import { hash } from './main/utils';
 
 

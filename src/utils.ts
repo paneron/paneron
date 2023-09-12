@@ -169,20 +169,3 @@ export function stripLeadingSlash(aPath: string): string {
 export function stripTrailingSlash(aPath: string): string {
   return aPath.replace(/\/$/, '');
 }
-
-
-export function toJSONPreservingUndefined(data: any) {
-  return (JSON.
-    stringify(
-      data || {},
-      (_, v) => (v === undefined) ? '__undefined' : v).
-    replace(/\"__undefined\"/g, 'undefined'));
-}
-
-
-/**
- * Normalizes object by ensuring its keys are sorted.
- */
-export function normalizeObject<T extends Record<string, any>>(obj: T): T {
-  return Object.fromEntries(Object.entries(obj).sort()) as T;
-}

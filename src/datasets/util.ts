@@ -1,6 +1,6 @@
 import type { DiffStatus } from '@riboseinc/paneron-extension-kit/types/changes';
+import { objectsHaveSameShape } from '@riboseinc/paneron-extension-kit/util';
 import { diffDatasets } from '../repositories/util';
-import { normalizeObject } from '../utils';
 
 
 /**
@@ -22,17 +22,23 @@ export async function* diffObjectDatasets(
         object2: Record<string, any> | null,
       ]>,
 ): AsyncGenerator<[ path: string, changeStatus: DiffStatus ]> {
-  return diffDatasets<Record<string, any>>(objectPaths, readObjects, objectsAreSame);
+  return diffDatasets<Record<string, any>>(
+    objectPaths,
+    readObjects,
+    objectsHaveSameShape,
+  );
 }
 
 
-/**
- * Returns `true` if both given objects have identical shape,
- * disregarding key ordering.
- */
-export function objectsAreSame(
-  obj1: Record<string, any>,
-  obj2: Record<string, any>,
-): boolean {
-  return JSON.stringify(normalizeObject(obj1)) === JSON.stringify(normalizeObject(obj2));
-}
+// /**
+//  * Returns `true` if both given objects have identical shape,
+//  * disregarding key ordering.
+//  *
+//  * Only does a shallow check.
+//  */
+// function objectsAreSame(
+//   obj1: Record<string, any>,
+//   obj2: Record<string, any>,
+// ): boolean {
+//   return JSON.stringify(normalizeObject(obj1)) === JSON.stringify(normalizeObject(obj2));
+// }
