@@ -2,7 +2,7 @@
 /** @jsxFrag React.Fragment */
 import { jsx, css } from '@emotion/react';
 
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useMemo, useCallback } from 'react';
 import { Button, Classes, Colors, H4, Icon, IconSize, InputGroup, Switch } from '@blueprintjs/core';
 import { Tooltip2 } from '@blueprintjs/popover2';
 
@@ -46,7 +46,10 @@ const CLEAR_OPTION_INFO: Record<ClearOption, { label: JSX.Element, description?:
     description: <>Information about repositories, as well as new repository defaults (e.g., author name and email), and most importantly <strong>repository data itself</strong>.</>,
     warning: <>This will clear repository configuration <strong>and all local data,</strong> but will not remove repository copies on remote Git servers (you’ll be able to re-import those afterwards). Please double-check all important changes were synchronized.</>,
   }
-}
+};
+
+
+const DUMMY_AUTHOR = { name: '', email: '' };
 
 
 const SettingsFormSection: React.FC<{ title?: string | JSX.Element }> = function ({ title, children }) {
@@ -59,6 +62,26 @@ const SettingsFormSection: React.FC<{ title?: string | JSX.Element }> = function
     {children}
   </div>
 }
+
+
+async function _handleAddLocalExtension() {
+  const dirResult = await selectDirectoryPath.renderer!.trigger({
+    prompt: "Select development extension folder",
+  });
+  const directoryPath = dirResult.result.directoryPath;
+  if (directoryPath && directoryPath.trim() !== '') {
+    await specifyLocalPluginPath.renderer!.trigger({ directoryPath });
+  } else {
+    throw new Error("No directory was selected");
+  }
+}
+
+
+const THEME_OPTIONS = [
+  { value: 'light', label: "Light" },
+  { value: 'dark', label: "Dark" },
+  { value: '', label: "None (use system)" },
+] as const;
 
 
 export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({ className }) {
@@ -82,33 +105,23 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
 
   const canClear = Object.values(clearOptionSelection).indexOf(true) >= 0;
 
-  async function _handleAddLocalExtension() {
-    const dirResult = await selectDirectoryPath.renderer!.trigger({
-      prompt: "Select development extension folder",
+  const handleAddLocalExtension = useCallback(
+    performOperation('adding local extension', _handleAddLocalExtension),
+    []);
+
+  const makeDeleteExtensionHandler = useCallback((pluginName: string) => {
+    return performOperation('removing local extension', async function handleDeleteExtension () {
+      return await removeLocalPluginPath.renderer!.trigger({ pluginName });
     });
-    const directoryPath = dirResult.result.directoryPath;
-    if (directoryPath && directoryPath.trim() !== '') {
-      await specifyLocalPluginPath.renderer!.trigger({ directoryPath });
-    } else {
-      throw new Error("No directory was selected");
-    }
-  }
+  }, [performOperation]);
 
-  const handleAddLocalExtension = performOperation('adding local extension', _handleAddLocalExtension);
-
-  function handleDeleteLocalExtension(pluginName: string) {
-    return performOperation('removing local extension', async () =>
-      await removeLocalPluginPath.renderer!.trigger({ pluginName })
-    );
-  }
-
-  async function handleClear() {
+  const handleClear = useCallback(async function handleClear() {
     await clearDataAndRestart.renderer!.trigger({
       options: clearOptionSelection,
     });
-  }
+  }, [clearOptionSelection]);
 
-  async function handleUpdate(key: string, value: unknown) {
+  const setSetting = useCallback(async function setSetting(key: string, value: unknown) {
     try {
       await performOperation(`writing ${key} setting`, async () => {
         await updateSetting('global', { key, value });
@@ -116,12 +129,55 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
     } finally {
       setTimeout(refreshSettings, 1000);
     }
-  }
+  }, [refreshSettings, performOperation]);
 
-  const localExtensions = Object.entries(localExtensionQuery.value).map(([id, ext]) => ({
-    id,
-    ext,
-  }));
+  const localExtensions = useMemo((() => {
+    return Object.entries(localExtensionQuery.value).
+      map(([id, ext]) => ({
+        id,
+        ext,
+      })).
+      map(({ id, ext }) =>
+        <div
+            key={id}
+            css={css`
+              position: relative;
+              margin: 5px 0;
+              background: ${Colors.LIGHT_GRAY4};
+              .bp4-dark & {
+                background: ${Colors.DARK_GRAY4};
+              }
+            `}>
+          <InputGroup
+            fill
+            value={ext.localPath}
+            css={css`input { border-radius: 0; }`}
+            disabled
+            rightElement={
+              <Button
+                small minimal intent="danger"
+                onClick={makeDeleteExtensionHandler(id)}
+                disabled={isBusy}
+                icon="cross"
+                title="Unload this local extension. The folder will remain in place, but Paneron won’t use it anymore"
+                css={css`position: absolute; top: 0; right: 0;`}
+              />
+            }
+          />
+          <div css={css`
+            transform: scale(0.9);
+            transform-origin: top center;
+            padding: 5px;
+            background: ${Colors.WHITE};
+            .bp4-dark & {
+              background: ${Colors.BLACK};
+            }
+          `}>
+            <DatasetExtension extension={ext} />
+          </div>
+        </div>
+      );
+  }), [localExtensionQuery.value]);
 
   return (
     <div className={className}>
@@ -138,7 +194,7 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
           <Select
             options={[{ value: 'top', label: "Top" }, { value: 'bottom', label: "Bottom" }]}
             onChange={!isBusy
-              ? (evt => handleUpdate('mainNavbarPosition', evt.currentTarget.value as 'top' | 'bottom'))
+              ? (evt => setSetting('mainNavbarPosition', evt.currentTarget.value as 'top' | 'bottom'))
               : undefined}
             value={settings.mainNavbarPosition}
           />
@@ -147,7 +203,7 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
           <Select
             options={[{ value: 'left', label: "Left" }, { value: 'right', label: "Right" }]}
             onChange={!isBusy
-              ? (evt => handleUpdate('sidebarPosition', evt.currentTarget.value as 'left' | 'right'))
+              ? (evt => setSetting('sidebarPosition', evt.currentTarget.value as 'left' | 'right'))
               : undefined}
             value={settings.sidebarPosition}
           />
@@ -159,23 +215,19 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
               Support for themes other than “light” is patchy among extension GUIs.
             </>}>
           <Select
-            options={[
-              { value: 'light', label: "Light" },
-              { value: 'dark', label: "Dark" },
-              { value: '', label: "None (use system)" },
-            ]}
+            options={THEME_OPTIONS}
             onChange={!isBusy
               ? (evt => {
                   if (['light', 'dark', ''].indexOf(evt.currentTarget.value) >= 0) {
                     if (evt.currentTarget.value === '') {
-                      handleUpdate('defaultTheme', null);
+                      setSetting('defaultTheme', null);
                       setTimeout(async () => {
                         const { result: { colorSchemeName } } = await getColorScheme.renderer!.trigger({});
                         colorSchemeUpdated.renderer!.trigger({ colorSchemeName });
                       }, 500);
                     } else {
                       const colorSchemeName = (evt.currentTarget.value as 'light' | 'dark');
-                      handleUpdate('defaultTheme', colorSchemeName);
+                      setSetting('defaultTheme', colorSchemeName);
                       colorSchemeUpdated.renderer!.trigger({ colorSchemeName });
                     }
                   }
@@ -198,46 +250,7 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
             Add…
           </Button>
         </>}>
-        {localExtensions.map(({ id, ext }) =>
-          <div
-              key={id}
-              css={css`
-                position: relative;
-                margin: 5px 0;
-                background: ${Colors.LIGHT_GRAY4};
-                .bp4-dark & {
-                  background: ${Colors.DARK_GRAY4};
-                }
-              `}>
-            <InputGroup
-              fill
-              value={ext.localPath}
-              css={css`input { border-radius: 0; }`}
-              disabled
-              rightElement={
-                <Button
-                  small minimal intent="danger"
-                  onClick={handleDeleteLocalExtension(id)}
-                  disabled={isBusy}
-                  icon="cross"
-                  title="Unload this local extension. The folder will remain in place, but Paneron won’t use it anymore"
-                  css={css`position: absolute; top: 0; right: 0;`}
-                />
-              }
-            />
-            <div css={css`
-              transform: scale(0.9);
-              transform-origin: top center;
-              padding: 5px;
-              background: ${Colors.WHITE};
-              .bp4-dark & {
-                background: ${Colors.BLACK};
-              }
-            `}>
-              <DatasetExtension extension={ext} />
-            </div>
-          </div>
-        )}
+        {localExtensions}
       </SettingsFormSection>
 
       <SettingsFormSection title="Executables">
@@ -303,7 +316,12 @@ const NewRepositoryDefaults: React.FC<{ className?: string }> = function ({ clas
     setEditedDefaults({ ...maybeEditedDefaults, branch: val });
   }
 
-  const maybeEditedDefaults: NewRepositoryDefaults = { author: { name: '', email: '' }, ...defaults, ...editedDefaults };
+  const maybeEditedDefaults: NewRepositoryDefaults = useMemo((() => ({
+    author: DUMMY_AUTHOR,
+    ...defaults,
+    ...editedDefaults,
+  })), [editedDefaults, defaults]);
+
   const author = maybeEditedDefaults.author;
   const nameValid = author.name.trim() !== '';
   const emailValid = author.email.trim() !== '';
