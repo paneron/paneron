@@ -271,10 +271,11 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
     },
 
     useMapReducedData: function _useMapReducedData (opts) {
-      const initial =
+      const initial = useMemo((() => (
         Object.keys(opts.chains).
           map(cid => ({ [cid]: undefined })).
-          reduce((prev, curr) => ({ ...prev, ...curr })) as Record<keyof typeof opts["chains"], undefined>;
+          reduce((prev, curr) => ({ ...prev, ...curr })) as Record<keyof typeof opts["chains"], undefined>
+      )), [opts.chains]);
       return mapReduce.renderer!.useValue({
         ...datasetParams,
         chains: opts.chains as Hooks.Data.MapReduceChains,
