@@ -1,4 +1,3 @@
-import path from 'path';
 import log from 'electron-log';
 
 import type { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
