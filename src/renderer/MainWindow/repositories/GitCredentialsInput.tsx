@@ -208,6 +208,7 @@ function ({
               fill
               isOpen={testResultNotes !== null}
               placement='bottom'
+              autoFocus={false}
               popoverClassName={`${css`&& { margin: 10px !important; }`}`}
               content={testResultNotes
                 ? <Callout
