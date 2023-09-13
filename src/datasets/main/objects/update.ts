@@ -106,7 +106,7 @@ async function ({
   replaceTarget,
   offloadToLFS,
 }) {
-  const datasetRoot = getDatasetRoot('', datasetID);
+  const datasetRoot = resolveDatasetAlias(datasetID);
   const pathMap: Record<string, string> = {};
 
   if (absoluteFilepaths.length > 0) {
