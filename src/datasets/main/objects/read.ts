@@ -19,7 +19,7 @@ import type { LFSParams } from 'repositories/types';
  *
  * Uses object specs to build objects from buffers.
  * Returns structured data of objects matching given paths.
- * 
+ *
  * Do not read too many objects at once. May be slow, especially with `resolveLFS`.
  */
 export const getObjectDataset: Datasets.Data.GetObjectDataset = async function ({
@@ -145,13 +145,13 @@ export async function readObjectCold(
  * Reads any number of versions of the same object.
  * Optimizes by only requesting worker & ser/des rule once for the whole procedure,
  * since it applies to the same object (just different versions of it).
- * 
+ *
  * The last argument is an array of commit hashes, and return value is an array of the same length.
  * Any element of the array can be either deserialized data of the object at that commit hash,
  * or null; however, if *all* values in the array are null, the error is raised.
- * 
+ *
  * NOTE: Does not resolve LFS yet.
- */ 
+ */
 export async function readObjectVersions
 <L extends number, C extends string[] & { length: L }>
 (workDir: string, datasetID: string, objectPath: string, commitHashes: C):
