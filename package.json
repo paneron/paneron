@@ -286,7 +286,7 @@
     "cz-conventional-changelog": "3.3.0",
     "electron": "15.5.7",
     "electron-builder": "23.6.0",
-    "electron-builder-notarize": "^1.4.0",
+    "electron-builder-notarize": "^1.5.1",
     "electron-react-devtools": "^0.5.3",
     "electron-webpack": "^2.8.2",
     "electron-webpack-ts": "^4.0.1",
