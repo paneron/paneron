@@ -629,7 +629,7 @@ const initFilteredIndex = datasetQueue.oneAtATime(async function (
   predicate: Datasets.Util.FilteredIndexPredicate,
   keyer?: Datasets.Util.FilteredIndexKeyer,
 ) {
-  const ds = getLoadedDataset(workDir, datasetID); 
+  const ds = getLoadedDataset(workDir, datasetID);
 
   const cacheRoot = ds.indexDBRoot;
 
@@ -700,7 +700,7 @@ async function initDefaultIndex(
   workDir: string,
   datasetID: string,
 ): Promise<Datasets.Util.DefaultIndex> {
-  const ds = getLoadedDataset(workDir, datasetID); 
+  const ds = getLoadedDataset(workDir, datasetID);
   const cacheRoot = ds.indexDBRoot;
   const dbPath = getDBPath(cacheRoot, `${workDir}/${datasetID}/default`);
   const idx: Datasets.Util.DefaultIndex = {
@@ -962,7 +962,7 @@ export const updateDatasetIndexesIfNeeded = datasetQueue.oneAtATime(async functi
                   // These are placeholders,
                   // this code doesn’t estimate progress yet:
                   loaded: 0,
-                  total: 1, 
+                  total: 1,
                 },
               } });
               // Keep track of affected indexes and their object counts here.
@@ -1167,7 +1167,7 @@ function makeIdxStub(dbPath: string, codecOptions: CodecOptions):
 Datasets.Util.ActiveDatasetIndex<any> {
   const idx: Datasets.Util.ActiveDatasetIndex<any> = {
     status: { objectCount: 0 },
-    //statusSubject: new Subject<IndexStatus>(), 
+    //statusSubject: new Subject<IndexStatus>(),
     dbHandle: levelup(encode(leveldown(dbPath), codecOptions)),
     accessed: new Date(),
   };

@@ -33,7 +33,7 @@ export interface DatasetInfo {
 export interface MigrationError {
   currentMigrationVersionSpec?: string
   message: string
-  conflicts?: PathChanges 
+  conflicts?: PathChanges
 }
 
 
@@ -185,7 +185,7 @@ export namespace API {
     export interface ActiveDatasetIndex<V> {
       dbHandle: LevelUp<EncodingDown<string, V>, AbstractIterator<string, V>>
       status: IndexStatus
-      completionPromise?: Promise<true> 
+      completionPromise?: Promise<true>
 
       //statusSubject: Subject<IndexStatus>
 
