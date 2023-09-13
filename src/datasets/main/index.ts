@@ -143,8 +143,11 @@ initializeDataset.main!.handle(async ({ workingCopyPath, meta: datasetMeta, data
   if (initialBufferDataset) {
     const initialData: BufferChangeset = {};
     for (const [_path, _blob] of Object.entries(initialBufferDataset)) {
-      const fullPath = `${stripTrailingSlash(datasetPath)}/${stripLeadingSlash(_path)}`;
-      initialData[fullPath] = { newValue: _blob };
+      const repoRelativeBufferPath = joinPaths(
+        stripTrailingSlash(datasetPath),
+        stripLeadingSlash(_path),
+      );
+      initialData[repoRelativeBufferPath] = { newValue: _blob };
     }
     Object.assign(bufferChangeset, initialData);
   }
