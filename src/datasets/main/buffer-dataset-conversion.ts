@@ -12,6 +12,8 @@ import { stripTrailingSlash } from 'utils';
  * (a record that maps paths to buffer changes)
  * ready for commit.
  *
+ * All paths should be POSIX-style, dataset-relative.
+ *
  * Repository working diretory should be absolute.
  * Dataset root should be relative to working directory,
  * and must not contain leading slash.
@@ -20,7 +22,9 @@ import { stripTrailingSlash } from 'utils';
  * returned buffer paths are relative to working directory.
  */
 export function toBufferChangeset(
+  /** Object changeset with dataset-relative POSIX-style paths. */
   objectChangeset: ObjectChangeset,
+  /** Repo-relative dataset path. */
   datasetDir: string,
 ): BufferChangeset {
   const buffers: BufferChangeset = {};
@@ -67,6 +71,7 @@ export function toBufferChangeset(
 function mergeBufferDatasetsIntoChangeset(
   oldDataset: BufferDataset,
   newDataset: BufferDataset,
+  /** Repository-relative path to dataset. */
   datasetPath: string,
   objectPath: string,
 ): BufferChangeset {

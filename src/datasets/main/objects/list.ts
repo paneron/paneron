@@ -6,7 +6,10 @@ const COMPOSITE_OBJECT_DIRNAME_EXTENSION = '.pan';
 
 
 /**
- * Composite objects are directories with a special extension. Returns slash-prepended path.
+ * Composite objects are directories with a special extension.
+ * Given a buffer path that is possibly *within* a composite object,
+ * returns a path to the containing composite object.
+ * Returns slash-prepended POSIX-style path.
  * Note: this is to support a provisional feature.
  */
 function getCompositeObjectPathForBufferPath(bufferPath: string): string | null {

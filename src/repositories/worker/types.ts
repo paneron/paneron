@@ -91,11 +91,13 @@ export namespace Git {
     // TODO: workDir below is likely redundant?
     // repoOperation decorator provides it for initialized workers.
     export type AddOrigin = (msg: {
+      /** Absolute path to Git working directory root. */
       workDir: string
       url: string
     }) => Promise<{ success: true }>;
 
     export type DeleteOrigin = (msg: {
+      /** Absolute path to Git working directory root. */
       workDir: string
     }) => Promise<{ success: true }>
 
@@ -127,6 +129,7 @@ export namespace Repositories {
   export namespace Data {
 
     export type ResolveChanges = (msg: GitOperationParams & {
+      /** Repo-relative, POSIX-style path. */
       rootPath: string
       oidBefore: string
       oidAfter: string
@@ -135,6 +138,7 @@ export namespace Repositories {
     }>
 
     export type ChooseMostRecentCommit = (msg: GitOperationParams & {
+      /** A list of commit hashes to choose from. */
       candidates: string[]
     }) => Promise<{ commitHash: string }>
 
@@ -175,10 +179,12 @@ export namespace Repositories {
       Promise<{ newCommitHash: string }>
 
     export type GetBufferDataset = (msg: GitOperationParams & {
+      /** A list of repo-relative, POSIX-style paths. */
       paths: string[]
     }) => Promise<BufferDataset>
 
     export type ReadBuffers = (msg: GitOperationParams & {
+      /** Repository-relative, POSIX-style path. */
       rootPath: string
 
       /**
@@ -190,6 +196,7 @@ export namespace Repositories {
     }) => Promise<Record<string, Uint8Array>>
 
     export type ReadBuffersAtVersion = (msg: GitOperationParams & {
+      /** Repository-relative, POSIX-style path. */
       rootPath: string
       commitHash: string
     }) => Promise<Record<string, Uint8Array>>
@@ -204,7 +211,10 @@ export namespace Repositories {
     export type AddExternalBuffers = (msg: AuthoringGitOperationParams & {
       commitMessage: string
 
-      /** Map of external paths to repo-relative paths. */
+      /**
+       * Map of external, platform-specific absolute paths
+       * to repo-relative POSIX-style paths.
+       */
       paths: Record<string, string>
 
       /**
@@ -219,12 +229,15 @@ export namespace Repositories {
       WithStatusUpdater<AddExternalBuffers>
 
     export type DeleteTree = (msg: AuthoringGitOperationParams & {
+      /** Repo-relative POSIX-style path. */
       treeRoot: string
       commitMessage: string
     }) => Promise<CommitOutcome>
 
     export type MoveTree = (msg: AuthoringGitOperationParams & {
+      /** Repo-relative POSIX-style path. */
       oldTreeRoot: string
+      /** Repo-relative POSIX-style path. */
       newTreeRoot: string
       commitMessage: string
     }) => Promise<CommitOutcome>
@@ -265,7 +278,12 @@ export default interface WorkerMethods {
    * If a function requiring working directory to be open is called before
    * the directory is assigned, it will throw.
    */
-  openLocalRepo: (workDirPath: string, branch: string, mode: 'r' | 'rw') => Promise<void>
+  openLocalRepo: (
+    /** Absolute path to Git working directory root. */
+    workDirPath: string,
+    branch: string,
+    mode: 'r' | 'rw',
+  ) => Promise<void>
 
   destroy: () => Promise<void>
 

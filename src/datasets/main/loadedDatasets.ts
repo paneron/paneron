@@ -239,11 +239,14 @@ const locatePositionInFilteredIndex: Datasets.Indexes.LocatePositionInFilteredIn
 
 
 const resolveDatasetChanges: (opts: {
+  /** Absolute path to Git working directory root. */
   workDir: string
+  /** Dataset ID within the repository. */
   datasetID: string
   oidBefore: string
   oidAfter: string
 }) => Promise<{
+  /** Dataset-relative POSIX-style object paths. */
   changedObjectPaths: AsyncGenerator<string>,
 }> = async function ({
   workDir,

@@ -446,6 +446,8 @@ addFromFilesystem.main!.handle(async ({ workingCopyPath, datasetID, commitMessag
 
 
 deleteDataset.main!.handle(async ({ workingCopyPath, datasetID }) => {
+  // TODO: Resolve datasetID?
+
   const w = getLoadedRepository(workingCopyPath).workers.sync;
 
   const { author } = await readRepoConfig(workingCopyPath);

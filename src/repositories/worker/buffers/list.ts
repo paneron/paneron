@@ -23,11 +23,13 @@ export const resolveChanges: Repositories.Data.ResolveChanges = async ({ workDir
 
 
 /**
- * Streams paths that are descendants of given root path
+ * Streams paths that are descendants of given root filesystem path
  * as slash-prepended strings relative to root path
  * (which should be given as system-absolute).
- * If root path is not a directory, yields the only string '/'.
  *
+ * Paths are platform-specific (win32 or posix).
+ *
+ * If root path is not a directory, yields path.sep (platform-dependent)_.
  *
  * Uses filesystem, so may report data or changes unknown to Git.
  */
@@ -56,29 +58,27 @@ export async function* listDescendantPaths(
 
 
 /**
- * Yields paths that are descendants of given root path
- * as slash-prepended strings relative to root path.
- * 
- * Requires workDir, which must be a root of Git repository.
- * root should be relative to workDir.
- * 
- * Only returns paths found at given ref (repository commit).
- * 
+ * Yields repository subpaths that are descendants of given `root` path
+ * as slash-prepended POSIX paths relative to `root`.
+ *
+ * Only returns paths found at given `ref` (repository commit).
+ *
  * Optionally can compare change status of the path
  * relative to another commit. If `opts.onlyChanged` is also specified,
  * will not return paths that are unchanged.
  *
  * Returns a promise that resolves with a list of all found paths at once.
- * Since this uses Git and is not a generator
  *
+ * Since this function uses Git storage, and is not a generator
  * (due to underlying Isomorphic Git API restrictions),
- * this is slower than plain listDescendantPaths and uses more memory.
- * On the other hand, it will not include untracked files.
+ * this *may* be more expensive than plain `listDescendantPaths()`.
  *
  * If root path is not a directory, yields the only string '/'.
  */
 export async function listDescendantPathsAtVersion(
+  /** POSIX-style repo-relative path. */
   root: string,
+  /** Absolute local path to Git working directory root. */
   workDir: string,
   ref: string,
   diffOpts?: { refToCompare: string, onlyChanged: boolean },

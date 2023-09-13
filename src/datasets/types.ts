@@ -157,8 +157,11 @@ export namespace API {
      */
     export type UpdateObjectsExternal =
       (msg: AuthoringGitOperationParams & DatasetOperationParams & {
+        /** Absolute filesystem paths to objects to add. */
         absoluteFilepaths: string[]
+        /** Repo-relative POSIX-style path. */
         targetPath: string
+        /** Replace `targetPath`, rather than add files beneath. */
         replaceTarget?: true
         offloadToLFS?: true
         commitMessage: string

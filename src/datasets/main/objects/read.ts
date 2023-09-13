@@ -90,12 +90,12 @@ export async function readObject(
  * Deserializes it into JS structure
  * according to ser/des rule provided by Paneron core.
  *
- * @param workDir repository working directory
- * @param rootPath object path, relative to working directory root
  * @returns Record<string, any> | null
  */
 export async function readObjectCold(
+  /** Absolute path to Git working directory root. */
   workDir: string,
+  /** Repo-relative POSIX-style path. */
   rootPath: string,
 
   /** Whether or not to try to download blobs corresponding to LFS pointers. */
@@ -153,8 +153,16 @@ export async function readObjectCold(
  * NOTE: Does not resolve LFS yet.
  */
 export async function readObjectVersions
-<L extends number, C extends string[] & { length: L }>
-(workDir: string, datasetID: string, objectPath: string, commitHashes: C):
+<L extends number, C extends string[] & { length: L }>(
+  /** Absolute path to Git working directory root. */
+  workDir: string,
+  /** Identifier of the dataset within the repository. */
+  datasetID: string,
+  /** Dataset-relative POSIX-style path to logical object of interest. */
+  objectPath: string,
+  /** List of commit hashes of interest. */
+  commitHashes: C,
+):
 Promise<(Record<string, any> | null)[] & { length: L }> {
   // TODO: Support resolving LFS in `readObjectVersions()`.
 

@@ -21,7 +21,7 @@ export type PaneronRepository = {
 
 /** Data used to work with a locally cloned Git repository. */
 export interface GitRepository {
-  /** Working directory location. */
+  /** Working directory location, absolute end-user platform-specific path. */
   workingCopyPath: string
 
   /** Custom label assigned by the user, e.g. if there are similar repositories. */
@@ -198,6 +198,10 @@ export interface LFSParams {
 // Worker operation parameters (“worker messages”).
 
 export interface GitOperationParams {
+  /**
+   * Absolute path to Git working directory root,
+   * specific to current platform if using Node on desktop.
+   */
   workDir: string
 
   /** Optional for now, but most operations will be branch-based eventually. */
@@ -240,14 +244,17 @@ export interface PushRequestMessage extends RemoteGitOperationParams {
 export interface FetchRequestMessage extends RemoteGitOperationParams {}
 
 export interface BufferDataRequestMessage extends GitOperationParams {
+  /** A list of repo-relative POSIX paths. */
   bufferPaths: string[]
 }
 
 export interface ObjectDataRequestMessage extends GitOperationParams {
+  /** A list of repo-relative POSIX paths. */
   objectPaths: string[]
 }
 
 export interface BufferCommitRequestMessage extends AuthoringGitOperationParams {
+  /** Buffer changeset, with repository-relative paths. */
   bufferChangeset: BufferChangeset
   commitMessage: string
 
@@ -270,7 +277,9 @@ export interface CommitRequestMessage extends AuthoringGitOperationParams, Datas
 }
 
 export interface TreeUpdateCommitRequestMessage extends AuthoringGitOperationParams, DatasetOperationParams {
+  /** Repo-relative POSIX path. */
   oldSubtreePath: string
+  /** Repo-relative POSIX path. */
   newSubtreePath: string | null // NOTE: if null, deletes subtree
   commitMessage: string
 }

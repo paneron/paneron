@@ -14,12 +14,14 @@ import { listDescendantPaths, listDescendantPathsAtVersion } from './list';
 
 
 /**
- * Given a work dir and a rootPath relative to it,
- * returns a BufferDataset with buffers under the root path.
+ * Given a `workDir` and a `rootPath` relative to it,
+ * returns a `BufferDataset` with buffers under the `rootPath`.
  *
- * Paths in buffer dataset will be slash-prepended and relative to root path.
+ * `rootPath` must be POSIX, `workDir` must be native Git workdir absolute path.
  *
- * If there’s no descendants (e.g., rootPath is a file),
+ * Paths in buffer dataset are POSIX, slash-prepended, relative to root path.
+ *
+ * If there’s no descendants (e.g., `rootPath` is a file),
  * buffer dataset will contain a sole key '/' mapping to the buffer.
  *
  * Object paths referencing nonexistent objects
@@ -71,13 +73,15 @@ export const readBuffers: Repositories.Data.ReadBuffers = async function ({
 
 
 /**
- * Given a root path, returns a BufferDataset containing data under that path.
- * Paths in buffer dataset will be slash-prepended and relative to root path.
+ * Given a root path, returns a `BufferDataset` containing data under that path.
+ * Paths in buffer dataset will be POSIX, slash-prepended and relative to root path.
  *
  * NOTE: Does not support LFS yet.
  */
 export const readBuffersAtVersion: Repositories.Data.ReadBuffersAtVersion = async function ({
+  /** Absolute path to Git working directory. */
   workDir,
+  /** POSIX-style repo-relative path. */
   rootPath,
   commitHash,
 }): Promise<Record<string, Uint8Array>> {
@@ -154,8 +158,10 @@ export const getBufferDataset: Repositories.Data.GetBufferDataset = async functi
  * NOTE: This function is somewhat slow.
  */
 async function readBufferAtVersion(
+  /** Repository-relative POSIX-style path. */
   path: string,
   commitHash: string,
+  /** Absolute path to repository working directory root. */
   workDir: string,
 ): Promise<Uint8Array | null> {
   let blob: Uint8Array;
