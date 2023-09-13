@@ -163,8 +163,8 @@ export async function listDescendantPathsAtVersion(
  *
  * If opts.onlyChanged is true, returned change statuses will not contain ‘unchanged’
  * (and path list will not be exhaustive).
- * NOTE: Deprecated.
  *
+ * @deprecated use `listDescendantPathsAtVersion()` with `diffOpts` instead.
  */
 export async function listBufferStatuses
 (oid1: string, oid2: string, workDir: string, opts?: { onlyChanged?: boolean }):

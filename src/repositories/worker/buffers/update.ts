@@ -16,7 +16,7 @@ import type { Repositories } from '../types';
 
 
 /**
- * Applies given BufferChangeset and commits changes.
+ * Applies given `BufferChangeset` and commits changes.
  * Does not check for conflicts.
  *
  * NOTE: Does not check for conflicts at this point

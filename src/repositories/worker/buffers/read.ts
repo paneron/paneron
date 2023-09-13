@@ -132,7 +132,7 @@ export const readBuffersAtVersion: Repositories.Data.ReadBuffersAtVersion = asyn
 
 /**
  * Given a list of buffer paths, returns a BufferDataset.
- * readBuffers() should be preferred instead.
+ * @deprecated prefer `readBuffers()`.
  */
 export const getBufferDataset: Repositories.Data.GetBufferDataset = async function ({
   workDir,
