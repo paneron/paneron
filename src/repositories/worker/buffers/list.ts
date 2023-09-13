@@ -1,9 +1,9 @@
 import nodePath from 'path';
 import fs from 'fs';
-import git, { WalkerEntry } from 'isomorphic-git';
-import { ChangeStatus, DiffStatus } from '@riboseinc/paneron-extension-kit/types/changes';
+import git, { type WalkerEntry } from 'isomorphic-git';
+import type { ChangeStatus, DiffStatus } from '@riboseinc/paneron-extension-kit/types/changes';
 import { stripLeadingSlash } from '../../../utils';
-import { Repositories } from '../types';
+import type { Repositories } from '../types';
 
 
 const { lstat, readdir } = fs.promises;
