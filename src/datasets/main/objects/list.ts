@@ -1,6 +1,3 @@
-import path from 'path';
-
-
 // TODO: Define composite object extension & ser/des logic via ser/des rules in extension kit.
 const COMPOSITE_OBJECT_DIRNAME_EXTENSION = '.pan';
 
@@ -13,12 +10,12 @@ const COMPOSITE_OBJECT_DIRNAME_EXTENSION = '.pan';
  * Note: this is to support a provisional feature.
  */
 function getCompositeObjectPathForBufferPath(bufferPath: string): string | null {
-  const parts = bufferPath.split(path.posix.sep);
+  const parts = bufferPath.split('/');
   const firstCompositePartIndex =
-    parts.findIndex(part => path.extname(part.toLowerCase()) === COMPOSITE_OBJECT_DIRNAME_EXTENSION);
+    parts.findIndex(part => part.toLowerCase().split('.').at(-1) === COMPOSITE_OBJECT_DIRNAME_EXTENSION);
   if (firstCompositePartIndex >= 0) {
     const objectPathParts = parts.slice(0, firstCompositePartIndex + 1);
-    return `/${objectPathParts.join(path.posix.sep)}`;
+    return `/${objectPathParts.join('/')}`;
   } else {
     return null;
   }

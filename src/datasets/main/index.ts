@@ -6,7 +6,7 @@ import log from 'electron-log';
 import type { BufferChange, BufferChangeset } from '@riboseinc/paneron-extension-kit/types/buffers';
 import { INITIAL_INDEX_STATUS } from '@riboseinc/paneron-extension-kit/types/indexes';
 
-import { stripLeadingSlash, stripTrailingSlash, forceSlug } from 'utils';
+import { joinPaths, stripLeadingSlash, stripTrailingSlash, forceSlug } from 'utils';
 import { checkPathIsOccupied } from 'main/fs-utils';
 import { serializeMeta } from 'main/meta-serdes';
 
@@ -136,7 +136,7 @@ initializeDataset.main!.handle(async ({ workingCopyPath, meta: datasetMeta, data
 
   const repos = getLoadedRepository(workingCopyPath).workers.sync;
 
-  const datasetMetaPath = path.join(datasetPath, DATASET_FILENAME);
+  const datasetMetaPath = joinPaths(datasetPath, DATASET_FILENAME);
 
   const bufferChangeset: BufferChangeset = {}
 
@@ -479,7 +479,7 @@ deleteDataset.main!.handle(async ({ workingCopyPath, datasetID }) => {
   delete repoMeta.datasets[datasetID];
   const newMetaBuffer = serializeMeta(repoMeta);
 
-  const datasetMetaPath = path.join(datasetID, DATASET_FILENAME);
+  const datasetMetaPath = joinPaths(datasetID, DATASET_FILENAME);
 
   const repoMetaUpdateResult = await w.repo_updateBuffers({
     commitMessage: "Record dataset deletion",

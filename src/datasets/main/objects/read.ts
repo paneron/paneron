@@ -9,6 +9,7 @@ import { getDatasetRoot } from 'repositories/main/meta';
 
 import { readLFSParams } from 'repositories/main/readRepoConfig';
 
+import { joinPaths } from '../../../utils';
 import type { API as Datasets } from '../../types';
 import { getDefaultIndex } from '../loadedDatasets';
 import type { LFSParams } from 'repositories/types';
@@ -36,7 +37,7 @@ export const getObjectDataset: Datasets.Data.GetObjectDataset = async function (
     objectPaths?.map(async (objectPath) => {
       const data = await readObjectCold(
         workDir,
-        path.join(datasetRoot, objectPath),
+        joinPaths(datasetRoot, objectPath),
         resolveLFS);
       return {
         [objectPath]: data,
@@ -170,8 +171,12 @@ Promise<(Record<string, any> | null)[] & { length: L }> {
 
   const datasetRoot = getDatasetRoot('', datasetID);
 
+  const repoRelativeObjectPath = joinPaths(datasetRoot, objectPath);
   const bufferDatasets = await Promise.all(commitHashes.map(oid =>
-    sync.repo_readBuffersAtVersion({ rootPath: path.join(datasetRoot, objectPath), commitHash: oid })
+    sync.repo_readBuffersAtVersion({
+      rootPath: repoRelativeObjectPath,
+      commitHash: oid,
+    })
   )) as Record<string, Uint8Array>[] & { length: L };
 
   //const bufDs1 = await sync.repo_readBuffersAtVersion({ workDir, rootPath: path.join(datasetRoot, objectPath), commitHash: oidIndex! });
@@ -194,7 +199,11 @@ Promise<(Record<string, any> | null)[] & { length: L }> {
   //const objDs2: Record<string, any> | null = Object.keys(bufDs2).length > 0 ? rule.deserialize(bufDs2, {}) : null;
 
   if (objectDatasets.filter(ds => ds !== null).length < 1) {
-    log.error("Datasets: readObjectVersions(): Unable to read any object version", path.join(datasetRoot, objectPath), commitHashes);
+    log.error(
+      "Datasets: readObjectVersions(): Unable to read any object version",
+      workDir,
+      repoRelativeObjectPath,
+      commitHashes);
     throw new Error("Unable to read any object version");
   }
 

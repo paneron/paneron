@@ -6,8 +6,8 @@ import { pointsToLFS } from '@riboseinc/isogit-lfs/util';
 import { downloadBlobFromPointer, readPointer } from '@riboseinc/isogit-lfs';
 import type { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 
-import { stripLeadingSlash, stripTrailingSlash } from '../../../utils';
 import { readBuffer } from '../../../main/fs-utils';
+import { joinPaths, stripLeadingSlash, stripTrailingSlash } from '../../../utils';
 import { normalizeURL } from '../../util';
 import type { Repositories } from '../types';
 import { listDescendantPaths, listDescendantPathsAtVersion } from './list';
@@ -93,7 +93,7 @@ export const readBuffersAtVersion: Repositories.Data.ReadBuffersAtVersion = asyn
     workDir,
     commitHash);
   for (const [relativeBufferPath, _] of bufferPathsRelativeToRoot) {
-    const bufferPath = path.join(rootPath, relativeBufferPath);
+    const bufferPath = joinPaths(rootPath, relativeBufferPath);
     const bufferData: Uint8Array | null = await readBufferAtVersion(
       bufferPath,
       commitHash,

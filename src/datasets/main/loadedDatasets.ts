@@ -14,7 +14,7 @@ import type { ChangeStatus } from '@riboseinc/paneron-extension-kit/types/change
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
 import { listDescendantPaths } from 'repositories/worker/buffers/list';
 import { getDatasetRoot } from 'repositories/main/meta';
-import { makeQueue } from 'utils';
+import { joinPaths, makeQueue } from 'utils';
 import { hash } from 'main/utils';
 import type { API as Datasets, ReturnsPromise } from '../types';
 import { filteredIndexUpdated, indexStatusChanged, objectsChanged } from '../ipc';
@@ -343,7 +343,7 @@ async function _writeDefaultIndex(
 
     let obj: Record<string, any> | null;
     try {
-      obj = await readObjectCold(workDir, path.join(datasetRoot, objectPath));
+      obj = await readObjectCold(workDir, joinPaths(datasetRoot, objectPath));
     } catch (e) {
       // Pretend the object does not exist. readObjectCold() should log any deserialization errors.
       obj = null;

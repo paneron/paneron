@@ -1,8 +1,7 @@
-import path from 'path';
 import type { ObjectChangeset } from '@riboseinc/paneron-extension-kit/types/objects';
 import type { BufferChange, BufferChangeset, BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 import { findSerDesRuleForObject } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
-import { stripTrailingSlash } from 'utils';
+import { joinPaths, stripTrailingSlash } from 'utils';
 
 
 /**
@@ -37,7 +36,7 @@ export function toBufferChangeset(
       const rule = findSerDesRuleForObject(objectPath, change.newValue);
       newObjectBuffersRelative = rule.serialize(change.newValue, {});
     } else {
-      newObjectBuffersRelative = { [path.posix.sep]: null };
+      newObjectBuffersRelative = { ['/']: null };
     }
 
     // When conflict check is disabled
@@ -50,7 +49,7 @@ export function toBufferChangeset(
         const rule = findSerDesRuleForObject(objectPath, change.oldValue);
         oldObjectBuffersRelative = rule.serialize(change.oldValue, {});
       } else {
-        oldObjectBuffersRelative = { [path.posix.sep]: null };
+        oldObjectBuffersRelative = { ['/']: null };
       }
     } else {
       oldObjectBuffersRelative = {};
@@ -92,7 +91,7 @@ function mergeBufferDatasetsIntoChangeset(
       oldValue: oldDataset[p] ?? undefined,
       newValue: newDataset[p] ?? null,
     };
-    changeset[stripTrailingSlash(path.join(datasetPath, objectPath, p))] = change;
+    changeset[stripTrailingSlash(joinPaths(datasetPath, objectPath, p))] = change;
   }
 
   return changeset;

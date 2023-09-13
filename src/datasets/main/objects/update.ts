@@ -6,6 +6,7 @@ import { getLoadedRepository } from 'repositories/main/loadedRepositories';
 import { getDatasetRoot } from 'repositories/main/meta';
 import { readLFSParams } from 'repositories/main/readRepoConfig';
 import type { LFSParams } from 'repositories/types';
+import { joinPaths } from 'utils';
 import { updateDatasetIndexesIfNeeded } from '../loadedDatasets';
 import { toBufferChangeset } from '../buffer-dataset-conversion';
 import { API as Datasets } from '../../types';
@@ -77,14 +78,14 @@ async function ({
     result = await sync.repo_moveTree({
       author,
       commitMessage,
-      oldTreeRoot: path.posix.join(datasetRoot, oldSubtreePath),
-      newTreeRoot: path.posix.join(datasetRoot, newSubtreePath),
+      oldTreeRoot: joinPaths(datasetRoot, oldSubtreePath),
+      newTreeRoot: joinPaths(datasetRoot, newSubtreePath),
     });
   } else {
     result = await sync.repo_deleteTree({
       author,
       commitMessage,
-      treeRoot: path.posix.join(datasetRoot, oldSubtreePath),
+      treeRoot: joinPaths(datasetRoot, oldSubtreePath),
     });
   }
 
@@ -110,12 +111,12 @@ async function ({
 
   if (absoluteFilepaths.length > 0) {
     if (replaceTarget) {
-      const bufferPath = path.join(datasetRoot, targetPath);
+      const bufferPath = joinPaths(datasetRoot, targetPath);
       pathMap[absoluteFilepaths[0]] = bufferPath;
     } else {
       for (const fp of absoluteFilepaths) {
         const fn = path.basename(fp);
-        const bufferPath = path.join(datasetRoot, targetPath, fn);
+        const bufferPath = joinPaths(datasetRoot, targetPath, fn);
         pathMap[fp] = bufferPath;
       }
     }
@@ -174,7 +175,7 @@ async function findFirstConflictingObjectPath(
   Promise<[ Record<string, any> | null, Record<string, any> | null ]> {
     return [
       referenceObjectDataset[p],
-      await readObjectCold(workDir, path.join(datasetRoot, p)),
+      await readObjectCold(workDir, joinPaths(datasetRoot, p)),
     ];
   }
 
