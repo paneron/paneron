@@ -12,13 +12,7 @@ import { joinPaths, stripTrailingSlash } from 'utils';
  * ready for commit.
  *
  * All paths should be POSIX-style, dataset-relative.
- *
- * Repository working diretory should be absolute.
- * Dataset root should be relative to working directory,
- * and must not contain leading slash.
- *
- * Accepted object paths are relative to given dataset root,
- * returned buffer paths are relative to working directory.
+ * Returned buffer paths are POSIX-style, relative to repo root.
  */
 export function toBufferChangeset(
   /** Object changeset with dataset-relative POSIX-style paths. */
