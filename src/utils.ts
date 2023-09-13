@@ -160,6 +160,10 @@ export function forceSlug(val: string): string {
   return val.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
 }
 
+export function joinPaths(...parts: string[]): string {
+  return parts.join('/');
+}
+
 
 export function stripLeadingSlash(aPath: string): string {
   return aPath.replace(/^\//, '');
