@@ -30,19 +30,6 @@ export async function readPaneronRepoMeta(workingCopyPath: string): Promise<Pane
 
 
 /**
- * Given working directory path & dataset ID,
- * returns absolute path to dataset directory on user’s machine at runtime.
- */
-export function getDatasetRootAbsolute(absoluteWorkDirPath: string, datasetID: string) {
-  if (datasetID !== SOLE_DATASET_ID) {
-    return path.join(absoluteWorkDirPath, datasetID);
-  } else {
-    return absoluteWorkDirPath;
-  }
-}
-
-
-/**
  * Resolves a dataset alias to POSIX-style dataset path
  * relative to its repository root.
  * Mostly exists after migration away from single-dataset repos,
