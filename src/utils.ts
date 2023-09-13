@@ -161,7 +161,19 @@ export function forceSlug(val: string): string {
 }
 
 export function joinPaths(...parts: string[]): string {
-  return parts.join('/');
+  return normalizePath(parts.map(normalizePath).join('/'));
+}
+
+export function normalizePath(path: string): string {
+  return path
+    .replace(/\/\.\//g, '/') // Replace '/./' with '/'
+    .replace(/\/{2,}/g, '/') // Replace consecutive '/'
+    .replace(/^\/\.$/, '/') // if path === '/.' return '/'
+    .replace(/^\.\/$/, '.') // if path === './' return '.'
+    .replace(/^\.\//, '') // Remove leading './'
+    .replace(/\/\.$/, '') // Remove trailing '/.'
+    .replace(/(.+)\/$/, '$1') // Remove trailing '/'
+    .replace(/^$/, '.'); // if path === '' return '.'
 }
 
 
