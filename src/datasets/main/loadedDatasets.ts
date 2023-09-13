@@ -13,7 +13,7 @@ import type { ChangeStatus } from '@riboseinc/paneron-extension-kit/types/change
 
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
 import { listDescendantPaths } from 'repositories/worker/buffers/list';
-import { getDatasetRoot } from 'repositories/main/meta';
+import { resolveDatasetAlias } from 'repositories/main/meta';
 import { joinPaths, makeQueue } from 'utils';
 import { hash } from 'main/utils';
 import type { API as Datasets, ReturnsPromise } from '../types';
@@ -256,11 +256,9 @@ const resolveDatasetChanges: (opts: {
 }) {
   const { workers: { sync } } = getLoadedRepository(workDir);
 
-  const datasetRoot = getDatasetRoot('', datasetID);
-
   // Find which buffers were added/removed/modified
   const { changedBuffers } = await sync.repo_resolveChanges({
-    rootPath: datasetRoot,
+    rootPath: resolveDatasetAlias(datasetID),
     oidBefore,
     oidAfter,
   });
@@ -331,7 +329,7 @@ async function _writeDefaultIndex(
   changedObjectPathGenerator: AsyncGenerator<string>,
   statusReporter: (indexedItemCount: number) => void,
 ) {
-  const datasetRoot = getDatasetRoot('', datasetID);
+  const datasetRoot = resolveDatasetAlias(datasetID);
 
   let loaded: number = 0;
   for await (const objectPath of changedObjectPathGenerator) {
@@ -390,7 +388,7 @@ const fillInDefaultIndex = datasetQueue.oneAtATime(async function _fillInDefault
   datasetID: string,
   index: Datasets.Util.DefaultIndex,
 ) {
-  const datasetRoot = getDatasetRoot('', datasetID);
+  const datasetRoot = resolveDatasetAlias(datasetID);
 
   const defaultIndexStatusReporter = getDefaultIndexStatusReporter(workDir, datasetID);
 

@@ -3,7 +3,7 @@ import path from 'path';
 import type { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
 import type { ObjectChangeset, ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
-import { getDatasetRoot } from 'repositories/main/meta';
+import { resolveDatasetAlias } from 'repositories/main/meta';
 import { readLFSParams } from 'repositories/main/readRepoConfig';
 import type { LFSParams } from 'repositories/types';
 import { joinPaths } from 'utils';
@@ -25,7 +25,7 @@ async function ({
 }) {
   const { workers: { sync } } = getLoadedRepository(workDir);
 
-  const datasetRoot = getDatasetRoot('', datasetID);
+  const datasetRoot = resolveDatasetAlias(datasetID);
 
   if (_dangerouslySkipValidation !== true) {
     const conflict = await findFirstConflictingObjectPath(
@@ -70,7 +70,7 @@ async function ({
 }) {
   const { workers: { sync } } = getLoadedRepository(workDir);
 
-  const datasetRoot = getDatasetRoot('', datasetID);
+  const datasetRoot = resolveDatasetAlias(datasetID);
 
   let result: CommitOutcome;
 
@@ -169,7 +169,7 @@ async function findFirstConflictingObjectPath(
 
   const paths = Object.keys(referenceObjectDataset);
 
-  const datasetRoot = getDatasetRoot('', datasetID);
+  const datasetRoot = resolveDatasetAlias(datasetID);
 
   async function readObjects(p: string):
   Promise<[ Record<string, any> | null, Record<string, any> | null ]> {

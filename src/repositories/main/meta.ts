@@ -43,33 +43,32 @@ export function getDatasetRootAbsolute(absoluteWorkDirPath: string, datasetID: s
 
 
 /**
- * Given working directory path & dataset ID,
- * returns path to dataset root (with no leading/trailing slashes)
- * relative to given repository root.
- * 
- * Repository root can be empty string,
- * in which case the returned path will start with leading slash.
+ * Resolves a dataset alias to POSIX-style dataset path
+ * relative to its repository root.
+ * Mostly exists after migration away from single-dataset repos,
+ * for compatibility.
  *
  * @example
  * ```
- * getDatasetRoot('', '') => error
- * getDatasetRoot('', '@') => '/'
- * getDatasetRoot('testrepo', '@') => 'testrepo/'
- * getDatasetRoot('testrepo', 'dataset') => 'testrepo/dataset'
- * getDatasetRoot('', 'complex/dataset/id') => '/complex/dataset/id'
+ * getDatasetRoot('') => error
+ * getDatasetRoot('@') => '/'
+ * getDatasetRoot('dataset') => '/dataset'
+ * getDatasetRoot('complex/dataset/id') => '/complex/dataset/id'
  * ```
  */
-export function getDatasetRoot(workDirPath: string, datasetID: string) {
-  if (!datasetID.trim()) {
-    throw new Error("Invalid dataset ID");
+export function resolveDatasetAlias(datasetID: string): string {
+  const _id = datasetID.trim();
+
+  if (!_id) {
+    throw new Error("Invalid dataset ID: looks like an empty string");
+  }
+  if (_id.startsWith('/') || _id.indexOf('\\') >= 0) {
+    throw new Error("Invalid dataset ID: can’t start with a slash or have backslashes");
   }
 
-  const datasetDir = datasetID !== SOLE_DATASET_ID
-    ? datasetID
-    : '';
+  const datasetDir = _id !== SOLE_DATASET_ID ? datasetID : '';
 
-  const result = path.join(workDirPath, datasetDir);
-  return (result !== '.' ? result : '/');
+  return `/${datasetDir}`;
 }
 
 
@@ -80,8 +79,8 @@ export function getDatasetRoot(workDirPath: string, datasetID: string) {
  */
 export async function readDatasetMeta(workDir: string, datasetID: string):
 Promise<DatasetInfo> {
-  const datasetRoot = getDatasetRoot('', datasetID);
   const datasetMetaPath = path.join(datasetRoot, DATASET_FILENAME);
+  const datasetRoot = resolveDatasetAlias(datasetID);
 
   const meta = readBuffer(path.join(workDir, datasetMetaPath));
 

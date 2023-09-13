@@ -5,7 +5,7 @@ import type { ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objec
 import { findSerDesRuleForBuffers } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
 
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
-import { getDatasetRoot } from 'repositories/main/meta';
+import { resolveDatasetAlias } from 'repositories/main/meta';
 
 import { readLFSParams } from 'repositories/main/readRepoConfig';
 
@@ -29,7 +29,7 @@ export const getObjectDataset: Datasets.Data.GetObjectDataset = async function (
   objectPaths,
   resolveLFS,
 }) {
-  const datasetRoot = getDatasetRoot('', datasetID);
+  const datasetRoot = resolveDatasetAlias(datasetID);
 
   //console.debug("Worker: Repositories: getObjectDataset: Reading…", objectPaths)
 
@@ -169,7 +169,7 @@ Promise<(Record<string, any> | null)[] & { length: L }> {
 
   const { workers: { sync } } = getLoadedRepository(workDir);
 
-  const datasetRoot = getDatasetRoot('', datasetID);
+  const datasetRoot = resolveDatasetAlias(datasetID);
 
   const repoRelativeObjectPath = joinPaths(datasetRoot, objectPath);
   const bufferDatasets = await Promise.all(commitHashes.map(oid =>
