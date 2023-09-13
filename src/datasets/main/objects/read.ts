@@ -187,7 +187,11 @@ Promise<(Record<string, any> | null)[] & { length: L }> {
       try {
         return rule.deserialize(buffers, {});
       } catch (e) {
-        log.error("Datasets: readObjectVersions(): Error deserializing version for object", workDir, datasetRoot, objectPath, e);
+        log.error(
+          "Datasets: readObjectVersions(): Error deserializing version for object",
+          workDir,
+          repoRelativeObjectPath,
+          e);
         throw e;
       }
     } else {
