@@ -76,6 +76,9 @@ jobs:
 
       - name: Run yarn dist for a maximum of ${{ inputs.max_build_attempts }} time(s)
         run: |
+
+          notarization_log="notarization-error.log"
+
           if [[ ${{ inputs.os }} = macos-* ]]
           then
             export CSC_KEY_PASSWORD='${{ secrets.MAC_CERTS_PASSWORD }}'
@@ -106,6 +109,18 @@ jobs:
             if ((attempt >= ${{ inputs.max_build_attempts }}))
             then
               >&2 echo "error: ❌ Attempted ${{ inputs.max_build_attempts }} times and all have failed.  Aborting."
+              if [[ -r "${notarization_log}" ]]
+              then
+                >&2 printf "📝 \e[1;93mPrinting out notarization error log:\e[m\n"
+                >&2 echo
+                >&2 printf "\e[1m<NotarizationLog>\e[;33m\n"
+                >&2 echo
+                >&2 cat "${notarization_log}"
+                >&2 echo
+                >&2 printf "\e[;1m</NotarizationLog>\e[m\n"
+                >&2 echo
+                echo 'has_notarization_error=1' >> $GITHUB_ENV
+              fi
               exit 1
             fi
             ((attempt++))
@@ -140,3 +155,11 @@ jobs:
           path: |
             ${{ inputs.cache_dir }}/*paneron*
           if-no-files-found: error
+
+      - name: Upload error logs
+        uses: actions/upload-artifact@v3
+        if: always() && env.has_notarization_error == 1
+        with:
+          name: error-logs-${{ inputs.os }}
+          path: |
+            notarization-error.log
