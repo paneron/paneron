@@ -114,14 +114,14 @@ export const readBuffersAtVersion: Repositories.Data.ReadBuffersAtVersion = asyn
 //   atCommitHash?: string,
 // ): Promise<BufferDataset> {
 //   const normalizedPaths = bufferPaths.map(stripLeadingSlash);
-// 
+//
 //   let reader: (path: string) => Promise<null | Uint8Array> | null | Uint8Array;
 //   if (atCommitHash === undefined) {
 //     reader = (p) => readBuffer(path.join(workDir, p));
 //   } else {
 //     reader = (p) => readBufferAtVersion(p, atCommitHash, workDir);
 //   }
-// 
+//
 //   return (await Promise.all(normalizedPaths.map(async ([path]) => {
 //     return {
 //       [path]: await reader(path),
