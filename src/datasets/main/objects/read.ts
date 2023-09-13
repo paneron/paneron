@@ -186,7 +186,7 @@ Promise<(Record<string, any> | null)[] & { length: L }> {
   //const objDs2: Record<string, any> | null = Object.keys(bufDs2).length > 0 ? rule.deserialize(bufDs2, {}) : null;
 
   if (objectDatasets.filter(ds => ds !== null).length < 1) {
-    log.error("Datasets: updateIndexesIfNeeded: Unable to read any object version", path.join(datasetRoot, objectPath), commitHashes);
+    log.error("Datasets: readObjectVersions(): Unable to read any object version", path.join(datasetRoot, objectPath), commitHashes);
     throw new Error("Unable to read any object version");
   }
 
