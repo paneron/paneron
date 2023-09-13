@@ -147,10 +147,10 @@ export const getBufferDataset: Repositories.Data.GetBufferDataset = async functi
 
 /**
  * Retrieves state of blob at given path as of given commit hash using Git.
- * 
+ *
  * Buffer is considered nonexistent if Isomorphic Git returns NotFoundError,
  * other errors are thrown.
- * 
+ *
  * NOTE: This function is somewhat slow.
  */
 async function readBufferAtVersion(

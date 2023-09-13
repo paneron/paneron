@@ -49,7 +49,7 @@ export function getDatasetRootAbsolute(absoluteWorkDirPath: string, datasetID: s
  * 
  * Repository root can be empty string,
  * in which case the returned path will start with leading slash.
- * 
+ *
  * @example
  * ```
  * getDatasetRoot('', '') => error

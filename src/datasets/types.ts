@@ -71,10 +71,10 @@ export namespace API {
     /**
      * Creates a custom index that filters items in default index
      * using given query expression that evaluates in context of each object.
-     * 
+     *
      * Custom indexes contain object paths only, object data
      * is retrieved from default index.
-     * 
+     *
      * Returns index ID that can be used to query items. */
     export type GetOrCreateFiltered = (msg: DatasetOperationParams & {
       queryExpression: string
@@ -206,9 +206,9 @@ export namespace API {
        * Commit hash signifies which version of the repository the index in question was built against.
        * If, upon any index access, its hash doesn’t match the current HEAD commit hash as reported by Git,
        * indexes are expected to be updated.
-       * 
+       *
        * This also happens each time a new commit was added to the repository.
-       * 
+       *
        * Upon index update, frontend is notified.
        */
       commitHash: string

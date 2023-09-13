@@ -11,11 +11,11 @@ import { stripTrailingSlash } from 'utils';
  * to buffer changeset
  * (a record that maps paths to buffer changes)
  * ready for commit.
- * 
+ *
  * Repository working diretory should be absolute.
  * Dataset root should be relative to working directory,
  * and must not contain leading slash.
- * 
+ *
  * Accepted object paths are relative to given dataset root,
  * returned buffer paths are relative to working directory.
  */

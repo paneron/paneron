@@ -26,11 +26,11 @@ export const resolveChanges: Repositories.Data.ResolveChanges = async ({ workDir
  * Streams paths that are descendants of given root path
  * as slash-prepended strings relative to root path
  * (which should be given as system-absolute).
- * 
  * If root path is not a directory, yields the only string '/'.
- * 
+ *
+ *
  * Uses filesystem, so may report data or changes unknown to Git.
- */ 
+ */
 export async function* listDescendantPaths(
   /** Filesystem-absolute path. */
   root: string,
@@ -67,14 +67,14 @@ export async function* listDescendantPaths(
  * Optionally can compare change status of the path
  * relative to another commit. If `opts.onlyChanged` is also specified,
  * will not return paths that are unchanged.
- * 
+ *
  * Returns a promise that resolves with a list of all found paths at once.
- * 
  * Since this uses Git and is not a generator
+ *
  * (due to underlying Isomorphic Git API restrictions),
  * this is slower than plain listDescendantPaths and uses more memory.
  * On the other hand, it will not include untracked files.
- * 
+ *
  * If root path is not a directory, yields the only string '/'.
  */
 export async function listDescendantPathsAtVersion(
@@ -157,14 +157,14 @@ export async function listDescendantPathsAtVersion(
  * Given two commits, returns a big flat object of paths
  * (slash-prepended, relative to workDir)
  * and their change statuses (type ChangeStatus) between those commits.
- * 
+ *
  * Uses Isomorphic Git tree walker to iterate,
  * so will not include files unknown to Git.
- * 
+ *
  * If opts.onlyChanged is true, returned change statuses will not contain ‘unchanged’
  * (and path list will not be exhaustive).
- * 
  * NOTE: Deprecated.
+ *
  */
 export async function listBufferStatuses
 (oid1: string, oid2: string, workDir: string, opts?: { onlyChanged?: boolean }):

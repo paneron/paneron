@@ -24,7 +24,7 @@ import { readObjectCold, readObjectVersions } from './objects/read';
 
 /**
  * Keeps track of loaded datasets here in memory.
- * 
+ *
  *     { datasetID: { objectPath: { field1: value1, ... }}}
  */
 const datasets: {
