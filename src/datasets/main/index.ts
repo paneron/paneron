@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { ensureDir } from 'fs-extra';
-import path from 'path';
+import nodePath from 'path';
 import { app, BrowserWindow, dialog, type OpenDialogOptions } from 'electron';
 import log from 'electron-log';
 import type { BufferChange, BufferChangeset } from '@riboseinc/paneron-extension-kit/types/buffers';
@@ -82,7 +82,7 @@ proposeDatasetPath.main!.handle(async ({ workingCopyPath, datasetPath }) => {
   }
 
   const dir = forceSlug(datasetPath);
-  const fullPath = path.join(workingCopyPath, dir);
+  const fullPath = nodePath.join(workingCopyPath, dir);
 
   // For check to succeed, the path must not exist at all.
 
@@ -190,7 +190,7 @@ initializeDataset.main!.handle(async ({ workingCopyPath, meta: datasetMeta, data
 });
 
 
-const INDEX_DB_ROOT = path.join(app.getPath('userData'), 'index-dbs');
+const INDEX_DB_ROOT = nodePath.join(app.getPath('userData'), 'index-dbs');
 
 
 export async function clearIndexes() {

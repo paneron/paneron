@@ -1,4 +1,4 @@
-import path from 'path';
+import nodePath from 'path';
 import fs from 'fs';
 import git from 'isomorphic-git';
 import http from 'isomorphic-git/http/node';
@@ -6,8 +6,8 @@ import { pointsToLFS } from '@riboseinc/isogit-lfs/util';
 import { downloadBlobFromPointer, readPointer } from '@riboseinc/isogit-lfs';
 import type { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 
-import { readBuffer } from '../../../main/fs-utils';
 import { joinPaths, stripLeadingSlash, stripTrailingSlash } from '../../../utils';
+import { deposixifyPath, readBuffer, stripLeadingSlashPlatformSpecific } from '../../../main/fs-utils';
 import { normalizeURL } from '../../util';
 import type { Repositories } from '../types';
 import { listDescendantPaths, listDescendantPathsAtVersion } from './list';
@@ -41,10 +41,13 @@ export const readBuffers: Repositories.Data.ReadBuffers = async function ({
   resolveLFS,
 }): Promise<Record<string, Uint8Array>> {
   const buffers: Record<string, Uint8Array> = {};
-  const absoluteRootPath = path.join(workDir, rootPath);
+  const absoluteRootPath = nodePath.join(workDir, deposixifyPath(rootPath));
 
   for await (const relativeBufferPath of listDescendantPaths(absoluteRootPath)) {
-    const bPath = path.join(absoluteRootPath, stripLeadingSlash(relativeBufferPath));
+    const bPath = nodePath.join(
+      absoluteRootPath,
+      stripLeadingSlashPlatformSpecific(relativeBufferPath),
+    );
     const bufferData = readBuffer(bPath);
 
     if (bufferData !== null) {
@@ -55,6 +58,9 @@ export const readBuffers: Repositories.Data.ReadBuffers = async function ({
           gitdir: `${stripTrailingSlash(workDir)}/.git`,
           content: Buffer.from(bufferData),
         });
+
+        // TODO: Fix bug in isogit-lfs that may make it not work on Windows
+        lfsPointer.objectPath = deposixifyPath(lfsPointer.objectPath);
 
         buffers[relativeBufferPath] = await downloadBlobFromPointer({
           fs,
@@ -139,9 +145,11 @@ export const getBufferDataset: Repositories.Data.GetBufferDataset = async functi
   paths,
 }) {
   //console.debug("Reading buffers at paths", workDir, paths);
-  const bufferDataset: BufferDataset = paths.map((bufferPath) => {
+  const bufferDataset: BufferDataset = paths.
+  map(deposixifyPath).
+  map((bufferPath) => {
     return {
-      [bufferPath]: readBuffer(path.join(workDir, bufferPath)),
+      [bufferPath]: readBuffer(nodePath.join(workDir, bufferPath)),
     };
   }).reduce((prev, curr) => ({ ...prev, ...curr }), {});
 

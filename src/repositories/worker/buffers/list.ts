@@ -1,4 +1,4 @@
-import { resolve, relative } from 'path';
+import nodePath from 'path';
 import fs from 'fs';
 import git, { WalkerEntry } from 'isomorphic-git';
 import { ChangeStatus, DiffStatus } from '@riboseinc/paneron-extension-kit/types/changes';
@@ -44,11 +44,11 @@ export async function* listDescendantPaths(
   if (rootStat.isDirectory()) {
     const dirents = await readdir(root, { withFileTypes: true });
     for (const dirent of dirents) {
-      const resolvedPath = resolve(root, dirent.name);
+      const resolvedPath = nodePath.resolve(root, dirent.name);
       if (dirent.isDirectory()) {
         yield* listDescendantPaths(resolvedPath, originalRoot ?? root);
       } else {
-        yield `/${relative(originalRoot ?? root, resolvedPath)}`;
+        yield `/${nodePath.relative(originalRoot ?? root, resolvedPath)}`;
       }
     }
   } else {
@@ -117,7 +117,7 @@ export async function listDescendantPathsAtVersion(
         return;
       }
 
-      const relativeFilepath = relative(rootWithLeadingSlash, filepathWithLeadingSlash);
+      const relativeFilepath = nodePath.posix.relative(rootWithLeadingSlash, filepathWithLeadingSlash);
       const relativeFilepathWithLeadingSlash = relativeFilepath ? `/${relativeFilepath}` : '/';
 
       if (doCompare) {

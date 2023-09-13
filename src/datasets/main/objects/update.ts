@@ -1,4 +1,4 @@
-import path from 'path';
+import nodePath from 'path';
 
 import type { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
 import type { ObjectChangeset, ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
@@ -115,7 +115,7 @@ async function ({
       pathMap[absoluteFilepaths[0]] = bufferPath;
     } else {
       for (const fp of absoluteFilepaths) {
-        const fn = path.basename(fp);
+        const fn = nodePath.basename(fp);
         const bufferPath = joinPaths(datasetRoot, targetPath, fn);
         pathMap[fp] = bufferPath;
       }

@@ -1,5 +1,5 @@
 import log from 'electron-log';
-import path from 'path';
+import nodePath from 'path';
 //import * as R from 'ramda';
 import levelup from 'levelup';
 import leveldown from 'leveldown';
@@ -14,6 +14,7 @@ import type { ChangeStatus } from '@riboseinc/paneron-extension-kit/types/change
 import { getLoadedRepository } from 'repositories/main/loadedRepositories';
 import { listDescendantPaths } from 'repositories/worker/buffers/list';
 import { resolveDatasetAlias } from 'repositories/main/meta';
+import { deposixifyPath } from '../../main/fs-utils';
 import { joinPaths, makeQueue } from 'utils';
 import { hash } from 'main/utils';
 import type { API as Datasets, ReturnsPromise } from '../types';
@@ -430,7 +431,7 @@ const fillInDefaultIndex = datasetQueue.oneAtATime(async function _fillInDefault
 
     // Collect object paths
     const objectPaths =
-      listObjectPaths(listDescendantPaths(path.join(workDir, datasetRoot)));
+      listObjectPaths(listDescendantPaths(nodePath.join(workDir, deposixifyPath(datasetRoot))));
 
     for await (const objectPath of objectPaths) {
       counterStatusReporterDebounced(totalCount);
@@ -1158,7 +1159,7 @@ async function rebuildFilteredIndexSortedDB(idx: Datasets.Util.FilteredIndex, on
 // Utility functions
 
 function getDBPath(cacheRoot: string, id: string) {
-  return path.join(cacheRoot, hash(id));
+  return nodePath.join(cacheRoot, hash(id));
 }
 
 

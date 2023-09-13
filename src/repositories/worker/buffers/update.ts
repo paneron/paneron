@@ -1,5 +1,5 @@
 import fs from 'fs';
-import path from 'path';
+import nodePath from 'path';
 import { ensureFile, removeSync, remove, move } from 'fs-extra';
 import git from 'isomorphic-git';
 import http from 'isomorphic-git/http/node';
@@ -9,6 +9,7 @@ import { formatPointerInfo } from '@riboseinc/isogit-lfs/pointers';
 import uploadBlob from '@riboseinc/isogit-lfs/upload';
 
 import { stripLeadingSlash } from 'utils';
+import { deposixifyPath } from '../../../main/fs-utils';
 import { normalizeURL } from '../../util';
 //import { BufferChangeset } from '@riboseinc/paneron-extension-kit/types/buffers';
 //import { AuthoringGitOperationParams, RepoStatusUpdater } from 'repositories/types';
@@ -47,7 +48,7 @@ export const updateBuffers: Repositories.Data.UpdateBuffersWithStatusReporter = 
 
   try {
     await Promise.all(bufferPaths.map(async (bufferPath) => {
-      const absolutePath = path.join(opts.workDir, bufferPath);
+      const absolutePath = nodePath.join(opts.workDir, deposixifyPath(bufferPath));
       const { newValue } = changeset[bufferPath];
       await ensureFile(absolutePath);
 
@@ -198,10 +199,14 @@ export const moveTree: Repositories.Data.MoveTree = async function ({
   const newTreeRootNormalized = stripLeadingSlash(newTreeRoot);
 
   try {
-    const oldFullPath = path.join(workDir, oldTreeRootNormalized);
-    const newFullPath = path.join(workDir, newTreeRootNormalized);
+    const oldPathAbsolute = nodePath.join(workDir, deposixifyPath(oldTreeRootNormalized));
+    const newPathAbsolute = nodePath.join(workDir, deposixifyPath(newTreeRootNormalized));
 
-    await move(oldFullPath, newFullPath, { overwrite: false });
+    await move(
+      oldPathAbsolute,
+      newPathAbsolute,
+      { overwrite: false },
+    );
 
     const WORKDIR = 2, FILE = 0;
 
@@ -257,9 +262,9 @@ export const deleteTree: Repositories.Data.DeleteTree = async function ({
   const treeRootNormalized = stripLeadingSlash(treeRoot);
 
   try {
-    const fullPath = path.join(workDir, treeRootNormalized);
+    const absolutePath = nodePath.join(workDir, deposixifyPath(treeRootNormalized));
 
-    await remove(fullPath);
+    await remove(absolutePath);
 
     const WORKDIR = 2, FILE = 0;
     const deletedPaths = (await git.statusMatrix({ fs, dir: workDir })).

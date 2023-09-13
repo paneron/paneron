@@ -2,9 +2,9 @@
  * Reading & updating Paneron metadata from within repositories.
  */
 
-import path from 'path';
+import nodePath from 'path';
 import log from 'electron-log';
-import { readBuffer } from 'main/fs-utils';
+import { deposixifyPath, readBuffer } from 'main/fs-utils';
 import { deserializeMeta } from 'main/meta-serdes';
 import { DatasetInfo } from 'datasets/types';
 import { PaneronRepository, SOLE_DATASET_ID } from '../types';
@@ -19,7 +19,7 @@ export const DATASET_FILENAME = 'panerondataset.yaml';
  * read from `PANERON_REPOSITORY_META_FILENAME` directly under `workingCopyPath`.
  */
 export async function readPaneronRepoMeta(workingCopyPath: string): Promise<PaneronRepository> {
-  const meta = readBuffer(path.join(workingCopyPath, PANERON_REPOSITORY_META_FILENAME));
+  const meta = readBuffer(nodePath.join(workingCopyPath, PANERON_REPOSITORY_META_FILENAME));
 
   if (meta === null) {
     throw new Error("Paneron repository metadata file is not found");
@@ -66,10 +66,10 @@ export function resolveDatasetAlias(datasetID: string): string {
  */
 export async function readDatasetMeta(workDir: string, datasetID: string):
 Promise<DatasetInfo> {
-  const datasetMetaPath = path.join(datasetRoot, DATASET_FILENAME);
   const datasetRoot = resolveDatasetAlias(datasetID);
+  const datasetMetaPath = nodePath.join(deposixifyPath(datasetRoot), DATASET_FILENAME);
 
-  const meta = readBuffer(path.join(workDir, datasetMetaPath));
+  const meta = readBuffer(nodePath.join(workDir, datasetMetaPath));
 
   if (meta === null) {
     log.error("Cannot read dataset metadata", workDir, datasetID, datasetMetaPath);
