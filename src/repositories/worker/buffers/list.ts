@@ -29,8 +29,9 @@ export const resolveChanges: Repositories.Data.ResolveChanges = async ({ workDir
  *
  * If root path is not a directory, yields one `/`.
  *
+ * Root path must be system-absolute and platform-specific (win32 or POSIX).
  *
- * Uses filesystem, so may report data or changes unknown to Git.
+ * NOTE: Uses filesystem direct, so may return data or changes unknown to VCS.
  */
 export async function * listDescendantPaths(
   /** Filesystem-absolute path. */
