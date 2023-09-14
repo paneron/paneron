@@ -48,6 +48,7 @@ export async function * listDescendantPaths(
       if (dirent.isDirectory()) {
         yield * listDescendantPaths(resolvedPath, originalRoot ?? root);
       } else {
+        // `path.relative()` returns paths without the leading slash.
         yield `/${posixifyPath(nodePath.relative(originalRoot ?? root, resolvedPath))}`;
       }
     }
