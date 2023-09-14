@@ -55,7 +55,7 @@ export const readBuffers: Repositories.Data.ReadBuffers = async function ({
       // and reuse it in `readBuffersAtVersion()`? Depends on batch support in isogit-lfs.
       if (resolveLFS !== undefined && pointsToLFS(bufferData)) {
         const lfsPointer = readPointer({
-          gitdir: `${stripTrailingSlash(workDir)}/.git`,
+          gitdir: `${stripTrailingSlash(posixifyPath(workDir))}/.git`,
           content: Buffer.from(bufferData),
         });
 
