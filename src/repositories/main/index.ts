@@ -40,6 +40,7 @@ import loadedDatasets from '../../datasets/main/loadedDatasets';
 
 import { makeQueue, changesetToPathChanges } from 'utils';
 import { makeUUIDv4 } from '../../main/utils';
+import { deposixifyPath } from '../../main/fs-utils';
 
 import type { PaneronRepository, GitRemote, Repository } from '../types';
 
@@ -763,7 +764,7 @@ getBufferDataset.main!.handle(async ({ workingCopyPath, paths }) => {
 
 getBufferPaths.main!.handle(async ({ workingCopyPath, prefix }) => {
   const paths: string[] = [];
-  for await (const p of listDescendantPaths(path.join(workingCopyPath, prefix))) {
+  for await (const p of listDescendantPaths(path.join(workingCopyPath, deposixifyPath(prefix)))) {
     if (p !== '/') {
       paths.push(p);
     }

@@ -7,7 +7,7 @@ import { downloadBlobFromPointer, readPointer } from '@riboseinc/isogit-lfs';
 import type { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 
 import { joinPaths, stripLeadingSlash, stripTrailingSlash } from '../../../utils';
-import { deposixifyPath, readBuffer, stripLeadingSlashPlatformSpecific } from '../../../main/fs-utils';
+import { deposixifyPath, posixifyPath, readBuffer } from '../../../main/fs-utils';
 import { normalizeURL } from '../../util';
 import type { Repositories } from '../types';
 import { listDescendantPaths, listDescendantPathsAtVersion } from './list';
@@ -46,7 +46,7 @@ export const readBuffers: Repositories.Data.ReadBuffers = async function ({
   for await (const relativeBufferPath of listDescendantPaths(absoluteRootPath)) {
     const bPath = nodePath.join(
       absoluteRootPath,
-      stripLeadingSlashPlatformSpecific(relativeBufferPath),
+      deposixifyPath(stripLeadingSlash(relativeBufferPath)),
     );
 
     const bufferData = readBuffer(bPath);

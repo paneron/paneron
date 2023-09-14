@@ -3,6 +3,7 @@ import fs from 'fs';
 import git, { type WalkerEntry } from 'isomorphic-git';
 import type { ChangeStatus, DiffStatus } from '@riboseinc/paneron-extension-kit/types/changes';
 import { stripLeadingSlash } from '../../../utils';
+import { posixifyPath } from '../../../main/fs-utils';
 import type { Repositories } from '../types';
 
 
@@ -24,12 +25,10 @@ export const resolveChanges: Repositories.Data.ResolveChanges = async ({ workDir
 
 /**
  * Streams paths that are descendants of given root filesystem path
- * as slash-prepended strings relative to root path
- * (which should be given as system-absolute).
+ * as slash-prepended POSIX-style strings relative to root path.
  *
- * Paths are platform-specific (win32 or posix).
+ * If root path is not a directory, yields one `/`.
  *
- * If root path is not a directory, yields path.sep (platform-dependent)_.
  *
  * Uses filesystem, so may report data or changes unknown to Git.
  */
@@ -48,7 +47,7 @@ export async function * listDescendantPaths(
       if (dirent.isDirectory()) {
         yield * listDescendantPaths(resolvedPath, originalRoot ?? root);
       } else {
-        yield `/${nodePath.relative(originalRoot ?? root, resolvedPath)}`;
+        yield `/${posixifyPath(nodePath.relative(originalRoot ?? root, resolvedPath))}`;
       }
     }
   } else {
