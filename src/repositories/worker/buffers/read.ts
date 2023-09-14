@@ -48,6 +48,7 @@ export const readBuffers: Repositories.Data.ReadBuffers = async function ({
       absoluteRootPath,
       stripLeadingSlashPlatformSpecific(relativeBufferPath),
     );
+
     const bufferData = readBuffer(bPath);
 
     if (bufferData !== null) {
