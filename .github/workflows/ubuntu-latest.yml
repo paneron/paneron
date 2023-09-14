@@ -69,7 +69,6 @@ jobs:
     secrets: inherit
 
   publish-snapcraft:
-    name: Publish to snapcraft.io
     if: ${{ startsWith(github.ref, 'refs/tags/v') }}
     needs: [test-dist]
     runs-on: ubuntu-latest
