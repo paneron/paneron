@@ -46,10 +46,10 @@ const load: Datasets.Lifecycle.Load = datasetQueue.oneAtATime(async function ({
 }) {
   try {
     getLoadedDataset(workDir, datasetID);
-    log.info("Datasets: Load: Already loaded", workDir, datasetID);
+    //log.silly("Datasets: Load: Already loaded", workDir, datasetID);
 
   } catch (e) {
-    log.info("Datasets: Load: Unloading first to clean up", workDir, datasetID);
+    log.info("Datasets: Load: Unloading to clean up", workDir, datasetID);
 
     await unloadDatasetDirect(workDir, datasetID);
 
@@ -58,6 +58,8 @@ const load: Datasets.Lifecycle.Load = datasetQueue.oneAtATime(async function ({
       indexDBRoot: cacheRoot,
       indexes: {},
     };
+
+    log.info("Datasets: Load: Initializing default index", workDir, datasetID);
 
     await initDefaultIndex(
       workDir,
@@ -134,11 +136,14 @@ datasetQueue.oneAtATime(async function ({
       filteredIndexID,
     ) as Datasets.Util.FilteredIndex;
 
-    log.debug("Datasets: getOrCreateFilteredIndex: Already exists", queryExpression, filteredIndexID);
+    //log.silly("Datasets: getOrCreateFilteredIndex: Already exists", queryExpression, filteredIndexID);
 
   } catch (e) {
 
-    log.debug("Datasets: getOrCreateFilteredIndex: Creating", queryExpression, filteredIndexID);
+    log.debug(
+      "Datasets: getOrCreateFilteredIndex: Does not exist yet, creating for predicate query expression:",
+      queryExpression,
+      filteredIndexID);
 
     let predicate: Datasets.Util.FilteredIndexPredicate;
     try {
@@ -374,7 +379,7 @@ function getLoadedDataset(
 ): Datasets.Util.LoadedDataset {
   const ds = datasets[workDir]?.[datasetID];
   if (!ds) {
-    log.warn("getLoadedDataset: is not loaded", datasetID);
+    //log.warn("getLoadedDataset: is not loaded", datasetID);
     throw new Error("Dataset does not exist or is not loaded");
   }
   return ds;
@@ -689,7 +694,7 @@ export function getFilteredIndex(
   const ds = getLoadedDataset(workDir, datasetID);
   const idx = ds.indexes[indexID] as Datasets.Util.FilteredIndex | undefined;
   if (!idx) {
-    log.error("Unable to get filtered index", datasetID, indexID)
+    //log.debug("Unable to get filtered index", datasetID, indexID)
     throw new Error("Unable to get filtered index");
   }
   return idx;
