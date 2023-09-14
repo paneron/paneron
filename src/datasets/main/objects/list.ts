@@ -29,6 +29,9 @@ function getCompositeObjectPathForBufferPath(bufferPath: string): string | null 
  * can be part of a single object (although that feature isn’t implemented yet).
  */
 export async function * listObjectPaths(
+  /**
+   * A generator of POSIX-style slash-prepended “physical” buffer paths.
+   */
   bufferPaths: AsyncGenerator<string>,
 ): AsyncGenerator<string> {
   for await (const bufferPath of bufferPaths) {
