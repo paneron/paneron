@@ -33,7 +33,7 @@ export const resolveChanges: Repositories.Data.ResolveChanges = async ({ workDir
  *
  * Uses filesystem, so may report data or changes unknown to Git.
  */
-export async function* listDescendantPaths(
+export async function * listDescendantPaths(
   /** Filesystem-absolute path. */
   root: string,
 
@@ -46,7 +46,7 @@ export async function* listDescendantPaths(
     for (const dirent of dirents) {
       const resolvedPath = nodePath.resolve(root, dirent.name);
       if (dirent.isDirectory()) {
-        yield* listDescendantPaths(resolvedPath, originalRoot ?? root);
+        yield * listDescendantPaths(resolvedPath, originalRoot ?? root);
       } else {
         yield `/${nodePath.relative(originalRoot ?? root, resolvedPath)}`;
       }

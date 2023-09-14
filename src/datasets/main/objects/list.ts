@@ -28,7 +28,7 @@ function getCompositeObjectPathForBufferPath(bufferPath: string): string | null 
  * NOTE: May return the same object path more than once, since multiple buffers
  * can be part of a single object (although that feature isn’t implemented yet).
  */
-export async function* listObjectPaths(
+export async function * listObjectPaths(
   bufferPaths: AsyncGenerator<string>,
 ): AsyncGenerator<string> {
   for await (const bufferPath of bufferPaths) {
