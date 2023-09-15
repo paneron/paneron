@@ -69,6 +69,11 @@ export namespace Git {
     export type Describe = (msg: {
       url: string
       auth: GitAuthentication
+      /**
+       * If specified, `currentCommit` will be checked against that branch.
+       * Otherwise, inferred main branch will be used.
+       */
+      branchName?: string
     }) => Promise<{
       isBlank: boolean,
       canPush: boolean,
