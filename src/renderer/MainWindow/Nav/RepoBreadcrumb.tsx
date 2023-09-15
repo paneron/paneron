@@ -132,7 +132,7 @@ export const RepoBreadcrumb: React.FC<{
         repoInfo.gitMeta.workingCopyPath.slice(
           repoInfo.gitMeta.workingCopyPath.length - 20,
           repoInfo.gitMeta.workingCopyPath.length)}
-      icon={{ type: 'blueprint', iconName: 'git-repo' }}
+      icon={ICON_PROPS}
       onClose={onClose}
       onNavigate={onNavigate}
       status={<>
@@ -151,6 +151,9 @@ export const RepoBreadcrumb: React.FC<{
     />
   );
 };
+
+
+const ICON_PROPS = { type: 'blueprint', iconName: 'git-repo' } as const;
 
 
 export default RepoBreadcrumb;
