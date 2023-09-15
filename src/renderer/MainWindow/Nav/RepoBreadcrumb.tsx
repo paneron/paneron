@@ -4,6 +4,7 @@
 //import { throttle } from 'throttle-debounce';
 import formatDistance from 'date-fns/formatDistance';
 
+import { useThrottledCallback } from 'use-debounce';
 
 import React, { memo, useState, useMemo, useCallback, useEffect } from 'react';
 import { jsx } from '@emotion/react';
@@ -55,6 +56,24 @@ export const RepoBreadcrumb: React.FC<{
 
   const [_status, setStatus] = useState<RepoStatus | null>(null);
 
+  // Merging status lets us preserve the error message from previous status
+  // with progress information.
+  const mergeStatus = useCallback(function mergeStatus (newStatus) {
+    setStatus(_status => {
+      const shouldMerge = _status?.status && ['ahead', 'behind', 'diverged'].indexOf(_status?.status ?? '') >= 0;
+      return {
+        ...newStatus,
+        status: !newStatus.status && shouldMerge ? _status.status : newStatus.status,
+        remoteHead: newStatus.remoteHead ?? (_status as any)?.remoteHead,
+      }
+    });
+  }, [setStatus]);
+
+  const mergeStatusThrottled = useThrottledCallback(
+    mergeStatus,
+    300,
+    { leading: true, trailing: true });
+
   // NOTE: We started relying exclusively on status updates being throttled
   // in the worker thread. One reason for that is that we need to
   // throttle *only consecutive* “busy” progress updates: the first “busy”
@@ -67,9 +86,9 @@ export const RepoBreadcrumb: React.FC<{
 
   loadedRepositoryStatusChanged.renderer!.useEvent(async ({ workingCopyPath, status }) => {
     if (workingCopyPath === workDir) {
-      setStatus(status);
+      mergeStatusThrottled(status);
     }
-  }, [workDir]);
+  }, [workDir, mergeStatusThrottled]);
 
   const [lastSyncTS, setLastSyncTS] = useState<Date | null>(null);
   const [timeSinceLastSync, setTimeSinceLastSync] = useState<string>('');
@@ -126,8 +145,25 @@ export const RepoBreadcrumb: React.FC<{
       progress = undefined;
       error = !isLoaded ? "Repository is not loaded" : undefined;
     }
+
+    if (!error && status.status === 'diverged') {
+      error = "Upstream repository has diverged, can’t merge with your changes automatically";
+    }
+
     return [progress, error]
-  }, [isLoaded, status.status, JSON.stringify(status.busy ?? {})]);
+  }, [isLoaded, status]);
+
+  const statusString = !progress || error
+    ? <>
+        {isLoaded ? "Loaded" : "Not loaded"}
+        {status.status ? ` — status: ${status.status ?? 'N/A'}` : null}
+        {`, local commit: ${(status as any).localHead?.slice(0, 6) ?? '(N/A)'}`}
+        {status.status === 'diverged'
+          ? `, whereas remote is already at: ${(status as any).remoteHead?.slice(0, 6) ?? '(N/A)'}`
+          : null}
+        {timeSinceLastSync ? ` — ${timeSinceLastSync} since last sync attempt` : null}
+      </>
+    : null;
 
   return (
     <Breadcrumb
@@ -140,14 +176,7 @@ export const RepoBreadcrumb: React.FC<{
       onClose={onClose}
       onNavigate={onNavigate}
       status={<>
-        {!progress
-          ? <>
-              {isLoaded ? "Loaded" : "Not loaded"}
-              {status.status ? ` — status: ${status.status ?? 'N/A'}` : null}
-              {status.status === 'ready' ? ` (${status.localHead.slice(0, 6)})` : ' (commit N/A)'}
-              {timeSinceLastSync ? ` — ${timeSinceLastSync} since last sync attempt` : null}
-            </>
-          : null}
+        {statusString}
         <RepositorySummary repo={repoInfo} />
       </>}
       progress={progress}

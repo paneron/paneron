@@ -80,7 +80,7 @@ export async function getUncommittedObjectPaths(workDir: string): Promise<string
 // WARNING: Stages everything inside given working directory, then commits.
 // async function _commitAnyOutstandingChanges({ workDir, commitMessage, author }) {
 //   const repo = { fs, dir: workDir };
-// 
+//
 //   // Add any modified or unstaged files (git add --no-all)
 //   const modifiedOrUntrackedPaths: string[] =
 //   await globby(['./**', './**/.*'], {
@@ -90,7 +90,7 @@ export async function getUncommittedObjectPaths(workDir: string): Promise<string
 //   for (const filepath of modifiedOrUntrackedPaths) {
 //     await git.add({ ...repo, filepath });
 //   }
-// 
+//
 //   // Delete deleted files (git add -A)
 //   const removedPaths: string[] =
 //   await git.statusMatrix(repo).then((status) =>
@@ -101,7 +101,7 @@ export async function getUncommittedObjectPaths(workDir: string): Promise<string
 //   for (const filepath of removedPaths) {
 //     await git.remove({ ...repo, filepath });
 //   }
-// 
+//
 //   // Commit staged
 //   const newCommitHash = await git.commit({
 //     fs,
@@ -109,7 +109,7 @@ export async function getUncommittedObjectPaths(workDir: string): Promise<string
 //     message: commitMessage,
 //     author,
 //   });
-// 
+//
 //   return { newCommitHash };
 // },
 
