@@ -10,7 +10,7 @@ const ORIGIN_REMOTE_NAME = 'origin';
 const HEAD_REF_PREFIX = 'refs/heads/';
 
 
-const describe: Git.Remotes.Describe = async function ({ url, auth }) {
+const describe: Git.Remotes.Describe = async function ({ url, auth, branchName }) {
   const normalizedURL = normalizeURL(url);
 
   // TODO(perf): can use getRemoteInfo() to speed up probably.
@@ -43,7 +43,13 @@ const describe: Git.Remotes.Describe = async function ({ url, auth }) {
   const isBlank = branchRefs.length === 0;
   const mainBranchRef = getMainBranchRef(branchRefs);
   const mainBranchName = mainBranchRef?.ref.replace(HEAD_REF_PREFIX, '');
-  const currentCommit = mainBranchRef?.oid;
+
+  const branchNameRef = branchName
+    ? `refs/heads/${branchName.toLowerCase()}`
+    : undefined;
+  const currentCommit: string | undefined = branchNameRef
+    ? branchRefs.find(item => item.ref.toLowerCase() === branchNameRef)?.oid
+    : mainBranchRef?.oid;
 
   return {
     isBlank,
