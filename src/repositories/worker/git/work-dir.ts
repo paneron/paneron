@@ -3,7 +3,7 @@ import fs from 'fs';
 import { remove, ensureDir } from 'fs-extra';
 
 import { checkPathIsOccupied } from '../../../main/fs-utils';
-import { Git } from '../types';
+import type { Git } from '../types';
 import { stripLeadingSlash } from '../../../utils';
 
 

@@ -1,8 +1,8 @@
 import fs from 'fs';
-import git, { ServerRef } from 'isomorphic-git';
+import git, { type ServerRef } from 'isomorphic-git';
 import http from 'isomorphic-git/http/node';
 import { normalizeURL } from '../../util';
-import { Git } from '../types';
+import type { Git } from '../types';
 
 
 const ORIGIN_REMOTE_NAME = 'origin';
