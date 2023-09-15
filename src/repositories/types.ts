@@ -157,13 +157,19 @@ export type RepoStatus = {
   /** Local branch head commit OID. */
   localHead: string
 
+  remoteHead?: undefined
+
   busy?: undefined
 } | {
   status: 'unloaded' | 'invalid-working-copy'
+  localHead?: undefined
+  remoteHead?: undefined
   busy?: undefined
 } | {
   busy: RepoOperationStatus
   status?: undefined
+  localHead?: undefined
+  remoteHead?: undefined
 }
 
 export type RepoStatusUpdater = (newStatus: RepoStatus) => void;
