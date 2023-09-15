@@ -95,7 +95,6 @@ export default {
  * which is taken to be whatever HEAD ref points to.
  */
 function getMainBranchRef(refs: ServerRef[]): ServerRef | undefined {
-  console.debug("Locaing HEAD among refs", refs);
   if (refs.length > 0) {
     // Find the commit pointed to by HEAD
     const headRefOid = refs.find(r => r.ref.toLowerCase() === 'head')?.oid;
