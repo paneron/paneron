@@ -17,8 +17,7 @@ import WelcomeScreen from './WelcomeScreen';
 import GlobalSettingsForm from './GlobalSettingsForm';
 
 
-const MainWindow: React.FC<Record<never, never>> = memo(function () {
-
+const MainWindow: React.VoidFunctionComponent<Record<never, never>> = memo(function () {
   const { value: { settings: { mainNavbarPosition } } } =
     useSettings('global', INITIAL_GLOBAL_SETTINGS);
 
