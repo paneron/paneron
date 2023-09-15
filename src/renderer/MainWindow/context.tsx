@@ -2,7 +2,7 @@
 /** @jsxFrag React.Fragment */
 
 import { jsx } from '@emotion/react';
-import React, { useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { type ToastProps, Toaster } from '@blueprintjs/core';
 import OperationQueueContextProvider from '@riboseinc/paneron-extension-kit/widgets/OperationQueue/index';
 import usePaneronPersistentStateReducer from 'state/usePaneronPersistentStateReducer';
@@ -30,7 +30,7 @@ export const Context = React.createContext<ContextSpec>({
 
 
 
-const ContextProvider: React.FC<Record<never, never>> = function ({ children }) {
+const ContextProvider: React.FC<Record<never, never>> = memo(function ({ children }) {
   const [state, dispatch, stateLoaded] = usePaneronPersistentStateReducer(
     'main-window',
     undefined,
@@ -54,6 +54,6 @@ const ContextProvider: React.FC<Record<never, never>> = function ({ children }) 
       </OperationQueueContextProvider>
     </Context.Provider>
   );
-};
+});
 
 export default ContextProvider;
