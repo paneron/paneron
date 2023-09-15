@@ -4,7 +4,8 @@
 //import { throttle } from 'throttle-debounce';
 import formatDistance from 'date-fns/formatDistance';
 
-import React, { useState, useMemo, useEffect } from 'react';
+
+import React, { memo, useState, useMemo, useCallback, useEffect } from 'react';
 import { jsx } from '@emotion/react';
 import type { ToastProps } from '@blueprintjs/core';
 
@@ -24,10 +25,9 @@ export const RepoBreadcrumb: React.FC<{
   onNavigate?: () => void
   onClose?: () => void
   onMessage: (opts: ToastProps) => void
-}> = function ({ workDir, onNavigate, onClose, onMessage }) {
-  const openedRepoResp = describeRepository.renderer!.useValue({
-    workingCopyPath: workDir,
-  }, {
+}> = memo(function ({ workDir, onNavigate, onClose, onMessage }) {
+
+  const initialRepoDescription = useMemo((() => ({
     info: {
       gitMeta: {
         workingCopyPath: workDir,
@@ -35,7 +35,11 @@ export const RepoBreadcrumb: React.FC<{
       },
     },
     isLoaded: false,
-  });
+  })), [workDir]);
+
+  const openedRepoResp = describeRepository.renderer!.useValue({
+    workingCopyPath: workDir,
+  }, initialRepoDescription);
 
   const repoInfo = openedRepoResp.value.info;
 
@@ -150,7 +154,7 @@ export const RepoBreadcrumb: React.FC<{
       error={error}
     />
   );
-};
+});
 
 
 const ICON_PROPS = { type: 'blueprint', iconName: 'git-repo' } as const;
