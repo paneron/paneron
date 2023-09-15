@@ -21,8 +21,7 @@ on:
       - 'flake.lock'
       - '.github/workflows/*.yml'
       - '!.github/workflows/ubuntu-latest.yml'
-      - '!.github/workflows/build.yml'
-      - '!.github/workflows/build-dist.yml'
+      - '!.github/workflows/build-all.yml'
       - '!.github/workflows/test-dist.yml'
   pull_request:
     paths-ignore:
@@ -41,20 +40,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    uses: ./.github/workflows/build.yml
-    with:
-      os: ubuntu-latest
-
-  build-dist:
-    needs: [build]
-    uses: ./.github/workflows/build-dist.yml
+  build-all:
+    uses: ./.github/workflows/build-all.yml
     secrets: inherit
     with:
       os: ubuntu-latest
 
   test-dist:
-    needs: [build-dist]
+    needs: [build-all]
     uses: ./.github/workflows/test-dist.yml
     with:
       os: ubuntu-latest

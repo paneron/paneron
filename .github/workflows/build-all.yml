@@ -1,4 +1,4 @@
-name: build-dist
+name: build-all
 
 on:
   workflow_dispatch:
@@ -37,7 +37,7 @@ jobs:
       fail-fast: false
 
     concurrency:
-      group: '${{ github.workflow }}-${{ inputs.os }}-${{ inputs.node }}-${{ github.head_ref || github.ref_name }}'
+      group: '${{ github.workflow }}-${{ inputs.os }}-${{ inputs.node }}-${{ github.head_ref || github.ref_name }}-all'
       cancel-in-progress: true
 
     env:
@@ -49,12 +49,6 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Restore build cache
-        uses: actions/download-artifact@v3
-        with:
-          name: compile-${{ inputs.os }}-${{ inputs.node }}
-          path: ${{ inputs.cache_dir }}
-
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v3
         with:
@@ -62,6 +56,8 @@ jobs:
           cache: yarn
 
       - run: yarn install --frozen-lockfile --immutable --network-timeout ${{ inputs.npm_network_timeout }}
+
+      - run: yarn compile
 
       - name: Prepare for app notarization (macOS)
         if: startsWith(inputs.os, 'macos')
