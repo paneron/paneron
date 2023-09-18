@@ -22,7 +22,8 @@ import remotes from './remotes';
 //const UTF_DECODER = getDecoder('utf-8');
 
 
-const clone: WithStatusUpdater<Git.Sync.Clone> = async function (
+export const clone: WithStatusUpdater<Git.Sync.Clone> =
+async function clone (
   opts: CloneRequestMessage,
   updateStatus: RepoStatusUpdater,
 ) {
@@ -90,7 +91,7 @@ const clone: WithStatusUpdater<Git.Sync.Clone> = async function (
 }
 
 
-async function push(opts: PushRequestMessage, updateStatus: RepoStatusUpdater) {
+export async function push(opts: PushRequestMessage, updateStatus: RepoStatusUpdater) {
   const {
     workDir,
     auth,
@@ -168,7 +169,8 @@ async function push(opts: PushRequestMessage, updateStatus: RepoStatusUpdater) {
 }
 
 
-const pull: WithStatusUpdater<Git.Sync.Pull> = async function (
+export const pull: WithStatusUpdater<Git.Sync.Pull> =
+async function pull (
   opts: PullRequestMessage,
   updateStatus: RepoStatusUpdater,
 ) {
@@ -267,10 +269,3 @@ const pull: WithStatusUpdater<Git.Sync.Pull> = async function (
 
   return { oidBeforePull, oidAfterPull };
 }
-
-
-export default {
-  clone,
-  pull,
-  push,
-};

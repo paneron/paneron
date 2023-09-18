@@ -35,7 +35,8 @@ import { listDescendantPaths, listDescendantPathsAtVersion } from './list';
  * NOTE: Buffers are read from working directory file tree,
  * and may contain uncommitted changes.
  */
-export const readBuffers: Repositories.Data.ReadBuffers = async function ({
+export const readBuffers: Repositories.Data.ReadBuffers =
+async function readBuffers ({
   workDir,
   rootPath,
   resolveLFS,
@@ -85,7 +86,8 @@ export const readBuffers: Repositories.Data.ReadBuffers = async function ({
  *
  * NOTE: Does not support LFS yet.
  */
-export const readBuffersAtVersion: Repositories.Data.ReadBuffersAtVersion = async function ({
+export const readBuffersAtVersion: Repositories.Data.ReadBuffersAtVersion =
+async function readBuffersAtVersion ({
   /** Absolute path to Git working directory. */
   workDir,
   /** POSIX-style repo-relative path. */
@@ -141,7 +143,8 @@ export const readBuffersAtVersion: Repositories.Data.ReadBuffersAtVersion = asyn
  * Given a list of buffer paths, returns a BufferDataset.
  * @deprecated prefer `readBuffers()`.
  */
-export const getBufferDataset: Repositories.Data.GetBufferDataset = async function ({
+export const getBufferDataset: Repositories.Data.GetBufferDataset =
+async function getBufferDataset ({
   workDir,
   paths,
 }) {

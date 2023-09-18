@@ -4,6 +4,8 @@
 
 // TODO: Check whether electron-log is broken as of active versions, if yes fix it somehow
 
+import crypto from 'crypto';
+
 import { expose } from 'threads/worker';
 import { Observable, Subject } from 'threads/observable';
 import { type ModuleMethods } from 'threads/dist/types/master';
@@ -24,7 +26,7 @@ import { deleteTree, moveTree, updateBuffers, addExternalBuffers } from './buffe
 import { resolveChanges } from './buffers/list';
 import commits from './git/commits';
 import remotes from './git/remotes';
-import sync from './git/sync';
+import * as sync from './git/sync';
 import workDir from './git/work-dir';
 
 
@@ -45,9 +47,11 @@ type OpenedRepoOperation<I extends GitOperationParams, O> =
   (opts: Omit<I, 'workDir' | 'branch'>) => Promise<O>;
 
 function openedRepoOperation<I extends GitOperationParams, O>(
-  func: RepoOperation<I, O>
+  func: RepoOperation<I, O>,
+  opts?: { time?: boolean },
 ): OpenedRepoOperation<I, O> {
-  return async function (args) {
+  const wrapped: OpenedRepoOperation<I, O> =
+  async function openedRepoOperationWrapped (args) {
     if (openedRepository === null) {
       throw new Error("Repository is not opened");
     } else {
@@ -57,9 +61,25 @@ function openedRepoOperation<I extends GitOperationParams, O>(
         workDir: openedRepository.workDirPath,
         branch: openedRepository.branch,
       } as I;
-      return await func(params);
+
+      const timeMsg = opts?.time
+        ? `Repo worker: running function ${func.name || '(ANONYMOUS)'} for ${openedRepository.workDirPath} at ${new Date()} (invocation ID: ${crypto.randomUUID()})`
+        : undefined;
+      if (timeMsg) {
+        console.time(timeMsg);
+      }
+
+      const result = await func(params);
+
+      if (timeMsg) {
+        console.timeEnd(timeMsg);
+      }
+
+      return result;
     }
   };
+  Object.defineProperty(wrapped, 'name', { value: func.name || '(anonymous function)' });
+  return wrapped;
 }
 
 /**
@@ -83,8 +103,16 @@ function lockingRepoOperation<I extends GitOperationParams, O>(
     /** If lock is busy, how long can we wait before starting the operation. */
     timeout?: number
   },
+  opts?: { time?: boolean },
 ): OpenedRepoOperation<I, O> {
-  return openedRepoOperation(async (args) => {
+  const wrapped: RepoOperation<I, O> = async function wrapped (args) {
+    const timeMsg = opts?.time
+      ? `Repo worker: obtaining lock to run function ${func.name || '(ANONYMOUS)'} for ${openedRepository?.workDirPath} at ${new Date()} (invokation ID: ${crypto.randomUUID()})`
+      : undefined;
+    if (timeMsg) {
+      console.time(timeMsg);
+    }
+
     if (lockOpts?.failIfBusy === true && repoWriteLock.isLocked()) {
       throw new Error("Working directory is locked by another Git operation");
     }
@@ -92,10 +120,16 @@ function lockingRepoOperation<I extends GitOperationParams, O>(
     const lock = timeout
       ? withTimeout(repoWriteLock, timeout)
       : repoWriteLock;
+
     return await lock.runExclusive(async () => {
+      if (timeMsg) {
+        console.timeEnd(timeMsg);
+      }
       return await func(args);
     });
-  });
+  };
+  Object.defineProperty(wrapped, 'name', { value: func.name || '(anonymous function)' });
+  return openedRepoOperation(wrapped, opts);
 }
 
 
@@ -105,15 +139,17 @@ type RepoOperationWithStatusReporter<I extends GitOperationParams, O> =
 function lockingRepoOperationWithStatusReporter<I extends GitOperationParams, O>(
   func: RepoOperationWithStatusReporter<I, O>,
   lockOpts?: { failIfBusy?: boolean, timeout?: number },
+  opts?: { time?: boolean },
 ): OpenedRepoOperation<I, O> {
   const statusUpdater = getRepoStatusUpdater();
-  return lockingRepoOperation(async (args) => {
+  const wrapped: RepoOperation<I, O> = async function wrapped (args) {
     if (openedRepository === null) {
       throw new Error("Repository is not initialized");
     }
-    console.debug("Got repository lock");
     return await func(args, statusUpdater);
-  }, lockOpts);
+  };
+  Object.defineProperty(wrapped, 'name', { value: func.name || '(anonymous function)' });
+  return lockingRepoOperation(wrapped, lockOpts, opts);
 }
 
 
@@ -231,9 +267,9 @@ const methods: WorkerSpec = {
   git_init: lockingRepoOperation(workDir.init, { failIfBusy: true }),
   git_addOrigin: openedRepoOperation(remotes.addOrigin),
   git_deleteOrigin: openedRepoOperation(remotes.deleteOrigin),
-  git_clone: lockingRepoOperationWithStatusReporter(sync.clone, { timeout: 120000 }),
-  git_pull: lockingRepoOperationWithStatusReporter(sync.pull),
-  git_push: lockingRepoOperationWithStatusReporter(sync.push),
+  git_clone: lockingRepoOperationWithStatusReporter(sync.clone, { timeout: 120000 }, { time: true }),
+  git_pull: lockingRepoOperationWithStatusReporter(sync.pull, undefined, { time: true }),
+  git_push: lockingRepoOperationWithStatusReporter(sync.push, undefined, { time: true }),
 
 
   // Buffer management.
@@ -244,14 +280,14 @@ const methods: WorkerSpec = {
   repo_undoLatestCommit: lockingRepoOperation(commits.undoLatest, { failIfBusy: true }),
   repo_listCommits: openedRepoOperation(commits.listCommits),
   repo_chooseMostRecentCommit: openedRepoOperation(commits.chooseMostRecentCommit),
-  repo_updateBuffers: lockingRepoOperationWithStatusReporter(updateBuffers),
+  repo_updateBuffers: lockingRepoOperationWithStatusReporter(updateBuffers, undefined, { time: true }),
   repo_addExternalBuffers: lockingRepoOperationWithStatusReporter(addExternalBuffers),
   repo_readBuffers: openedRepoOperation(readBuffers),
   repo_readBuffersAtVersion: openedRepoOperation(readBuffersAtVersion),
   repo_getBufferDataset: openedRepoOperation(getBufferDataset),
-  repo_deleteTree: lockingRepoOperation(deleteTree),
-  repo_moveTree: lockingRepoOperation(moveTree),
-  repo_resolveChanges: lockingRepoOperation(resolveChanges),
+  repo_deleteTree: lockingRepoOperation(deleteTree, undefined, { time: true }),
+  repo_moveTree: lockingRepoOperation(moveTree, undefined, { time: true }),
+  repo_resolveChanges: lockingRepoOperation(resolveChanges, undefined, { time: true }),
 
   git_workDir_discardUncommittedChanges: lockingRepoOperation(workDir.discardUncommitted),
 

@@ -22,7 +22,8 @@ import type { LFSParams } from 'repositories/types';
  *
  * Do not read too many objects at once. May be slow, especially with `resolveLFS`.
  */
-export const getObjectDataset: Datasets.Data.GetObjectDataset = async function ({
+export const getObjectDataset: Datasets.Data.GetObjectDataset =
+async function getObjectDataset ({
   workDir,
   datasetID,
   objectPaths,

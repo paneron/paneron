@@ -15,7 +15,7 @@ import { readObjectCold } from './read';
 
 
 export const updateObjects: Datasets.Data.UpdateObjects =
-async function ({
+async function updateObjects ({
   workDir,
   datasetID,
   objectChangeset,
@@ -60,7 +60,7 @@ async function ({
 
 
 export const updateTree: Datasets.Data.UpdateTree =
-async function ({
+async function updateTree ({
   workDir,
   datasetID,
   author,
@@ -96,7 +96,7 @@ async function ({
 
 
 export const addExternal: Datasets.Data.UpdateObjectsExternal =
-async function ({
+async function addExternal ({
   workDir,
   datasetID,
   commitMessage,

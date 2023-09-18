@@ -27,7 +27,8 @@ import type { Repositories } from '../types';
  * or do something about BufferChangeset being passed
  * here with unnecessary `oldValue`s.
  */
-export const updateBuffers: Repositories.Data.UpdateBuffersWithStatusReporter = async function (
+export const updateBuffers: Repositories.Data.UpdateBuffersWithStatusReporter =
+async function updateBuffers (
   opts,
   updateStatus,
 ) {
@@ -129,7 +130,8 @@ export const updateBuffers: Repositories.Data.UpdateBuffersWithStatusReporter = 
 }
 
 
-export const addExternalBuffers: Repositories.Data.AddExternalBuffersWithStatusReporter = async function ({
+export const addExternalBuffers: Repositories.Data.AddExternalBuffersWithStatusReporter =
+async function addExternalBuffers ({
   workDir,
   paths,
   commitMessage,
@@ -184,7 +186,8 @@ export const addExternalBuffers: Repositories.Data.AddExternalBuffersWithStatusR
 }
 
 
-export const moveTree: Repositories.Data.MoveTree = async function ({
+export const moveTree: Repositories.Data.MoveTree =
+async function moveTree ({
   workDir,
   oldTreeRoot,
   newTreeRoot,
@@ -249,7 +252,8 @@ export const moveTree: Repositories.Data.MoveTree = async function ({
 }
 
 
-export const deleteTree: Repositories.Data.DeleteTree = async function ({
+export const deleteTree: Repositories.Data.DeleteTree =
+async function deleteTree ({
   workDir,
   treeRoot,
   commitMessage,
