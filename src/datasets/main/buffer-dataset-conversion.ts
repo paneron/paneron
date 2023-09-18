@@ -108,23 +108,23 @@ function mergeBufferDatasetsIntoChangeset(
 //   objectDataset: ObjectDataset,
 // ): BufferDataset {
 //   const objectSpecs = getSpecs(workDir, datasetDirNormalized);
-// 
+//
 //   const buffers: Record<string, Uint8Array> = {};
-// 
+//
 //   for (const [objectPath, obj] of Object.entries(objectDataset)) {
 //     const spec = getSpec(objectSpecs, objectPath);
-// 
+//
 //     if (spec) {
 //       const objectBuffersRelative = spec.serialize(obj);
-// 
+//
 //       const objectBuffers: Record<string, Uint8Array> = Object.entries(objectBuffersRelative).
 //         map(([objectRelativePath, data]) => ({
 //           [`/${path.join(datasetDirNormalized, objectPath, objectRelativePath)}`]: data,
 //         })).
 //         reduce((p, c) => ({ ...p, ...c }), {});
-// 
+//
 //       Object.assign(buffers, objectBuffers);
-// 
+//
 //     } else {
 //       //log.error("Unable to find object spec for object path", objectPath);
 //       throw new Error("Unable to find object spec for path");
@@ -150,7 +150,7 @@ function mergeBufferDatasetsIntoChangeset(
 //     throw new Error("Dataset does not exist or specs not registered");
 //   }
 //   const objectSpecs = ds.specs;
-// 
+//
 //   // 1. Go through paths and organize them by matching object spec.
 //   // If a path matches some spec, that path is considered new object root,
 //   // and subsequent paths are considered to belong to this object
@@ -160,28 +160,28 @@ function mergeBufferDatasetsIntoChangeset(
 //     data: Record<string, Uint8Array>
 //     spec: SerializableObjectSpec
 //   }[] = [];
-// 
+//
 //   // Sorted paths will appear in fashion [/, /foo/, /foo/bar.yaml, /baz/, /baz/qux.yaml, ...]
 //   const paths = Object.keys(bufferDataset).sort();
-// 
+//
 //   let currentSpec: SerializableObjectSpec | undefined;
 //   let currentObject: {
 //     path: string
 //     buffers: Record<string, Uint8Array>
 //   } | null = null;
-// 
+//
 //   for (const p of paths) {
-// 
+//
 //     if (currentObject && p.startsWith(currentObject.path)) {
 //       // We are in the middle of processing an object
 //       // and current path is a descendant of object’s path.
-// 
+//
 //       // Accumulate current path into current object for deserialization later.
 //       const objectRelativePath = stripLeadingSlash(p.replace(currentObject.path, ''));
 //       currentObject.buffers[`/${objectRelativePath}`] = bufferDataset[p];
-// 
+//
 //       //log.debug("Matched path to object", p, currentObject.path, objectRelativePath);
-// 
+//
 //     } else {
 //       // Were we in the middle of processing a spec and an object?
 //       if (currentSpec && currentObject) {
@@ -194,10 +194,10 @@ function mergeBufferDatasetsIntoChangeset(
 //         // ...and reset/flush accumulated object.
 //         currentObject = null;
 //       }
-// 
+//
 //       // Find a matching spec for current path.
 //       currentSpec = Object.values(objectSpecs).find(c => matchesPath(p, c.matches));
-// 
+//
 //       if (currentSpec) {
 //         // If a matching spec was found, start a new object.
 //         currentObject = { path: p, buffers: {} };
@@ -206,13 +206,13 @@ function mergeBufferDatasetsIntoChangeset(
 //       }
 //     }
 //   }
-// 
+//
 //   // 2. Deserialize accumulated buffers into objects.
 //   const index: Record<string, Record<string, any>> = {};
 //   for (const { objectPath, data, spec } of toProcess) {
 //     index[objectPath] = spec.deserialize(data);
 //   }
-// 
+//
 //   return index;
 // }
-// 
+//
