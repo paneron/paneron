@@ -39,7 +39,8 @@ const datasetQueue = makeQueue();
 
 // Main API
 
-const load: Datasets.Lifecycle.Load = datasetQueue.oneAtATime(async function ({
+const load: Datasets.Lifecycle.Load =
+datasetQueue.oneAtATime(async function loadDataset ({
   workDir,
   datasetID,
   cacheRoot,
@@ -71,7 +72,8 @@ const load: Datasets.Lifecycle.Load = datasetQueue.oneAtATime(async function ({
 }, ({ workDir, datasetID }) => [workDir, `${workDir}:${datasetID}`]);
 
 
-const unload: Datasets.Lifecycle.Unload = datasetQueue.oneAtATime(async function ({
+const unload: Datasets.Lifecycle.Unload =
+datasetQueue.oneAtATime(async function unloadDataset ({
   workDir,
   datasetID,
 }) {
@@ -84,7 +86,8 @@ const unload: Datasets.Lifecycle.Unload = datasetQueue.oneAtATime(async function
 }, ({ workDir, datasetID }) => [`${workDir}:${datasetID}`]);
 
 
-const unloadAll: Datasets.Lifecycle.UnloadAll = datasetQueue.oneAtATime(async function ({
+const unloadAll: Datasets.Lifecycle.UnloadAll =
+datasetQueue.oneAtATime(async function unloadAllDatasets ({
   workDir,
 }) {
   for (const datasetID of Object.keys(datasets[workDir] ?? {})) {
@@ -118,9 +121,8 @@ async function unloadDatasetDirect(workDir: string, datasetID: string) {
 }
 
 
-const getOrCreateFilteredIndex:
-ReturnsPromise<Datasets.Indexes.GetOrCreateFiltered> =
-datasetQueue.oneAtATime(async function ({
+const getOrCreateFilteredIndex: ReturnsPromise<Datasets.Indexes.GetOrCreateFiltered> =
+datasetQueue.oneAtATime(async function getOrCreateFilteredIndex ({
   workDir,
   datasetID,
   queryExpression,
@@ -178,7 +180,8 @@ datasetQueue.oneAtATime(async function ({
 }, ({ workDir, datasetID, queryExpression }) => [`${workDir}:${datasetID}:${queryExpression}`]);
 
 
-const describeIndex: ReturnsPromise<Datasets.Indexes.Describe> = async function ({
+const describeIndex: ReturnsPromise<Datasets.Indexes.Describe> =
+async function describeIndex ({
   workDir,
   datasetID,
   indexID,
@@ -195,7 +198,8 @@ const describeIndex: ReturnsPromise<Datasets.Indexes.Describe> = async function 
 }
 
 
-const getFilteredObject: Datasets.Indexes.GetFilteredObject = async function ({
+const getFilteredObject: Datasets.Indexes.GetFilteredObject =
+async function getFilteredObject ({
   workDir,
   datasetID,
   indexID,
@@ -216,7 +220,8 @@ const getFilteredObject: Datasets.Indexes.GetFilteredObject = async function ({
 }
 
 
-const locatePositionInFilteredIndex: Datasets.Indexes.LocatePositionInFilteredIndex = async function ({
+const locatePositionInFilteredIndex: Datasets.Indexes.LocatePositionInFilteredIndex =
+async function locatePositionInFilteredIndex ({
   workDir,
   datasetID,
   indexID,
@@ -254,7 +259,7 @@ const resolveDatasetChanges: (opts: {
 }) => Promise<{
   /** Dataset-relative POSIX-style object paths. */
   changedObjectPaths: AsyncGenerator<string>,
-}> = async function ({
+}> = async function resolveDatasetChanges ({
   workDir,
   datasetID,
   oidBefore,
@@ -389,7 +394,8 @@ function getLoadedDataset(
 // Indexes
 
 /** Writes default index from scratch, by listing & reading objects from filesystem. */
-const fillInDefaultIndex = datasetQueue.oneAtATime(async function _fillInDefaultIndex(
+const fillInDefaultIndex =
+datasetQueue.oneAtATime(async function _fillInDefaultIndex(
   workDir: string,
   datasetID: string,
   index: Datasets.Util.DefaultIndex,
@@ -627,7 +633,7 @@ async function getCurrentCommit(workDir: string): Promise<string> {
 }
 
 
-const initFilteredIndex = datasetQueue.oneAtATime(async function (
+const initFilteredIndex = datasetQueue.oneAtATime(async function initFilteredIndex (
   workDir: string,
   datasetID: string,
   indexID: string,
@@ -838,7 +844,8 @@ async function indexMeta(
  *
  * Once index is being rebuilt, further rebuilds are skipped until the update is complete.
  */
-export const updateDatasetIndexesIfNeeded = datasetQueue.oneAtATime(async function _updateDatasetIndexesIfNeeded (
+export const updateDatasetIndexesIfNeeded =
+datasetQueue.oneAtATime(async function _updateDatasetIndexesIfNeeded (
   workDir: string,
   datasetID: string,
 ) {
