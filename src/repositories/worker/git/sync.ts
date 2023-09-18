@@ -15,6 +15,7 @@ import type {
 import { checkPathIsOccupied } from '../../../main/fs-utils';
 import { normalizeURL } from '../../util';
 import type { Git, WithStatusUpdater } from '../types';
+import remotes from './remotes';
 
 
 //import getDecoder from './decoders';
@@ -216,15 +217,48 @@ const pull: WithStatusUpdater<Git.Sync.Pull> = async function (
     });
   } catch (e) {
     //log.error(`C/db/isogit/worker: Error pulling from repository`, e);
-    const suppress: boolean =
-      ((e as any).code === 'UserCanceledError' && opts._presumeCanceledErrorMeansAwaitingAuth === true);
+    const errCode = (e as any).code;
+
+    const suppress =
+      errCode === 'UserCanceledError' && opts._presumeCanceledErrorMeansAwaitingAuth === true;
+
     if (!suppress) {
-      updateStatus({
-        busy: {
-          operation: 'pulling',
-          networkError: true,
-        },
-      });
+      if (errCode === 'FastForwardError') {
+        updateStatus({
+          status: 'diverged',
+          // To assume that local head is OID before pull seems reasonable.
+          localHead: oidBeforePull,
+          remoteHead: undefined,
+        });
+
+        let remoteHead: string | undefined;
+        try {
+          remoteHead = (await remotes.describe({
+            url: opts.repoURL,
+            auth: opts.auth,
+            branchName: opts.branch,
+          })).currentCommit;
+        } catch (e) {
+          console.error("FastForwardError: Failed to retrieve remote’s currentCommit", e);
+          remoteHead = undefined;
+        }
+        console.warn("FastForwardError: Remote’s currentCommit", remoteHead);
+
+        updateStatus({
+          status: 'diverged',
+          // To assume that local head is OID before pull seems reasonable.
+          localHead: oidBeforePull,
+          remoteHead,
+        });
+      } else {
+        // Assume network error
+        updateStatus({
+          busy: {
+            operation: 'pulling',
+            networkError: true,
+          },
+        });
+      }
     }
     throw e;
   }

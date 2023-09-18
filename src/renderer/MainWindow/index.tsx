@@ -3,7 +3,7 @@
 
 import { jsx, css } from '@emotion/react';
 import styled from '@emotion/styled';
-import React, { useContext, useMemo } from 'react';
+import React, { memo, useContext, useMemo } from 'react';
 import { Button, ButtonProps, Classes, Colors, NonIdealState } from '@blueprintjs/core';
 import { INITIAL_GLOBAL_SETTINGS } from '@riboseinc/paneron-extension-kit/settings';
 
@@ -17,8 +17,7 @@ import WelcomeScreen from './WelcomeScreen';
 import GlobalSettingsForm from './GlobalSettingsForm';
 
 
-const MainWindow: React.FC<Record<never, never>> = function () {
-
+const MainWindow: React.VoidFunctionComponent<Record<never, never>> = memo(function () {
   const { value: { settings: { mainNavbarPosition } } } =
     useSettings('global', INITIAL_GLOBAL_SETTINGS);
 
@@ -51,11 +50,11 @@ const MainWindow: React.FC<Record<never, never>> = function () {
       </Frag>
     );
   }, [mainNavbarPosition, isPackaged, version]);
-};
+});
 
 
 const Navbar: React.FC<{ version: string, isPackaged?: boolean }> =
-function ({ version, isPackaged }) {
+memo(function ({ version, isPackaged }) {
   const { state: { view }, dispatch } = useContext(Context);
 
   const { value: { settings: { mainNavbarPosition } } } =
@@ -95,7 +94,7 @@ function ({ version, isPackaged }) {
       />
     </Nav>
   );
-};
+});
 
 
 const NavbarButton: React.FC<ButtonProps & { title?: string }> = function (props) {
@@ -115,7 +114,7 @@ const NavbarButton: React.FC<ButtonProps & { title?: string }> = function (props
 
 
 const MainView: React.FC<{ className?: string }> =
-function ({ className }) {
+memo(function ({ className }) {
   const { state } = useContext(Context);
 
   const { value: { settings: { mainNavbarPosition } } } =
@@ -151,7 +150,7 @@ function ({ className }) {
       {MAIN_VIEWS[state.view] ?? MAIN_VIEWS.fallback}
     </MainViewWrapper>
   );
-}
+});
 
 
 const NAV_HEIGHT_PX = '24';

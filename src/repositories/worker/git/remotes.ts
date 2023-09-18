@@ -1,8 +1,8 @@
 import fs from 'fs';
-import git, { ServerRef } from 'isomorphic-git';
+import git, { type ServerRef } from 'isomorphic-git';
 import http from 'isomorphic-git/http/node';
 import { normalizeURL } from '../../util';
-import { Git } from '../types';
+import type { Git } from '../types';
 
 
 const ORIGIN_REMOTE_NAME = 'origin';
@@ -10,7 +10,7 @@ const ORIGIN_REMOTE_NAME = 'origin';
 const HEAD_REF_PREFIX = 'refs/heads/';
 
 
-const describe: Git.Remotes.Describe = async function ({ url, auth }) {
+const describe: Git.Remotes.Describe = async function ({ url, auth, branchName }) {
   const normalizedURL = normalizeURL(url);
 
   // TODO(perf): can use getRemoteInfo() to speed up probably.
@@ -43,7 +43,13 @@ const describe: Git.Remotes.Describe = async function ({ url, auth }) {
   const isBlank = branchRefs.length === 0;
   const mainBranchRef = getMainBranchRef(branchRefs);
   const mainBranchName = mainBranchRef?.ref.replace(HEAD_REF_PREFIX, '');
-  const currentCommit = mainBranchRef?.oid;
+
+  const branchNameRef = branchName
+    ? `refs/heads/${branchName.toLowerCase()}`
+    : undefined;
+  const currentCommit: string | undefined = branchNameRef
+    ? branchRefs.find(item => item.ref.toLowerCase() === branchNameRef)?.oid
+    : mainBranchRef?.oid;
 
   return {
     isBlank,
@@ -89,7 +95,6 @@ export default {
  * which is taken to be whatever HEAD ref points to.
  */
 function getMainBranchRef(refs: ServerRef[]): ServerRef | undefined {
-  console.debug("Locaing HEAD among refs", refs);
   if (refs.length > 0) {
     // Find the commit pointed to by HEAD
     const headRefOid = refs.find(r => r.ref.toLowerCase() === 'head')?.oid;

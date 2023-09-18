@@ -101,9 +101,9 @@ async function _loadRepository(workingCopyPath: string): Promise<RepoStatus> {
   }
 
   async function reportStatus(status: RepoStatus) {
-    const statusChanged = (
-      JSON.stringify(loadedRepositories[workingCopyPath]?.latestStatus ?? {}) !==
-      JSON.stringify(status));
+    const previousStatus = loadedRepositories[workingCopyPath]?.latestStatus ?? null;
+    const statusChanged = JSON.stringify(previousStatus) !== JSON.stringify(status);
+
     if (statusChanged) {
       await loadedRepositoryStatusChanged.main!.trigger({
         workingCopyPath,
