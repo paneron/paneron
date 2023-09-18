@@ -275,7 +275,7 @@ const resolveDatasetChanges: (opts: {
   });
 
   // Simply transforms the list of buffer paths to an async generator of strings.
-  async function* getChangedPaths(changes: [ string, ChangeStatus ][]) {
+  async function * getChangedPaths(changes: [ string, ChangeStatus ][]) {
     for (const [p, _] of changes) {
       yield p;
     }
@@ -461,7 +461,7 @@ datasetQueue.oneAtATime(async function _fillInDefaultIndex(
 
     log.debug("Datasets: fillInDefaultIndex: Read objects total", totalCount);
 
-    async function* objectPathsToBeIndexed(): AsyncGenerator<string> {
+    async function * objectPathsToBeIndexed(): AsyncGenerator<string> {
       for await (const data of index.dbHandle.createReadStream()) {
         const { key, value } = data as unknown as { key: string, value: Record<string, any> | false };
         if (key !== INDEX_META_MARKER_DB_KEY && value === false) {
