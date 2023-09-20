@@ -2,7 +2,7 @@
 
 
 import { expose } from 'threads/worker';
-import { ModuleMethods } from 'threads/dist/types/master';
+import type { ModuleMethods } from 'threads/dist/types/master';
 
 import * as fs from 'fs-extra';
 import * as path from 'path';
@@ -10,7 +10,7 @@ import * as path from 'path';
 import yaml from 'js-yaml';
 import AsyncLock from 'async-lock';
 
-import { Extension, ExtensionRegistry, InstalledPluginInfo } from 'plugins/types';
+import type { Extension, ExtensionRegistry, InstalledPluginInfo } from 'plugins/types';
 
 
 interface PluginConfigData {
