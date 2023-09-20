@@ -36,7 +36,7 @@ const pluginLock = new AsyncLock();
 
 export interface Methods {
 
-  /** 
+  /**
    * Initialize plugin manager and config file.
    * Must be called before anything else on freshly started worker.
    */
