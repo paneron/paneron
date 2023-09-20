@@ -13,6 +13,7 @@ import parseJSON from 'date-fns/parseJSON';
 import { spawn, Worker, Thread } from 'threads';
 import {
   getPluginInfo, getPluginManagerProps,
+  getPackageCode,
   installPlugin, listAvailablePlugins,
   listLocalPlugins,
   pluginsUpdated, removeLocalPluginPath, removePlugin, specifyLocalPluginPath, upgradePlugin,
@@ -84,6 +85,24 @@ upgradePlugin.main!.handle(async ({ id, version: versionToUpgradeTo }) => {
   }
 
   return { installed: true };
+});
+
+
+getPackageCode.main!.handle(async ({ id, version }) => {
+  const w = await worker;
+  const localPlugins = await w.listLocalPlugins();
+  const localPath = localPlugins[id]?.localPath;
+  if (!localPath) {
+    throw new Error("Extension is not locally installed");
+  }
+
+  const builtFilePath = path.join(localPath, 'test.js');
+
+  log.debug("getPackageCode: getting code from", builtFilePath);
+
+  const code = await fs.readFile(builtFilePath, { encoding: 'utf-8' });
+
+  return { code };
 });
 
 

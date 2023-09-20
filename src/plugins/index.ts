@@ -32,6 +32,14 @@ export const getPluginInfo = makeEndpoint.main(
 );
 
 
+/** Retrieve full source of the extension. New API. */
+export const getPackageCode = makeEndpoint.main(
+  'getPackageCode',
+  <{ id: string, version?: string }>_,
+  <{ code: string }>_,
+);
+
+
 // (Un)installation
 
 export const installPlugin = makeEndpoint.main(

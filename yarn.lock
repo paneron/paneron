@@ -6795,6 +6795,11 @@ import-local@^2.0.0:
     pkg-dir "^3.0.0"
     resolve-cwd "^2.0.0"
 
+import-mapper@^0.0.4:
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/import-mapper/-/import-mapper-0.0.4.tgz#438951827dff95d9f830ce44c7425faaf30cdc33"
+  integrity sha512-0xwFd54uT/BhXaEwxJUG0vnO5mAG7NtKni3hC2j5+Z9YCNCD5zV39L8axtQQGqYcqybD1CQwoxO2sZaI6ypecQ==
+
 imurmurhash@^0.1.4:
   version "0.1.4"
   resolved "https://registry.yarnpkg.com/imurmurhash/-/imurmurhash-0.1.4.tgz#9218b9b2b928a238b13dc4fb6b6d576f231453ea"
