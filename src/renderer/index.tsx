@@ -92,17 +92,12 @@ async function getDeps(): Promise<Record<string, unknown>> {
 
 async function setUpDeps() {
   const deps = await getDeps();
-  //Object.assign(window, { '##IMPORTS##': deps });
 
   const imports: Record<string, string> = {};
   for (const [moduleID, _moduleData] of Object.entries(deps)) {
     const m = _moduleData as any;
     const moduleData = m.default ?? _moduleData;
     imports[moduleID] = ImportMapper.forceDefault(moduleData);
-    if (moduleID === '@blueprintjs/core') {
-      console.debug(m);
-      console.debug(m.default);
-    }
   }
 
   const mapper = new ImportMapper(imports);
