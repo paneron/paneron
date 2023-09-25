@@ -30,6 +30,7 @@ export default async function getPlugin(id: string, version: string | undefined)
     const blob = new Blob([code], { type: 'text/javascript' });
     const url = URL.createObjectURL(blob);
     const { 'default': plugin } = await import(/* webpackIgnore: true */ url);
+
     return parsePlugin(await plugin);
 
   } catch (e) {
