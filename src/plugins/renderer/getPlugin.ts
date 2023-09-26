@@ -52,7 +52,6 @@ export default async function getPlugin(id: string, version: string | undefined)
 
     } else {
 
-      // Old way
       const localPath = localPlugins[id].localPath!;
       const installedVersion = localPlugins[id].npm.version;
 
