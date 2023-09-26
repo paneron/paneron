@@ -85,11 +85,6 @@ export default async function getDataset(workingCopyPath: string, datasetID: str
     const plugin = await getPlugin(pluginName, pluginVersion);
     console.timeEnd("Dataset view: Awaiting renderer plugin…");
 
-    if (!plugin.mainView) {
-      console.error("Dataset view: Not provided by plugin", pluginName, pluginVersion, plugin.mainView);
-      throw new Error("Error requesting main dataset view from Paneron extension");
-    }
-
     MainView = plugin.mainView;
     exportFormats = plugin.exportFormats;
     console.debug("Dataset view: Got renderer plugin and dataset view", plugin);
