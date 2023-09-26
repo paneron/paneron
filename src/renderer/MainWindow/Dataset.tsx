@@ -60,23 +60,29 @@ function ({ className, showExportOptions }) {
 
   useEffect(() => {
     let cancelled = false;
-    performOperation('loading dataset', async () => {
-      if (cancelled) { return };
-      if (selectedRepoWorkDir && selectedDatasetID) {
-        setLoading(true);
-        try {
-          const dsProps = await getDataset(selectedRepoWorkDir, selectedDatasetID);
+    (async () => {
+      try {
+        await performOperation('loading dataset', async () => {
           if (cancelled) { return };
-          setDatasetProperties(dsProps);
-        } finally {
-          if (cancelled) { return };
-          setLoading(false);
-        }
-      } else {
-        setLoading(false);
-        setDatasetProperties(null);
+          if (selectedRepoWorkDir && selectedDatasetID) {
+            setLoading(true);
+            try {
+              const dsProps = await getDataset(selectedRepoWorkDir, selectedDatasetID);
+              if (cancelled) { return };
+              setDatasetProperties(dsProps);
+            } finally {
+              if (cancelled) { return };
+              setLoading(false);
+            }
+          } else {
+            setLoading(false);
+            setDatasetProperties(null);
+          }
+        }, { blocking: true })();
+      } catch (e) {
+        dispatch({ type: 'close-dataset' });
       }
-    }, { blocking: true })();
+    })();
     return function cleanup() {
       cancelled = true;
       if (selectedRepoWorkDir && selectedDatasetID) {
