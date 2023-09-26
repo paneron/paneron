@@ -35,28 +35,39 @@ async function updateBuffers (
   const bufferPaths = Object.keys(opts.bufferChangeset);
   const changeset = opts.bufferChangeset;
 
+  if (!opts.branch) {
+    throw new Error("Cannot update buffers without branch specified");
+  }
+
+  let oldCommitHash: string | undefined;
+  try {
+    oldCommitHash = (await git.resolveRef({ fs, dir: opts.workDir, ref: opts.branch })) || undefined;
+  } catch (e) {
+    oldCommitHash = undefined;
+  }
+
+  if (opts.initial && oldCommitHash !== undefined) {
+    throw new Error("updateBuffer: expecting initial commit, but preexisting commit hash was found");
+  } else if (!opts.initial && !oldCommitHash) {
+    throw new Error("updateBuffer: no preexisting commit hash was found (not expecting initial commit)");
+  }
+
   updateStatus({
     busy: {
       operation: 'committing',
     },
   });
 
-  if (!opts.branch) {
-    throw new Error("Cannot update buffers without branch specified");
-  }
-
-  const oldCommitHash = await git.resolveRef({ fs, dir: opts.workDir, ref: opts.branch });
-
   try {
     await Promise.all(bufferPaths.map(async (bufferPath) => {
       const absolutePath = nodePath.join(opts.workDir, deposixifyPath(bufferPath));
       const { newValue } = changeset[bufferPath];
-      await ensureFile(absolutePath);
 
-      if (newValue === null) {
-        removeSync(absolutePath);
-      } else {
+      if (newValue !== null) {
+        await ensureFile(absolutePath);
         await fs.promises.writeFile(absolutePath, Buffer.from(newValue));
+      } else if (!opts.initial) {
+        removeSync(absolutePath);
       }
     }));
 
@@ -70,7 +81,7 @@ async function updateBuffers (
           dir: opts.workDir,
           filepath: normalizedPath,
         });
-      } else {
+      } else if (!opts.initial) {
         await git.remove({
           fs,
           dir: opts.workDir,
@@ -89,19 +100,21 @@ async function updateBuffers (
     });
 
   } catch (e) {
-    // Undo changes by resetting to HEAD
-    // TODO: We could do this at the very end for reliability,
-    // if we take note of previous commit and force reset to it (?)
-    await git.checkout({
-      fs,
-      dir: opts.workDir,
-      force: true,
-      filepaths: bufferPaths.map(stripLeadingSlash),
-    });
-    updateStatus({
-      status: 'ready',
-      localHead: oldCommitHash,
-    });
+    if (oldCommitHash) {
+      // Undo changes by resetting to HEAD
+      // TODO: We could do this at the very end for reliability,
+      // if we take note of previous commit and force reset to it (?)
+      await git.checkout({
+        fs,
+        dir: opts.workDir,
+        force: true,
+        filepaths: bufferPaths.map(stripLeadingSlash),
+      });
+      updateStatus({
+        status: 'ready',
+        localHead: oldCommitHash,
+      });
+    }
     throw e;
   }
 
@@ -119,10 +132,12 @@ async function updateBuffers (
       localHead: newCommitHash,
     });
   } catch (e) {
-    updateStatus({
-      status: 'ready',
-      localHead: oldCommitHash,
-    });
+    if (oldCommitHash) {
+      updateStatus({
+        status: 'ready',
+        localHead: oldCommitHash,
+      });
+    }
     throw e;
   }
 

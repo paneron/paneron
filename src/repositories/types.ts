@@ -270,6 +270,12 @@ export interface BufferCommitRequestMessage extends AuthoringGitOperationParams 
   commitMessage: string
 
   /**
+   * Whether it is supposed to be an initial commit.
+   * Suppresses some logic around diffing changes.
+   */
+  initial?: true
+
+  /**
    * Makes Paneron not strictly check that preexisting values
    * match `oldValue`s in given changeset.
    */

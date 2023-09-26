@@ -4,6 +4,8 @@ import fs from 'fs-extra';
 import { app } from 'electron';
 import log from 'electron-log';
 
+import type { CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
+
 import { serializeMeta } from 'main/meta-serdes';
 import { loadState } from 'state/manage';
 
@@ -642,63 +644,86 @@ createRepository.main!.handle(async ({ title, author, mainBranchName: branch }) 
   //   throw new Error("Unexpected main branch name")
   // }
 
-  await updateRepositories((data) => {
-    if (data.workingCopies?.[workDirPath] !== undefined) {
-      throw new Error("Repository already exists");
-    }
-    const newData = { ...data };
-    newData.workingCopies[workDirPath] = {
-      author,
-      mainBranch: branch,
-    };
-    return newData;
-  });
-
   const w = (await getRepoWorkers(workDirPath, branch)).sync;
-
-  log.debug("Repositories: Initializing new working directory", workDirPath);
-
-  await w.git_init({
-    defaultBranch: branch,
-  });
 
   const paneronMeta: PaneronRepository = {
     title: title ?? "Unnamed repository",
     datasets: {},
   };
 
-  log.debug("Repositories: Writing Paneron meta", workDirPath);
+  let outcome: CommitOutcome | undefined;
+  try {
+    log.debug("Repositories: Initializing new working directory", workDirPath);
 
-  const { newCommitHash, conflicts } = await w.repo_updateBuffers({
-    commitMessage: "Initial commit",
-    author,
-    // _dangerouslySkipValidation: true, // Have to, since we cannot validate data
-    bufferChangeset: {
-      [PANERON_REPOSITORY_META_FILENAME]: {
-        oldValue: null,
-        newValue: serializeMeta(paneronMeta),
+    await w.git_init({
+      defaultBranch: branch,
+    });
+
+    log.debug("Repositories: Writing Paneron meta", workDirPath);
+
+    outcome = await w.repo_updateBuffers({
+      commitMessage: "Initial commit",
+      initial: true,
+      author,
+      // _dangerouslySkipValidation: true, // Have to, since we cannot validate data
+      bufferChangeset: {
+        [PANERON_REPOSITORY_META_FILENAME]: {
+          oldValue: null,
+          newValue: serializeMeta(paneronMeta),
+        },
       },
-    },
-  });
-
-  if (!newCommitHash) {
-    log.error("Failed to create a repository—conflicts when writing initial commit!", conflicts);
-    throw new Error("Could not create a repository");
+    });
+  } catch (e) {
+    log.error("Repositories: Failed to initialize repository or make initial commit", e);
+    outcome = undefined;
   }
 
-  log.debug("Repositories: Notifying about newly created repository");
+  if (outcome?.newCommitHash) {
 
-  await loadedRepositories.loadRepository(workDirPath);
+    await updateRepositories((data) => {
+      if (data.workingCopies?.[workDirPath] !== undefined) {
+        throw new Error("Repository already exists");
+      }
+      const newData = { ...data };
+      newData.workingCopies[workDirPath] = {
+        author,
+        mainBranch: branch,
+      };
+      return newData;
+    });
 
-  repositoriesChanged.main!.trigger({
-    changedWorkingPaths: [],
-    deletedWorkingPaths: [],
-    createdWorkingPaths: [workDirPath],
-  });
+    log.debug("Repositories: Notifying about newly created repository");
 
-  log.debug("Repositories: Created repository");
+    await loadedRepositories.loadRepository(workDirPath);
 
-  return { success: true };
+    repositoriesChanged.main!.trigger({
+      changedWorkingPaths: [],
+      deletedWorkingPaths: [],
+      createdWorkingPaths: [workDirPath],
+    });
+
+    log.debug("Repositories: Created repository");
+
+    return { success: true };
+
+  } else {
+
+    if (outcome?.conflicts) {
+      log.error("Failed to create a repository—conflicts when writing initial commit!", outcome.conflicts);
+    } else {
+      log.error("Failed to create a repository for some reason");
+    }
+
+    await oneOffWorkerTask(w => w.git_delete({
+      workDir: workDirPath,
+
+      // TODO: Make it so that yesReallyDestroyLocalWorkingCopy flag must be passed all the way from GUI
+      yesReallyDestroyLocalWorkingCopy: true,
+    }));
+
+    throw new Error("Could not create a repository");
+
+  }
 });
 
 
