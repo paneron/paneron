@@ -39,7 +39,11 @@ export default async function getPlugin(id: string, version: string | undefined)
 
     console.warn("Using legacy extension: requiring via NPM package");
 
-    const pluginManager = new PluginManager({ cwd, pluginsPath });
+    const pluginManager = new PluginManager({
+      cwd,
+      pluginsPath,
+      sandbox: { global: global as any },
+    });
 
     // NOTE: This requires `nodeIntegration` to be true on Electron’s window.
     // Ideally, we want to get rid of that.
@@ -89,6 +93,35 @@ export default async function getPlugin(id: string, version: string | undefined)
     return parsePlugin(await pluginManager.require(id).default);
   }
 }
+
+
+const global = {
+  console,
+  Object,
+  Array,
+  ArrayBuffer,
+  Boolean,
+  Date,
+  Error,
+  Function,
+  JSON,
+  Infinity,
+  Intl,
+  Map,
+  Math,
+  NaN,
+  Number,
+  Promise,
+  RegExp,
+  Set,
+  String,
+  Symbol,
+  TextEncoder,
+  TextDecoder,
+  Uint8Array,
+  WeakMap,
+  WeakSet,
+};
 
 
 function parsePlugin(plugin: any): RendererPlugin {
