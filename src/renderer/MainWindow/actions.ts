@@ -1,4 +1,4 @@
-import { BaseAction } from '@riboseinc/paneron-extension-kit/usePersistentStateReducer';
+import type { BaseAction } from '@riboseinc/paneron-extension-kit/usePersistentStateReducer';
 
 
 interface OpenDatasetAction extends BaseAction {
