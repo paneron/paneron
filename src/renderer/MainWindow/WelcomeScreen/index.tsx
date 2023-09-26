@@ -133,7 +133,7 @@ function ({ className }) {
           key={sectionID}
           id={sectionID}
           title={specialSectionConfiguration[sectionID].title}
-          panel={<SectionView onOpenDataset={handleOpenDataset} />}
+          panel={<SectionView onOpenDataset={!isBusy ? handleOpenDataset : undefined} />}
         />
       })}
       {repoTabs}
