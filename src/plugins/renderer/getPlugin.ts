@@ -96,6 +96,8 @@ export default async function getPlugin(id: string, version: string | undefined)
 
 
 const global = {
+  atob,
+  btoa,
   console: {
     debug: (...args: any[]) => console.debug(...args),
     log: (...args: any[]) => console.log(...args),
