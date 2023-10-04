@@ -2,7 +2,7 @@
 /** @jsxFrag React.Fragment */
 
 import { jsx, css } from '@emotion/react';
-import React, { useContext, useState } from 'react';
+import React, { useMemo, useCallback, useContext, useState } from 'react';
 import { Card, Button, Colors, InputGroup, Classes } from '@blueprintjs/core';
 import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import type { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
@@ -30,7 +30,6 @@ function ({ workDir }) {
     workingCopyPath: workDir,
     datasetPath: datasetID,
   }, { path: undefined });
-
 
   const canInitialize = datasetID.trim() !== '' && title.trim() !== '' && selectedExtension !== null && checkResult.value.path;
   async function _initializeDataset() {
@@ -93,7 +92,9 @@ function ({ workDir }) {
           <TextInput
             value={title}
             onChange={setTitle}
-            validationErrors={title.trim() === '' ? ["Short descriptive human-readable title for the new dataset."] : []} />
+            validationErrors={title.trim() === ''
+              ? ["Short descriptive human-readable title for the new dataset."]
+              : []} />
         </PropertyView>
         <Button fill
           disabled={!canInitialize || isBusy}
@@ -108,22 +109,52 @@ function ({ workDir }) {
   );
 };
 
-const DatasetExtensionBrowser: React.FC<{ onSelect?: (extension: Extension) => void, selectedExtension?: Extension, className?: string }> =
-function ({ selectedExtension, onSelect, className }) {
+const DatasetExtensionBrowser: React.FC<{
+  onSelect?: (extension: Extension) => void
+  selectedExtension?: Extension
+  className?: string
+}> = React.memo(function ({ selectedExtension, onSelect, className }) {
   const [searchString, setSearchString] = useState('');
+  const searchStringNormalized = searchString.toLowerCase().trim();
+
   const extensionResp = listAvailablePlugins.renderer!.useValue({}, { extensions: [] });
-  const extensions = extensionResp.value.extensions.filter(ext => {
-    const str = searchString.toLowerCase();
-    if (str.trim().length < 3) {
-      return ext.featured;
-    } else {
-      return (
-        ext.title.toLowerCase().indexOf(str) >= 0 ||
-        ext.description.toLowerCase().indexOf(str) >= 0 ||
-        ext.author.toLowerCase().indexOf(str) >= 0 ||
-        ext.npm.name.toLowerCase().indexOf(str) >= 0);
-    }
-  });
+
+  const extensionsToShow = useMemo(() => {
+    return extensionResp.value.extensions.filter(ext => {
+      const str = searchStringNormalized;
+      if (str.length < 3) {
+        // Show featured extensions if no search string is provided
+        return ext.featured;
+      } else {
+        // If a search string is provided, show matching extensions
+        return (
+          ext.title.toLowerCase().indexOf(str) >= 0 ||
+          ext.description.toLowerCase().indexOf(str) >= 0 ||
+          ext.author.toLowerCase().indexOf(str) >= 0 ||
+          ext.npm.name.toLowerCase().indexOf(str) >= 0);
+      }
+    });
+  }, [searchStringNormalized, extensionResp.value.extensions]);
+
+  const extensionList: JSX.Element | JSX.Element[] = useMemo(() => {
+    return extensionResp.isUpdating
+      ? <>
+          {/* Placeholders */}
+          <DatasetExtensionCardInBrowser />
+          <DatasetExtensionCardInBrowser />
+          <DatasetExtensionCardInBrowser />
+        </>
+      : extensionsToShow.map(ext =>
+          <DatasetExtensionCardInBrowser
+            searchString={searchString.trim().length < 3 ? undefined : searchString}
+            full={extensionsToShow.length === 1 ? true : undefined}
+            extension={ext}
+            key={ext.title}
+            selected={ext.npm.name === selectedExtension?.npm?.name ? true : undefined}
+            onSelect={onSelect ?? undefined}
+          />
+        )
+  }, [extensionResp.isUpdating, extensionsToShow, selectedExtension, searchString, onSelect]);
 
   return (
     <div className={className} css={css`
@@ -137,10 +168,17 @@ function ({ selectedExtension, onSelect, className }) {
           leftIcon="search"
           placeholder="Search extensions…"
           rightElement={
-            <Button minimal disabled={searchString.trim() === ''} onClick={() => setSearchString('')} icon="cross" />
+            <Button
+              minimal
+              disabled={searchStringNormalized === ''}
+              onClick={() => setSearchString('')}
+              icon="cross"
+            />
           }
           value={searchString}
-          onChange={(evt: React.FormEvent<HTMLInputElement>) => setSearchString(evt.currentTarget.value)} />
+          onChange={(evt: React.FormEvent<HTMLInputElement>) =>
+            setSearchString(evt.currentTarget.value)}
+        />
       </div>
       <div css={css`
         flex: 1;
@@ -150,35 +188,25 @@ function ({ selectedExtension, onSelect, className }) {
           background: ${Colors.DARK_GRAY2};
         }
       `}>
-        {extensionResp.isUpdating
-          ? <>
-              {/* Placeholders */}
-              <DatasetExtensionCardInBrowser />
-              <DatasetExtensionCardInBrowser />
-              <DatasetExtensionCardInBrowser />
-            </>
-          : extensions.map(ext =>
-              <DatasetExtensionCardInBrowser
-                searchString={searchString.trim().length < 3 ? undefined : searchString}
-                full={extensions.length === 1 ? true : undefined}
-                extension={ext}
-                key={ext.title}
-                selected={ext.npm.name === selectedExtension?.npm?.name ? true : undefined}
-                onSelect={onSelect ? () => onSelect!(ext) : undefined} />
-            )
-          }
+        {extensionList}
       </div>
     </div>
   );
-};
+});
 
-const DatasetExtensionCardInBrowser:
-React.FC<DatasetExtensionCardProps & { onSelect?: () => void, selected?: true }>
-= function (props) {
+const DatasetExtensionCardInBrowser: React.FC<DatasetExtensionCardProps & {
+  onSelect?: (ext: Extension) => void
+  selected?: true
+}> = React.memo(function (props) {
+  const handleClick = useCallback(() => {
+    if (props.onSelect && props.extension) {
+      return props.onSelect(props.extension);
+    }
+  }, [props.extension, props.onSelect]);
   return (
     <Card
         interactive={props.onSelect !== undefined}
-        onClick={props.onSelect}
+        onClick={handleClick}
         css={css`
           padding: 10px;
           border-radius: 0;
@@ -189,8 +217,8 @@ React.FC<DatasetExtensionCardProps & { onSelect?: () => void, selected?: true }>
         `}>
       <DatasetExtension {...props} />
     </Card>
-  )
-}
+  );
+});
 
 
 export default InitializeDataset;
