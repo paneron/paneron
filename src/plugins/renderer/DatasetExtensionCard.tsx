@@ -5,7 +5,7 @@ import { Classes, ControlGroup, H5, Icon, InputGroup } from '@blueprintjs/core';
 import { css, jsx } from '@emotion/react';
 import React from 'react';
 import MarkedText from 'renderer/common/MarkedText';
-import { MaybeLocalExtension } from 'plugins/types';
+import type { MaybeLocalExtension } from 'plugins/types';
 
 
 export interface DatasetExtensionCardProps {
