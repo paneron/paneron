@@ -14,7 +14,7 @@ export interface DatasetExtensionCardProps {
   searchString?: string
 }
 const DatasetExtension: React.FC<DatasetExtensionCardProps> =
-function ({ extension, full, searchString }) {
+React.memo(function ({ extension, full, searchString }) {
   const title = extension?.title || 'Loading…';
   const description = extension?.description || 'Loading…';
   const author = extension?.author || 'Loading…';
@@ -59,7 +59,7 @@ function ({ extension, full, searchString }) {
       </p>
     </>
   );
-};
+});
 
 
 export default DatasetExtension;
