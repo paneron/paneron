@@ -150,7 +150,7 @@ const DatasetExtensionBrowser: React.FC<{
             full={extensionsToShow.length === 1 ? true : undefined}
             extension={ext}
             key={ext.title}
-            selected={ext.npm.name === selectedExtension?.npm?.name ? true : undefined}
+            selected={ext.npm.name === selectedExtension?.npm?.name || undefined}
             onSelect={onSelect ?? undefined}
           />
         )
