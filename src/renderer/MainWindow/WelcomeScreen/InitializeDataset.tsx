@@ -2,11 +2,12 @@
 /** @jsxFrag React.Fragment */
 
 import { jsx, css } from '@emotion/react';
-import React, { useMemo, useCallback, useContext, useState } from 'react';
+import React, { useMemo, useCallback, useEffect, useContext, useState } from 'react';
 import { Card, Button, Colors, InputGroup, Classes } from '@blueprintjs/core';
 import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import type { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 import OperationQueueContext from '@riboseinc/paneron-extension-kit/widgets/OperationQueue/context';
+import { objectsHaveSameShape } from '@riboseinc/paneron-extension-kit/util';
 
 import { listAvailablePlugins } from 'plugins';
 import type { Extension } from 'plugins/types';
@@ -110,7 +111,7 @@ function ({ workDir }) {
 };
 
 const DatasetExtensionBrowser: React.FC<{
-  onSelect?: (extension: Extension) => void
+  onSelect?: (extension: Extension | null) => void
   selectedExtension?: Extension
   className?: string
 }> = React.memo(function ({ selectedExtension, onSelect, className }) {
@@ -135,6 +136,20 @@ const DatasetExtensionBrowser: React.FC<{
       }
     });
   }, [searchStringNormalized, extensionResp.value.extensions]);
+
+  useEffect(() => {
+    const selectedExtensionFilteredOut = (
+      selectedExtension &&
+      !extensionsToShow.find(e => objectsHaveSameShape(e, selectedExtension))
+    );
+    if (onSelect && (!selectedExtension || selectedExtensionFilteredOut)) {
+      if (extensionsToShow.length === 1) {
+        onSelect(extensionsToShow[0]);
+      } else {
+        onSelect(null);
+      }
+    }
+  }, [onSelect, extensionsToShow, selectedExtension]);
 
   const extensionList: JSX.Element | JSX.Element[] = useMemo(() => {
     return extensionResp.isUpdating
