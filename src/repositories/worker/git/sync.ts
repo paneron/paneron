@@ -225,7 +225,7 @@ async function pull (
       errCode === 'UserCanceledError' && opts._presumeCanceledErrorMeansAwaitingAuth === true;
 
     if (!suppress) {
-      if (errCode === 'FastForwardError') {
+      if (errCode === 'FastForwardError' || errCode === 'MergeNotSupportedError') {
         updateStatus({
           status: 'diverged',
           // To assume that local head is OID before pull seems reasonable.
@@ -241,10 +241,10 @@ async function pull (
             branchName: opts.branch,
           })).currentCommit;
         } catch (e) {
-          console.error("FastForwardError: Failed to retrieve remote’s currentCommit", e);
+          console.error("Handling divergence: Failed to retrieve remote’s currentCommit", e);
           remoteHead = undefined;
         }
-        console.warn("FastForwardError: Remote’s currentCommit", remoteHead);
+        console.warn("Handling divergence: Remote’s currentCommit", remoteHead);
 
         updateStatus({
           status: 'diverged',
