@@ -1,4 +1,5 @@
 import log from 'electron-log';
+import { ensureDir } from 'fs-extra';
 import nodePath from 'path';
 //import * as R from 'ramda';
 import levelup from 'levelup';
@@ -62,6 +63,8 @@ datasetQueue.oneAtATime(async function loadDataset ({
 
 
 async function loadDatasetDirect(workDir: string, datasetID: string, cacheRoot: string) {
+  await ensureDir(cacheRoot);
+
   datasets[workDir] ||= {};
   datasets[workDir][datasetID] = {
     indexDBRoot: cacheRoot,

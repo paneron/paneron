@@ -1,5 +1,4 @@
 import fs from 'fs';
-import { ensureDir } from 'fs-extra';
 import nodePath from 'path';
 import { app, BrowserWindow, dialog, type OpenDialogOptions } from 'electron';
 import log from 'electron-log';
@@ -209,8 +208,6 @@ loadDataset.main!.handle(async ({ workingCopyPath, datasetID }) => {
   await _recordRecentlyOpenedDataset(workingCopyPath, datasetID);
 
   log.debug("Datasets: Load: Ensuring cache root dir…", INDEX_DB_ROOT);
-
-  await ensureDir(INDEX_DB_ROOT);
 
   //log.debug("Datasets: Load: Getting loaded repository worker");
   //const repoWorker = getLoadedRepository(workingCopyPath).workers.sync;
