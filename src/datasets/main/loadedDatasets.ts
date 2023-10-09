@@ -946,6 +946,9 @@ datasetQueue.oneAtATime(async function _updateDatasetIndexesIfNeeded (
         }
       } = {};
 
+      // const readVersionsTimeMsg = `Resolving changes: reading versions of ${objectPath} at commits ${oidIndex!} & ${oidCurrent})`;
+      // console.time(readVersionsTimeMsg);
+
       let objv1: Record<string, any> | null;
       let objv2: Record<string, any> | null;
 
@@ -959,7 +962,12 @@ datasetQueue.oneAtATime(async function _updateDatasetIndexesIfNeeded (
         );
       } catch (e) {
         [objv1, objv2] = [null, null];
+      } finally {
+        // console.timeEnd(readVersionsTimeMsg);
       }
+
+      // const updateIndexesTimeMsg = `Resolving changes: updating filtered indexes (${filteredIndexIDs.length} total)`;
+      // console.time(updateIndexesTimeMsg);
 
       //log.debug("Datasets: updateDatasetIndexesIfNeeded: Changed object path", objectPath, objv1, objv2);
 
@@ -1107,6 +1115,8 @@ datasetQueue.oneAtATime(async function _updateDatasetIndexesIfNeeded (
           }
         }
       }
+
+      // console.timeEnd(updateIndexesTimeMsg);
     }
 
     // Update default & filtered index meta; rebuild filtered index sorted DBs
