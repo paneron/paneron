@@ -406,8 +406,7 @@ function getLoadedDataset(
 // Indexes
 
 /** Writes default index from scratch, by listing & reading objects from filesystem. */
-const fillInDefaultIndex =
-datasetQueue.oneAtATime(async function _fillInDefaultIndex(
+async function fillInDefaultIndex(
   workDir: string,
   datasetID: string,
   index: Datasets.Util.DefaultIndex,
@@ -528,10 +527,7 @@ datasetQueue.oneAtATime(async function _fillInDefaultIndex(
   })();
 
   await index.completionPromise;
-}, (workDir, datasetID) => [
-  `${workDir}:${datasetID}`,
-  `${workDir}:${datasetID}:default`,
-]);
+};
 
 
 /** Fills in filtered index from scratch, by reading from default index. */
