@@ -722,12 +722,11 @@ async function initDefaultIndex(
   const ds = getLoadedDataset(workDir, datasetID);
   const cacheRoot = ds.indexDBRoot;
   const dbPath = getDBPath(cacheRoot, `${workDir}/${datasetID}/default`);
-  const idx: Datasets.Util.DefaultIndex = {
-    ...makeIdxStub(dbPath, {
-      keyEncoding: 'string',
-      valueEncoding: 'json',
-    }),
-  };
+
+  const idx: Datasets.Util.DefaultIndex = makeIdxStub(dbPath, {
+    keyEncoding: 'string',
+    valueEncoding: 'json',
+  });
 
   datasets[workDir][datasetID].indexes['default'] = idx;
 
