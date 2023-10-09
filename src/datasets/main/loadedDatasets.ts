@@ -51,7 +51,7 @@ datasetQueue.oneAtATime(async function loadDataset ({
     //log.silly("Datasets: Load: Already loaded", workDir, datasetID);
 
   } catch (e) {
-    log.info("Datasets: Load: Unloading to clean up", workDir, datasetID);
+    log.debug("Datasets: Load: Unloading to clean up", workDir, datasetID);
 
     await unloadDatasetDirect(workDir, datasetID);
 
