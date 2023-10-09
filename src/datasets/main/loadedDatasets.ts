@@ -118,7 +118,7 @@ async function unloadDatasetDirect(workDir: string, datasetID: string) {
     try {
       await dbHandle.close();
     } catch (e) {
-      log.error("Datasets: unload(): Failed to close DB handle", idxID, datasetID, workDir, e);
+      log.error("Datasets: unload(): Failed to close index DB handle", idxID, datasetID, workDir, e);
     }
     if (sortedDBHandle) {
       try {
