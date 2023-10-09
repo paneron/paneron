@@ -750,15 +750,20 @@ async function initDefaultIndex(
 
   datasets[workDir][datasetID].indexes['default'] = idx;
 
-  const meta = await indexMeta(idx);
-  if (!meta || !meta.commitHash || !meta.completed) {
-    // Will proceed in the background:
-    fillInDefaultIndex(workDir, datasetID, idx);
-  } else {
-    idx.status = {
-      objectCount: meta.objectCount,
-    };
-    getDefaultIndexStatusReporter(workDir, datasetID)(idx.status);
+  try {
+    const meta = await indexMeta(idx);
+    if (!meta || !meta.commitHash || !meta.completed) {
+      // Will proceed in the background:
+      await fillInDefaultIndex(workDir, datasetID, idx);
+    } else {
+      idx.status = {
+        objectCount: meta.objectCount,
+      };
+      getDefaultIndexStatusReporter(workDir, datasetID)(idx.status);
+    }
+  } catch (e) {
+    log.error("Failed to initialize default index DB");
+    throw e;
   }
 
   //idx.statusSubject.subscribe(status => {
