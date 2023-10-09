@@ -54,22 +54,31 @@ datasetQueue.oneAtATime(async function loadDataset ({
 
     await unloadDatasetDirect(workDir, datasetID);
 
-    datasets[workDir] ||= {};
-    datasets[workDir][datasetID] = {
-      indexDBRoot: cacheRoot,
-      indexes: {},
-    };
-
-    log.info("Datasets: Load: Initializing default index", workDir, datasetID);
-
-    await initDefaultIndex(
-      workDir,
-      datasetID,
-    );
+    await loadDatasetDirect(workDir, datasetID, cacheRoot);
 
     log.info("Datasets: Load: Initialized dataset in-memory structure and default index", workDir, datasetID);
   }
 }, ({ workDir, datasetID }) => [workDir, `${workDir}:${datasetID}`]);
+
+
+async function loadDatasetDirect(workDir: string, datasetID: string, cacheRoot: string) {
+  datasets[workDir] ||= {};
+  datasets[workDir][datasetID] = {
+    indexDBRoot: cacheRoot,
+    indexes: {},
+  };
+
+  const msg = `Datasets: Load: Initializing default index for repo ${workDir} / dataset ${datasetID})`;
+  log.info(msg);
+  console.time(msg);
+
+  await initDefaultIndex(
+    workDir,
+    datasetID,
+  );
+
+  console.timeEnd(msg);
+}
 
 
 const unload: Datasets.Lifecycle.Unload =
