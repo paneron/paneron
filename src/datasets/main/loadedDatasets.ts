@@ -909,6 +909,12 @@ datasetQueue.oneAtATime(async function _updateDatasetIndexesIfNeeded (
       oidAfter: oidCurrent,
     });
 
+    // First mark as undetermine changes,
+    // later try to determine the nature of the change & adjust indexes
+    for await (const objectPath of changedObjectPaths) {
+      changes[objectPath] = true;
+    }
+
     //log.debug("updateDatasetIndexesIfNeeded: Processing object paths & updating indexes");
 
     defaultIndexStatusReporter({
@@ -925,7 +931,7 @@ datasetQueue.oneAtATime(async function _updateDatasetIndexesIfNeeded (
     let idx: number = 0;
 
     // Update default index and infer which filtered indexes are affected
-    for await (const objectPath of changedObjectPaths) {
+    for await (const objectPath of Object.keys(changes)) {
       idx += 1;
       const pathAffectsFilteredIndexes: {
         [id: string]: {
