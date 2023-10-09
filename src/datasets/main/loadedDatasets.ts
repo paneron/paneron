@@ -1,4 +1,5 @@
 import log from 'electron-log';
+import fs from 'fs';
 import { ensureDir } from 'fs-extra';
 import nodePath from 'path';
 //import * as R from 'ramda';
@@ -131,6 +132,25 @@ async function unloadDatasetDirect(workDir: string, datasetID: string) {
 
   delete datasets[workDir]?.[datasetID];
 }
+
+
+async function clearIndexesAndReloadDatasetDirect(opts: { workDir: string, datasetID: string }) {
+  const ds = getLoadedDataset(opts.workDir, opts.datasetID);
+  const cacheRoot = ds.indexDBRoot;
+
+  await unloadDatasetDirect(opts.workDir, opts.datasetID);
+
+  fs.rmdirSync(cacheRoot, { recursive: true });
+
+  await loadDatasetDirect(opts.workDir, opts.datasetID, cacheRoot);
+
+}
+
+
+// const clearIndexesAndReloadDataset =
+// datasetQueue.oneAtATime(
+//   clearIndexesAndReloadDatasetDirect,
+//   ({ workDir, datasetID }) => [`${workDir}:${datasetID}`]);
 
 
 const getOrCreateFilteredIndex: ReturnsPromise<Datasets.Indexes.GetOrCreateFiltered> =
@@ -1138,21 +1158,31 @@ datasetQueue.oneAtATime(async function _updateDatasetIndexesIfNeeded (
     filter(idx => idx.completionPromise ? true : false).
     map(idx => idx.completionPromise));
 
+  // Start the work
+  const completionPromise = adjustIndex();
+
+  // Assign completion promise to indicate all indices are busy
+  defaultIndex.completionPromise = completionPromise;
+  for (const idxID of filteredIndexIDs) {
+    ds.indexes[idxID].completionPromise = completionPromise;
+  }
+
   try {
-    // Start the work
-    const completionPromise = adjustIndex();
-
-    // Assign completion promise to indicate all indices are busy
-    defaultIndex.completionPromise = completionPromise;
-    for (const idxID of filteredIndexIDs) {
-      ds.indexes[idxID].completionPromise = completionPromise;
-    }
-
     // Await completion
     await completionPromise;
 
+  } catch (e) {
+    // It’s possible that resolveDatasetChanges bailed. Let’s just reload.
+
+    log.error("Failed to adjust indexes; clearing & reloading");
+    await clearIndexesAndReloadDatasetDirect({ workDir, datasetID });
+
+    // Don’t throw, we want to notify frontend anyway.
+    //throw e;
+
   } finally {
-    // Clear promises
+    // Clear completion promises
+
     defaultIndex.completionPromise = undefined;
     for (const idxID of filteredIndexIDs) {
       ds.indexes[idxID].completionPromise = undefined;
