@@ -1107,11 +1107,13 @@ datasetQueue.oneAtATime(async function _updateDatasetIndexesIfNeeded (
 
     // Update default & filtered index meta; rebuild filtered index sorted DBs
 
+    console.time("Rebuilding filtered indexes")
     await indexMeta(defaultIndex, { commitHash: oidCurrent, completed: new Date(), objectCount: newDefaultIndexObjectCount });
     for (const { idx, newObjectCount } of Object.values(affectedFilteredIndexes)) {
       await indexMeta(idx, { commitHash: oidCurrent, completed: new Date(), objectCount: newObjectCount });
       await rebuildFilteredIndexSortedDB(idx);
     }
+    console.timeEnd("Rebuilding filtered indexes");
 
     return true as const;
   });
