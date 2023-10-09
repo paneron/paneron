@@ -96,7 +96,7 @@ datasetQueue.oneAtATime(async function unloadDataset ({
   } catch (e) {
     log.warn("Problem unloading dataset", e, workDir, datasetID);
   }
-}, ({ workDir, datasetID }) => [`${workDir}:${datasetID}`]);
+}, ({ workDir, datasetID }) => [workDir, `${workDir}:${datasetID}`]);
 
 
 const unloadAll: Datasets.Lifecycle.UnloadAll =
