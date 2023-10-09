@@ -930,6 +930,10 @@ datasetQueue.oneAtATime(async function _updateDatasetIndexesIfNeeded (
 
     let idx: number = 0;
 
+    if (Object.keys(changes).length > 10) {
+      throw new Error("Too many objects changed, skipping calculating difference");
+    }
+
     // Update default index and infer which filtered indexes are affected
     for await (const objectPath of Object.keys(changes)) {
       idx += 1;
