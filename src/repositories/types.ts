@@ -30,6 +30,9 @@ export interface GitRepository {
   /** This is the branch in use; not necessarily the main/master branch. */
   mainBranch: string
 
+  /** Current local latest commit on `mainBranch`. */
+  head?: string
+
   /** Remote, if connected. */
   remote?: GitRemote
 
@@ -69,6 +72,9 @@ export interface GitRemote {
 
   /** Whether remote was added with commit access. */
   writeAccess?: true
+
+  /** Current remote latest commit on `mainBranch`. */
+  head?: string
 }
 
 export interface RepositoryListQuery {
