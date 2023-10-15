@@ -63,7 +63,7 @@ export const listRepositories = makeEndpoint.main(
   <{ objects: Repository[] }>_,
 );
 
-/** 
+/**
  * This would set up repository worker and start repository sync.
  * Required to load datasets and query structured data.
  */
@@ -73,7 +73,7 @@ export const loadRepository = makeEndpoint.main(
   <RepoStatus>_,
 );
 
-/** 
+/**
  * This would terminate workers & stop sync.
  */
 export const unloadRepository = makeEndpoint.main(
