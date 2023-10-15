@@ -1,7 +1,7 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 
-import { jsx } from '@emotion/react';
+import { jsx, css } from '@emotion/react';
 import React, { useContext, useState } from 'react';
 import { Button } from '@blueprintjs/core';
 import PropertyView from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
@@ -9,10 +9,11 @@ import PanelSeparator from '@riboseinc/paneron-extension-kit/widgets/panels/Pane
 import OperationQueueContext from '@riboseinc/paneron-extension-kit/widgets/OperationQueue/context';
 
 import ShareRepoForm from 'renderer/MainWindow/repositories/ShareRepoForm';
-import { deleteRepository, describeRepository, repositoriesChanged, setAuthorInfo } from 'repositories/ipc';
+import { resetToCommit, deleteRepository, describeRepository, repositoriesChanged, setAuthorInfo } from 'repositories/ipc';
 import type { Repository } from 'repositories/types';
 import type { GitAuthor } from 'repositories/types';
 import AuthorForm from '../repositories/AuthorForm';
+import RepoSummary from '../repositories/TooltipSummary';
 
 
 const RepositorySettings: React.FC<{ workDir: string; repoInfo?: Repository; className?: string; }> =
@@ -44,6 +45,14 @@ function ({ workDir, repoInfo, className }) {
 
   const canDelete = !openedRepoResp.isUpdating && !isBusy;
 
+  // TODO:
+  // const handleReset = performOperation('resetting local version', async (workingCopyPath: string, commitHash: string) => {
+  //   await resetToCommit.renderer!.trigger({
+  //     workingCopyPath,
+  //     commitHash,
+  //   });
+  // }, { blocking: true });
+
   return (
     <div className={className}>
       <PaneronRepoPanel paneronMeta={repo.paneronMeta} />
@@ -54,6 +63,14 @@ function ({ workDir, repoInfo, className }) {
           ? performOperation('updating authoring information for this repository', handleChangeAuthor)
           : undefined}
       />
+      <PanelSeparator />
+        <RepoSummary
+          repo={repo}
+          onReset={/*!isBusy
+            ? (commit) => handleReset(repo.gitMeta.workingCopyPath, commit)
+            : */undefined}
+          css={css`font-size: 80%; max-width: 400px;`}
+        />
       <PanelSeparator />
       <Button small fill minimal
         disabled={!canDelete}
