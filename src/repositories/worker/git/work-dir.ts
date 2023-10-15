@@ -2,7 +2,7 @@ import git from 'isomorphic-git';
 import fs from 'fs';
 import { remove, ensureDir } from 'fs-extra';
 
-import { checkPathIsOccupied } from '../../../main/fs-utils';
+import { deposixifyPath, checkPathIsOccupied } from '../../../main/fs-utils';
 import type { Git } from '../types';
 import { stripLeadingSlash } from '../../../utils';
 
@@ -45,13 +45,23 @@ const _delete: Git.WorkDir.Delete = async function ({ workDir }) {
 }
 
 
-const discardUncommitted: Git.WorkDir.DiscardUncommittedChanges = async function ({ workDir, pathSpec }) {
+const discardUncommitted: Git.WorkDir.DiscardUncommittedChanges = async function ({ workDir, branch, pathSpec }) {
+  if (!branch) {
+    throw new Error("Cannot discard uncommitted local changes: need branch name");
+  }
   await git.checkout({
     fs,
     dir: workDir,
     force: true,
     filepaths: pathSpec ? [pathSpec] : undefined,
   });
+  const leftovers = await getUncommittedObjectPaths(workDir);
+  if (leftovers.length > 0) {
+    for (const fp of leftovers) {
+      console.debug("Unlinking leftover", fp, `${workDir}${deposixifyPath(fp)}`);
+      fs.promises.unlink(`${workDir}${deposixifyPath(fp)}`);
+    }
+  }
   return { success: true };
 }
 
