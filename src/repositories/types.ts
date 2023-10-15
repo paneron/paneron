@@ -66,6 +66,8 @@ export interface Repository {
 export interface GitRemote {
   username: string
   url: string
+
+  /** Whether remote was added with commit access. */
   writeAccess?: true
 }
 
