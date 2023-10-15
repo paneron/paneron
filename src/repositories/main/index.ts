@@ -22,6 +22,7 @@ import { makeUUIDv4 } from '../../main/utils';
 import { deposixifyPath } from '../../main/fs-utils';
 
 import type { PaneronRepository, GitRemote, Repository } from '../types';
+import git from 'isomorphic-git';
 
 import { getRepoWorkers, oneOffWorkerTask } from './workerManager';
 
@@ -280,9 +281,17 @@ repositoriesIPC.listRepositories.main!.handle(async ({ query: { matchesText, sor
       } catch (e) {
         paneronMeta = undefined;
       }
+      const mainBranch = workingCopies[workDir].mainBranch;
       const gitMeta = {
         workingCopyPath: workDir,
         ...workingCopies[workDir],
+        head: mainBranch
+          ? await git.resolveRef({
+              fs,
+              dir: workDir,
+              ref: mainBranch,
+            })
+          : undefined,
       };
       return {
         gitMeta,
