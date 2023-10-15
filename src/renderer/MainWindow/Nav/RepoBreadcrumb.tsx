@@ -158,9 +158,6 @@ export const RepoBreadcrumb: React.FC<{
         {isLoaded ? "Loaded" : "Not loaded"}
         {status.status ? ` — status: ${status.status ?? 'N/A'}` : null}
         {`, local commit: ${(status as any).localHead?.slice(0, 6) ?? '(N/A)'}`}
-        {status.status === 'diverged'
-          ? `, whereas remote is already at: ${(status as any).remoteHead?.slice(0, 6) ?? '(N/A)'}`
-          : null}
         {timeSinceLastSync ? ` — ${timeSinceLastSync} since last sync attempt` : null}
       </>
     : null;
