@@ -15,7 +15,6 @@ import type {
 import { checkPathIsOccupied } from '../../../main/fs-utils';
 import { normalizeURL } from '../../util';
 import type { Git, WithStatusUpdater } from '../types';
-import remotes from './remotes';
 
 
 //import getDecoder from './decoders';
@@ -225,41 +224,23 @@ async function pull (
       errCode === 'UserCanceledError' && opts._presumeCanceledErrorMeansAwaitingAuth === true;
 
     if (!suppress) {
-      if (errCode === 'FastForwardError' || errCode === 'MergeNotSupportedError') {
-        updateStatus({
-          status: 'diverged',
-          // To assume that local head is OID before pull seems reasonable.
-          localHead: oidBeforePull,
-          remoteHead: undefined,
-        });
-
-        let remoteHead: string | undefined;
-        try {
-          remoteHead = (await remotes.describe({
-            url: opts.repoURL,
-            auth: opts.auth,
-            branchName: opts.branch,
-          })).currentCommit;
-        } catch (e) {
-          console.error("Handling divergence: Failed to retrieve remote’s currentCommit", e);
-          remoteHead = undefined;
-        }
-        console.warn("Handling divergence: Remote’s currentCommit", remoteHead);
-
-        updateStatus({
-          status: 'diverged',
-          // To assume that local head is OID before pull seems reasonable.
-          localHead: oidBeforePull,
-          remoteHead,
-        });
-      } else {
-        // Assume network error
-        updateStatus({
-          busy: {
-            operation: 'pulling',
-            networkError: true,
-          },
-        });
+      switch (errCode) {
+        case 'FastForwardError':
+        case 'MergeNotSupportedError':
+          updateStatus({
+            status: 'diverged',
+            // To assume that local head is OID before pull seems reasonable.
+            localHead: oidBeforePull,
+          });
+          break;
+        default:
+          // Assume network error
+          updateStatus({
+            busy: {
+              operation: 'pulling',
+              networkError: true,
+            },
+          });
       }
     }
     throw e;
