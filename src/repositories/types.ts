@@ -183,6 +183,17 @@ export type RepoStatus = {
 export type RepoStatusUpdater = (newStatus: RepoStatus) => void;
 
 
+/** Result of comparing local and remote heads. */
+export interface RemoteHeadComparisonOutcome {
+  /** Remote branch head commit OID. */
+  remoteHead: string
+
+
+  /** Empty, unless remote head is divergent from local head. */
+  commonAncestor?: string
+}
+
+
 
 // Git-related types used by worker
 

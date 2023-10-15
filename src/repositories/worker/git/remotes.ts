@@ -61,6 +61,35 @@ const describe: Git.Remotes.Describe = async function ({ url, auth, branchName }
 };
 
 
+const compare: Git.Remotes.Compare = async function ({ url, auth, workDir }) {
+  const branchName = await git.currentBranch({ fs, dir: workDir });
+  if (!branchName) {
+    throw new Error("Local repository is not on a branch");
+  }
+
+  const { currentCommit: remoteHead } = await describe({ url, auth, branchName });
+  if (!remoteHead) {
+    throw new Error("Unable to determine remote’s current commit");
+  }
+
+  const localHead = await git.resolveRef({
+    fs,
+    dir: workDir,
+    ref: branchName,
+  });
+  if (!localHead) {
+    throw new Error("Unable to determine current local commit");
+  }
+
+  if (localHead !== remoteHead) {
+    const mergeBase = await git.findMergeBase({ fs, dir: workDir, oids: [localHead, remoteHead] });
+    return { remoteHead, commonAncestor: mergeBase[0] };
+  } else {
+    throw new Error("Comparing remote: is at same commit, nothing to compare");
+  }
+}
+
+
 const addOrigin: Git.Remotes.AddOrigin = async function ({ workDir, url }) {
   await git.addRemote({
     fs,
@@ -84,6 +113,7 @@ const deleteOrigin: Git.Remotes.DeleteOrigin = async function ({ workDir }) {
 
 export default {
   describe,
+  compare,
   addOrigin,
   deleteOrigin,
 };

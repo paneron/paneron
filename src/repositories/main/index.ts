@@ -456,6 +456,22 @@ repositoriesIPC.queryGitRemote.main!.handle(repoOpQueue.oneAtATime(async ({ url,
 }, ({ url }) => [url]));
 
 
+repositoriesIPC.compareRemote.main!.handle(repoOpQueue.oneAtATime(async ({ workingCopyPath }) => {
+  const { remote } = await readRepoConfig(workingCopyPath);
+  if (remote) {
+    const auth = await getAuth(remote.url, remote.username);
+    console.debug("Comparing remote");
+    return await oneOffWorkerTask(w => w.git_compareRemote({
+      url: remote.url,
+      workDir: workingCopyPath,
+      auth,
+    }));
+  } else {
+    throw new Error("No remote is configured");
+  }
+}, ({ workingCopyPath }) => [workingCopyPath]));
+
+
 // function isValidBranchName(val: string): boolean {
 //   return ['main', 'master'].indexOf(val) >= 0;
 // }

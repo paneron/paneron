@@ -263,6 +263,7 @@ const methods: WorkerSpec = {
   git_workDir_validate: workDir.validate,
   git_delete: workDir.delete,
   git_describeRemote: remotes.describe,
+  git_compareRemote: remotes.compare,
 
   git_init: lockingRepoOperation(workDir.init, { failIfBusy: true }),
   git_addOrigin: openedRepoOperation(remotes.addOrigin),

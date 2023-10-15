@@ -12,6 +12,7 @@ import type {
   GitRepository,
   RepositoryListQuery,
   CommitMeta,
+  RemoteHeadComparisonOutcome,
 } from './types';
 
 
@@ -105,6 +106,12 @@ export const queryGitRemote = makeEndpoint.main(
   'queryRemote',
   <{ url: string, username: string, password?: string }>_,
   <{ isBlank: boolean, canPush: boolean, mainBranchName?: string }>_,
+);
+
+export const compareRemote = makeEndpoint.main(
+  'compareRemote',
+  <{ workingCopyPath: string }>_,
+  <RemoteHeadComparisonOutcome>_,
 );
 
 export const describeGitRepository = makeEndpoint.main(

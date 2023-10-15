@@ -15,6 +15,7 @@ import type {
   RepoStatus,
   RepoStatusUpdater,
   CommitMeta,
+  RemoteHeadComparisonOutcome,
 } from 'repositories/types';
 
 
@@ -81,6 +82,15 @@ export namespace Git {
       currentCommit: string | undefined,
       availableBranches: string[],
     }>;
+
+    /**
+     * Compares remote to local.
+     */
+    export type Compare = (msg: {
+      url: string
+      auth: GitAuthentication
+      workDir: string
+    }) => Promise<RemoteHeadComparisonOutcome>;
 
     /**
      * Returns a flag indicating whether given auth can push
@@ -314,6 +324,7 @@ export default interface WorkerMethods {
   git_workDir_validate: Git.WorkDir.Validate
   git_delete: Git.WorkDir.Delete
   git_describeRemote: Git.Remotes.Describe
+  git_compareRemote: Git.Remotes.Compare
 
 
   // Git operations
