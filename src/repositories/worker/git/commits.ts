@@ -4,8 +4,7 @@ import git, { type ReadCommitResult } from 'isomorphic-git';
 import type { CommitMeta } from '../../types';
 import type { Repositories } from '../types';
 import remotes from './remotes';
-import { getUncommittedObjectPaths } from './work-dir';
-
+import workDirUtils, { getUncommittedObjectPaths } from './work-dir';
 
 
 const getCurrentCommit: Repositories.Data.GetCurrentCommit = async function ({ workDir, branch }) {
@@ -63,11 +62,6 @@ const undoLatest: Repositories.Data.UndoCommit = async function ({ workDir, comm
     throw new Error("Mismatching object type (should be final commit hash, got possibly symref)");
   }
 
-  const currentBranchName = await git.currentBranch({ fs, dir: workDir });
-  if (!currentBranchName) {
-    throw new Error("Not on a branch, won’t reset");
-  }
-
   if (commit.parent.length !== 1) {
     throw new Error("Specified commit has unexpected number of parents");
   }
@@ -80,10 +74,6 @@ const undoLatest: Repositories.Data.UndoCommit = async function ({ workDir, comm
 
   if (oid !== latestCommit) {
     throw new Error("Specified commit is not the latest local commit");
-  }
-
-  if ((await getUncommittedObjectPaths(workDir)).length > 0) {
-    throw new Error("Uncommitted changes detected, won’t reset");
   }
 
   if (remoteURL) {
@@ -100,27 +90,47 @@ const undoLatest: Repositories.Data.UndoCommit = async function ({ workDir, comm
       } else if (!(await git.isDescendent({ fs, dir: workDir, oid: latestCommit, ancestor: latestRemoteCommit }))) {
         throw new Error("Latest local commit is not a descendant of the latest remote commit");
       } else {
-        await resetToCommit(parent, currentBranchName, workDir);
+        await resetToCommit(parent, workDir);
       }
     } else {
       throw new Error("Couldn’t check latest commit in remote’s HEAD");
     }
   } else {
     // If there’s no remote configured, just do the reset without safety check for unpushed commits
-    await resetToCommit(parent, currentBranchName, workDir);
+    await resetToCommit(parent, workDir);
   }
 
   return { newCommitHash: parent };
 }
 
 
-async function resetToCommit(commitHash: string, branchName: string, workDir: string) {
-  // Write parent commit hash as current branch HEAD
+export const resetTo: Repositories.Data.ResetToCommit = async function ({ workDir, commitHash }) {
+  await resetToCommit(commitHash, workDir);
+  return { newCommitHash: commitHash };
+}
+
+
+async function resetToCommit(commitHash: string, workDir: string) {
+  if ((await getUncommittedObjectPaths(workDir)).length > 0) {
+    throw new Error("Uncommitted changes detected, won’t reset");
+  }
+
+  const branchName = await git.currentBranch({ fs, dir: workDir });
+  if (!branchName) {
+    throw new Error("Not on a branch, won’t reset");
+  }
+
+  // Write specified commit hash as current branch HEAD
   await fs.promises.writeFile(`${workDir}/.git/refs/${branchName}`, commitHash);
+
   // Clear index (though there shouldn’t be anything because we checked for uncommitted files)
   await fs.promises.unlink(`${workDir}/.git/index`);
+
   // Check out current branch
-  await git.checkout({ fs, dir: workDir, ref: branchName });
+  await git.checkout({ fs, dir: workDir, ref: branchName, force: true });
+
+  // Leftovers
+  await workDirUtils.discardUncommitted({ workDir, branch: branchName });
 }
 
 
@@ -148,6 +158,7 @@ const chooseMostRecentCommit: Repositories.Data.ChooseMostRecentCommit = async f
 
 export default {
   getCurrentCommit,
+  resetTo,
   chooseMostRecentCommit,
   listCommits,
   describeCommit,
