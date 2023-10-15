@@ -9,30 +9,7 @@ import type { CommitOutcome } from '@riboseinc/paneron-extension-kit/types/chang
 import { serializeMeta } from 'main/meta-serdes';
 import { loadState } from 'state/manage';
 
-import {
-  addRepository, createRepository, deleteRepository,
-  loadRepository,
-  unloadRepository,
-  listRepositories,
-  repositoriesChanged,
-  getDefaultWorkingDirectoryContainer,
-  getNewRepoDefaults, setNewRepoDefaults,
-  describeRepository, savePassword, setRemote,
-  queryGitRemote,
-  unsetRemote,
-  setAuthorInfo,
-  setLabel,
-  updatePaneronRepository,
-  unsetWriteAccess,
-  getBufferDataset,
-  getBufferPaths,
-  updateBuffers,
-  describeGitRepository,
-  addDisconnected,
-  listCommits,
-  describeCommit,
-  undoLatestCommit,
-} from '../ipc';
+import * as repositoriesIPC from '../ipc';
 
 import { listDescendantPaths } from '../worker/buffers/list';
 
@@ -70,7 +47,7 @@ const DEFAULT_WORKING_DIRECTORY_CONTAINER = path.join(app.getPath('userData'), '
 fs.ensureDirSync(DEFAULT_WORKING_DIRECTORY_CONTAINER);
 
 
-getNewRepoDefaults.main!.handle(async () => {
+repositoriesIPC.getNewRepoDefaults.main!.handle(async () => {
   try {
     return { defaults: await getDefaults() };
   } catch (e) {
@@ -79,18 +56,18 @@ getNewRepoDefaults.main!.handle(async () => {
 });
 
 
-setNewRepoDefaults.main!.handle(async (defaults) => {
+repositoriesIPC.setNewRepoDefaults.main!.handle(async (defaults) => {
   await setDefaults(defaults);
   return { success: true };
 });
 
 
-getDefaultWorkingDirectoryContainer.main!.handle(async () => {
+repositoriesIPC.getDefaultWorkingDirectoryContainer.main!.handle(async () => {
   return { path: DEFAULT_WORKING_DIRECTORY_CONTAINER };
 });
 
 
-loadRepository.main!.handle(async ({ workingCopyPath }) => {
+repositoriesIPC.loadRepository.main!.handle(async ({ workingCopyPath }) => {
   if (workingCopyPath) {
     const status = await loadedRepositories.loadRepository(workingCopyPath);
     return status;
@@ -99,7 +76,7 @@ loadRepository.main!.handle(async ({ workingCopyPath }) => {
   }
 });
 
-unloadRepository.main!.handle(async ({ workingCopyPath }) => {
+repositoriesIPC.unloadRepository.main!.handle(async ({ workingCopyPath }) => {
   if (workingCopyPath) {
     await loadedRepositories.unloadRepository(workingCopyPath);
   }
@@ -107,7 +84,7 @@ unloadRepository.main!.handle(async ({ workingCopyPath }) => {
 });
 
 
-setRemote.main!.handle(async ({ workingCopyPath, url, username, password }) => {
+repositoriesIPC.setRemote.main!.handle(async ({ workingCopyPath, url, username, password }) => {
   const w = loadedRepositories.getLoadedRepository(workingCopyPath).workers.sync;
 
   const auth = { username, password };
@@ -137,7 +114,7 @@ setRemote.main!.handle(async ({ workingCopyPath, url, username, password }) => {
     });
 
     setImmediate(async () => {
-      await repositoriesChanged.main!.trigger({
+      await repositoriesIPC.repositoriesChanged.main!.trigger({
         changedWorkingPaths: [workingCopyPath],
         deletedWorkingPaths: [],
         createdWorkingPaths: [],
@@ -165,7 +142,7 @@ setRemote.main!.handle(async ({ workingCopyPath, url, username, password }) => {
 });
 
 
-unsetWriteAccess.main!.handle(async ({ workingCopyPath }) => {
+repositoriesIPC.unsetWriteAccess.main!.handle(async ({ workingCopyPath }) => {
   await updateRepositories((data) => {
     const existingConfig = data.workingCopies?.[workingCopyPath];
     if (existingConfig?.remote?.writeAccess === true) {
@@ -183,7 +160,7 @@ unsetWriteAccess.main!.handle(async ({ workingCopyPath }) => {
   });
 
   setImmediate(async () => {
-    await repositoriesChanged.main!.trigger({
+    await repositoriesIPC.repositoriesChanged.main!.trigger({
       changedWorkingPaths: [workingCopyPath],
       deletedWorkingPaths: [],
       createdWorkingPaths: [],
@@ -194,7 +171,7 @@ unsetWriteAccess.main!.handle(async ({ workingCopyPath }) => {
 });
 
 
-unsetRemote.main!.handle(async ({ workingCopyPath }) => {
+repositoriesIPC.unsetRemote.main!.handle(async ({ workingCopyPath }) => {
   const w = loadedRepositories.getLoadedRepository(workingCopyPath).workers.sync;
 
   await updateRepositories((data) => {
@@ -218,7 +195,7 @@ unsetRemote.main!.handle(async ({ workingCopyPath }) => {
   });
 
   setImmediate(async () => {
-    await repositoriesChanged.main!.trigger({
+    await repositoriesIPC.repositoriesChanged.main!.trigger({
       changedWorkingPaths: [workingCopyPath],
       deletedWorkingPaths: [],
       createdWorkingPaths: [],
@@ -229,7 +206,7 @@ unsetRemote.main!.handle(async ({ workingCopyPath }) => {
 });
 
 
-setAuthorInfo.main!.handle(async ({ workingCopyPath, author }) => {
+repositoriesIPC.setAuthorInfo.main!.handle(async ({ workingCopyPath, author }) => {
   await updateRepositories((data) => {
     const existingConfig = data.workingCopies?.[workingCopyPath];
     if (existingConfig) {
@@ -248,7 +225,7 @@ setAuthorInfo.main!.handle(async ({ workingCopyPath, author }) => {
     }
   });
 
-  await repositoriesChanged.main!.trigger({
+  await repositoriesIPC.repositoriesChanged.main!.trigger({
     changedWorkingPaths: [workingCopyPath],
     deletedWorkingPaths: [],
     createdWorkingPaths: [],
@@ -258,7 +235,7 @@ setAuthorInfo.main!.handle(async ({ workingCopyPath, author }) => {
 });
 
 
-setLabel.main!.handle(async ({ workingCopyPath, label }) => {
+repositoriesIPC.setLabel.main!.handle(async ({ workingCopyPath, label }) => {
   await updateRepositories((data) => {
     const existingConfig = data.workingCopies?.[workingCopyPath];
     if (existingConfig) {
@@ -277,7 +254,7 @@ setLabel.main!.handle(async ({ workingCopyPath, label }) => {
     }
   });
 
-  await repositoriesChanged.main!.trigger({
+  await repositoriesIPC.repositoriesChanged.main!.trigger({
     changedWorkingPaths: [workingCopyPath],
     deletedWorkingPaths: [],
     createdWorkingPaths: [],
@@ -292,7 +269,7 @@ interface RepositoryLoadTimes {
 }
 
 
-listRepositories.main!.handle(async ({ query: { matchesText, sortBy } }) => {
+repositoriesIPC.listRepositories.main!.handle(async ({ query: { matchesText, sortBy } }) => {
   const workingCopies = (await readRepositories()).workingCopies;
 
   const repositories: Repository[] =
@@ -375,22 +352,22 @@ function isRepositoryLoaded(workingCopyPath: string): boolean {
 }
 
 
-describeGitRepository.main!.handle(async ({ workingCopyPath }) => {
+repositoriesIPC.describeGitRepository.main!.handle(async ({ workingCopyPath }) => {
   return {
     info: await readRepoConfig(workingCopyPath),
     isLoaded: isRepositoryLoaded(workingCopyPath),
   };
 });
 
-listCommits.main!.handle(async ({ workingCopyPath }) => {
+repositoriesIPC.listCommits.main!.handle(async ({ workingCopyPath }) => {
   return await loadedRepositories.getLoadedRepository(workingCopyPath).workers.reader.repo_listCommits({});
 });
 
-describeCommit.main!.handle(async ({ workingCopyPath, commitHash }) => {
+repositoriesIPC.describeCommit.main!.handle(async ({ workingCopyPath, commitHash }) => {
   return await loadedRepositories.getLoadedRepository(workingCopyPath).workers.reader.repo_describeCommit({ commitHash });
 });
 
-undoLatestCommit.main!.handle(async ({ workingCopyPath, commitHash }) => {
+repositoriesIPC.undoLatestCommit.main!.handle(async ({ workingCopyPath, commitHash }) => {
   const { remote } = await readRepoConfig(workingCopyPath);
   if (remote) {
     const auth = await getAuth(remote.url, remote.username);
@@ -401,7 +378,7 @@ undoLatestCommit.main!.handle(async ({ workingCopyPath, commitHash }) => {
 });
 
 
-describeRepository.main!.handle(async ({ workingCopyPath }) => {
+repositoriesIPC.describeRepository.main!.handle(async ({ workingCopyPath }) => {
   if (workingCopyPath.trim() === '') {
     //log.warn("describeRepository: empty working directory path given", workingCopyPath);
     return {
@@ -430,7 +407,7 @@ describeRepository.main!.handle(async ({ workingCopyPath }) => {
 });
 
 
-updatePaneronRepository.main!.handle(async ({ workingCopyPath, info }) => {
+repositoriesIPC.updatePaneronRepository.main!.handle(async ({ workingCopyPath, info }) => {
   if (!info.title) {
     throw new Error("Proposed Paneron repository meta is missing title");
   }
@@ -462,7 +439,7 @@ updatePaneronRepository.main!.handle(async ({ workingCopyPath, info }) => {
     throw new Error("Updating Paneron repository meta failed to return commit hash");
   }
 
-  await repositoriesChanged.main!.trigger({
+  await repositoriesIPC.repositoriesChanged.main!.trigger({
     changedWorkingPaths: [workingCopyPath],
   });
 
@@ -470,7 +447,7 @@ updatePaneronRepository.main!.handle(async ({ workingCopyPath, info }) => {
 });
 
 
-queryGitRemote.main!.handle(repoOpQueue.oneAtATime(async ({ url, username, password }) => {
+repositoriesIPC.queryGitRemote.main!.handle(repoOpQueue.oneAtATime(async ({ url, username, password }) => {
   const auth = { username, password };
   if (!auth.password) {
     auth.password = (await getAuth(url, username)).password;
@@ -484,7 +461,7 @@ queryGitRemote.main!.handle(repoOpQueue.oneAtATime(async ({ url, username, passw
 // }
 
 
-addRepository.main!.handle(async ({ gitRemoteURL, branch, username, password, author }) => {
+repositoriesIPC.addRepository.main!.handle(async ({ gitRemoteURL, branch, username, password, author }) => {
   const workDirPath = path.join(DEFAULT_WORKING_DIRECTORY_CONTAINER, makeUUIDv4());
 
   if (fs.existsSync(workDirPath) || ((await readRepositories())).workingCopies[workDirPath] !== undefined) {
@@ -557,7 +534,7 @@ addRepository.main!.handle(async ({ gitRemoteURL, branch, username, password, au
   });
 
   // Notify GUI
-  repositoriesChanged.main!.trigger({
+  repositoriesIPC.repositoriesChanged.main!.trigger({
     changedWorkingPaths: [],
     deletedWorkingPaths: [],
     createdWorkingPaths: [workDirPath],
@@ -582,7 +559,7 @@ addRepository.main!.handle(async ({ gitRemoteURL, branch, username, password, au
 });
 
 
-addDisconnected.main!.handle(async ({ gitRemoteURL, branch, username, password }) => {
+repositoriesIPC.addDisconnected.main!.handle(async ({ gitRemoteURL, branch, username, password }) => {
   const workDirPath = path.join(DEFAULT_WORKING_DIRECTORY_CONTAINER, makeUUIDv4());
   if (fs.existsSync(workDirPath) || ((await readRepositories())).workingCopies[workDirPath] !== undefined) {
     throw new Error("Could not generate a valid non-occupied repository path inside given container.");
@@ -614,7 +591,7 @@ addDisconnected.main!.handle(async ({ gitRemoteURL, branch, username, password }
       return newData;
     });
 
-    repositoriesChanged.main!.trigger({
+    repositoriesIPC.repositoriesChanged.main!.trigger({
       changedWorkingPaths: [],
       deletedWorkingPaths: [],
       createdWorkingPaths: [workDirPath],
@@ -629,7 +606,7 @@ addDisconnected.main!.handle(async ({ gitRemoteURL, branch, username, password }
 });
 
 
-createRepository.main!.handle(async ({ title, author, mainBranchName: branch }) => {
+repositoriesIPC.createRepository.main!.handle(async ({ title, author, mainBranchName: branch }) => {
   const workDirPath = path.join(DEFAULT_WORKING_DIRECTORY_CONTAINER, makeUUIDv4());
 
   if (fs.existsSync(workDirPath)) {
@@ -696,7 +673,7 @@ createRepository.main!.handle(async ({ title, author, mainBranchName: branch }) 
 
     await loadedRepositories.loadRepository(workDirPath);
 
-    repositoriesChanged.main!.trigger({
+    repositoriesIPC.repositoriesChanged.main!.trigger({
       changedWorkingPaths: [],
       deletedWorkingPaths: [],
       createdWorkingPaths: [workDirPath],
@@ -727,7 +704,7 @@ createRepository.main!.handle(async ({ title, author, mainBranchName: branch }) 
 });
 
 
-deleteRepository.main!.handle(async ({ workingCopyPath }) => {
+repositoriesIPC.deleteRepository.main!.handle(async ({ workingCopyPath }) => {
   try {
     await loadedDatasets.unloadAll({ workDir: workingCopyPath });
     await loadedRepositories.unloadRepository(workingCopyPath);
@@ -752,7 +729,7 @@ deleteRepository.main!.handle(async ({ workingCopyPath }) => {
     return data;
   });
 
-  repositoriesChanged.main!.trigger({
+  repositoriesIPC.repositoriesChanged.main!.trigger({
     changedWorkingPaths: [],
     deletedWorkingPaths: [workingCopyPath],
     createdWorkingPaths: [],
@@ -762,7 +739,7 @@ deleteRepository.main!.handle(async ({ workingCopyPath }) => {
 });
 
 
-savePassword.main!.handle(async ({ workingCopyPath, remoteURL, username, password }) => {
+repositoriesIPC.savePassword.main!.handle(async ({ workingCopyPath, remoteURL, username, password }) => {
   await loadedRepositories.unloadRepository(workingCopyPath);
   await saveAuth(remoteURL, username, password);
   await loadedRepositories.loadRepository(workingCopyPath);
@@ -774,7 +751,7 @@ savePassword.main!.handle(async ({ workingCopyPath, remoteURL, username, passwor
 // Manipulating data
 
 
-getBufferDataset.main!.handle(async ({ workingCopyPath, paths }) => {
+repositoriesIPC.getBufferDataset.main!.handle(async ({ workingCopyPath, paths }) => {
   if (paths.length < 1) {
     return {};
   }
@@ -787,7 +764,7 @@ getBufferDataset.main!.handle(async ({ workingCopyPath, paths }) => {
 });
 
 
-getBufferPaths.main!.handle(async ({ workingCopyPath, prefix }) => {
+repositoriesIPC.getBufferPaths.main!.handle(async ({ workingCopyPath, prefix }) => {
   const paths: string[] = [];
   for await (const p of listDescendantPaths(path.join(workingCopyPath, deposixifyPath(prefix)))) {
     if (p !== '/') {
@@ -798,7 +775,7 @@ getBufferPaths.main!.handle(async ({ workingCopyPath, prefix }) => {
 });
 
 
-updateBuffers.main!.handle(async ({
+repositoriesIPC.updateBuffers.main!.handle(async ({
   workingCopyPath,
   commitMessage,
   bufferChangeset,
