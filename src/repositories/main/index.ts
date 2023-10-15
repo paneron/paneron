@@ -371,7 +371,7 @@ repositoriesIPC.undoLatestCommit.main!.handle(async ({ workingCopyPath, commitHa
   const { remote } = await readRepoConfig(workingCopyPath);
   if (remote) {
     const auth = await getAuth(remote.url, remote.username);
-    return await loadedRepositories.getLoadedRepository(workingCopyPath).workers.reader.
+    return await loadedRepositories.getLoadedRepository(workingCopyPath).workers.sync.
       repo_undoLatestCommit({ commitHash, remoteURL: remote.url, auth });
   }
   throw new Error("no remote")
