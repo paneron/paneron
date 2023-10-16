@@ -116,7 +116,12 @@ export const resetTo: Repositories.Data.ResetToCommit = async function ({ workDi
 }
 
 
-async function resetToCommit(commitHash: string, workDir: string) {
+async function resetToCommit(
+  /** Commit hash to reset to. */
+  commitHash: string,
+  /** Git working directory path, platform-specific. */
+  workDir: string,
+) {
   const branchName = await git.currentBranch({ fs, dir: workDir });
   if (!branchName) {
     throw new Error("Not on a branch, won’t reset");
