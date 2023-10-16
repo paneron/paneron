@@ -66,7 +66,11 @@ const discardUncommitted: Git.WorkDir.DiscardUncommittedChanges = async function
 }
 
 
-export async function getUncommittedObjectPaths(workDir: string): Promise<string[]> {
+/** Returns a list of POSIX file paths with uncommitted changes, relative to repo. */
+export async function getUncommittedObjectPaths(
+  /** Absolute, platform-specific path to working directory root. */
+  workDir: string,
+): Promise<string[]> {
   // Status natrix row indexes
   const FILEPATH = 0;
   const HEAD = 1;

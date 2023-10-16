@@ -294,7 +294,7 @@ export default interface WorkerMethods {
    * the directory is assigned, it will throw.
    */
   openLocalRepo: (
-    /** Absolute path to Git working directory root. */
+    /** Absolute platform-specific local filesystem path to Git working directory root. */
     workDirPath: string,
     branch: string,
     mode: 'r' | 'rw',
