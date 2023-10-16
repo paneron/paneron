@@ -106,6 +106,11 @@ const undoLatest: Repositories.Data.UndoCommit = async function ({ workDir, comm
 
 
 export const resetTo: Repositories.Data.ResetToCommit = async function ({ workDir, commitHash }) {
+  const { oid } = await git.readCommit({ fs, dir: workDir, oid: commitHash });
+  if (oid !== commitHash) {
+    throw new Error("Mismatching object type (should be final commit hash, got possibly symref)");
+  }
+
   await resetToCommit(commitHash, workDir);
   return { newCommitHash: commitHash };
 }
