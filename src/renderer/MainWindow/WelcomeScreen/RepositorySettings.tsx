@@ -9,15 +9,19 @@ import PanelSeparator from '@riboseinc/paneron-extension-kit/widgets/panels/Pane
 import OperationQueueContext from '@riboseinc/paneron-extension-kit/widgets/OperationQueue/context';
 
 import ShareRepoForm from 'renderer/MainWindow/repositories/ShareRepoForm';
-import { deleteRepository, describeRepository, repositoriesChanged, setAuthorInfo } from 'repositories/ipc';
+import { resetToCommit, deleteRepository, describeRepository, repositoriesChanged, setAuthorInfo } from 'repositories/ipc';
 import type { Repository } from 'repositories/types';
 import type { GitAuthor } from 'repositories/types';
 import AuthorForm from '../repositories/AuthorForm';
 import RepoSummary from '../repositories/TooltipSummary';
 
 
-const RepositorySettings: React.FC<{ workDir: string; repoInfo?: Repository; className?: string; }> =
-function ({ workDir, repoInfo, className }) {
+const RepositorySettings: React.FC<{
+  /** Absolute platform-specific filesystem path to repo. */
+  workDir: string
+  repoInfo?: Repository
+  className?: string
+}> = function ({ workDir, repoInfo, className }) {
   const { performOperation, isBusy } = useContext(OperationQueueContext);
 
   const openedRepoResp = describeRepository.renderer!.useValue(
@@ -46,12 +50,12 @@ function ({ workDir, repoInfo, className }) {
   const canDelete = !openedRepoResp.isUpdating && !isBusy;
 
   // TODO:
-  // const handleReset = performOperation('resetting local version', async (workingCopyPath: string, commitHash: string) => {
-  //   await resetToCommit.renderer!.trigger({
-  //     workingCopyPath,
-  //     commitHash,
-  //   });
-  // }, { blocking: true });
+  const handleReset = performOperation('resetting local version', async (workingCopyPath: string, commitHash: string) => {
+    await resetToCommit.renderer!.trigger({
+      workingCopyPath,
+      commitHash,
+    });
+  }, { blocking: true });
 
   return (
     <div className={className}>
@@ -66,9 +70,9 @@ function ({ workDir, repoInfo, className }) {
       <PanelSeparator />
         <RepoSummary
           repo={repo}
-          onReset={/*!isBusy
+          onReset={!isBusy
             ? (commit) => handleReset(repo.gitMeta.workingCopyPath, commit)
-            : */undefined}
+            : undefined}
           css={css`font-size: 80%; max-width: 400px;`}
         />
       <PanelSeparator />
