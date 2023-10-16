@@ -121,10 +121,12 @@ async function resetToCommit(commitHash: string, workDir: string) {
   }
 
   // Write specified commit hash as current branch HEAD
-  await fs.promises.writeFile(`${workDir}/.git/refs/${branchName}`, commitHash);
+  const refPath = nodePath.join(workDir, '.git', 'refs', 'heads', branchName);
+  await fs.promises.writeFile(refPath, commitHash);
 
   // Clear index (though there shouldn’t be anything because we checked for uncommitted files)
-  await fs.promises.unlink(`${workDir}/.git/index`);
+  const indexPath = nodePath.join(workDir, '.git', 'index');
+  await fs.promises.unlink(indexPath);
 
   // Check out current branch
   await git.checkout({ fs, dir: workDir, ref: branchName, force: true });
