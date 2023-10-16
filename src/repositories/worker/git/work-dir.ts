@@ -1,6 +1,6 @@
-import git from 'isomorphic-git';
 import path from 'path';
 import fs from 'fs';
+import git from 'isomorphic-git';
 import { remove, ensureDir } from 'fs-extra';
 
 import { deposixifyPath, checkPathIsOccupied } from '../../../main/fs-utils';
