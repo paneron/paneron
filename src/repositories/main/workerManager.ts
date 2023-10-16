@@ -29,7 +29,10 @@ export interface RepoWorkers {
 
 
 /** Terminates both workers for a repository. */
-export async function terminateRepoWorkers(workDir: string) {
+export async function terminateRepoWorkers(
+  /** Platform-specific path to Git repository working directory root. */
+  workDir: string,
+) {
   log.debug("Repositories: Terminating workers for repo", workDir);
 
   const repoPromise = WORKERS[workDir];
@@ -58,7 +61,11 @@ async function terminateAllWorkers() {
 
 
 /** Returns repository workers, spawns if necessary. */
-export function getRepoWorkers(workDir: string, branch: string): Promise<RepoWorkers> {
+export function getRepoWorkers(
+  /** Platform-specific path to Git repository working directory root. */
+  workDir: string,
+  branch: string,
+): Promise<RepoWorkers> {
 
   if (!WORKERS[workDir]) {
     log.debug("Repositories: Workers not spawned yet, spawning now…", workDir);
