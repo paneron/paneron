@@ -138,6 +138,13 @@ export const undoLatestCommit = makeEndpoint.main(
   <{ newCommitHash: string }>_,
 );
 
+export const resetToCommit = makeEndpoint.main(
+  'resetToGitCommit',
+  <{ workingCopyPath: string, commitHash: string }>_,
+  <{ newCommitHash: string }>_,
+);
+
+
 export const savePassword = makeEndpoint.main(
   'savePassword',
   <{ workingCopyPath: string, remoteURL: string, username: string, password: string }>_,

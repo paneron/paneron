@@ -193,6 +193,15 @@ export namespace Repositories {
     }) =>
       Promise<{ newCommitHash: string }>
 
+    /**
+     * Resets HEAD to specified commit hash. More dangerous.
+     * Doesn’t check whether commits were pushed or not.
+     */
+    export type ResetToCommit = (msg: GitOperationParams & {
+      commitHash: string
+    }) =>
+      Promise<{ newCommitHash: string }>
+
     export type GetBufferDataset = (msg: GitOperationParams & {
       /** A list of repo-relative, POSIX-style paths. */
       paths: string[]
@@ -326,6 +335,7 @@ export default interface WorkerMethods {
   git_describeRemote: Git.Remotes.Describe
   git_compareRemote: Git.Remotes.Compare
 
+  git_resetToCommit: Repositories.Data.ResetToCommit
 
   // Git operations
 

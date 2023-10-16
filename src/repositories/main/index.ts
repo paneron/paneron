@@ -386,6 +386,18 @@ repositoriesIPC.undoLatestCommit.main!.handle(async ({ workingCopyPath, commitHa
   throw new Error("no remote")
 });
 
+repositoriesIPC.resetToCommit.main!.handle(async ({ workingCopyPath, commitHash }) => {
+  try {
+    loadedRepositories.getLoadedRepository(workingCopyPath);
+    throw new Error("Cannot reset a loaded repository");
+  } catch (e) {
+    console.debug("resetToCommit: Calling worker");
+    return await oneOffWorkerTask(w => w.git_resetToCommit({
+      commitHash,
+      workDir: workingCopyPath,
+    }));
+  }
+});
 
 repositoriesIPC.describeRepository.main!.handle(async ({ workingCopyPath }) => {
   if (workingCopyPath.trim() === '') {

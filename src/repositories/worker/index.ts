@@ -265,6 +265,8 @@ const methods: WorkerSpec = {
   git_describeRemote: remotes.describe,
   git_compareRemote: remotes.compare,
 
+  git_resetToCommit: commits.resetTo,
+
   git_init: lockingRepoOperation(workDir.init, { failIfBusy: true }),
   git_addOrigin: openedRepoOperation(remotes.addOrigin),
   git_deleteOrigin: openedRepoOperation(remotes.deleteOrigin),
