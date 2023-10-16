@@ -46,10 +46,7 @@ const _delete: Git.WorkDir.Delete = async function ({ workDir }) {
 }
 
 
-const discardUncommitted: Git.WorkDir.DiscardUncommittedChanges = async function ({ workDir, branch, pathSpec }) {
-  if (!branch) {
-    throw new Error("Cannot discard uncommitted local changes: need branch name");
-  }
+const discardUncommitted: Git.WorkDir.DiscardUncommittedChanges = async function ({ workDir, pathSpec }) {
   await git.checkout({
     fs,
     dir: workDir,
