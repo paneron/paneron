@@ -184,6 +184,7 @@ async function pull (
       http,
       fs,
       dir: opts.workDir,
+      ref: opts.branch,
       url: normalizeURL(opts.repoURL),
       singleBranch: true,
       fastForwardOnly: true,
