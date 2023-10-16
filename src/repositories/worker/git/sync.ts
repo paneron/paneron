@@ -244,6 +244,7 @@ async function pull (
           });
       }
     }
+    // TODO: Does suppress mean only GUI error suppression or also not throwing?
     throw e;
   }
 
