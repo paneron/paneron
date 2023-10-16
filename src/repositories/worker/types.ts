@@ -51,7 +51,7 @@ export namespace Git {
       (msg: InitRequestMessage) => Promise<{ success: true }>
 
     export type DiscardUncommittedChanges =
-      (msg: GitOperationParams & { pathSpec?: string }) =>
+      (msg: Omit<GitOperationParams, 'branch'> & { pathSpec?: string }) =>
         Promise<{ success: true }>
 
     export type Delete =

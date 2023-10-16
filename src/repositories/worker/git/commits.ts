@@ -130,7 +130,7 @@ async function resetToCommit(commitHash: string, workDir: string) {
   await git.checkout({ fs, dir: workDir, ref: branchName, force: true });
 
   // Leftovers
-  await workDirUtils.discardUncommitted({ workDir, branch: branchName });
+  await workDirUtils.discardUncommitted({ workDir });
 }
 
 
