@@ -4,7 +4,7 @@ import git, { type ReadCommitResult } from 'isomorphic-git';
 import type { CommitMeta } from '../../types';
 import type { Repositories } from '../types';
 import remotes from './remotes';
-import workDirUtils, { getUncommittedObjectPaths } from './work-dir';
+import workDirUtils from './work-dir';
 
 
 const getCurrentCommit: Repositories.Data.GetCurrentCommit = async function ({ workDir, branch }) {
