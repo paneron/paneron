@@ -5,10 +5,12 @@ import type WorkerMethods from '../worker/types';
 import type { WorkerSpec } from '../worker/index';
 
 
+/** Worker index. `workDir` should be platform-specific path. */
+const WORKERS: { [workDir: string]: Promise<RepoWorkers> } = {};
+
 // TODO: This layer may not be that necessary, considering loadedRepositories
 // already caches workers—but we want it for “abstract” worker not attached
 // to a working directory.
-const WORKERS: { [workDir: string]: Promise<RepoWorkers> } = {};
 
 
 /**
