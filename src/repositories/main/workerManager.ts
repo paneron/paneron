@@ -147,9 +147,14 @@ async function terminateWorker(worker: Thread & WorkerMethods) {
 export async function oneOffWorkerTask<Result = any>
 (task: (worker: Thread & WorkerMethods) => Promise<Result>) {
   const worker = await spawnWorker();
+
+  const msg = `Running one-off worker for ${task.toString()}`;
+  console.time(msg);
   try {
     return await task(worker);
   } finally {
+    console.timeEnd(msg);
+    log.error(`Terminating worker spawned for ${task.toString()}`);
     await terminateWorker(worker);
   }
 }
