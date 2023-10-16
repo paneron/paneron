@@ -111,10 +111,6 @@ export const resetTo: Repositories.Data.ResetToCommit = async function ({ workDi
 
 
 async function resetToCommit(commitHash: string, workDir: string) {
-  if ((await getUncommittedObjectPaths(workDir)).length > 0) {
-    throw new Error("Uncommitted changes detected, won’t reset");
-  }
-
   const branchName = await git.currentBranch({ fs, dir: workDir });
   if (!branchName) {
     throw new Error("Not on a branch, won’t reset");
