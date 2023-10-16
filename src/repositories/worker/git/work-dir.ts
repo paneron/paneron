@@ -1,4 +1,5 @@
 import git from 'isomorphic-git';
+import path from 'path';
 import fs from 'fs';
 import { remove, ensureDir } from 'fs-extra';
 
@@ -58,8 +59,9 @@ const discardUncommitted: Git.WorkDir.DiscardUncommittedChanges = async function
   const leftovers = await getUncommittedObjectPaths(workDir);
   if (leftovers.length > 0) {
     for (const fp of leftovers) {
-      console.debug("Unlinking leftover", fp, `${workDir}${deposixifyPath(fp)}`);
-      fs.promises.unlink(`${workDir}${deposixifyPath(fp)}`);
+      const afp = path.join(workDir, deposixifyPath(fp));
+      console.debug("discardUncommitted: deleting leftover", afp);
+      fs.promises.unlink(afp);
     }
   }
   return { success: true };
