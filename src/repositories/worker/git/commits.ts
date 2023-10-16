@@ -129,7 +129,7 @@ async function resetToCommit(commitHash: string, workDir: string) {
   await fs.promises.unlink(indexPath);
 
   // Check out current branch
-  await git.checkout({ fs, dir: workDir, ref: branchName, force: true });
+  await git.checkout({ fs, dir: workDir, noUpdateHead: false, ref: branchName, force: true });
 
   // Leftovers
   await workDirUtils.discardUncommitted({ workDir });
