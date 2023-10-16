@@ -69,17 +69,18 @@ const discardUncommitted: Git.WorkDir.DiscardUncommittedChanges = async function
 export async function getUncommittedObjectPaths(workDir: string): Promise<string[]> {
   // Status natrix row indexes
   const FILEPATH = 0;
+  const HEAD = 1;
   const WORKDIR = 2;
-  const STAGE = 3;
+  //const STAGE = 3;
 
   // Status matrix state
-  const UNCHANGED = 1;
+  //const UNCHANGED = 1;
 
   const allFiles = await git.statusMatrix({ fs, dir: workDir });
 
   return allFiles.
-    // get changed records relative to HEAD
-    filter((row) => row[WORKDIR] > UNCHANGED && row[STAGE] > UNCHANGED).
+    // get changed records in workdir relative to HEAD
+    filter((row) => row[HEAD] !== row[WORKDIR]).
     // get file paths from records
     map((row) => row[FILEPATH]).
     // normalize leading slash
