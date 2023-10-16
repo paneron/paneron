@@ -9,7 +9,7 @@ import PanelSeparator from '@riboseinc/paneron-extension-kit/widgets/panels/Pane
 import OperationQueueContext from '@riboseinc/paneron-extension-kit/widgets/OperationQueue/context';
 
 import ShareRepoForm from 'renderer/MainWindow/repositories/ShareRepoForm';
-import { resetToCommit, deleteRepository, describeRepository, repositoriesChanged, setAuthorInfo } from 'repositories/ipc';
+import { deleteRepository, describeRepository, repositoriesChanged, setAuthorInfo } from 'repositories/ipc';
 import type { Repository } from 'repositories/types';
 import type { GitAuthor } from 'repositories/types';
 import AuthorForm from '../repositories/AuthorForm';
