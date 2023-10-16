@@ -19,7 +19,7 @@ import type {
   RepoStatusUpdater,
 } from '../types';
 
-import WorkerMethods, { RepoUpdate } from './types';
+import WorkerMethods, { type RepoUpdate } from './types';
 
 import { getBufferDataset, readBuffers, readBuffersAtVersion } from './buffers/read';
 import { deleteTree, moveTree, updateBuffers, addExternalBuffers } from './buffers/update';
