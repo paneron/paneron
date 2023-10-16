@@ -136,10 +136,16 @@ async function resetToCommit(
   await fs.promises.unlink(indexPath);
 
   // Check out current branch
+  const msg1 = `resetToCommit: force checkout ${workDir}, ${branchName}`;
+  console.time(msg1);
   await git.checkout({ fs, dir: workDir, noUpdateHead: false, ref: branchName, force: true });
+  console.timeEnd(msg1);
 
   // Leftovers
+  const msg2 = `resetToCommit: discarding potential uncommitted changes in ${workDir}`;
+  console.time(msg2);
   await workDirUtils.discardUncommitted({ workDir });
+  console.timeEnd(msg2);
 }
 
 
