@@ -399,6 +399,14 @@ repositoriesIPC.describeRepository.main!.handle(async ({ workingCopyPath }) => {
 
   const gitRepo = await readRepoConfig(workingCopyPath);
 
+  if (gitRepo.mainBranch) {
+    gitRepo.head = await git.resolveRef({
+      fs,
+      dir: workingCopyPath,
+      ref: gitRepo.mainBranch,
+    });
+  }
+
   let paneronRepo: PaneronRepository | undefined;
   try {
     paneronRepo = await readPaneronRepoMeta(workingCopyPath);
