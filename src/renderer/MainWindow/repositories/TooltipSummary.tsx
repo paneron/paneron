@@ -3,26 +3,9 @@
 
 import React from 'react';
 import { jsx } from '@emotion/react';
-import styled from '@emotion/styled';
+import DL from '@riboseinc/paneron-extension-kit/widgets/DL';
 import { compareRemote } from 'repositories/ipc';
 import type { Repository } from 'repositories/types';
-
-
-const DL = styled.dl`
-  margin: 0;
-  padding: 0;
-  > * {
-    display: flex;
-    flex-flow: row nowrap;
-    > dt {
-      font-weight: bold;
-      margin-right: .5em;
-    }
-    > dd {
-      margin: 0;
-    }
-  }
-`;
 
 
 const RepositorySummary: React.FC<{
