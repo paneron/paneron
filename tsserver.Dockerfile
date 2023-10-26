@@ -36,7 +36,7 @@ COPY --chown=paneron:paneron dependencies-local dependencies-local
 RUN yarn install
 
 # RUN npx electron-rebuild
-RUN yarn add typescript-language-server "typescript@~4.6.0"
+RUN yarn add "typescript-language-server@^3.3.2" "typescript@~4.6.0"
 
 # see https://github.com/electron/electron/issues/17972
 # USER root
