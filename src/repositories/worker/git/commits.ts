@@ -36,19 +36,19 @@ const describeCommit: Repositories.Data.DescribeCommit = async function ({ workD
     hash: oid,
     message: commit.message,
     parents: commit.parent,
-  }
+  };
   if (commit.committer) {
     commitMeta.committer = {
       name: commit.committer.name,
       email: commit.committer.email,
-    }
+    };
     commitMeta.committedAt = commit.committer.timestamp;
   }
   if (commit.author) {
     commitMeta.author = {
       name: commit.author.name,
       email: commit.author.email,
-    }
+    };
     commitMeta.committedAt = commit.author.timestamp;
   }
   return {

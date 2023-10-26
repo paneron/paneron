@@ -196,13 +196,13 @@ export const indexStatusChanged = makeEndpoint.renderer(
 //   <{ workingCopyPath: string, datasetPath: string }>_,
 //   <{ migration?: { versionSpec: string } }>_,
 // );
-// 
+//
 // export const applyOutstandingMigrations = makeEndpoint.main(
 //   'applyOutstandingMigrations',
 //   <{ workingCopyPath: string, datasetPath: string }>_,
 //   <{ outcome: MigrationSequenceOutcome }>_,
 // );
-// 
+//
 // export const reportMigrationStatus = makeEndpoint.renderer(
 //   'reportMigrationStatus',
 //   <{ datasetVersion: string, currentMigrationVersionSpec?: string, operation: string, progress?: number }>_,
