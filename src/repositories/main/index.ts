@@ -282,16 +282,23 @@ repositoriesIPC.listRepositories.main!.handle(async ({ query: { matchesText, sor
         paneronMeta = undefined;
       }
       const mainBranch = workingCopies[workDir].mainBranch;
+
+      let head = undefined;
+      if (mainBranch) {
+        try {
+          head = await git.resolveRef({
+            fs,
+            dir: workDir,
+            ref: mainBranch,
+          });
+        } catch (e) {
+          log.error("Failed to resolve ref for repository", workDir, mainBranch);
+        }
+      }
       const gitMeta = {
         workingCopyPath: workDir,
         ...workingCopies[workDir],
-        head: mainBranch
-          ? await git.resolveRef({
-              fs,
-              dir: workDir,
-              ref: mainBranch,
-            })
-          : undefined,
+        head,
       };
       return {
         gitMeta,
