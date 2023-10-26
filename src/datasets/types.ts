@@ -243,6 +243,8 @@ export namespace API {
 
     export type FilteredIndexKeyer = (item: Record<string, any>) => string | null;
 
+    export type PredicateFunction = (key: string, value: unknown) => boolean;
+
     export type MapFunction = (key: string, value: unknown, emit: (val: unknown) => void) => void;
 
     export type ReduceFunction<T = any> = (accumulator: unknown, value: unknown) => T;
@@ -251,6 +253,7 @@ export namespace API {
       id: string
       map: MapFunction
       reduce?: ReduceFunction<T>
+      predicate?: PredicateFunction
     };
 
   }

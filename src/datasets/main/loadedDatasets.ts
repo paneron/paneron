@@ -322,6 +322,7 @@ const resolveDatasetChanges: (opts: {
 async function mapReduce(
   workDir: string,
   datasetID: string,
+  predicate: Datasets.Util.PredicateFunction | undefined,
   map: Datasets.Util.MapFunction,
   reduce: Datasets.Util.ReduceFunction | undefined
 ): Promise<unknown> {
@@ -336,7 +337,9 @@ async function mapReduce(
     // TODO: [upstream] NodeJS.ReadableStream is poorly typed.
     const { key, value } = data as unknown as { key: string, value: Record<string, unknown> };
     if (key !== INDEX_META_MARKER_DB_KEY) {
-      map(key, value, (val) => mappedData.push(val));
+      if (!predicate || predicate(key, value)) {
+        map(key, value, (val) => mappedData.push(val));
+      }
     }
   }
   if (mappedData.length < 1) {

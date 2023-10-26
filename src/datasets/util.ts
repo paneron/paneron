@@ -1,5 +1,7 @@
 import type { DiffStatus } from '@riboseinc/paneron-extension-kit/types/changes';
 import { objectsHaveSameShape } from '@riboseinc/paneron-extension-kit/util';
+import type { Hooks } from '@riboseinc/paneron-extension-kit/types/renderer';
+import { API as Datasets } from './types';
 import { diffDatasets } from '../repositories/util';
 
 
@@ -27,6 +29,48 @@ export async function* diffObjectDatasets(
     readObjects,
     objectsHaveSameShape,
   );
+}
+
+
+export function parsePredicateFunction(func: string): Datasets.Util.PredicateFunction {
+  return new Function('key', 'value', func) as Datasets.Util.PredicateFunction;
+}
+
+export function parseMapReduceChain(
+  chainID: string,
+  chain: Hooks.Data.MapReduceChain,
+): Datasets.Util.MapReduceChain<unknown> {
+  let map: Datasets.Util.MapFunction;
+  let reduce: Datasets.Util.ReduceFunction | undefined;
+  let predicate: Datasets.Util.PredicateFunction | undefined;
+  try {
+    map = new Function('key', 'value', 'emit', chain.mapFunc) as Datasets.Util.MapFunction;
+  } catch (e) {
+    //log.error("Unable to parse submitted map function in map-reduce chain", chainID, chain.mapFunc, e);
+    throw new Error("Unable to parse submitted map function");
+  }
+  if (chain.reduceFunc) {
+    try {
+      reduce = new Function('accumulator', 'value', chain.reduceFunc) as Datasets.Util.ReduceFunction;
+    } catch (e) {
+      //log.error("Unable to parse submitted reducer function in map-reduce chain", chainID, chain.reduceFunc, e);
+      throw new Error("Unable to parse submitted reducer function");
+    }
+  }
+  if (chain.predicateFunc) {
+    try {
+      predicate = parsePredicateFunction(chain.predicateFunc);
+    } catch (e) {
+      //log.error("Unable to parse submitted predicate function in map-reduce chain", chainID, chain.predicateFunc, e);
+      throw new Error("Unable to parse submitted predicate function");
+    }
+  }
+  return {
+    id: chainID,
+    map,
+    reduce,
+    predicate,
+  };
 }
 
 

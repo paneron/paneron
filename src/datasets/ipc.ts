@@ -1,3 +1,4 @@
+import type { Hooks } from '@riboseinc/paneron-extension-kit/types/renderer';
 import type { ObjectChangeset, ObjectDataset } from '@riboseinc/paneron-extension-kit/types/objects';
 import type { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 import type { ChangeStatus, CommitOutcome } from '@riboseinc/paneron-extension-kit/types/changes';
@@ -110,7 +111,7 @@ export const locateFilteredIndexPosition = makeEndpoint.main(
 
 export const mapReduce = makeEndpoint.main(
   'datasets_mapReduce',
-  <{ workingCopyPath: string, datasetID: string, chains: Record<string, { mapFunc: string, reduceFunc?: string }> }>_,
+  <{ workingCopyPath: string, datasetID: string, chains: Hooks.Data.MapReduceChains }>_,
   <Record<string, unknown>>_,
 );
 

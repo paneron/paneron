@@ -8,7 +8,7 @@
 
 import * as R from 'ramda';
 import log from 'electron-log';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { DatasetContext } from '@riboseinc/paneron-extension-kit/types';
 import type { RendererPlugin } from '@riboseinc/paneron-extension-kit/types';
@@ -28,6 +28,7 @@ import { describeBundledExecutable, describeSubprocess, execBundled, subprocessE
 import { describeRepository } from 'repositories/ipc';
 import { updateSetting, useSettings } from 'renderer/MainWindow/settings';
 
+import { parsePredicateFunction } from '../util';
 import {
   addFromFilesystem,
   describeIndex,
@@ -271,15 +272,51 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
     },
 
     useMapReducedData: function _useMapReducedData (opts) {
-      const initial = useMemo((() => (
+      const initial: Record<keyof typeof opts["chains"], undefined> = useMemo((() => (
         Object.keys(opts.chains).
           map(cid => ({ [cid]: undefined })).
-          reduce((prev, curr) => ({ ...prev, ...curr })) as Record<keyof typeof opts["chains"], undefined>
+          reduce((prev, curr) => ({ ...prev, ...curr }), {})
       )), [opts.chains]);
-      return mapReduce.renderer!.useValue({
+
+      const predicateFunctionsRaw = Object.values(opts.chains).map(chain => chain.predicateFunc);
+      if (predicateFunctionsRaw.find(f => typeof f !== 'string')) {
+        throw new Error("Cannot useMapReducedData without predicate");
+      }
+      const predicateKey = predicateFunctionsRaw.toString();
+      const predicateFunctions = predicateFunctionsRaw.map((func => parsePredicateFunction(func!)));
+
+      const result = mapReduce.renderer!.useValue({
         ...datasetParams,
         chains: opts.chains as Hooks.Data.MapReduceChains,
       }, initial);
+
+      const handleUpdate = useCallback(
+        function handleUpdate (updateParams: { workingCopyPath: string, datasetID: string, objects?: Record<string, unknown> }) {
+          const { workingCopyPath, datasetID, objects } = updateParams;
+          // We will refresh objects if
+          if (
+            // It’s event corresponds to this dataset
+            workingCopyPath === datasetParams.workingCopyPath
+            && datasetID === datasetParams.datasetID
+            // There are either no changed objects specified
+            && (objects === undefined ||
+              // or, there is a changed object
+              Object.entries(objects).find(([changedPath, changedObject]) =>
+                // for which any of the predicate functions from our chains returns true.
+                predicateFunctions.find(func => func(changedPath, changedObject)) !== undefined
+              )
+            )
+          ) {
+            result.refresh();
+          }
+        },
+        [predicateKey]);
+
+      objectsChanged.renderer!.useEvent(
+        handleUpdate,
+        [predicateKey]);
+
+      return result;
     } as DatasetContext["useMapReducedData"], // TODO: Avoid casting?
 
 
