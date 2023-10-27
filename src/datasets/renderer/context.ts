@@ -291,7 +291,11 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
       }, initial);
 
       const handleUpdate = useCallback(
-        function handleUpdate (updateParams: { workingCopyPath: string, datasetID: string, objects?: Record<string, unknown> }) {
+        function handleUpdate (updateParams: {
+          workingCopyPath: string
+          datasetID: string
+          objects?: Record<string, { newObjectData?: unknown, oldObjectData?: unknown }>
+        }) {
           const { workingCopyPath, datasetID, objects } = updateParams;
           // We will refresh objects if
           if (
@@ -301,10 +305,11 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
             // There are either no changed objects specified
             && (objects === undefined ||
               // or, there is a changed object
-              Object.entries(objects).find(([changedPath, changedObject]) =>
+              Object.entries(objects).find(([changedPath, change]) => {
                 // for which any of the predicate functions from our chains returns true.
-                predicateFunctions.find(func => func(changedPath, changedObject)) !== undefined
-              )
+                const objData = change.newObjectData || change.oldObjectData;
+                return predicateFunctions.find(func => func(changedPath, objData)) !== undefined
+              })
             )
           ) {
             result.refresh();

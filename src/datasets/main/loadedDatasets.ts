@@ -888,7 +888,11 @@ datasetQueue.oneAtATime(async function _updateDatasetIndexesIfNeeded (
 
   const ds = getLoadedDataset(workDir, datasetID);
   const affectedFilteredIndexes: { [idxID: string]: { idx: Datasets.Util.FilteredIndex, newObjectCount: number } } = {};
-  const changes: Record<string, true | ChangeStatus> = {};
+  const changes: Record<string, {
+    oldObjectData?: unknown
+    newObjectData?: unknown
+    change: true | ChangeStatus
+  }> = {};
 
   const defaultIndex = ds.indexes['default'];
   const defaultIdxDB = defaultIndex.dbHandle;
@@ -940,7 +944,7 @@ datasetQueue.oneAtATime(async function _updateDatasetIndexesIfNeeded (
     // First mark as undetermine changes,
     // later try to determine the nature of the change & adjust indexes
     for await (const objectPath of changedObjectPaths) {
-      changes[objectPath] = true;
+      changes[objectPath] = { change: true };
     }
 
     //log.debug("updateDatasetIndexesIfNeeded: Processing object paths & updating indexes");
@@ -1053,7 +1057,7 @@ datasetQueue.oneAtATime(async function _updateDatasetIndexesIfNeeded (
         await defaultIdxDB.put(objectPath, objv2);
         if (objv1 === null) { // Object was added
           //log.debug("Datasets: updateDatasetsIndexesIfNeeded: Added object path", objectPath);
-          changes[objectPath] = 'added';
+          changes[objectPath] = { change: 'added', newObjectData: objv2 };
 
           // Add object path in affected filtered indexes
           for (const [idxID, { idx }] of Object.entries(pathAffectsFilteredIndexes)) {
@@ -1072,7 +1076,7 @@ datasetQueue.oneAtATime(async function _updateDatasetIndexesIfNeeded (
           });
         } else { // Object was changed
           //log.debug("Datasets: updateDatasetsIndexesIfNeeded: Changed object path", objectPath);
-          changes[objectPath] = 'modified';
+          changes[objectPath] = { newObjectData: objv2, change: 'modified' };
 
           // Add new key (or object path) to affected filtered indexes,
           // delete old key (if it’s different) from affected filtered indexes
@@ -1108,7 +1112,7 @@ datasetQueue.oneAtATime(async function _updateDatasetIndexesIfNeeded (
       } else { // Object was likely deleted, or never existed
         //log.debug("Datasets: updateDatasetsIndexesIfNeeded: Removed object path", objectPath);
         try {
-          changes[objectPath] = 'removed';
+          changes[objectPath] = { oldObjectData: objv1, change: 'removed' };
 
           // Delete from default index
           try {
@@ -1137,7 +1141,7 @@ datasetQueue.oneAtATime(async function _updateDatasetIndexesIfNeeded (
         } catch (e) {
           if ((e as any).type === 'NotFoundError') {
             // (or even never existed)
-            changes[objectPath] = true;
+            changes[objectPath] = { change: true };
           } else {
             throw e;
           }

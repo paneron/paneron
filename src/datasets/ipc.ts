@@ -174,7 +174,15 @@ export const addFromFilesystem = makeEndpoint.main(
 
 export const objectsChanged = makeEndpoint.renderer(
   'dataset_objectsChanged',
-  <{ workingCopyPath: string, datasetID: string, objects?: Record<string, ChangeStatus | true> }>_,
+  <{
+    workingCopyPath: string
+    datasetID: string
+    objects?: Record<string, {
+      newObjectData?: unknown
+      oldObjectData?: unknown
+      change: ChangeStatus | true
+    }>
+  }>_,
 );
 
 export const filteredIndexUpdated = makeEndpoint.renderer(
