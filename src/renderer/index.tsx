@@ -16,7 +16,7 @@ import '!style-loader!css-loader!./renderer.css';
 import ErrorBoundary from '@riboseinc/paneron-extension-kit/widgets/ErrorBoundary';
 import MainWindow from './MainWindow/index';
 
-import { colorSchemeUpdated } from 'common';
+import { openExternalURL, colorSchemeUpdated } from 'common';
 
 
 // Set color scheme
@@ -46,6 +46,16 @@ if (containerEl === null) {
 
 const applyColorSchemeDebounced = debounce(1000, applyColorScheme);
 colorSchemeUpdated.renderer!.handle(applyColorSchemeDebounced);
+
+window.addEventListener('click', function handlePossibleNavigation (evt) {
+  const linkHref = evt.target?.getAttribute?.('href')?.trim() || '';
+  if (linkHref !== '' && linkHref.startsWith('http')) {
+    evt.preventDefault();
+    evt.stopPropagation();
+    openExternalURL.renderer!.trigger({ url: linkHref });
+    return 'overriding click';
+  }
+});
 
 async function render() {
   await setUpDeps();
