@@ -166,7 +166,6 @@ export interface RemoteHeadComparisonOutcome {
   /** Remote branch head commit OID. */
   remoteHead: string
 
-
   /** Empty, unless remote head is divergent from local head. */
   commonAncestor?: string
 }
