@@ -48,7 +48,7 @@ const applyColorSchemeDebounced = debounce(1000, applyColorScheme);
 colorSchemeUpdated.renderer!.handle(applyColorSchemeDebounced);
 
 window.addEventListener('click', function handlePossibleNavigation (evt) {
-  const linkHref = evt.target?.getAttribute?.('href')?.trim() || '';
+  const linkHref = (evt.target as Element | null)?.getAttribute?.('href')?.trim() || '';
   if (linkHref !== '' && linkHref.startsWith('http')) {
     evt.preventDefault();
     evt.stopPropagation();
