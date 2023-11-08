@@ -55,6 +55,7 @@ window.addEventListener('click', function handlePossibleNavigation (evt) {
     openExternalURL.renderer!.trigger({ url: linkHref });
     return 'overriding click';
   }
+  return;
 });
 
 async function render() {
