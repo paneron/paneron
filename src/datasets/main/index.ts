@@ -317,13 +317,13 @@ locateFilteredIndexPosition.main!.handle(async ({ workingCopyPath, datasetID, in
 mapReduce.main!.handle(async ({ workingCopyPath, datasetID, chains }) => {
   const parsedChains: Datasets.Util.MapReduceChain<any>[] = [];
 
-  log.debug("mapReduce: pre-processing chains", chains);
+  //log.debug("mapReduce: pre-processing chains", chains);
 
   for (const [chainID, chain] of Object.entries(chains)) {
     parsedChains.push(parseMapReduceChain(chainID, chain));
   }
 
-  log.debug("mapReduce: processing chains", parsedChains);
+  //log.debug("mapReduce: processing chains", parsedChains);
 
   const chainResults = (await Promise.allSettled(parsedChains.map(async (c) =>
     ({ [c.id]: await loadedDatasets.mapReduce(workingCopyPath, datasetID, c.predicate, c.map, c.reduce) })
