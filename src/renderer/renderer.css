@@ -48,7 +48,6 @@ html.platform--win32::before {
 }
 .bp4-dark .bp4-input:read-only {
   box-shadow: inset rgba(255, 255, 255, 0.2) 1px -1px;
-  background: none;
 }
 .bp4-tree-node-caret {
   cursor: default !important;
