@@ -34,6 +34,14 @@ html.platform--win32::before {
 .bp4-overlay-backdrop.bp4-popover2-backdrop {
   background: rgba(0, 0, 0, .5);
 }
+
+.bp4-input {
+  /*
+   * “middle”, specified by BP4, causes issues with inpout text <-> OL marker alignment.
+   * This seems to have no side-effects.
+   */
+  vertical-align: unset;
+}
 .bp4-input:read-only {
   box-shadow: inset silver 1px -1px;
   background: none;
