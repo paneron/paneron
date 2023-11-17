@@ -299,7 +299,7 @@ export const GlobalSettingsForm: React.FC<{ className?: string; }> = function ({
 
 const NewRepositoryDefaults: React.FC<{ className?: string }> = function ({ className }) {
   const { performOperation, isBusy } = useContext(OperationQueueContext);
-  const defaultsResp = getNewRepoDefaults.renderer!.useValue({}, { defaults: null });
+  const defaultsResp = getNewRepoDefaults.renderer!.useValue({}, { defaults: { author: DUMMY_AUTHOR } });
   const defaults = defaultsResp.value.defaults;
   const busy = defaultsResp.isUpdating || isBusy;
 
