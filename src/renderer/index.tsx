@@ -77,8 +77,9 @@ import 'repositories/ipc';
 import 'datasets/ipc';
 
 
-// To make dependencies importable within imported extension code
+// To make dependencies importable within dynamically imported extension code
 
+/** Returns an object with all imports allowed within an extension. */
 async function getDeps(): Promise<Record<string, unknown>> {
   return {
     'react': await import('react'),
@@ -101,6 +102,11 @@ async function getDeps(): Promise<Record<string, unknown>> {
   };
 }
 
+/**
+ * Uses importMapper to make select dependencies available within code
+ * that was dynamically `import()`ed from an object URL
+ * (see `plugins.renderer.getPlugin()` for where that happens).
+ */
 async function setUpDeps() {
   const deps = await getDeps();
 
