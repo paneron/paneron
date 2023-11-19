@@ -37,7 +37,7 @@ export default async function getPlugin(id: string, version: string | undefined)
 
     // Old way
 
-    console.warn("Using legacy extension: requiring via NPM package");
+    console.error("Using legacy extension via NodeJS & NPM package, since requiring v3 failed due to an error:", e);
 
     const pluginManager = new PluginManager({
       cwd,
