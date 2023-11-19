@@ -105,10 +105,14 @@ async function setUpDeps() {
   const deps = await getDeps();
 
   const imports: Record<string, string> = {};
-  for (const [moduleID, _moduleData] of Object.entries(deps)) {
-    const m = _moduleData as any;
-    const moduleData = m.default ?? _moduleData;
-    imports[moduleID] = ImportMapper.forceDefault(moduleData);
+  for (const [moduleID, moduleData] of Object.entries(deps)) {
+    const m = moduleData as any;
+    const d = m.default // && Object.keys(m).length === 1 // only default export
+      ? ImportMapper.forceDefault(m.default)
+      : null;
+    if (d || moduleData) {
+      imports[moduleID] = d ?? moduleData;
+    }
   }
 
   const mapper = new ImportMapper(imports);
