@@ -87,8 +87,10 @@ async function getDeps(): Promise<Record<string, unknown>> {
     '@emotion/react': await import('@emotion/react'),
     '@blueprintjs/core': await import('@blueprintjs/core'),
     '@blueprintjs/popover2': await import('@blueprintjs/popover2'),
+    '@blueprintjs/select': await import('@blueprintjs/select'),
     'react-mathjax2': await import('react-mathjax2'),
     'liquidjs': await import('liquidjs'),
+    'immutability-helper': await import('immutability-helper'),
 
     '@riboseinc/paneron-extension-kit': await import('@riboseinc/paneron-extension-kit'),
     '@riboseinc/paneron-registry-kit': await import('@riboseinc/paneron-registry-kit'),
