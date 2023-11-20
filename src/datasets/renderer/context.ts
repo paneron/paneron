@@ -171,7 +171,7 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
       opts[1], opts[2],
 
       opts[3], opts[4], opts[5],
-    ]), [...Array(6).keys()].map(k => opts[k]));
+    ]), [workingCopyPath, datasetID, ...[...Array(6).keys()].map(k => opts[k])]);
     return usePaneronPersistentStateReducer(...effectiveOpts);
   }
 
@@ -188,7 +188,7 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
       opts[3], opts[4],
 
       opts[5], opts[6], opts[7],
-    ]),  [...Array(8).keys()].map(k => opts[k]));
+    ]),  [workingCopyPath, datasetID, ...[...Array(8).keys()].map(k => opts[k])]);
     return useTimeTravelingPersistentStateReducer(...effectiveOpts);
   }
 
