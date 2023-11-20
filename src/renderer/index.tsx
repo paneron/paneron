@@ -1,5 +1,4 @@
 import { debounce } from 'throttle-debounce';
-import { ImportMapper } from 'import-mapper';
 
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -59,8 +58,6 @@ window.addEventListener('click', function handlePossibleNavigation (evt) {
 });
 
 async function render() {
-  await setUpDeps();
-
   ReactDOM.render(
     <ErrorBoundary viewName="Main window">
       <MainWindow />
@@ -75,54 +72,3 @@ render();
 import 'common';
 import 'repositories/ipc';
 import 'datasets/ipc';
-
-
-// To make dependencies importable within dynamically imported extension code
-
-/** Returns an object with all imports allowed within an extension. */
-async function getDeps(): Promise<Record<string, unknown>> {
-  return {
-    'react': await import('react'),
-    '@emotion/styled': await import('@emotion/styled'),
-    '@emotion/react': await import('@emotion/react'),
-    '@blueprintjs/core': await import('@blueprintjs/core'),
-    '@blueprintjs/popover2': await import('@blueprintjs/popover2'),
-    '@blueprintjs/select': await import('@blueprintjs/select'),
-    'react-mathjax2': await import('react-mathjax2'),
-    'liquidjs': await import('liquidjs'),
-    'immutability-helper': await import('immutability-helper'),
-
-    '@riboseinc/paneron-extension-kit': await import('@riboseinc/paneron-extension-kit'),
-    '@riboseinc/paneron-registry-kit': await import('@riboseinc/paneron-registry-kit'),
-    '@riboseinc/paneron-registry-kit/migrations/initial': await import('@riboseinc/paneron-registry-kit/migrations/initial'),
-    '@riboseinc/paneron-registry-kit/views': await import('@riboseinc/paneron-registry-kit/views'),
-    '@riboseinc/paneron-registry-kit/views/FilterCriteria/CRITERIA_CONFIGURATION': await import('@riboseinc/paneron-registry-kit/views/FilterCriteria/CRITERIA_CONFIGURATION'),
-    '@riboseinc/paneron-registry-kit/views/util': await import('@riboseinc/paneron-registry-kit/views/util'),
-    '@riboseinc/paneron-registry-kit/views/BrowserCtx': await import('@riboseinc/paneron-registry-kit/views/BrowserCtx'),
-    '@riboseinc/paneron-registry-kit/views/itemPathUtils': await import('@riboseinc/paneron-registry-kit/views/itemPathUtils'),
-    '@riboseinc/paneron-extension-kit/context': await import('@riboseinc/paneron-extension-kit/context'),
-  };
-}
-
-/**
- * Uses importMapper to make select dependencies available within code
- * that was dynamically `import()`ed from an object URL
- * (see `plugins.renderer.getPlugin()` for where that happens).
- */
-async function setUpDeps() {
-  const deps = await getDeps();
-
-  const imports: Record<string, string> = {};
-  for (const [moduleID, moduleData] of Object.entries(deps)) {
-    const m = moduleData as any;
-    const d = m.default // && Object.keys(m).length === 1 // only default export
-      ? ImportMapper.forceDefault(m.default)
-      : null;
-    if (d || moduleData) {
-      imports[moduleID] = d ?? moduleData;
-    }
-  }
-
-  const mapper = new ImportMapper(imports);
-  mapper.register();
-}
