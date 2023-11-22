@@ -57,16 +57,11 @@ window.addEventListener('click', function handlePossibleNavigation (evt) {
   return;
 });
 
-async function render() {
-  ReactDOM.render(
-    <ErrorBoundary viewName="Main window">
-      <MainWindow />
-    </ErrorBoundary>,
-    containerEl);
-}
-
-
-render();
+ReactDOM.render(
+  <ErrorBoundary viewName="Main window">
+    <MainWindow />
+  </ErrorBoundary>,
+  containerEl);
 
 
 import 'common';
