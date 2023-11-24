@@ -30,12 +30,12 @@ function applyColorScheme(opts: { colorSchemeName: string }) {
   }
 }
 
-// Params passed to the window from main via GET query string
+/** Params passed to the window from main via GET query string. */
 const searchParams = new URLSearchParams(window.location.search);
 const colorScheme = searchParams.get('colorScheme');
 if (colorScheme) { applyColorScheme({ colorSchemeName: colorScheme }); }
 
-// electron-webpack guarantees presence of #app in index.html it bundles
+/** The root element that’s supposed to be guaranteed by electron-webpack. */
 const containerEl: HTMLElement | null = document.getElementById('app');
 if (containerEl === null) {
   throw new Error("Missing app container");
