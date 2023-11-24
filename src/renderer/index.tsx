@@ -46,16 +46,26 @@ if (containerEl === null) {
 const applyColorSchemeDebounced = debounce(1000, applyColorScheme);
 colorSchemeUpdated.renderer!.handle(applyColorSchemeDebounced);
 
-window.addEventListener('click', function handlePossibleNavigation (evt) {
-  const linkHref = (evt.target as Element | null)?.getAttribute?.('href')?.trim() || '';
-  if (linkHref !== '' && linkHref.startsWith('http')) {
-    evt.preventDefault();
-    evt.stopPropagation();
-    openExternalURL.renderer!.trigger({ url: linkHref });
-    return 'overriding click';
+/**
+ * Processes any click; if clicked element is a link with HTTP(S) protocol,
+ * then handle it using default browser via `openExternalURL`;
+ * otherwise don’t handle (leave to default handling).
+ */
+function handleLinkClick(evt: MouseEvent) {
+  if ((evt.target as Element | null)?.tagName === 'A') {
+    const linkHref = (evt.target as Element | null)?.getAttribute?.('href')?.toLowerCase().trim() || '';
+    if (linkHref !== '' && linkHref.startsWith('http')) {
+      evt.preventDefault();
+      evt.stopPropagation();
+      openExternalURL.renderer!.trigger({ url: linkHref });
+      return 'overriding click';
+    }
   }
+  // This should preserve the default <a> handling
   return;
-});
+}
+
+window.addEventListener('click', handleLinkClick);
 
 ReactDOM.render(
   <ErrorBoundary viewName="Main window">

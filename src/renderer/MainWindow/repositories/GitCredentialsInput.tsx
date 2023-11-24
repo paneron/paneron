@@ -8,7 +8,6 @@ import { Button, ButtonProps, Callout, UL } from '@blueprintjs/core';
 import { Popover2 } from '@blueprintjs/popover2';
 import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
 import { queryGitRemote } from 'repositories/ipc';
-import { openExternalURL } from 'common';
 import { ColorNeutralLink } from 'renderer/widgets';
 
 
@@ -151,12 +150,6 @@ function ({
     }
   }, [password, username, remoteURL]);
 
-  function handleOpenGitHubPATHelp() {
-    openExternalURL.renderer!.trigger({
-      url: "https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token#creating-a-token",
-    });
-  }
-
   return (
     <>
       <PropertyView
@@ -186,7 +179,7 @@ function ({
                 {" "}
                 rather than your Github account’s actual password
                 {" "}
-                (see <ColorNeutralLink onClick={handleOpenGitHubPATHelp}>Creating a personal access token</ColorNeutralLink>).
+                (see <ColorNeutralLink href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token#creating-a-token">Creating a personal access token</ColorNeutralLink>).
               </li>
             </UL>
             {" "}

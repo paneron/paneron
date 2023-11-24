@@ -5,20 +5,12 @@ import React from 'react';
 import { jsx, css } from '@emotion/react';
 import { UL } from '@blueprintjs/core';
 import PropertyView, { TextInput } from '@riboseinc/paneron-extension-kit/widgets/Sidebar/PropertyView';
-import { openExternalURL } from 'common';
 import { ColorNeutralLink } from 'renderer/widgets';
 import type { GitAuthor } from 'repositories/types';
 
 
 const AuthorForm: React.FC<{ author: GitAuthor, onChange?: (newAuthor: GitAuthor) => void }> =
 function ({ author, onChange }) {
-
-  function handleOpenGitHubCommitEmailDocs() {
-    openExternalURL.renderer!.trigger({
-      url: 'https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-github-user-account/managing-email-preferences/setting-your-commit-email-address#about-commit-email-addresses',
-    })
-  }
-
   return (
     <>
       <PropertyView
@@ -46,7 +38,7 @@ function ({ author, onChange }) {
               <li>
                 For GitHub, you can use the no-reply email in the form of <code css={css`white-space: nowrap;`}>…@users.noreply.github.com</code>
                 {" "}
-                (see GitHub help’s <ColorNeutralLink onClick={handleOpenGitHubCommitEmailDocs}>About commit email addresses</ColorNeutralLink>).
+                (see GitHub help’s <ColorNeutralLink href="https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-github-user-account/managing-email-preferences/setting-your-commit-email-address#about-commit-email-addresses">About commit email addresses</ColorNeutralLink>).
               </li>
             </UL>
           </>}>
