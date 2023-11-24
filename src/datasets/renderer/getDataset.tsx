@@ -75,13 +75,11 @@ export default async function getDataset(workingCopyPath: string, datasetID: str
   // }
   // Require plugin
   try {
-    // Experiment with using plain remote did not work so well so far.
-    //const pluginPromise: RendererPlugin = global.require(path.resolve(`${pluginPath}/plugin`)).default;
     console.debug("Dataset view: Awaiting renderer plugin…", pluginName, pluginVersion);
 
+    console.time("Dataset view: Awaiting renderer plugin…");
     // IMPORTANT: VS Code may report await as unnecessary, but it is very much required.
     // Could be due to broken typings in live-plugin-manager.
-    console.time("Dataset view: Awaiting renderer plugin…");
     const plugin = await getPlugin(pluginName, pluginVersion);
     console.timeEnd("Dataset view: Awaiting renderer plugin…");
 
