@@ -27,6 +27,8 @@ export default async function getPlugin(id: string, version: string | undefined)
 
     // New way
 
+    console.time("Load new-style packaged extension");
+
     const { result: { code } } = await getPackageCode.renderer!.trigger({ id });
 
     await setUpDeps();
@@ -35,13 +37,19 @@ export default async function getPlugin(id: string, version: string | undefined)
     const url = URL.createObjectURL(blob);
     const { 'default': plugin } = await import(/* webpackIgnore: true */ url);
 
+    console.timeEnd("Load new-style packaged extension");
+
+    console.info("Successfully loaded new-style packaged extension");
+
     return parsePlugin(await plugin);
 
   } catch (e) {
 
     // Old way
 
-    console.error("Using legacy extension via NodeJS & NPM package, since requiring v3 failed due to an error:", e);
+    console.error("Unable to load new-style packaged extension due to an error:", e);
+
+    console.time("Install legacy extension via NodeJS & NPM package");
 
     const pluginManager = new PluginManager({
       cwd,
@@ -93,6 +101,8 @@ export default async function getPlugin(id: string, version: string | undefined)
       await installPlugin.renderer!.trigger({ id, version: installedVersion });
       await pluginManager.installFromPath(localPath);
     }
+
+    console.timeEnd("Install legacy extension via NodeJS & NPM package");
 
     return parsePlugin(await pluginManager.require(id).default);
   }
