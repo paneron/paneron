@@ -70,7 +70,7 @@ type BasicDatasetReadAPI = Pick<DatasetContext,
 /** Returns basic extension context, read-only. */
 export function getBasicReadAPI(contextOpts: BasicDatasetOptions): BasicDatasetReadAPI {
   const { workingCopyPath, datasetID } = contextOpts;
-  const datasetParams = { workingCopyPath, datasetID };
+  const datasetParams = { workingCopyPath, datasetID } as const;
   return {
     getObjectData: async function _getObjectData(opts) {
       const resp = await getObjectDataset.renderer!.trigger({
@@ -155,10 +155,7 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
     performOperation,
   } = opts;
 
-  const datasetParams = {
-    workingCopyPath,
-    datasetID,
-  };
+  const datasetParams = { workingCopyPath, datasetID } as const;
 
   function usePersistentDatasetStateReducer<S extends Record<string, any>, A extends BaseAction>
   (...opts: Parameters<PersistentStateReducerHook<S, A>>) {
