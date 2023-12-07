@@ -170,7 +170,11 @@ async function getDeps(): Promise<Record<string, unknown>> {
     '@blueprintjs/select': await import('@blueprintjs/select'),
     'react-mathjax2': await import('react-mathjax2'),
     'liquidjs': await import('liquidjs'),
+    'js-yaml': await import('js-yaml'),
+    'asciidoctor': await import('asciidoctor'),
     'immutability-helper': await import('immutability-helper'),
+    'date-fns/format': await import('date-fns/format'),
+    'date-fns/parse': await import('date-fns/parse'),
 
     '@riboseinc/paneron-extension-kit': await import('@riboseinc/paneron-extension-kit'),
     '@riboseinc/paneron-registry-kit': await import('@riboseinc/paneron-registry-kit'),
