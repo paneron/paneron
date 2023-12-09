@@ -333,12 +333,15 @@ async function mapReduce(
   }
   const mappedData: unknown[] = [];
   //log.silly("mapReduce: mapping");
+  function handleEmit(val: unknown) {
+    mappedData.push(val);
+  }
   for await (const data of defaultIndex.dbHandle.createReadStream()) {
     // TODO: [upstream] NodeJS.ReadableStream is poorly typed.
     const { key, value } = data as unknown as { key: string, value: Record<string, unknown> };
     if (key !== INDEX_META_MARKER_DB_KEY) {
       if (!predicate || predicate(key, value)) {
-        map(key, value, (val) => mappedData.push(val));
+        map(key, value, handleEmit);
       }
     }
   }
