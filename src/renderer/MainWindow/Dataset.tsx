@@ -255,7 +255,7 @@ const ExportOptions: React.FC<{
             src={plugin?.iconURL} />}
         />;
 
-  const canExport = !!(!inProgress && onRequestExport && formatID)
+  const canExport = !!(!inProgress && onRequestExport && formatID);
 
   return <NonIdealState
     icon={effectiveIconEl}
