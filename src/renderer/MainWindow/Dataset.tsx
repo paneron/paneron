@@ -226,7 +226,7 @@ const DEFAULT_EXPORT_FORMATS = {
     name: "Source data, as is",
     description: "Full source data. NOTE: Prefer to clone the corresponding Git repository instead. This may take a while.",
   },
-};
+} as const;
 
 
 const ExportOptions: React.FC<{
