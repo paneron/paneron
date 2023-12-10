@@ -229,6 +229,9 @@ const DEFAULT_EXPORT_FORMATS = {
 } as const;
 
 
+const DEFAULT_PLUGIN_INFO = { plugin: null } as const;
+
+
 const ExportOptions: React.FC<{
   datasetInfo: DatasetInfo
   exportFormats: { [formatID: string]: ExportFormatInfo }
@@ -240,7 +243,7 @@ const ExportOptions: React.FC<{
 
   const { value: { plugin } } = getPluginInfo.renderer!.useValue(
     { id: datasetInfo.type.id ?? '' },
-    { plugin: null });
+    DEFAULT_PLUGIN_INFO);
 
   const effectiveIconEl: JSX.Element = !plugin
     ? <Icon icon="circle" size={IconSize.LARGE * 4} />
