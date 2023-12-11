@@ -31,9 +31,9 @@ const NODE_MODULES_PATH = process.env.NODE_ENV === 'production'
   ? `${__static}/../../app.asar.unpacked/node_modules`
   : `${__static}/../../node_modules`;
 
-const MATHJAX_PATH = `${NODE_MODULES_PATH}/mathjax/MathJax.js?config=AM_HTMLorMML` as const;
+const MATHJAX_PATH = `${NODE_MODULES_PATH}/mathjax/MathJax.js?config=AM_HTMLorMML`;
 
-const MATHJAX_PATH_WITH_PROTO = `file://${MATHJAX_PATH}` as const;
+const MATHJAX_PATH_WITH_PROTO = `file://${MATHJAX_PATH}`;
 
 const MATHJAX_OPTS = {
   asciimath2jax: {
