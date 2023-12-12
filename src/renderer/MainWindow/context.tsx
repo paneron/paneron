@@ -13,6 +13,7 @@ import type { Action } from './actions';
 const toaster = Toaster.create({ position: 'bottom' });
 
 
+// TODO: Separate window context into separate state and dispatch contexts
 interface ContextSpec {
   state: State
   dispatch: React.Dispatch<Action>
