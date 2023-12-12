@@ -21,6 +21,7 @@ interface ContextSpec {
 }
 
 
+/** `MainWindow` state (repo, dataset) and action dispatch. */
 export const Context = React.createContext<ContextSpec>({
   state: initialState,
   dispatch: () => void 0,
@@ -30,6 +31,10 @@ export const Context = React.createContext<ContextSpec>({
 
 
 
+/**
+ * Provides `MainWindow`’s context, along with `OperationQueueContext`.
+ * Uses persistent state reducer hook to persist state.
+ */
 const ContextProvider: React.FC<Record<never, never>> = memo(function ({ children }) {
   const [state, dispatch, stateLoaded] = usePaneronPersistentStateReducer(
     'main-window',
