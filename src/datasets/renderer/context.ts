@@ -60,6 +60,8 @@ export interface ContextGetterProps extends BasicDatasetOptions {
 const decoder = new TextDecoder('utf-8');
 const encoder = new TextEncoder();
 
+const EMPTY_OBJECT = Object.freeze({});
+
 
 type BasicDatasetReadAPI = Pick<DatasetContext,
   'getObjectData'
@@ -230,7 +232,7 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
     // Settings
 
     useSettings: () => {
-      return useSettings(EXT_SETTINGS_SCOPE, {});
+      return useSettings(EXT_SETTINGS_SCOPE, EMPTY_OBJECT);
     },
 
     useGlobalSettings: () => {
