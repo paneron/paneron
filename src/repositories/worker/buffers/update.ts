@@ -16,10 +16,6 @@ import { normalizeURL } from '../../util';
 import type { Repositories } from '../types';
 
 
-const chunk = <T>(arr: T[], size: number): T[][] => [
-  ...Array(Math.ceil(arr.length / size)),
-].map((_, i) => arr.slice(size * i, size + size * i));
-
 
 /**
  * Applies given `BufferChangeset` and commits changes.
@@ -64,38 +60,43 @@ async function updateBuffers (
   });
 
   try {
-    const writePromises = bufferPaths.map((bufferPath) => async () => {
+    //let idx = 0;
+    //let total = bufferPaths.length;
+    for (const bufferPath of bufferPaths) {
       const absolutePath = nodePath.join(opts.workDir, deposixifyPath(bufferPath));
       const { newValue } = changeset[bufferPath];
 
+      //idx += 1;
+      //console.debug(`Writing or removing file ${idx} of ${total}`);
       if (newValue !== null) {
         await ensureFile(absolutePath);
         await fs.promises.writeFile(absolutePath, Buffer.from(newValue));
       } else if (!opts.initial) {
         removeSync(absolutePath);
       }
-    });
-    const chunks = chunk(writePromises, 50);
-    for (const chunk of chunks) {
-      console.debug("Awaiting chunk");
-      await Promise.all(chunk.map(func => func()));
     }
 
     // TODO: Make sure checkout in catch() block resets staged files as well!
-    for (const [path, contents] of Object.entries(changeset)) {
-      const normalizedPath = stripLeadingSlash(path);
-      const { newValue } = contents;
-      if (newValue !== null) {
-        await git.add({
-          fs,
-          dir: opts.workDir,
-          filepath: normalizedPath,
-        });
-      } else if (!opts.initial) {
+
+    const pathsToAdd = Object.entries(changeset).
+      filter(([, { newValue }]) => newValue !== null).
+      map(([path, ]) => stripLeadingSlash(path));
+    //console.debug(`Adding changes: ${pathsToAdd.length} total`);
+    await git.add({
+      fs,
+      dir: opts.workDir,
+      filepath: pathsToAdd as unknown as string, // supports array, actually
+    });
+
+    if (!opts.initial) {
+      const pathsToRemove = Object.entries(changeset).
+        filter(([, { newValue }]) => newValue === null).
+        map(([path, ]) => stripLeadingSlash(path));
+      for (const filepath of pathsToRemove) {
         await git.remove({
           fs,
           dir: opts.workDir,
-          filepath: normalizedPath,
+          filepath, // does not support array
         });
       }
     }
