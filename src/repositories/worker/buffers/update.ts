@@ -16,6 +16,11 @@ import { normalizeURL } from '../../util';
 import type { Repositories } from '../types';
 
 
+const chunk = <T>(arr: T[], size: number): T[][] => [
+  ...Array(Math.ceil(arr.length / size)),
+].map((_, i) => arr.slice(size * i, size + size * i));
+
+
 /**
  * Applies given `BufferChangeset` and commits changes.
  * Does not check for conflicts.
@@ -59,7 +64,7 @@ async function updateBuffers (
   });
 
   try {
-    await Promise.all(bufferPaths.map(async (bufferPath) => {
+    const writePromises = bufferPaths.map((bufferPath) => async () => {
       const absolutePath = nodePath.join(opts.workDir, deposixifyPath(bufferPath));
       const { newValue } = changeset[bufferPath];
 
@@ -69,7 +74,12 @@ async function updateBuffers (
       } else if (!opts.initial) {
         removeSync(absolutePath);
       }
-    }));
+    });
+    const chunks = chunk(writePromises, 50);
+    for (const chunk of chunks) {
+      console.debug("Awaiting chunk");
+      await Promise.all(chunk.map(func => func()));
+    }
 
     // TODO: Make sure checkout in catch() block resets staged files as well!
     for (const [path, contents] of Object.entries(changeset)) {
