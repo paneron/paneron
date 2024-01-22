@@ -1187,6 +1187,25 @@ datasetQueue.oneAtATime(async function _updateDatasetIndexesIfNeeded (
     // Await completion
     await completionPromise;
 
+    // Notify frontend
+    defaultIndexStatusReporter({
+      objectCount: defaultIndex.status.objectCount,
+    });
+
+    objectsChanged.main!.trigger({
+      workingCopyPath: workDir,
+      datasetID,
+      objects: changes,
+    });
+
+    for (const [indexID, { newObjectCount }] of Object.entries(affectedFilteredIndexes)) {
+      ds.indexes[indexID].status.objectCount = newObjectCount;
+      filteredIndexUpdated.main!.trigger({ workingCopyPath: workDir, datasetID, indexID });
+      indexStatusChanged.main!.trigger({ workingCopyPath: workDir, datasetID, indexID, status: {
+        objectCount: newObjectCount,
+      } });
+    }
+
   } catch (e) {
     // It’s possible that resolveDatasetChanges bailed. Let’s just reload.
 
@@ -1194,13 +1213,19 @@ datasetQueue.oneAtATime(async function _updateDatasetIndexesIfNeeded (
 
     await clearIndexesAndReloadDatasetDirect({ workDir, datasetID });
 
+    // Notify frontend anyway
+
     objectsChanged.main!.trigger({
       workingCopyPath: workDir,
       datasetID,
       objects: undefined,
     });
 
-    // Don’t throw, we want to notify frontend anyway.
+    for (const indexID of filteredIndexIDs) {
+      filteredIndexUpdated.main!.trigger({ workingCopyPath: workDir, datasetID, indexID });
+    }
+
+    // Is throwing going to offend any caller?
     //throw e;
 
   } finally {
@@ -1210,25 +1235,6 @@ datasetQueue.oneAtATime(async function _updateDatasetIndexesIfNeeded (
     for (const idxID of filteredIndexIDs) {
       ds.indexes[idxID].completionPromise = undefined;
     }
-  }
-
-  // Notify frontend
-  defaultIndexStatusReporter({
-    objectCount: defaultIndex.status.objectCount,
-  });
-
-  objectsChanged.main!.trigger({
-    workingCopyPath: workDir,
-    datasetID,
-    objects: changes,
-  });
-
-  for (const [indexID, { newObjectCount }] of Object.entries(affectedFilteredIndexes)) {
-    ds.indexes[indexID].status.objectCount = newObjectCount;
-    filteredIndexUpdated.main!.trigger({ workingCopyPath: workDir, datasetID, indexID });
-    indexStatusChanged.main!.trigger({ workingCopyPath: workDir, datasetID, indexID, status: {
-      objectCount: newObjectCount,
-    } });
   }
 }, (workDir, datasetID) => [`${workDir}:${datasetID}`]);
 
