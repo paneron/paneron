@@ -71,9 +71,13 @@ NOTE: Development environment has been tested on macOS Monterey and Ubuntu 18.
 You’ll need the following installed:
 
 * macOS: Xcode and the accompanying command-line tools
-* Node 16 (installation:
+* Node 16 & 18 (installation:
   link:https://github.com/nodesource/distributions/blob/master/README.md#installation-instructions[Ubuntu],
   link:https://nodejs.org/en/download/package-manager/#macos[macOS])
+
+  * If Leveldown compilation fails, you may need to use Node 18 for that
+    and switch to 16 to run `yarn dev` and others for the time being.
+
 * Yarn (link:https://classic.yarnpkg.com/en/docs/install/[installation])
 * Ubuntu: `libsecret-1-dev` (may or may not be installed by default)
   and some frontend such as `gnome-keyring`.
