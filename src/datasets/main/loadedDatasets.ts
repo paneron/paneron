@@ -185,9 +185,10 @@ datasetQueue.oneAtATime(async function getOrCreateFilteredIndex ({
   } catch (e) {
 
     log.debug(
-      "Datasets: getOrCreateFilteredIndex: Does not exist yet, creating for predicate query expression:",
+      "Datasets: getOrCreateFilteredIndex: No good index found for predicate query expression, creating new:",
       queryExpression,
-      filteredIndexID);
+      filteredIndexID,
+      e);
 
     let predicate: Datasets.Util.FilteredIndexPredicate;
     try {
