@@ -238,7 +238,7 @@ async function initMain() {
   const { id: windowID } = await openWindow(MAIN_WINDOW_OPTIONS);
 
   refreshMainWindow.main!.handle(async () => {
-    await CLEAR_OPTION_ROUTINES['db-indexes']();
+    //await CLEAR_OPTION_ROUTINES['db-indexes']();
 
     // This will throw if window is not open
     // (But then app quits if it’s closed anyway)
