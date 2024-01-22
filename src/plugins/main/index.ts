@@ -198,7 +198,7 @@ export async function clearPluginData() {
     delete publishedExtensions[key];
   }
 
-  fs.rmdirSync(PLUGINS_PATH, { recursive: true });
+  fs.removeSync(PLUGINS_PATH);
   fs.removeSync(PLUGIN_CONFIG_PATH);
 }
 

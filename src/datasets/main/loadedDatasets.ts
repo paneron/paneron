@@ -1,6 +1,5 @@
 import log from 'electron-log';
-import fs from 'fs';
-import { ensureDir } from 'fs-extra';
+import { removeSync, ensureDir } from 'fs-extra';
 import nodePath from 'path';
 //import * as R from 'ramda';
 import levelup from 'levelup';
@@ -140,7 +139,7 @@ async function clearIndexesAndReloadDatasetDirect(opts: { workDir: string, datas
 
   await unloadDatasetDirect(opts.workDir, opts.datasetID);
 
-  fs.rmdirSync(cacheRoot, { recursive: true });
+  removeSync(cacheRoot);
 
   await loadDatasetDirect(opts.workDir, opts.datasetID, cacheRoot);
 

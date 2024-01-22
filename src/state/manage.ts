@@ -1,5 +1,5 @@
 import path from 'path';
-import fs from 'fs';
+import { removeSync } from 'fs-extra';
 import { app, safeStorage } from 'electron';
 import levelup from 'levelup';
 import leveldown from 'leveldown';
@@ -97,7 +97,7 @@ export async function resetState(key: string) {
 
 export async function resetStateGlobal() {
   await stateStorage.clear();
-  fs.rmdirSync(STATE_STORAGE_PATH, { recursive: true });
+  removeSync(STATE_STORAGE_PATH);
 }
 const STATE_STORAGE_PATH = path.join(app.getPath('userData'), 'state');
 const stateStorage = levelup(encode(leveldown(STATE_STORAGE_PATH), {

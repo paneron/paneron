@@ -1,4 +1,4 @@
-import fs from 'fs';
+import { removeSync } from 'fs-extra';
 import nodePath from 'path';
 import { app, BrowserWindow, dialog, type OpenDialogOptions } from 'electron';
 import log from 'electron-log';
@@ -194,7 +194,7 @@ const INDEX_DB_ROOT = nodePath.join(app.getPath('userData'), 'index-dbs');
 
 
 export async function clearIndexes() {
-  fs.rmdirSync(INDEX_DB_ROOT, { recursive: true });
+  removeSync(INDEX_DB_ROOT);
 }
 
 
