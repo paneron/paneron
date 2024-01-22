@@ -727,7 +727,6 @@ const initFilteredIndex = datasetQueue.oneAtATime(async function initFilteredInd
 
   const statusReporter = getFilteredIndexStatusReporter(workDir, datasetID, indexID);
 
-  // This will proceed in background.
   await fillInFilteredIndex(getDefaultIndex(workDir, datasetID), idx, statusReporter);
 }, (workDir, datasetID, indexID) => [
   // Lock for entire dataset
