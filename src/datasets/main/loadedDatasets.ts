@@ -1189,7 +1189,8 @@ datasetQueue.oneAtATime(async function _updateDatasetIndexesIfNeeded (
   } catch (e) {
     // It’s possible that resolveDatasetChanges bailed. Let’s just reload.
 
-    log.error("Failed to adjust indexes; clearing & reloading");
+    log.error("Failed to adjust indexes; clearing & reloading", e);
+
     await clearIndexesAndReloadDatasetDirect({ workDir, datasetID });
 
     objectsChanged.main!.trigger({
