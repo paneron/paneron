@@ -758,7 +758,8 @@ async function initDefaultIndex(
 
   try {
     const meta = await indexMeta(idx);
-    if (!meta || !meta.commitHash || !meta.completed) {
+    const repoCommit = await getCurrentCommit(workDir);
+    if (!meta || !meta.commitHash || !meta.completed || meta.commitHash !== repoCommit) {
       // Will proceed in the background:
       await fillInDefaultIndex(workDir, datasetID, idx);
     } else {
