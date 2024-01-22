@@ -306,8 +306,16 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
               // or, there is a changed object
               Object.entries(objects).find(([changedPath, change]) => {
                 // for which any of the predicate functions from our chains returns true.
-                const objData = change.newObjectData || change.oldObjectData;
-                return predicateFunctions.find(func => func(changedPath, objData)) !== undefined
+                return predicateFunctions.find(func => {
+                  try {
+                    return (
+                      func(changedPath, change.newObjectData) ||
+                      func(changedPath, change.oldObjectData)
+                    );
+                  } catch (e) {
+                    return false;
+                  }
+                }) !== undefined
               })
             )
           ) {
