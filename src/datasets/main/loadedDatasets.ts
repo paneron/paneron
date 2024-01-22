@@ -164,11 +164,21 @@ datasetQueue.oneAtATime(async function getOrCreateFilteredIndex ({
 
   try {
 
-    getFilteredIndex(
+    const idx = getFilteredIndex(
       workDir,
       datasetID,
       filteredIndexID,
     ) as Datasets.Util.FilteredIndex;
+
+    const commitHash = (await indexMeta(idx))?.commitHash;
+    if (commitHash) {
+      const defaultIndex = getDefaultIndex(workDir, datasetID);
+      if ((await indexMeta(defaultIndex))?.commitHash !== commitHash) {
+        throw new Error("Possibly stale filtered index found (commit hash differs from default index)");
+      }
+    } else {
+      throw new Error("Bad filtered index found (no commit hash)");
+    }
 
     //log.silly("Datasets: getOrCreateFilteredIndex: Already exists", queryExpression, filteredIndexID);
 
