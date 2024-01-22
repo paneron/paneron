@@ -1178,16 +1178,6 @@
     ky "^0.25.1"
     ky-universal "^0.8.2"
 
-"@effect/schema@~0.56.0":
-  version "0.56.1"
-  resolved "https://registry.yarnpkg.com/@effect/schema/-/schema-0.56.1.tgz#debb72ad6a9cacdd4ca9b91a76cec9ed7f365188"
-  integrity sha512-cfEyHLXPdzSKzJU/yYrPjFd0iVHPydh+NT0sgTe4bzXbcvOsKZuvQ86cAAwXN7lxY0N5cPes9ACxUxTdkEaNlw==
-
-"@effect/typeclass@~0.21.0":
-  version "0.21.0"
-  resolved "https://registry.yarnpkg.com/@effect/typeclass/-/typeclass-0.21.0.tgz#179b7a3d9c042e14e7d4aea7f620930850184d98"
-  integrity sha512-J0UU0lZqILcjt/6x1a7ykf608NlO45Mg3rajgjifMRONTc4ANDPBTLE6/e2eknwS/unIVX6LJFEZEPotfQIe6Q==
-
 "@electron/get@^1.13.0":
   version "1.14.1"
   resolved "https://registry.yarnpkg.com/@electron/get/-/get-1.14.1.tgz#16ba75f02dffb74c23965e72d617adc721d27f40"
@@ -4934,11 +4924,6 @@ ee-first@1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/ee-first/-/ee-first-1.1.1.tgz#590c61156b0ae2f4f0255732a158b266bc56b21d"
   integrity sha1-WQxhFWsK4vTwJVcyoViyZrxWsh0=
-
-effect@~2.0.0-next.62:
-  version "2.0.5"
-  resolved "https://registry.yarnpkg.com/effect/-/effect-2.0.5.tgz#5ec26908d4bc40ade057abae1c89c116a93f862b"
-  integrity sha512-xu3w2lFfjLvmeNlzdSXgtlwynbKr+FcEkfVHDpkJno41gHfuGZDnpAGHw//fOPqNUdcX728vtZkyRvZ0xMlgag==
 
 ejs@^3.1.7:
   version "3.1.8"

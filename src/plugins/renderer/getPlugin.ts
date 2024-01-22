@@ -176,8 +176,9 @@ async function getDeps(): Promise<Record<string, unknown>> {
     'date-fns/format': await import('date-fns/format'),
     'date-fns/parse': await import('date-fns/parse'),
 
-    'effect': await import('effect'),
-    '@effect/schema': await import('@effect/schema'),
+    // Doesn’t compile on TS 4
+    // 'effect': await import('effect'),
+    // '@effect/schema': await import('@effect/schema'),
 
     '@riboseinc/paneron-extension-kit': await import('@riboseinc/paneron-extension-kit'),
     '@riboseinc/paneron-registry-kit': await import('@riboseinc/paneron-registry-kit'),
