@@ -1192,6 +1192,12 @@ datasetQueue.oneAtATime(async function _updateDatasetIndexesIfNeeded (
     log.error("Failed to adjust indexes; clearing & reloading");
     await clearIndexesAndReloadDatasetDirect({ workDir, datasetID });
 
+    objectsChanged.main!.trigger({
+      workingCopyPath: workDir,
+      datasetID,
+      objects: undefined,
+    });
+
     // Don’t throw, we want to notify frontend anyway.
     //throw e;
 
