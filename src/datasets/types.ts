@@ -178,7 +178,7 @@ export namespace API {
         // Includes “default” index and any custom/filtered indexes.
         // Default index ID is 'default'.
         // Filtered index ID is the hash of filter predicate function (query expression) string.
-        [id: string]:  ActiveDatasetIndex<any>
+        [id: string]: ActiveDatasetIndex<any>
       }
     }
 
