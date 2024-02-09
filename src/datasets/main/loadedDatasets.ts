@@ -360,6 +360,9 @@ async function mapReduce(
   }
   if (reduce) {
     //log.silly("mapReduce: reducing");
+
+    // TODO: Provide initialValue, or otherwise work around the issue where
+    // reduce() is not invoked when mappedData contains only one element.
     return mappedData.reduce((prev, curr) => reduce(prev, curr));
   } else {
     return mappedData;
