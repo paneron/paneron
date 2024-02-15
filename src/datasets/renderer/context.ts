@@ -221,7 +221,7 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
         { info: { gitMeta: { workingCopyPath, mainBranch: '' } }, isLoaded: false },
       );
       const remote = resp.value.info.gitMeta.remote;
-      const username = remote ? remote.username : undefined;
+      const username = remote ? remote.username?.trim() : undefined;
       return useMemo((() => ({
         ...resp,
         value: { username },
