@@ -96,7 +96,7 @@ getPackageCode.main!.handle(async ({ id, version }) => {
     throw new Error("Extension is not locally installed");
   }
 
-  const builtFilePath = path.join(localPath, 'test.js');
+  const builtFilePath = path.join(localPath, 'extension.js');
 
   log.debug("getPackageCode: getting code from", builtFilePath);
 
