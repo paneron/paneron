@@ -101,6 +101,8 @@ async function updateBuffers (
       }
     }
 
+    //console.debug(`Committing changes`);
+
     // Check if we can do this
     await git.commit({
       dryRun: true,

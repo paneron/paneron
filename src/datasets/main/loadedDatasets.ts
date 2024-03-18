@@ -342,10 +342,10 @@ async function mapReduce(
     await defaultIndex.completionPromise;
   }
   const mappedData: unknown[] = [];
-  //log.silly("mapReduce: mapping");
   function handleEmit(val: unknown) {
     mappedData.push(val);
   }
+  //log.debug("mapReduce: mapping");
   for await (const data of defaultIndex.dbHandle.createReadStream()) {
     // TODO: [upstream] NodeJS.ReadableStream is poorly typed.
     const { key, value } = data as unknown as { key: string, value: Record<string, unknown> };
@@ -359,7 +359,7 @@ async function mapReduce(
     return {};
   }
   if (reduce) {
-    //log.silly("mapReduce: reducing");
+    //log.debug("mapReduce: reducing", mappedData);
 
     // TODO: Provide initialValue, or otherwise work around the issue where
     // reduce() is not invoked when mappedData contains only one element.

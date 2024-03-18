@@ -97,10 +97,17 @@ async function readBuffersAtVersion ({
   // TODO: Support LFS in `readBuffersAtVersion()`?
 
   const buffers: Record<string, Uint8Array> = {};
+
+  const timeMsgPrefix = `readBuffersAtVersion: ${rootPath}@${commitHash}`;
+
+  console.time(`${timeMsgPrefix}: listDescendantPathsAtVersion`);
   const bufferPathsRelativeToRoot = await listDescendantPathsAtVersion(
     rootPath,
     workDir,
     commitHash);
+  console.timeEnd(`${timeMsgPrefix}: listDescendantPathsAtVersion`);
+
+  console.time(`${timeMsgPrefix}: reading buffer data`);
   for (const [relativeBufferPath, _] of bufferPathsRelativeToRoot) {
     const bufferPath = joinPaths(rootPath, relativeBufferPath);
     const bufferData: Uint8Array | null = await readBufferAtVersion(
@@ -111,6 +118,8 @@ async function readBuffersAtVersion ({
       buffers[relativeBufferPath] = bufferData;
     }
   }
+  console.timeEnd(`${timeMsgPrefix}: reading buffer data`);
+
   return buffers;
 }
 
