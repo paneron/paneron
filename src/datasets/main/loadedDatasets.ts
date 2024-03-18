@@ -118,13 +118,13 @@ async function unloadDatasetDirect(workDir: string, datasetID: string) {
     try {
       await dbHandle.close();
     } catch (e) {
-      log.error("Datasets: unload(): Failed to close index DB handle", idxID, datasetID, workDir, e);
+      log.error("Datasets: unload(): Failed to clear or close index DB handle", idxID, datasetID, workDir, e);
     }
     if (sortedDBHandle) {
       try {
         await sortedDBHandle.close();
       } catch (e) {
-        log.error("Datasets: unload(): Failed to close filtered index sorted DB handle", idxID, datasetID, workDir, e);
+        log.error("Datasets: unload(): Failed to clear or close filtered index sorted DB handle", idxID, datasetID, workDir, e);
       }
     }
   }
