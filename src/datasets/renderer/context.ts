@@ -354,7 +354,7 @@ export function getFullAPI(opts: ContextGetterProps): Omit<DatasetContext, 'titl
         if (
           workingCopyPath === evt.workingCopyPath &&
           datasetID === evt.datasetID &&
-          indexID === evt.indexID
+          indexID === evt.indexID // seems obviously required?
         ) {
           setStatus(evt.status);
           //result.refresh();
