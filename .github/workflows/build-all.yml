@@ -102,21 +102,24 @@ jobs:
           until yarn dist
           do
             >&2 echo "warning: ⚠️ Attempt #${attempt} failed."
+
+            if [[ -r "${notarization_log}" ]]
+            then
+              >&2 printf "📝 \e[1;93mPrinting out notarization error log:\e[m\n"
+              >&2 echo
+              >&2 printf "\e[1m<NotarizationLog>\e[;33m\n"
+              >&2 echo
+              >&2 cat "${notarization_log}"
+              >&2 echo
+              >&2 printf "\e[;1m</NotarizationLog>\e[m\n"
+              >&2 echo
+              echo 'has_notarization_error=1' >> $GITHUB_ENV
+              exit 1
+            fi
+
             if ((attempt >= ${{ inputs.max_build_attempts }}))
             then
               >&2 echo "error: ❌ Attempted ${{ inputs.max_build_attempts }} times and all have failed.  Aborting."
-              if [[ -r "${notarization_log}" ]]
-              then
-                >&2 printf "📝 \e[1;93mPrinting out notarization error log:\e[m\n"
-                >&2 echo
-                >&2 printf "\e[1m<NotarizationLog>\e[;33m\n"
-                >&2 echo
-                >&2 cat "${notarization_log}"
-                >&2 echo
-                >&2 printf "\e[;1m</NotarizationLog>\e[m\n"
-                >&2 echo
-                echo 'has_notarization_error=1' >> $GITHUB_ENV
-              fi
               exit 1
             fi
             ((attempt++))
