@@ -8,6 +8,8 @@ import PropertyView from '@riboseinc/paneron-extension-kit/widgets/Sidebar/Prope
 import PanelSeparator from '@riboseinc/paneron-extension-kit/widgets/panels/PanelSeparator';
 import OperationQueueContext from '@riboseinc/paneron-extension-kit/widgets/OperationQueue/context';
 
+import ButtonWithPrompt from '../../common/ButtonWithPrompt';
+
 import ShareRepoForm from 'renderer/MainWindow/repositories/ShareRepoForm';
 import { resetToCommit, deleteRepository, describeRepository, repositoriesChanged, setAuthorInfo } from 'repositories/ipc';
 import type { Repository } from 'repositories/types';
@@ -77,7 +79,14 @@ const RepositorySettings: React.FC<{
           css={css`font-size: 80%; max-width: 400px;`}
         />
       <PanelSeparator />
-      <Button small fill minimal
+      <ButtonWithPrompt
+        small
+        minimal
+        promptIntent="danger"
+        promptMessage={<>
+          This will delete your local working copy, and any changes
+          that were not synchronized to the remote server will be lost.
+        </>}
         disabled={!canDelete}
         intent={canDelete ? 'danger' : undefined}
         onClick={canDelete
@@ -86,7 +95,7 @@ const RepositorySettings: React.FC<{
             })
           : undefined}>
         Delete working copy
-      </Button>
+      </ButtonWithPrompt>
     </div>
   );
 };
