@@ -87,7 +87,7 @@ function ({
     testButtonProps.intent = 'success';
   } else if (testResult !== undefined) {
     testButtonProps.intent = 'danger';
-    testButtonProps.text = "Try again";
+    testButtonProps.text = "Could not check credentials";
     testButtonProps.rightIcon = 'warning-sign';
     testButtonProps.alignText = 'left';
   }
@@ -205,7 +205,7 @@ function ({
               popoverClassName={`${css`&& { margin: 10px !important; }`}`}
               content={testResultNotes
                 ? <Callout
-                      title={testPassed ? "It works, but" : "There may have been an issue"}
+                      title={testPassed ? "It works, but" : "There may have been an issue checking credentials"}
                       intent={testPassed ? 'primary' : 'danger'}>
                     {testResultNotes}
                   </Callout>

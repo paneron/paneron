@@ -118,17 +118,17 @@ function ({ repo }) {
 
             {editingPassword
               ? <ButtonGroup>
-                  <Button small fill outlined disabled={isBusy} onClick={performOperation('updating password', _savePassword)}>
+                  <Button intent={password !== '' ? "primary" : "danger"} small fill outlined disabled={isBusy} onClick={performOperation('updating password', _savePassword)}>
                     {password !== ''
                       ? 'Save secret'
                       : 'Reset saved secret'}
                   </Button>
                   <Button small fill outlined disabled={isBusy} onClick={() => { setEditingPassword(false); setPassword(''); }}>
-                    Don’t save
+                    Cancel
                   </Button>
                 </ButtonGroup>
               : <Button fill small outlined disabled={isBusy} active={editingPassword} onClick={() => setEditingPassword(true)}>
-                  Amend secret
+                  Update secret
                 </Button>}
           </>
         : <Button small outlined
