@@ -100,6 +100,15 @@ mkdir -p dependencies-local
 cp -R /path/to/your/registry-kit/dist dependencies-local/registry-kit-dist
 # or
 ln -sf /path/to/your/registry-kit/dist dependencies-local/registry-kit-dist
+
+# Could be part of one-liner, e.g., when working on registry kit:
+yarn upgrade --ignore-scripts @priboseinc/paneron-extension-kit \
+&& yarn run build \
+&& rsync -a --delete dist/ /path/to/paneron/dependencies-local/registry-kit-dist/ \
+&& rsync -a --delete dist/ /path/to/some/extension/dependencies-local/registry-kit-dist/ \
+&& rsync -a --delete dist/ /path/to/another/extension/dependencies-local/registry-kit-dist/
+# after which, in Paneron directory
+yarn upgrade --ignore-scripts registry-kit && yarn run dev
 ----
 
 then 2) replace their package.json entries with relative paths
