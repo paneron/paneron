@@ -44,13 +44,13 @@ jobs:
     uses: ./.github/workflows/build-all.yml
     secrets: inherit
     with:
-      os: macos-13
+      os: macos-14
 
   test-dist:
     needs: [build-all]
     uses: ./.github/workflows/test-dist.yml
     with:
-      os: macos-13
+      os: macos-14
 
   update-website:
     needs: [test-dist]
