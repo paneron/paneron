@@ -60,7 +60,8 @@ jobs:
         run: |
           brew install python@3.11
 
-      - run: |
+      - name: install packages
+        run: |
           npm config set python "/opt/homebrew/bin/python3.11"
           yarn install --frozen-lockfile --immutable --network-timeout ${{ inputs.npm_network_timeout }}
 
