@@ -55,6 +55,12 @@ jobs:
           node-version: ${{ inputs.node }}
           cache: yarn
 
+      - name: Install Python 3.11 (macOS 14+)
+        if: startsWith(inputs.os, 'macos')
+        run: |
+          brew install python@3.11
+          export npm_config_python=/opt/homebrew/bin/python3.11
+
       - run: yarn install --frozen-lockfile --immutable --network-timeout ${{ inputs.npm_network_timeout }}
 
       - run: yarn compile
