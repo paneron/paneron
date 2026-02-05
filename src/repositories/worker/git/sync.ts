@@ -17,10 +17,6 @@ import { normalizeURL } from '../../util';
 import type { Git, WithStatusUpdater } from '../types';
 
 
-//import getDecoder from './decoders';
-//const UTF_DECODER = getDecoder('utf-8');
-
-
 export const clone: WithStatusUpdater<Git.Sync.Clone> =
 async function clone (
   opts: CloneRequestMessage,
