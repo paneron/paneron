@@ -52,25 +52,18 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ inputs.node }}
           cache: yarn
 
       - name: Install Python 3.11 (macOS 14+)
         if: startsWith(inputs.os, 'macos')
         run: |
           brew install python@3.11
-          echo "npm_config_python=/opt/homebrew/bin/python3.11" >> "$GITHUB_ENV"
 
       - name: install packages
         run: |
-          $npm_config_python --version
+          npm config set python "/opt/homebrew/bin/python3.11"
           yarn install --frozen-lockfile --immutable --network-timeout ${{ inputs.npm_network_timeout }}
-
-      - name: Install Node.js, NPM and Yarn
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ inputs.node }}
-          cache: yarn
 
       - run: yarn compile
 
