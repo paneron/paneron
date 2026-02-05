@@ -157,6 +157,3 @@ export async function oneOffWorkerTask<Result = any>
     await terminateWorker(worker);
   }
 }
-
-// export const syncWorker = initializeWorker();
-// export const readerWorker = initializeWorker();
