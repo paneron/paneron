@@ -1,4 +1,4 @@
-name: macos-13
+name: macos-14
 
 on:
   workflow_dispatch:
@@ -20,7 +20,7 @@ on:
       - '**.nix'
       - 'flake.lock'
       - '.github/workflows/*.yml'
-      - '!.github/workflows/macos-13.yml'
+      - '!.github/workflows/macos-14.yml'
       - '!.github/workflows/build-all.yml'
       - '!.github/workflows/test-dist.yml'
   pull_request:
