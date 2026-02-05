@@ -100,11 +100,6 @@
       "hardenedRuntime": true,
       "entitlements": "./node_modules/electron-builder-notarize/entitlements.mac.inherit.plist"
     },
-    "mas": {
-      "entitlements": "./build/entitlements.mas.plist",
-      "entitlementsInherit": "./build/entitlements.mas.inherit.plist",
-      "hardenedRuntime": false
-    },
     "dmg": {
       "contents": [
         {
