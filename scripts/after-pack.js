@@ -64,7 +64,7 @@ const waitFor = async function(child) {
 };
 
 module.exports = async function(context) {
-  console.warn("after build; disable sandbox");
+  console.warn("after build; disable sandbox on Linux");
   const isLinux = context.targets.find(
     target => target.name === "appImage" || target.name === "snap",
   );

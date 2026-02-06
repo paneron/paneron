@@ -14,7 +14,7 @@ on:
       max_build_attempts:
         required: false
         type: number
-        default: 5
+        default: 3
       cache_dir:
         required: false
         type: string
@@ -49,21 +49,51 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Install the Apple certificate and provisioning profile
+        if: startsWith(inputs.os, 'macos')
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION_CERT }}
+          P12_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_CERT_PW }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          # create variables
+          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+
+          # import certificate
+          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
+
+          # create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          # import certificate to keychain
+          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.22
+          cache: yarn
+
+      - name: Install Python 3.11 for node-gyp (macOS 14+)
+        if: startsWith(inputs.os, 'macos')
+        run: |
+          brew install python@3.11
+          echo "npm_config_python=/opt/homebrew/bin/python3.11" >> "$GITHUB_ENV"
+
+      - name: install packages
+        run: |
+          yarn install --frozen-lockfile --immutable --network-timeout ${{ inputs.npm_network_timeout }}
+
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v4
         with:
           node-version: ${{ inputs.node }}
           cache: yarn
-
-      - name: Install Python 3.11 (macOS 14+)
-        if: startsWith(inputs.os, 'macos')
-        run: |
-          brew install python@3.11
-
-      - name: install packages
-        run: |
-          npm config set python "/opt/homebrew/bin/python3.11"
-          yarn install --frozen-lockfile --immutable --network-timeout ${{ inputs.npm_network_timeout }}
 
       - run: yarn compile
 
@@ -79,51 +109,12 @@ jobs:
           yarn fetch-dist-deps
 
       - name: Run yarn dist for a maximum of ${{ inputs.max_build_attempts }} time(s)
+        shell: bash
         run: |
-
-          notarization_log="notarization-error.log"
-
-          if [[ ${{ inputs.os }} = macos-* ]]
-          then
-            export CSC_KEY_PASSWORD='${{ secrets.MAC_CERTS_PASSWORD }}'
-            export CSC_LINK='${{ secrets.MAC_CERTS }}'
-          # Windows codesigning disabled until cloud HSM has been set up.
-          # elif [[ ${{ inputs.os }} = windows-* ]]
-          # then
-          #   export CSC_KEY_PASSWORD='${{ secrets.WINDOWS_CERTS_PASSWORD }}'
-          #   export CSC_LINK='${{ secrets.WINDOWS_CERTS }}'
-          fi
-
-          # Unset empty variables for electron-builder (mainly for Windows but may also help with other OSs)
-          for var in CSC_LINK CSC_KEY_PASSWORD
-          do
-            if [[ -z "${!var:-}" ]]
-            then
-              >&2 echo "info: unsetting empty \$${var} variable."
-              unset "${var}"
-            else
-              >&2 echo "info: keeping non-empty \$${var} variable."
-            fi
-          done
-
           attempt=1
           until yarn dist
           do
             >&2 echo "warning: ⚠️ Attempt #${attempt} failed."
-
-            if [[ -r "${notarization_log}" ]]
-            then
-              >&2 printf "📝 \e[1;93mPrinting out notarization error log:\e[m\n"
-              >&2 echo
-              >&2 printf "\e[1m<NotarizationLog>\e[;33m\n"
-              >&2 echo
-              >&2 cat "${notarization_log}"
-              >&2 echo
-              >&2 printf "\e[;1m</NotarizationLog>\e[m\n"
-              >&2 echo
-              echo 'has_notarization_error=1' >> $GITHUB_ENV
-              exit 1
-            fi
 
             if ((attempt >= ${{ inputs.max_build_attempts }}))
             then
@@ -133,26 +124,96 @@ jobs:
             ((attempt++))
           done
           >&2 echo "info: ✅ Completed after attempt #${attempt}."
-        shell: bash
         env:
           # Always helpful for debugging non-interactive sessions
           DEBUG: electron-builder
+
+          # electron-builder publishing
+          GH_TOKEN: ${{ secrets.GH_PANERON_CI_TOKEN }}
 
           # macOS notarization
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
-          # Windows codesigning
-          WINDOWS_CERTS_PASSWORD: ${{ secrets.WINDOWS_CERTS_PASSWORD }}
-          WINDOWS_CERTS: ${{ secrets.WINDOWS_CERTS }}
+      # Below may not be required with current electron-builder,
+      # but we keep it near for a bit to see how it goes.
+      #
+      # - name: Run yarn dist for a maximum of ${{ inputs.max_build_attempts }} time(s)
+      #   run: |
 
-          # macOS notarization
-          MAC_CERTS_PASSWORD: ${{ secrets.MAC_CERTS_PASSWORD }}
-          MAC_CERTS: ${{ secrets.MAC_CERTS }}
+      #     notarization_log="notarization-error.log"
 
-          # electron-builder publishing
-          GH_TOKEN: ${{ secrets.GH_PANERON_CI_TOKEN }}
+      #     if [[ ${{ inputs.os }} = macos-* ]]
+      #     then
+      #       export CSC_KEY_PASSWORD='${{ secrets.MAC_CERTS_PASSWORD }}'
+      #       export CSC_LINK='${{ secrets.MAC_CERTS }}'
+      #     # Windows codesigning disabled until cloud HSM has been set up.
+      #     # elif [[ ${{ inputs.os }} = windows-* ]]
+      #     # then
+      #     #   export CSC_KEY_PASSWORD='${{ secrets.WINDOWS_CERTS_PASSWORD }}'
+      #     #   export CSC_LINK='${{ secrets.WINDOWS_CERTS }}'
+      #     fi
+
+      #     # Unset empty variables for electron-builder (mainly for Windows but may also help with other OSs)
+      #     for var in CSC_LINK CSC_KEY_PASSWORD
+      #     do
+      #       if [[ -z "${!var:-}" ]]
+      #       then
+      #         >&2 echo "info: unsetting empty \$${var} variable."
+      #         unset "${var}"
+      #       else
+      #         >&2 echo "info: keeping non-empty \$${var} variable."
+      #       fi
+      #     done
+
+      #     attempt=1
+      #     until yarn dist
+      #     do
+      #       >&2 echo "warning: ⚠️ Attempt #${attempt} failed."
+
+      #       if [[ -r "${notarization_log}" ]]
+      #       then
+      #         >&2 printf "📝 \e[1;93mPrinting out notarization error log:\e[m\n"
+      #         >&2 echo
+      #         >&2 printf "\e[1m<NotarizationLog>\e[;33m\n"
+      #         >&2 echo
+      #         >&2 cat "${notarization_log}"
+      #         >&2 echo
+      #         >&2 printf "\e[;1m</NotarizationLog>\e[m\n"
+      #         >&2 echo
+      #         echo 'has_notarization_error=1' >> $GITHUB_ENV
+      #         exit 1
+      #       fi
+
+      #       if ((attempt >= ${{ inputs.max_build_attempts }}))
+      #       then
+      #         >&2 echo "error: ❌ Attempted ${{ inputs.max_build_attempts }} times and all have failed.  Aborting."
+      #         exit 1
+      #       fi
+      #       ((attempt++))
+      #     done
+      #     >&2 echo "info: ✅ Completed after attempt #${attempt}."
+      #   shell: bash
+      #   env:
+      #     # Always helpful for debugging non-interactive sessions
+      #     DEBUG: electron-builder
+
+      #     # macOS notarization
+      #     APPLE_ID: ${{ secrets.APPLE_ID }}
+      #     APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+      #     APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      #     # Windows codesigning
+      #     WINDOWS_CERTS_PASSWORD: ${{ secrets.WINDOWS_CERTS_PASSWORD }}
+      #     WINDOWS_CERTS: ${{ secrets.WINDOWS_CERTS }}
+
+      #     # macOS notarization
+      #     MAC_CERTS_PASSWORD: ${{ secrets.MAC_CERTS_PASSWORD }}
+      #     MAC_CERTS: ${{ secrets.MAC_CERTS }}
+
+      #     # electron-builder publishing
+      #     GH_TOKEN: ${{ secrets.GH_PANERON_CI_TOKEN }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

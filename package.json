@@ -85,7 +85,7 @@
       }
     ],
     "afterPack": "./scripts/after-pack.js",
-    "afterSign": "electron-builder-notarize",
+    "afterSign": "./scripts/notarize.js",
     "mac": {
       "asarUnpack": [
         "**/*.node"
@@ -98,7 +98,7 @@
       "icon": "build/icon.icns",
       "gatekeeperAssess": false,
       "hardenedRuntime": true,
-      "entitlements": "./node_modules/electron-builder-notarize/entitlements.mac.inherit.plist"
+      "entitlements": "./build/entitlements.mac.inherit.plist"
     },
     "dmg": {
       "contents": [
@@ -284,7 +284,7 @@
     "cz-conventional-changelog": "3.3.0",
     "electron": "15.5.7",
     "electron-builder": "23.6.0",
-    "electron-builder-notarize": "^1.5.2",
+    "@electron/notarize": "3.1.1",
     "electron-react-devtools": "^0.5.3",
     "electron-webpack": "^2.8.2",
     "electron-webpack-ts": "^4.0.1",
