@@ -249,6 +249,7 @@
     "use-debounce": "9.0.4"
   },
   "devDependencies": {
+    "@electron/notarize": "3.1.1",
     "@emotion/eslint-plugin": "^11.0.0",
     "@types/async-lock": "^1.1.1",
     "@types/chai": "^4.2.18",
@@ -284,7 +285,6 @@
     "cz-conventional-changelog": "3.3.0",
     "electron": "15.5.7",
     "electron-builder": "23.6.0",
-    "@electron/notarize": "3.1.1",
     "electron-react-devtools": "^0.5.3",
     "electron-webpack": "^2.8.2",
     "electron-webpack-ts": "^4.0.1",
